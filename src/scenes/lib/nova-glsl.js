@@ -225,7 +225,7 @@ vec3 knotEval(vec3 oc, vec3 rd, vec3 cid, float tMax, float pa){
   vec3 nk = cubeDir((cid.yz + 0.2 + 0.6 * h1.xy) / uKnotKc * 2.0 - 1.0, cid.x);
   vec4 Lg = shLarge(nk);
   // knots live in the complexes and arcs: the large-scale field sets presence, not only brightness
-  if (h1.z > uKnotDens * mix(1.0, Lg.x, uClump * 0.9)) return vec3(0.0);
+  if (h1.z > uKnotDens * mix(1.0, Lg.x, uClump)) return vec3(0.0);
   float g = sqrt(Lg.x) * Lg.y * Lg.z;
   vec3 h2 = hash33(cid.zxy * vec3(3.7, 5.3, 2.9) + uShSeed * 3.1 + 17.0);
   float q = h2.x;
@@ -233,7 +233,7 @@ vec3 knotEval(vec3 oc, vec3 rd, vec3 cid, float tMax, float pa){
   float scK = shScale(nk) * uShR;
   vec3 Ph = nk * (0.972 + 0.026 * (h2.y - 0.5) * 2.0) * scK;
   float s = (0.0011 + 0.0014 * h2.y + 0.0011 * q * q) * scK;
-  float B = 0.1 + 0.6 * q * q * q * q + 3.5 * pow(q, 40.0);    // power law: a few blazing knots
+  float B = 0.1 + 0.6 * q * q * q * q + 1.6 * pow(q, 40.0);    // power law: a few blazing knots
   vec3 col = vec3(0.0);
   // head (column normalised to peak 1 when resolved; flux-conserving blur to the pixel footprint)
   float th = dot(Ph - oc, rd);
@@ -268,12 +268,13 @@ vec3 knotEval(vec3 oc, vec3 rd, vec3 cid, float tMax, float pa){
 }
 // visit the cells the ray's direction sweeps through the knot layer (radii rLo..rHi) on one side
 vec3 knotsSide(vec3 oc, vec3 rd, float b, float p, float s, float sc, float tMax, float pa){
-  float rHi = 1.03 * sc, rLo = 0.82 * sc;
+  // knot layer: heads 0.946..0.998, fingers down to ~0.946 - 1.8 uTailL (margin for the prolate radius)
+  float rHi = 1.012 * sc, rLo = (0.935 - 1.8 * uTailL) * sc;
   if (p >= rHi) return vec3(0.0);
   vec3 nt = p > 1e-5 * sc ? (oc - rd * b) / p : normalize(cross(rd, vec3(0.31, 0.83, 0.46)));
   float phA = atan(sqrt(rHi * rHi - p * p), p);
   float phB = p < rLo ? atan(sqrt(rLo * rLo - p * p), p) : 0.0;
-  int M = int(clamp(ceil((phA - phB) * uKnotKc / 0.45), 1.0, 10.0));
+  int M = int(clamp(ceil((phA - phB) * uKnotKc / 0.55), 1.0, 10.0));
   vec3 col = vec3(0.0), prev = vec3(-1.0);
   for (int i = 0; i < 10; i++){
     if (i >= M) break;
@@ -336,7 +337,8 @@ vec3 shellSide(vec3 oc, vec3 rd, float b, float p, float s, float tMax, float pa
   float wisp = shellCross(p, (0.958 + 0.03 * (thick - 0.5)) * sc, 0.016 * sc) * fil * fr;
   c += uCWisp * wisp * uWisp * gate * gate;
   // faint diffuse layer (deep crimson), thicker; gives depth without filling the gaps
-  c += uCGap * shellCross(p, 0.93 * sc, 0.05 * sc) * uDiffuse * (0.12 + 0.88 * gate * sqrt(gate)) * (0.6 + 0.4 * Lg.w);
+  // clumpy diffuse nebulosity (deep crimson) gathered in the knot complexes; gives depth without filling the gaps
+  c += uCGap * shellCross(p, 0.93 * sc, 0.05 * sc) * uDiffuse * (0.12 + 0.88 * gate * sqrt(gate)) * (0.3 + 1.4 * smoothstep(0.42, 0.8, thick));
   // thin cold-blue forward shock, just outside the knots: steady with gentle patches
   float skin = shellCross(p, (1.035 + 0.006 * (Lg.w - 0.5)) * sc, 0.006 * sc) * (0.55 + 0.45 * smoothstep(0.35, 0.65, Lg.w));
   c += uCSkin * skin * uSkin;

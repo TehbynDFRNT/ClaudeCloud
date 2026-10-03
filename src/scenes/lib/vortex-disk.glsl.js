@@ -39,6 +39,7 @@ uniform float uHotPhi;     // azimuth of the impact point on the rim
 uniform vec3 uStreamDir;   // stream velocity direction (unit, toward the impact)
 uniform float uStreamW;    // stream half width
 uniform float uShockK;     // bow-shock brightness
+uniform float uStreamK;    // stream column density multiplier
 uniform float uSmear;      // shutter length in disk-seconds (deterministic flow motion blur)
 uniform float uRb;         // radial bound of the gas
 uniform float uLod;        // step growth with distance (fraction of t)
@@ -229,8 +230,8 @@ vec4 vxStream(vec3 ro, vec3 rd){
   float dist = length(v);
   float ds = max(s - SHOCK_S0, 0.0);
   // the head splays and frays as it rams the shocked gas
-  float head = exp(-ds / 0.07);
-  float w = uStreamW * (1.0 + 0.5 * max(s, 0.0) + 1.6 * head);
+  float head = exp(-ds / 0.06);
+  float w = uStreamW * (1.0 + 0.5 * max(s, 0.0) + 0.45 * head);
   // lateral coordinate across the tube as seen along the ray (signed), and the along-flow coordinate
   vec3 side = normalize(cross(U, rd) + vec3(1e-5));
   float lat = dot(v, side) / w;
@@ -238,9 +239,11 @@ vec4 vxStream(vec3 ro, vec3 rd){
   float sn = n3(vec3(fs * 6.0, lat * 1.2, 2.7)) * 0.6 + n3(vec3(fs * 15.0, lat * 2.4, 8.1)) * 0.3;
   float strands = 0.35 + 0.65 * smoothstep(-0.35, 0.35, n3(vec3(lat * 2.6, fs * 1.4, 4.0)) + 0.4 * n3(vec3(lat * 5.5, fs * 3.0, 11.0)));
   float prof = exp(-dist * dist / (w * w * (1.0 + 0.7 * sn)));
-  float ends = smoothstep(SHOCK_S0 - 0.03, SHOCK_S0 + 0.12, s) * (1.0 - smoothstep(0.9, 1.6, s));
-  float col = 1.7725 * w / sqrt(den) * prof * ends * strands * exp(1.5 * sn) / (1.0 + 2.0 * head);
-  float Ts = 2900.0 + 1300.0 * sn + 6500.0 * head * head + 900.0 * strands;
+  // ragged head: the tube is eaten away unevenly as it enters the shock
+  float rag = n3(vec3(lat * 1.8, uTau * 0.9, 5.3)) * 0.05 + n3(vec3(lat * 4.0, uTau * 1.7, 9.1)) * 0.025;
+  float ends = smoothstep(SHOCK_S0 - 0.01, SHOCK_S0 + 0.10, s + rag) * (1.0 - smoothstep(0.9, 1.6, s));
+  float col = 1.7725 * w / sqrt(den) * prof * ends * strands * exp(1.5 * sn) * uStreamK;
+  float Ts = 2800.0 + 1300.0 * sn + 4800.0 * head + 700.0 * strands;
   return vec4(t, col, Ts, 0.0);
 }
 // bow shock: thin paraboloid sheet facing upstream, apex SHOCK_S0 upstream of the rim point, torn into knots.
@@ -251,7 +254,7 @@ vec3 vxShockHit(vec3 ro, vec3 rd, float tt, out float tHit){
   vec3 E2 = cross(E1, U);
   vec3 o = ro - hotPos();
   vec3 lo = vec3(dot(o, U), dot(o, E1), dot(o, E2)), ld = vec3(dot(rd, U), dot(rd, E1), dot(rd, E2));
-  const float Rc = 0.045, RHO = 0.15;
+  const float Rc = 0.04, RHO = 0.10;
   float A2 = (ld.y * ld.y + ld.z * ld.z) / (2.0 * Rc);
   float B2 = ld.x + (lo.y * ld.y + lo.z * ld.z) / Rc;
   float C2 = lo.x - SHOCK_S0 + (lo.y * lo.y + lo.z * lo.z) / (2.0 * Rc);
@@ -267,12 +270,12 @@ vec3 vxShockHit(vec3 ro, vec3 rd, float tt, out float tHit){
     float rho = length(x.yz);
     if (rho > RHO) continue;
     vec3 nn = normalize(vec3(1.0, x.y / Rc, x.z / Rc));
-    float ci = max(abs(dot(ld, nn)), 0.15);
-    vec3 kq = vec3(x.y / 0.011, x.z / 0.011, tt * 1.4 + rho * 30.0);
-    float kn = n3(kq) * 0.65 + n3(kq * 2.3 + 5.0) * 0.35;
-    float knots = smoothstep(-0.18, 0.5, kn);
+    float ci = max(abs(dot(ld, nn)), 0.3);
+    vec3 kq = vec3(x.y / 0.010, x.z / 0.010, tt * 1.4 - rho * 40.0);
+    float kn = n3(kq) * 0.6 + n3(kq * 2.3 + 5.0) * 0.3 + n3(kq * 5.1 + 2.0) * 0.15;
+    float knots = smoothstep(-0.05, 0.45, kn);
     float fr = rho / RHO;
-    float prof = exp(-fr * fr * 3.0) * (1.0 - smoothstep(0.8, 1.0, fr));
+    float prof = exp(-fr * fr * 4.0) * (1.0 - smoothstep(0.6, 1.0, fr + 0.25 * kn));
     float T = mix(4200.0, 9800.0, exp(-fr * fr * 6.0)) * (0.85 + 0.3 * knots) * uHeat;
     acc += vxEmit(T) * (prof * knots * 0.07 / ci);
     if (tHit < 0.0) tHit = th;
@@ -386,6 +389,12 @@ uniform float uDwarfSurf;   // dwarf surface radiance multiplier
 uniform float uGlowK;       // dwarf glow (halo + wide) multiplier
 
 const vec3 C_CURT = vec3(0.16, 0.40, 1.0);
+float vmJit(vec2 px){
+  vec2 o = vec2(fract(uFrame * 0.6180339), fract(uFrame * 0.7548776)) * 517.0 + 31.0;
+  float c = hash12(px + o);
+  float nb = hash12(px + o + vec2(1.0, 0.0)) + hash12(px + o - vec2(1.0, 0.0)) + hash12(px + o + vec2(0.0, 1.0)) + hash12(px + o - vec2(0.0, 1.0));
+  return fract(c - 0.25 * nb + 0.5);
+}
 // Accretion curtains: plasma lifted off the inner disk edge, sliding along dipole field lines (r = L sin^2 theta)
 // onto the dwarf's magnetic poles. Two broad curtains (oblique rotator), field-aligned threads, poleward knots.
 vec3 vxCurtain(vec3 ro, vec3 rd, float tMax, float jit){

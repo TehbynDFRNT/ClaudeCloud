@@ -129,18 +129,18 @@ vec3 wdBackdrop(vec3 rd, float t){
       float edge = smoothstep(1.0 + bl * 0.8, 1.0 - bl * 0.5, rho);
       float prof = lim * lim * edge;                                  // ~1 in the interior, ~6-8 at the rim
       vec2 kp = pl / uShellR;
-      float clump = smoothstep(0.38, 0.78, fbm3(vec3(kp * 5.0, 2.0), 3) * 0.5 + 0.5 + 0.15 * n3(vec3(kp * 13.0, 5.0)));
+      float clump = smoothstep(0.30, 0.85, ridged3(vec3(kp * 4.0, 2.0), 3) + 0.15 * n3(vec3(kp * 13.0, 5.0)));
       // bokeh knots: worley discs in the screen plane, gated by a coarse field, mostly on the rim
       vec2 k = cells3(vec3(kp * 10.0, 4.3));
       float kr = 0.26 + 0.9 * bl;
       float disc = smoothstep(kr, kr - 0.05 - 0.2 * bl, k.x) * (0.7 + 0.45 * smoothstep(kr - 0.14, kr - 0.03, k.x));
       float gate = smoothstep(0.05, 0.45, n3(vec3(kp * 3.1, 7.0)));
-      float rim = smoothstep(0.55, 0.96, rho);                       // the interior stays black
+      float rim = smoothstep(0.70, 0.97, rho);                       // the interior stays black
       float knots = disc * gate * prof * rim * 0.30;
       float fill = prof * rim * clump * 0.07;
       // ember-gold inner face, crimson outer edge; knots hotter (gold)
       float outer = smoothstep(0.90, 1.08, rho);
-      vec3 shC = mix(vec3(1.0, 0.36, 0.07), vec3(0.85, 0.07, 0.018), outer);
+      vec3 shC = mix(vec3(1.0, 0.42, 0.09), vec3(0.85, 0.07, 0.018), outer);
       vec3 knC = mix(vec3(1.0, 0.55, 0.17), vec3(1.0, 0.25, 0.05), outer);
       c += uShell * (shC * fill + knC * knots * (0.4 + 0.6 * clump));
     }
@@ -322,7 +322,7 @@ vec3 wdFlashPlume(vec3 ro, vec3 rd, float tMax, float t, float pixA){
   if (rp.x < tMax + 0.2){
     float w = 0.015 + 0.05 * uFlashR;
     float q = rp.y * rp.y / (w * w);
-    col += vec3(1.0, 0.94, 0.86) * uFlash.w * (0.9 * exp(-q) + 0.04 / (1.0 + q));
+    col += vec3(1.0, 0.94, 0.86) * uFlash.w * (0.6 * exp(-q) + 0.02 / (1.0 + q));
   }
   if (uPlume <= 0.0) return col;
   vec3 u = normalize(cross(nf, abs(nf.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0))), v = cross(nf, u);
@@ -341,14 +341,15 @@ vec3 wdFlashPlume(vec3 ro, vec3 rd, float tMax, float t, float pixA){
     vec3 sg = s1.z < s2.z ? vec3(s1.xy * vec2(1.0, 0.55), s1.z) : vec3(s2.x, 0.55 + 0.45 * s2.y, s2.z);
     if (sg.x > tMax) continue;
     float wpx = pixA * sg.x * 0.6;
-    float w0 = (0.004 + 0.010 * h.y) * (1.0 + 1.5 * sg.y) * (0.6 + 0.4 * uPlume);
+    float w0 = (0.0025 + 0.005 * h.y) * (1.0 + 0.8 * sg.y);
     float w = max(w0, wpx);
     float core = exp(-sg.z * sg.z / (w * w)) * (w0 / w);
-    float glow = exp(-sg.z / (w0 * 5.0 + wpx)) * 0.15;
-    float knot = 0.55 + 0.45 * n3(vec3(fi * 4.3, sg.y * 9.0 - t * 6.0, 2.0));
-    float tipFade = smoothstep(1.0, 0.7, sg.y) + 1.5 * exp(-pow((sg.y - 0.97) / 0.05, 2.0));
-    float heat = mix(1.15, 0.55, sg.y);                                      // white-hot base, ember tips
-    col += oceanEmit(heat) * (core * knot * tipFade + glow * 0.3) * uFlash.w * 0.35;
+    float glow = exp(-sg.z / (w0 * 4.0 + wpx)) * 0.06;
+    float kn = n3(vec3(fi * 4.3, sg.y * 14.0 - t * 6.0, 2.0)) * 0.5 + 0.5;
+    float knot = 0.25 + 1.3 * smoothstep(0.45, 0.8, kn);                     // Rayleigh-Taylor knots along the finger
+    float tipFade = smoothstep(1.0, 0.75, sg.y) + 2.0 * exp(-pow((sg.y - 0.95) / 0.05, 2.0));
+    float heat = mix(1.05, 0.45, sg.y);                                      // white-hot base, ember tips
+    col += oceanEmit(heat) * (core * knot * tipFade + glow * 0.3) * (0.6 + 0.4 * uFlash.w) * 0.6;
   }
   // sparks: fast droplets with short motion streaks
   for (int i = 0; i < 20; i++){
@@ -449,8 +450,9 @@ vec2 wdConvulse(vec3 n, float t){
   float ring = exp(-front * front / 0.003) + 0.35 * sin(front * 30.0) * exp(max(front, -1.0) * 5.0) * step(front, 0.0);
   ring *= exp(-ts * 0.4);
   // the whole layer heaves: bulges out and recoils, strongest near the origin
-  float heave = sin(ts * 6.5) * exp(-ts * 1.0) * (0.45 + 0.55 * exp(-g * g * 0.8));
-  return vec2(uConvAmp * (ring * 1.3 + heave * 1.4), exp(-front * front / 0.0015) * exp(-ts * 0.35));
+  float hv = sin(ts * 6.5);
+  float heave = max(hv, 0.25 * hv) * exp(-ts * 1.0) * (0.45 + 0.55 * exp(-g * g * 0.8));   // bulge out, shallow recoil
+  return vec2(max(uConvAmp * (ring * 1.3 + heave * 1.4), -0.3), exp(-front * front / 0.0015) * exp(-ts * 0.35));
 }
 
 // ---------- accreted hydrogen ocean

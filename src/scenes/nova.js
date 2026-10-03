@@ -325,8 +325,8 @@ export default {
       mode: 'shell', volScale: 0.7, dur: 2.88,
       cam: [[0, [1.2, 1.0, 5.6], [1.7, 1.2, 0.0], 36], [2.9, [1.45, 1.05, 5.9], [1.85, 1.25, 0.0], 36, 0, 'outCubic']],
       shR: [[0, 3.0], [2.88, 3.25, 'outQuad']], frac: [[0, 0.04], [2.88, 0.95, 'inOutSine']], shHeat: [[0, 0.66], [2.88, 0.62]],
-      knotK: 13, prolate: 0.1, deform: 0.04, equator: 0.6, clump: 0.8, sheetW: 5, sheetWid: 0.026, knotGain: 40, tailGain: 9, tailL: 0.035,
-      wisp: 12, diffuse: 1, skin: 2, giant: true, giantGlow: 0.8, scar: 0.8, dwarfLum: 1, starGain: 0.6,
+      knotK: 13, knotKc: 34, prolate: 0.1, deform: 0.04, equator: 0.6, clump: 0.85, sheetW: 5, sheetWid: 0.026, knotGain: 1.0, tailGain: 1.2, tailL: 0.028,
+      wisp: 6, diffuse: 1.8, skin: 0.3, giant: true, giantGlow: 0.8, scar: 0.8, dwarfLum: 1, starGain: 0.6,
       post: { bloomStrength: 0.1, lift: 0 },
     },
     // 6.0 s: the immense fractured golden shell (GK Per / T Pyx knots and fingers); the pair small inside; slow pull back.
@@ -334,8 +334,8 @@ export default {
       mode: 'shell', volScale: 0.75, dur: 6.0,
       cam: [[0, [3.6, 5.0, 12.4], [0, 0, 0], 34], [6.0, [7.6, 10.4, 25.6], [0, 0, 0], 34]],
       shR: [[0, 7.0], [6.0, 7.45, 'linear']], frac: 1, shHeat: [[0, 0.62], [6.0, 0.57]],
-      knotK: 16, knotKc: 34, prolate: 0.12, deform: 0.06, equator: 0.8, clump: 0.92, sheetW: 2, knotGain: 1.0, tailGain: 1.2, tailL: 0.028,
-      wisp: 6, diffuse: 1.6, skin: 0.3, giant: true, giantGlow: 0.55, scar: 0.6, dwarfLum: 0.6, starGain: 0.6,
+      knotK: 16, knotKc: 34, prolate: 0.12, deform: 0.06, equator: 0.8, clump: 0.92, sheetW: 1.5, knotGain: 1.0, tailGain: 1.2, tailL: 0.028,
+      wisp: 0, diffuse: 1.8, skin: 0.3, giant: true, giantGlow: 0.55, scar: 0.6, dwarfLum: 0.6, starGain: 0.6,
       post: { bloomStrength: 0.09, lift: 0 },
     },
     // 3.33 s (+ dissolve tail to S29b): centred, still. A near-perfect limb-brightened ring, outer radius ~0.32 H.

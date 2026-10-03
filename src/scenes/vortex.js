@@ -63,7 +63,7 @@ void main(){
   float pixAngle = 2.0 * uTanHalfFov / uRes.y;
   // stars only through genuinely clear gas (no stars glinting through optically thick glowing matter)
   vec3 col = rgb + starField(rd, pixAngle) * uStarGain * smoothstep(0.45, 0.97, tr);
-  if (uCurtain > 0.0) col += vxCurtain(ro, rd, hit ? hd.x : 1e9, ign(gl_FragCoord.xy)) * trD;
+  if (uCurtain > 0.0) col += vxCurtain(ro, rd, hit ? hd.x : 1e9, vmJit(gl_FragCoord.xy)) * trD;
   if (hit) col += vxDwarfSurface(ro, rd, hd) * trD;
   col += vxDwarfGlow(ro, rd, 2.0 * uTanHalfFov / uFull.y) * trD;
   fragColor = vec4(col, 1.0);
@@ -74,7 +74,7 @@ const DISK = {
   omega: 0.22, cycle: 2.4, rin: 0.075, rout: 1.0, h0: 0.075, flare: 1.18, rimPuff: 1.2,
   dens: 7.0, densExp: 1.8, tout: 1300, tinK: 0.6, turb: 0.55, arms: 0.55, armM: 2, armPitch: 0.36, armSpeed: 0.05, armSharp: 3.0,
   curtain: 1.0, curtainSpin: 2.0, curtainPhi: 0.6, dwarfR: 0.014, dwarfSurf: 1.0, glowK: 1.0,
-  hot: 0, hotPhi: 2.2, streamDir: [0.6, 0, 0.8], streamW: 0.02, shockK: 1.0,
+  hot: 0, hotPhi: 2.2, streamDir: [0.6, 0, 0.8], streamW: 0.02, shockK: 1.0, streamK: 1.0,
   rb: 1.25, lod: 0.004, stepK: 0.55, edgeFade: 0.3, grain3: 1.0, starGain: 0.3, irr: 6, armFloor: 0.12, armHeat: 0.35,
   void: -0.37, puff: 1.0, floor: 0.08, sheet: 1.0, sheetHeat: 0.45, coldGas: 0.5, sheetW: 0.04, maxSteps: 44, sheetMask: -1,
   floorMid: 0.6, kr: 6.0, ky: 10.0,
@@ -262,7 +262,7 @@ export default {
       uTau: F.tau, uOmega: d.omega, uCycle: d.cycle, uRin: d.rin, uRout: d.rout, uH0: d.h0, uFlare: d.flare,
       uRimPuff: d.rimPuff, uDens: d.dens, uDensExp: d.densExp, uTout: d.tout, uTinK: d.tinK, uHeat: F.heat, uTurb: d.turb,
       uArms: d.arms, uArmM: d.armM, uArmPitch: d.armPitch, uArmSpeed: d.armSpeed, uArmSharp: d.armSharp,
-      uHot: d.hot, uHotPhi: d.hotPhi, uStreamDir: v3.norm(d.streamDir), uStreamW: d.streamW, uShockK: d.shockK,
+      uHot: d.hot, uHotPhi: d.hotPhi, uStreamDir: v3.norm(d.streamDir), uStreamW: d.streamW, uShockK: d.shockK, uStreamK: d.streamK,
       uSmear: F.smear, uRb: d.rb, uLod: d.lod, uStepK: d.stepK, uSeedV: P.seed ?? 1, uEdgeFade: d.edgeFade,
       uGrain3: d.grain3, uIrr: d.irr, uArmFloor: d.armFloor, uArmHeat: d.armHeat, uVoid: d.void, uPuff: d.puff, uFloor: d.floor,
       uSheet: d.sheet, uSheetHeat: d.sheetHeat, uColdGas: d.coldGas, uSheetW: d.sheetW, uMaxSteps: d.maxSteps,
