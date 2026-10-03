@@ -9,8 +9,10 @@
 // measured quantity (shaper latency, grid check) is derived robustly, so the output is a function of (plan, grid,
 // media). Chrome's native Web Audio kernels still differ between runs at float-rounding level (SIMD paths): two
 // renders agree to about -104 dBFS peak / -125 dB RMS in the mix, not bit for bit.
-// Each stem is rendered in its own OfflineAudioContext(2, 48000 * 156.5, 48000); the mix/master stage
-// (auto-levelling, bus compression, true-peak limiting, loudness) runs in plain JS on the rendered buffers.
+// Each stem is rendered in its own OfflineAudioContext(2, 48000 * 156.5, 48000); the mix/master stage runs in plain
+// JS on the rendered buffers: cannon approach law (measure each cue against the orchestra, correct, re-render) and
+// cannon-stem limiter, synth auto-level (per bar / envelope-following drone), duck + ladder ride of the music under
+// the strikes, bus compression, true-peak limiting and loudness.
 import { Music, evalFps } from '../engine/music.js';
 import { mulberry32 } from '../engine/rng.js';
 
@@ -1371,6 +1373,7 @@ export async function renderSoundtrack({ base = '/', log = console.log } = {}) {
     times: tl.T, tuningA4: tl.a4, gridCheck: tl.refined.report, shaperLatencySamples: { x2: Math.round(tl.lat['2x'] * SR), x4: Math.round(tl.lat['4x'] * SR) },
     orchestra: info.orchestra, synth: { ...info.synth, steps: info.synth.steps.length, autoLevel: lev.rows.map((r) => ({ bar: r.bar, target: +r.target.toFixed(1), raw: +(r.synthK - r.orchK).toFixed(1), appliedDb: +r.appliedDb.toFixed(1) })), drone: lev.drone, pad: lev.pad },
     synthSteps: info.synth.steps,
+    ladderRide: { ...DESIGN.ladderRide, rideStart: +tRide.toFixed(3) },
     cannonApproach: { law: DESIGN.cannon, passMaxErrDb: cannonPasses, cues: cl.rows, limiter: { ...DESIGN.cannonLimiter, maxGrDb: +cLim.maxGrDb.toFixed(1) } }, duck: { ...DESIGN.duck, cues: info.cannons.filter((c) => c.distance <= DESIGN.duck.maxD).map((c) => c.id) },
     cannons: info.cannons, cannonSamples: Object.fromEntries(Object.entries(samples).map(([k, s]) => [k, { ...CANNON_SAMPLES[k], onsetMs: +(s.info.onset * 1000).toFixed(2), peakAtMs: +(s.info.peakAt * 1000).toFixed(1), peakDb: +db(s.info.peak).toFixed(1), boomDb: +db(s.info.boomRms).toFixed(1), matchGainDb: +db(s.info.norm).toFixed(1) }])),
     ignition: info.ignition,

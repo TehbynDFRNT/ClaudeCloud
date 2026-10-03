@@ -29,6 +29,7 @@ uniform float uDensExp;    // midplane density ~ r^-uDensExp
 uniform float uTout;       // display temperature at the outer edge (K)
 uniform float uTinK;       // steep inner rise: T *= 1 + uTinK*(rin/r)^2
 uniform float uHeat;       // global temperature multiplier (flares)
+uniform float uInnerFlare; // extra heating concentrated on the inner disk (strike flares, pulses)
 uniform float uTurb;       // lognormal contrast of the diffuse gas
 uniform float uArms, uArmM, uArmPitch, uArmSpeed; // spiral arms: strength, count, pitch (rad), pattern speed
 uniform float uArmFloor;   // inter-arm density fraction
@@ -206,11 +207,12 @@ vec4 vxField(vec3 p, vec3 rd, float tau, float seg, inout vec4 xs, inout vec2 xf
   float T0 = uTout * pow(rT / uRout, -0.55) * (1.0 + uTinK * (uRin / rT) * (uRin / rT));
   T0 *= (1.0 + 0.12 * n + 0.10 * fine + uArmHeat * uArms * armP) * uHeat;
   T0 *= 1.0 + 0.6 * exp(-pow((r - rin * 1.1) / (0.25 * uRin), 2.0));   // hot inner wall
+  T0 *= 1.0 + uInnerFlare * exp(-max(r - rin, 0.0) / (2.2 * uRin));     // inner-disk flare
   // two-phase medium: hot dissipative sheets and cold diffuse gas. The source function is averaged over the
   // phases (linear in the pre-integrated sheet density), so the result converges with coarse steps and does not
   // depend on where the samples fall - temperature contrast is what makes structure visible.
-  float Th = T0 * (1.0 + uSheetHeat) * (1.0 + 1.26 * hinf);               // shock heating at the impact
-  float Tc = T0 * uColdGas * (1.0 + 0.36 * hinf);
+  float Th = T0 * (1.0 + uSheetHeat) * (1.0 + 2.0 * hinf);                // shock heating at the impact
+  float Tc = T0 * uColdGas * (1.0 + 0.8 * hinf);
   vec3 S = mix(vxEmit(Tc), vxEmit(Th), ws);
   // irradiation of the flared skin by the dwarf + inner disk (radial optical depth ~ smooth vertical profile)
   float z0 = abs(p.y) / max(H, 1e-4);
@@ -249,13 +251,13 @@ vec4 vxStream(vec3 ro, vec3 rd){
   vec3 side = normalize(cross(U, rd) + vec3(1e-5));
   float lat = dot(v, side) / w;
   float fs = s + uTau * 0.35;                                  // material coordinate (flows into the impact)
-  float sn = n3(vec3(fs * 6.0, lat * 1.2, 2.7)) * 0.6 + n3(vec3(fs * 15.0, lat * 2.4, 8.1)) * 0.3;
-  float strands = 0.35 + 0.65 * smoothstep(-0.35, 0.35, n3(vec3(lat * 2.6, fs * 1.4, 4.0)) + 0.4 * n3(vec3(lat * 5.5, fs * 3.0, 11.0)));
+  float sn = n3(vec3(fs * 7.0, lat * 1.6, 2.7)) * 0.6 + n3(vec3(fs * 18.0, lat * 3.0, 8.1)) * 0.35;
+  float strands = 0.5 + 0.5 * smoothstep(-0.35, 0.35, n3(vec3(lat * 2.6, fs * 2.4, 4.0)) + 0.4 * n3(vec3(lat * 5.5, fs * 5.0, 11.0)));
   float prof = exp(-dist * dist / (w * w * (1.0 + 0.7 * sn)));
   // ragged head: the tube is eaten away unevenly as it enters the shock
   float rag = n3(vec3(lat * 1.8, uTau * 0.9, 5.3)) * 0.05 + n3(vec3(lat * 4.0, uTau * 1.7, 9.1)) * 0.025;
   float ends = smoothstep(SHOCK_S0 - 0.01, SHOCK_S0 + 0.10, s + rag) * (1.0 - smoothstep(0.9, 1.6, s));
-  float col = 1.7725 * w / sqrt(den) * prof * ends * strands * exp(1.5 * sn) * uStreamK;
+  float col = 1.7725 * w / sqrt(den) * prof * ends * strands * exp(2.1 * sn) * uStreamK;
   float Ts = 2800.0 + 1300.0 * sn + 4800.0 * head + 700.0 * strands;
   return vec4(t, col, Ts, 0.0);
 }

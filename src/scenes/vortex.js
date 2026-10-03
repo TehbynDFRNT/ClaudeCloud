@@ -8,6 +8,7 @@
 //   tau: [tau0, rate, accel]  disk time = tau0 + rate*local + accel*local^2 (flow motion blur follows the rate)
 //   disk: overrides of the disk uniforms (omega, rin, rout, h0, flare, dens, ...)
 //   heat: [base, flareAmp, flareDecay, pulseAmp]  temperature multiplier envelope; heatRamp: [from, to] over the shot
+//   flare: [amp, decay, pulseAmp] inner-disk heating (strike flash + decay + music-eighth pulses)
 //   lum: dwarf luminosity envelope [base, end] (lerp over the shot), post: post overrides
 import { frag, STARS } from '../engine/glsl.js';
 import { DWARF } from './lib/dwarf.glsl.js';
@@ -83,7 +84,7 @@ const DISK = {
 
 const P0 = {
   disk: {},
-  vol: 0.6, tau: [0, 1, 0], heat: [1, 0, 0.5, 0], lum: [1, 1], drift: [0, 0], smearK: 1, clear: 0,
+  vol: 0.6, tau: [0, 1, 0], heat: [1, 0, 0.5, 0], flare: [0, 0.5, 0], lum: [1, 1], drift: [0, 0], smearK: 1, clear: 0,
   post: { bloomStrength: 0.07, streakStrength: 0.004 },
 };
 
@@ -131,7 +132,7 @@ const presets = {
     lum: [0.5, 0.5],
     disk: {
       omega: 0.26, hot: 1.0, hotPhi: -2.873, streamDir: [0.965, 0, 0.261], streamW: 0.024, rb: 1.35,
-      arms: 0.35, rin: 0.12, sheet: 0.6, sheetMask: -0.1, curtain: 1.5, maxSteps: 52, irr: 4, tout: 1450, sheetHeat: 0.6, tinK: 0.35, edgeFade: 0.12,
+      arms: 0.35, rin: 0.12, sheet: 0.6, sheetMask: -0.1, curtain: 1.5, maxSteps: 52, irr: 3, tout: 1250, sheetHeat: 0.6, tinK: 0.1, edgeFade: 0.12,
     },
     sparks: {
       origin: [-0.93, 0.02, 0.26], axis: [-0.25, 0.75, 0.62], spread: 0.85, speed: 0.42, life: 1.1, count: 190,
@@ -175,7 +176,7 @@ const presets = {
       [1, [0.09, 0.28, 0.46], [0, -0.01, 0], 44, 0.04, 'outSine'],
     ],
     tau: [60, 1.4, 0],
-    heat: [1.0, 0.45, 0.45, 0.08], lum: [1.5, 1.2],
+    heat: [1.0, 0, 0.5, 0], flare: [0.9, 0.5, 0.12], lum: [1.4, 1.1],
     disk: { omega: 0.34, h0: 0.05, dens: 9, tout: 1000, tinK: 0.6, arms: 0.6, sheet: 0.9, sheetHeat: 0.5, coldGas: 0.5, sheetMask: -0.2,
       rimPuff: 0.6, curtain: 1.2, maxSteps: 46, irr: 1.5 },
     post: {},
@@ -265,13 +266,15 @@ export default {
     const local = clamp(S.local, -0.5, S.dur + 0.5);
     const cam = camAt(P, local, S.dur);
     const tau = tauAt(P, local);
-    const pulse = E.music && P.heat[3] ? E.music.pulse(filmTime(E, S)) : null;
+    const pulse = E.music && (P.heat[3] || P.flare[2]) ? E.music.pulse(filmTime(E, S)) : null;
     const u = clamp(local / S.dur);
     const heat = heatAt(P, local, pulse, u);
-    const lum = lerp(P.lum[0], P.lum[1], smoothstep(0, 1, u)) * (0.6 + 0.4 * heat);
+    const [fa, fd, fp] = P.flare;
+    const flare = fa * Math.exp(-Math.max(0, local) / fd) + (fp && pulse ? fp * Math.exp(-pulse.since / 0.12) : 0);
+    const lum = lerp(P.lum[0], P.lum[1], smoothstep(0, 1, u)) * (0.6 + 0.4 * heat) * (1 + 0.6 * flare);
     // deterministic flow motion blur: disk-time elapsed during a 180-degree shutter
     const smear = tauRate(P, local) * (0.5 / (E.fps || 24)) * P.smearK;
-    return { P, local, cam, tau, heat, lum, u, smear };
+    return { P, local, cam, tau, heat, flare, lum, u, smear };
   },
   render(E, S, target) {
     const F = this.frameState(E, S);
@@ -282,7 +285,7 @@ export default {
     E.draw(this.vol, {
       ...cam.uniforms, ...dwarf,
       uTau: F.tau, uOmega: d.omega, uCycle: d.cycle, uRin: d.rin, uRout: d.rout, uH0: d.h0, uFlare: d.flare,
-      uRimPuff: d.rimPuff, uDens: d.dens, uDensExp: d.densExp, uTout: d.tout, uTinK: d.tinK, uHeat: F.heat, uTurb: d.turb,
+      uRimPuff: d.rimPuff, uDens: d.dens, uDensExp: d.densExp, uTout: d.tout, uTinK: d.tinK, uHeat: F.heat, uInnerFlare: F.flare, uTurb: d.turb,
       uArms: d.arms, uArmM: d.armM, uArmPitch: d.armPitch, uArmSpeed: d.armSpeed, uArmSharp: d.armSharp,
       uHot: d.hot, uHotPhi: d.hotPhi, uStreamDir: v3.norm(d.streamDir), uStreamW: d.streamW, uShockK: d.shockK, uStreamK: d.streamK,
       uSmear: F.smear, uRb: d.rb, uLod: d.lod, uStepK: d.stepK, uSeedV: P.seed ?? 1, uEdgeFade: d.edgeFade,
