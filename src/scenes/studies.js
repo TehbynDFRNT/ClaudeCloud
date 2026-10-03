@@ -178,7 +178,7 @@ const presets = {
     drawing: 'sling', paperSeed: 29.3, design: 0.792,
     view: [[0, 0.0, -0.03, 0.95, 0.02], [0.792, 0.01, -0.035, 1.04, -0.012, 'outQuad']],
     key: { pos: [-0.12, -0.18], r: 0.95, pow: 1.3, dir: [-0.8, -0.4, 0.42], col: [1.1, 0.9, 0.67] },
-    portrait: { view: [[0, -0.01, -0.012, 0.8, 0.02], [0.792, -0.004, -0.017, 0.85, -0.012, 'outQuad']] },
+    portrait: { view: [[0, -0.215, -0.01, 2.6, 0.0]] },
   },
   // Prometheus cut (9:16): the eagle in red chalk — the fierce head, the wing fanning open
   'F29.1-eagle': {

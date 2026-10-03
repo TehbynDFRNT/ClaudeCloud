@@ -525,7 +525,8 @@ def curvature_fields(V, F, N, A, H_edge):
         mad = np.median(np.abs(c - np.median(c))) + 1e-12
         cs.append(c / (1.4826 * mad))
     cav = 0.5 * cs[0] + 0.3 * cs[1] + 0.2 * cs[2]
-    rough = scalar_smooth(np.abs(cs[1]), A, 40)
+    rough = dict(r16=scalar_smooth(np.abs(cs[1]), A, 40), r48=scalar_smooth(np.abs(cs[2]), A, 60),
+                 neg48=scalar_smooth(np.clip(-cs[2], 0, None), A, 60))
     return cav, rough
 
 
@@ -751,8 +752,9 @@ def process(name, args):
     _lab = region_labels(V, F, an, fw)
     _lv = np.zeros(len(V), int)
     np.maximum.at(_lv, F.ravel(), np.repeat(_lab, 3))
-    log('  roughness percentiles 10/50/90  face-core %s  face %s  head/hair %s  body %s' % tuple(
-        str(np.percentile(rough_full[_lv == L], [10, 50, 90]).round(2)) if (_lv == L).any() else '-' for L in (3, 2, 1, 0)))
+    for key in rough_full:
+        log('  %s percentiles 10/50/90  face-core %s  face %s  head/hair %s  body %s' % ((key,) + tuple(
+            str(np.percentile(rough_full[key][_lv == L], [10, 50, 90]).round(2)) if (_lv == L).any() else '-' for L in (3, 2, 1, 0))))
     # ---- decimation (budget toward the face)
     labels = region_labels(V, F, an, fw)
     if len(F) > cfg['target_faces'] * 1.02:
@@ -780,8 +782,8 @@ def process(name, args):
     tree = cKDTree(V)
     _, nn = tree.query(Vd, k=4)
     cav = cav_full[nn].mean(1)
-    rough = rough_full[nn].mean(1)
-    skin = 1 - smoothstep(BAKE['skin_rough'][0], BAKE['skin_rough'][1], rough)
+    rough = {k: v[nn].mean(1) for k, v in rough_full.items()}
+    skin = 1 - smoothstep(BAKE['skin_rough'][0], BAKE['skin_rough'][1], rough['r16'])
     bake = np.stack([np.clip(ao, 0, 1) * 255,
                      128 + 127 * np.tanh(cav / BAKE['cav_scale']),
                      np.clip(thick, 0, 1) * 255,
@@ -799,7 +801,7 @@ def process(name, args):
         extra = sol_diadem(mh, caster_full, an)
     res = dict(name=name, cfg=cfg, V=Vd, F=Fd, N=Nd, bake=bake, an=an, eyes=eyes_json, fr=fr, ht=ht, H=H, O_rot=O_rot,
                Rm=Rm, fw=fw, ear_notes=ear_notes, torso=torso, neck_top=neck_top, extra=extra, n_src=n_src,
-               edge_src=edge, regions=dict(source=reg_counts, final=reg_final), t=time.time() - t_start)
+               rough=rough, edge_src=edge, regions=dict(source=reg_counts, final=reg_final), t=time.time() - t_start)
     return res
 
 
