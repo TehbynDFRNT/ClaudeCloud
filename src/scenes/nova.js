@@ -9,9 +9,10 @@
 //   wave: wvR, wvDens, wvHeat, debris, adv, refract (composite refraction strength)
 //   shell: shR, frac, shHeat, gain, skin, knotK, prolate, equator, sheetW, sheetWid, knotGain, faceDim, steps, stepLen, giant/dwarf
 //   dur: authored duration; local time is warped to the plan's actual shot length (the 9:16 plan shortened S23-S25:
-//        every key lands at the same fraction of the shot, so the beats keep their place against the score)
-//   span: optional [a, b] authored window played over the shot instead of [0, dur] (trim a shot's head or tail without
-//        speeding it up, e.g. from plan shot params when an insert shortens it)
+//        every key lands at the same fraction of the shot, so the beats keep their place against the score).
+//        Statue inserts need nothing here: the engine's shot `span` (engine/film.js state()) keeps the host shot's
+//        clock, so S.local / S.dur and the keyed portrait framing (S24, keyed on shot u) still run over the whole
+//        original shot and nothing is sped up; the insert only hides the frames under it.
 //   post: static post overrides; postKeys: { name: keys } animated post overrides
 //   portrait: 9:16 overrides (engine/film.js): a `framing` per shot, plus S22's emergence from the dark. Landscape renders
 //        ignore it, so the 16:9 frames are unchanged. Nothing here injects a `flash`: ignition is dark (S22-dark).
@@ -287,7 +288,9 @@ export default {
   presets: {
     // 1.83 s: out of the white-out, a white-hot ball erupts from the dwarf and fills the frame.
     // 9:16: no white-out. The cut comes out of black (S22-dark): a white-hot point at frame centre on black, the stars
-    // only fading in as it swells into the seething ball, which then grows exactly as before to fill the frame.
+    // only fading in as it swells into the seething ball. The ball keeps the 16:9 growth curve (swell, hold, then
+    // accelerating again) but never engulfs the frame: at the cut (2828) it spans the width, with its limb and dark
+    // space with stars (only the bloom's glow) still showing above (~11% H) and below (~7% H); never a full-frame white-out.
     'S22-ignition': {
       mode: 'fire', volScale: 0.5, dur: 1.83,
       cam: [[0, [0, 0.06, -1.9], [0, 0, 0], 40], [0.8, [0.02, 0.07, -1.95], [0, 0, 0], 40], [1.83, [0.06, 0.12, -2.25], [0, 0.01, 0], 40, 0, 'inQuad']],
@@ -296,8 +299,10 @@ export default {
       starGain: 1,
       post: { bloomStrength: 0.14, halation: 0.04, streakStrength: 0.06, saturation: 1.12, contrast: 1.1, lift: 0 },
       portrait: {
-        framing: { zoom: 0.72 },   // centred; the ball reads ~1.3x larger on a phone than in 16:9, fills the frame at the end
-        fbR: [[0, 0.006], [0.3, 0.12, 'inQuad'], [0.95, 0.45, 'outQuad'], [1.83, 1.2, 'inQuad']],
+        framing: { zoom: 0.72 },   // centred; the ball reads ~1.3x larger on a phone than in 16:9
+        // 0.146 matches the slopes either side of the 0.3 key ((v - 0.006) / 0.3 = (0.45 - v) / 0.65): C1-smooth growth.
+        // The last key is 0.75 (16:9: 1.2) so the limb stays inside the frame top and bottom to the end.
+        fbR: [[0, 0.006], [0.3, 0.146, 'inQuad'], [0.95, 0.45, 'outQuad'], [1.83, 0.75, 'inQuad']],
         starGain: [[0, 0], [0.6, 1, 'inOutSine']],
       },
     },
@@ -378,7 +383,6 @@ export default {
   // local time warped to the preset's authored duration (robust to plan retiming); may exceed dur in dissolves
   localT(S) {
     const P = S.params;
-    if (P.span) return P.span[0] + Math.max(0, S.local) * (P.span[1] - P.span[0]) / S.dur;
     return Math.max(0, S.local) * (P.dur ? P.dur / S.dur : 1);
   },
 

@@ -217,7 +217,7 @@ const INSERTS = [
   ['M10', strike(33) - 36, strike(33), 'The held breath: a slow push on the three-quarter face'],
   ['M11', strike(35) - 18, strike(35), 'Between strikes: the face, hard light'],
   ['M12', strike(37) - 18, strike(37), 'Both eyes now, almost upon us'],
-  ['M13', IGNITION + DARK + 106 - 24, IGNITION + DARK + 106, 'Amid the eruption: the face, still, in its aura'],
+  ['M13', IGNITION + DARK + 160 - 24, IGNITION + DARK + 160, 'After the shock front: the face, still, in its aura'],   // tail of S24, clear of S23's giant contact
   ['M14', srcToFrame(BAR56_SRC) + 72, srcToFrame(BAR56_SRC) + 96, 'Expansion: the face nearly turned to us'],
   ['M15', at(60) - 24, at(60), 'Devastation gives way: the gaze a breath from direct'],
   ['M16', at(63) + 55, CODA, 'The gaze: directly into the lens, staring into you'],
