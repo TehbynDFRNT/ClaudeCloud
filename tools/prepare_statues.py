@@ -683,7 +683,8 @@ def smooth_skin(V, F, N, A, mode, H_edge, crop_y):
     w = scalar_smooth(w, A, 4) * mode.get('strength', 1.0)
     w *= smoothstep(crop_y + 0.02, crop_y + 0.06, V[:, 1])   # leave the cut rim and its cap alone
     V2 = taubin(V, A, mode['iters'], W=w)
-    moved = np.linalg.norm(V2 - V, axis=1)
+    V2 = V + ((V2 - V) * N).sum(1, keepdims=True) * N      # keep only the normal component (no tangential drift)
+    moved = np.abs(((V2 - V) * N).sum(1))
     log('  smoothing: mask mean %.2f, moved mean %.5f max %.5f (head units)' % (w.mean(), moved.mean(), moved.max()))
     return V2, w
 
