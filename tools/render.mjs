@@ -6,13 +6,15 @@
 //   node tools/render.mjs sandbox <sceneId> [--preset <shotId>] [--params '{}'] [--times 0,2,4] [--dur 6] [--post '{}'] [--lb 0.128]
 //   node tools/render.mjs strip   --from 1200 --count 8
 //   node tools/render.mjs sheet   [--every 48 | --frames a,b,c | --shots] [--cols 6] [--w 640]
-//   node tools/render.mjs film    [--from 0] [--to N] [--out out/frames] [--q 0.95]
+//   node tools/render.mjs film    [--from 0] [--to N] [--out out/frames] [--q 0.95] [--force] [--adopt]
+//     (keeps frames whose content fingerprint matches out/frames/manifest.json; re-renders only stale ones)
 //   node tools/render.mjs bench   <sceneId> [--params '{}'] [--t 2]
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
+import { makeFingerprinter } from './fingerprint.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const argv = process.argv.slice(2);
@@ -136,18 +138,38 @@ async function main() {
       else { const every = +opt('every', 48); frames = []; for (let f = +opt('from', 0); f < +opt('to', pi.frames); f += every) frames.push(f); }
       await sheet(page, frames, +opt('cols', 6), path.join(ROOT, out || 'out/sheets/sheet.jpg'));
     } else if (mode === 'film') {
+      // Final frames are never thrown away: a frame is skipped when its file exists AND its content
+      // fingerprint (code + shot + active effects, see tools/fingerprint.mjs) matches the manifest.
+      // Stale frames are re-rendered to a temp file and atomically swapped in.
       const pi = await page.evaluate(() => window.planInfo());
       const from = +opt('from', 0), to = +opt('to', pi.frames);
       const dir = path.join(ROOT, out || 'out/frames');
       fs.mkdirSync(dir, { recursive: true });
       const q = +opt('q', 0.95);
+      const planJson = JSON.parse(fs.readFileSync(path.join(ROOT, 'film-plan.json'), 'utf8'));
+      const fp = makeFingerprinter(planJson);
+      const manPath = path.join(dir, 'manifest.json');
+      const manifest = fs.existsSync(manPath) ? JSON.parse(fs.readFileSync(manPath, 'utf8')) : {};
+      const saveManifest = () => { fs.writeFileSync(manPath + '.tmp', JSON.stringify(manifest)); fs.renameSync(manPath + '.tmp', manPath); };
       const log = fs.createWriteStream(path.join(dir, 'render-log.jsonl'), { flags: 'a' });
-      const t0 = Date.now(); let done = 0; const todo = [];
-      for (let f = from; f < to; f++) if (flag('force') || !fs.existsSync(path.join(dir, `${pad(f)}.jpg`))) todo.push(f);
-      console.log(`rendering ${todo.length} frames (${from}..${to - 1}) at ${W}x${H}`);
-      for (const f of todo) {
-        const info = await renderTo(page, f, path.join(dir, `${pad(f)}.jpg`), q);
-        log.write(JSON.stringify(info) + '\n');
+      const t0 = Date.now(); let done = 0; const todo = []; let kept = 0, adopted = 0;
+      for (let f = from; f < to; f++) {
+        const file = path.join(dir, `${pad(f)}.jpg`);
+        const want = fp(f, W, H);
+        const exists = fs.existsSync(file);
+        if (exists && !flag('force') && manifest[f] === want) { kept++; continue; }
+        if (exists && !flag('force') && flag('adopt') && manifest[f] === undefined) { manifest[f] = want; adopted++; continue; }
+        todo.push([f, want]);
+      }
+      if (adopted) saveManifest();
+      console.log(`frames ${from}..${to - 1}: ${kept} final kept, ${adopted} adopted, ${todo.length} to render at ${W}x${H}`);
+      for (const [f, want] of todo) {
+        const file = path.join(dir, `${pad(f)}.jpg`);
+        const info = await renderTo(page, f, file + '.tmp.jpg', q);
+        fs.renameSync(file + '.tmp.jpg', file);
+        manifest[f] = want;
+        saveManifest();
+        log.write(JSON.stringify({ ...info, fp: want }) + '\n');
         done++;
         if (done % 10 === 0 || done === todo.length) {
           const el = (Date.now() - t0) / 1000, eta = (el / done) * (todo.length - done);
