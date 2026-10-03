@@ -55,7 +55,7 @@ uniform float uSheetW;     // sheet half-thickness in noise units (~0.13 = 1 sig
 uniform float uColdGas;    // temperature factor of the diffuse gas between sheets
 uniform float uFloorMid;   // cold dense midplane layer
 uniform float uSheetMask;  // sheets only in coherent patches (-1 = everywhere)
-uniform float uMaxSteps;   // march step cap (<= 52)
+uniform float uMaxSteps;   // march step cap (<= 64)
 uniform float uKr, uKy;    // radial (per unit ln r) and vertical (per unit y/r) lattice frequency of the sheets
 uniform vec4 uClear;       // camera clearing: xyz = centre, w = radius (thins gas right at the lens; 0 = off)
 
@@ -106,10 +106,10 @@ float shAvg(float x0, float x1, float w){
   return (shCDF(x1, w) - shCDF(x0, w)) / d;
 }
 
-// gas field at p seen along rd: x = extinction (per unit length), y = display temperature (K),
-// z = scattered central light from the irradiated flared skin.
+// gas field at p seen along rd: rgb = source function (phase-averaged emission), a = extinction per unit length;
+// scat = scattered central light from the irradiated flared skin.
 // xs/xf carry the sheet coordinates of the previous sample along the ray (pre-integration); hasPrev = continuity.
-vec3 vxField(vec3 p, vec3 rd, float tau, float seg, inout vec4 xs, inout vec2 xf, bool hasPrev){
+vec4 vxField(vec3 p, vec3 rd, float tau, float seg, inout vec4 xs, inout vec2 xf, bool hasPrev, out float scat){
   float r = length(p.xz);
   float H = diskH(r);
   float phi = atan(-p.z, p.x);
@@ -123,8 +123,9 @@ vec3 vxField(vec3 p, vec3 rd, float tau, float seg, inout vec4 xs, inout vec2 xf
   float rate = length(vec3(uKr * rdr, 1.27 * rdt, uKy * rd.y)) / max(r, 1e-3);
   // deterministic motion blur: azimuthal smear during the shutter, in lattice cells of the B octave
   float sm = om * uSmear * (8.0 / TAU);
-  float k1 = max(sat(seg * rate * 1.6 - 0.35), 0.85 * smoothstep(0.3, 1.2, sm));
-  float k2 = max(sat(seg * rate * 4.8 - 0.35), smoothstep(0.1, 0.4, sm));
+  // (rate counts B cells per unit length; the domain warp roughly doubles the effective frequency, C is 3x B)
+  float k1 = max(sat(seg * rate * 2.4 - 0.4), 0.85 * smoothstep(0.3, 1.2, sm));
+  float k2 = max(sat(seg * rate * 9.0 - 0.45), smoothstep(0.1, 0.4, sm));
   float n = 0.0, puff = 0.0, sheet = 0.0, fine = 0.0, w2 = 0.0;
   vec4 xsn = vec4(0.0); vec2 xfn = vec2(0.0);
   for (int i = 0; i < 2; i++){
@@ -139,7 +140,8 @@ vec3 vxField(vec3 p, vec3 rd, float tau, float seg, inout vec4 xs, inout vec2 xf
     q += (A.rgb - 0.5) * vec3(1.6, 0.9, 1.4);
     vec4 B = n4(q);
     vec4 C = n4(q * 3.0 + 17.0);
-    float t = (B.r - 0.5) * 1.1 + (B.b - 0.5) * 0.6 + ((C.r - 0.5) * 0.42 + (C.b - 0.5) * 0.24) * uGrain3 * (1.0 - k2);
+    // (the fine octave only enters through the pre-integrated filament term s2: point-sampled, it would be noise)
+    float t = (B.r - 0.5) * 1.15 + (B.b - 0.5) * 0.65;
     vec2 x = vec2(B.r - 0.5, B.b - 0.5);
     float xc = C.r - 0.5;
     vec2 x0 = i == 0 ? xs.xy : xs.zw;
@@ -193,26 +195,29 @@ vec3 vxField(vec3 p, vec3 rd, float tau, float seg, inout vec4 xs, inout vec2 xf
   // camera clearing (a lens-sized pocket so the near field is discrete clumps, not fog)
   if (uClear.w > 0.0){ float dc = length(p - uClear.xyz) / uClear.w; rho *= smoothstep(0.35, 1.0, dc + 0.25 * n); }
   float rT = max(r, rin);
-  float T = uTout * pow(rT / uRout, -0.55) * (1.0 + uTinK * (uRin / rT) * (uRin / rT));
-  // cold diffuse gas vs. hot dissipative sheets: temperature contrast is what makes structure visible
-  T *= mix(uColdGas, 1.0 + uSheetHeat, ws) * (1.0 + 0.12 * n + 0.10 * fine + uArmHeat * uArms * armP);
-  T *= 1.0 + 0.6 * exp(-pow((r - rin * 1.1) / (0.25 * uRin), 2.0));   // hot inner wall
-  T *= 1.0 + 0.9 * hinf * (0.4 + ws);                                       // shock heating at the impact
+  float T0 = uTout * pow(rT / uRout, -0.55) * (1.0 + uTinK * (uRin / rT) * (uRin / rT));
+  T0 *= (1.0 + 0.12 * n + 0.10 * fine + uArmHeat * uArms * armP) * uHeat;
+  T0 *= 1.0 + 0.6 * exp(-pow((r - rin * 1.1) / (0.25 * uRin), 2.0));   // hot inner wall
+  // two-phase medium: hot dissipative sheets and cold diffuse gas. The source function is averaged over the
+  // phases (linear in the pre-integrated sheet density), so the result converges with coarse steps and does not
+  // depend on where the samples fall - temperature contrast is what makes structure visible.
+  float Th = T0 * (1.0 + uSheetHeat) * (1.0 + 1.26 * hinf);               // shock heating at the impact
+  float Tc = T0 * uColdGas * (1.0 + 0.36 * hinf);
+  vec3 S = mix(vxEmit(Tc), vxEmit(Th), ws);
   // irradiation of the flared skin by the dwarf + inner disk (radial optical depth ~ smooth vertical profile)
   float z0 = abs(p.y) / max(H, 1e-4);
   float lit = exp(-uDens * 2.6 * exp(-0.5 * z0 * z0 * z0) * (0.5 + 0.9 * sat(n + 0.5)));
   float cth = dot(normalize(p), -rd);
   float hg = 0.8775 / pow(1.1225 - 0.7 * cth, 1.5);
-  float scat = uIrr * lit * hg * pow(uRin / max(r, uRin), 2.0) * sig;
-  T *= uHeat;
+  scat = uIrr * lit * hg * pow(uRin / max(r, uRin), 2.0) * sig;
   if (uHot > 0.0){
-    float rp = uDens * plume * sig;
+    float rp = uDens * plume;
     float tot = rho + rp;
-    T = (T * rho + Tp * uHeat * rp) / max(tot, 1e-5);
+    S = (S * rho + vxEmit(Tp * uHeat) * rp) / max(tot, 1e-5);
     scat *= rho / max(tot, 1e-5);
     rho = tot;
   }
-  return vec3(rho, T, scat);
+  return vec4(S, rho);
 }
 
 // ---------------- S09: analytic stream tube and bow shock ----------------
@@ -277,7 +282,7 @@ vec3 vxShockHit(vec3 ro, vec3 rd, float tt, out float tHit){
     float fr = rho / RHO;
     float prof = exp(-fr * fr * 4.0) * (1.0 - smoothstep(0.6, 1.0, fr + 0.25 * kn));
     float T = mix(4200.0, 9800.0, exp(-fr * fr * 6.0)) * (0.85 + 0.3 * knots) * uHeat;
-    acc += vxEmit(T) * (prof * knots * 0.07 / ci);
+    acc += vxEmit(T) * (prof * knots * 0.3 / ci);
     if (tHit < 0.0) tHit = th;
   }
   return acc * uShockK;
@@ -329,7 +334,7 @@ vec3 vxMarch(vec3 ro, vec3 rd, float tMax, float jit, float pixAngle, float tD, 
   float t = t0, tPrev = t0;
   bool hasPrev = false;
   vec4 xs = vec4(0.0); vec2 xf = vec2(0.0);
-  const int N = 52;
+  const int N = 64;
   for (int i = 0; i < N; i++){
     if (t > t1 || trans < 0.004 || float(i) >= uMaxSteps) break;
     vec3 p = ro + rd * t;
@@ -344,12 +349,13 @@ vec3 vxMarch(vec3 ro, vec3 rd, float tMax, float jit, float pixAngle, float tD, 
     dt = max(dt, budget * mix(0.35, 1.0, smoothstep(0.15, 0.4, r)));
     if (uHot > 0.0){
       float dh = length(p - hotPos() - hotDown() * 0.1);
-      dt = min(dt, mix(0.018, 0.04, smoothstep(0.1, 0.3, dh)) + lodStep);
-      dt = max(dt, budget * 0.7);
+      // near the impact the step budget is waived: the hot trail is the subject
+      dt = min(dt, mix(0.016, 0.05, smoothstep(0.08, 0.35, dh)) + lodStep);
     }
     if (!hasPrev){
       // entering gas: this sample only initialises the pre-integration state (every contributing segment is integrated)
-      vxField(p, rd, uTau, 0.0, xs, xf, false);
+      float scD;
+      vxField(p, rd, uTau, 0.0, xs, xf, false, scD);
       hasPrev = true; tPrev = t;
       t += dt * max(jit, 0.04); jit = fract(jit + 0.6180339);
       continue;
@@ -359,11 +365,12 @@ vec3 vxMarch(vec3 ro, vec3 rd, float tMax, float jit, float pixAngle, float tD, 
     if (tB > 0.0 && tB <= t){ col += trans * emB; tB = -1.0; }
     if (tS < 1e8 && tS <= t){ col += trans * emS; trans *= exp(-tauS); tS = 1e9; }
     if (transD < 0.0 && t > tD) transD = trans;
-    vec3 f = vxField(p, rd, uTau, seg, xs, xf, true);
-    float a = 1.0 - exp(-f.x * seg);
+    float scat;
+    vec4 f = vxField(p, rd, uTau, seg, xs, xf, true, scat);
+    float a = 1.0 - exp(-f.a * seg);
     // scattered light: ice-blue dwarf light on the inner rim, ember (reprocessed through red gas) further out
     vec3 sc = mix(vec3(0.16, 0.38, 1.0), vec3(1.0, 0.3, 0.06), smoothstep(uRin * 1.3, uRin * 3.5, r));
-    col += trans * a * (vxEmit(f.y) + f.z * sc);
+    col += trans * a * (f.rgb + scat * sc);
     trans *= 1.0 - a;
     tPrev = t;
     t += dt;

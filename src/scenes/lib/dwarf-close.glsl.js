@@ -137,12 +137,12 @@ vec3 wdBackdrop(vec3 rd, float t){
       float gate = smoothstep(0.05, 0.45, n3(vec3(kp * 3.1, 7.0)));
       float rim = smoothstep(0.70, 0.97, rho);                       // the interior stays black
       float knots = disc * gate * prof * rim * 0.30;
-      float fill = prof * rim * clump * 0.07;
+      float fill = prof * rim * (0.35 + 0.65 * clump) * 0.06 * (1.0 - 0.5 * bl);
       // ember-gold inner face, crimson outer edge; knots hotter (gold)
       float outer = smoothstep(0.90, 1.08, rho);
       vec3 shC = mix(vec3(1.0, 0.42, 0.09), vec3(0.85, 0.07, 0.018), outer);
       vec3 knC = mix(vec3(1.0, 0.55, 0.17), vec3(1.0, 0.25, 0.05), outer);
-      c += uShell * (shC * fill + knC * knots * (0.4 + 0.6 * clump));
+      c += uShell * (shC * fill + knC * knots * (0.5 + 0.5 * clump) * (1.0 - 0.6 * bl));
     }
   }
   return c;
@@ -160,8 +160,9 @@ vec3 wdCorona(vec3 ro, vec3 rd, float tHit, float mu){
     c1 = exp(-(b - 1.0) / H1) * sqrt(TAU * H1);
     c2 = exp(-(b - 1.0) / H2) * sqrt(TAU * H2);
   } else {
-    c1 = H1 / max(mu, sqrt(H1) * 0.8) * 0.6;
-    c2 = H2 / max(mu, sqrt(H2) * 0.8) * 0.06;
+    // in front of the disc: the half-column at the limb (the far half is hidden by the star), thinning inward
+    c1 = H1 / max(mu, sqrt(H1) * 0.8);
+    c2 = 0.5 * sqrt(TAU * H2) * exp(-mu / 0.06);
   }
   vec3 dirc = b > 1e-4 ? pc / b : vec3(0.0);
   float gside = sat(dot(dirc, uGiantDir));
@@ -533,7 +534,7 @@ vec4 wdOcean(vec3 ro, vec3 rd, float tSurf, float t, float pixA){
   float lod = smoothstep(0.12, 0.6, foot * uTurbF * 0.55);
   float sigma0 = (1.6 + 5.0 * uOcean) / Hm;
   float dt = (t1 - t0) / float(N);
-  float j = 0.5 + 0.6 * (ignStatic(gl_FragCoord.xy) - 0.5);           // static mild jitter: no frame-to-frame crawl
+  float j = 0.5 + 0.6 * (hash12(gl_FragCoord.xy) - 0.5);              // static white-noise jitter: no crawl, no hatching
   vec3 acc = vec3(0.0); float T = 1.0;
   vec3 S = vec3(0.0);
   vec2 fl = wdFlashParts(nm, t);
@@ -671,8 +672,8 @@ vec3 wdThread(vec3 ro, vec3 rd, float tMax, float pixA, float t){
   float w0 = 0.010 * (1.0 + 1.2 * (1.0 - sBest)) * (0.45 + 1.1 * nw), wpx = pixA * tp * 0.6;
   float w = max(w0, wpx);
   float core = exp(-d * d / (w * w)) * (w0 / w);
-  float cl = n3(vec3(sBest * 60.0 - t * 1.6, 2.0, 5.0)) * 0.5 + 0.5;
-  float clumps = smoothstep(0.45, 0.70, cl) * (0.55 + 0.45 * (n3(vec3(sBest * 170.0 - t * 4.0, 7.0, 1.0)) * 0.5 + 0.5));
+  float cl = (n3(vec3(sBest * 47.0 - t * 1.3, 2.0, 5.0)) + 0.55 * n3(vec3(sBest * 131.0 - t * 3.1, 9.0, 3.0))) * 0.4 + 0.5;
+  float clumps = smoothstep(0.42, 0.78, cl) * (0.6 + 0.4 * (n3(vec3(sBest * 290.0 - t * 5.0, 7.0, 1.0)) * 0.5 + 0.5));
   float glow = exp(-d / (w0 * 4.0 + wpx)) * 0.22 * (0.15 + clumps);
   float ws = w0 * 9.0 + wpx * 2.0;
   float sheath = exp(-d * d / (ws * ws)) * 0.05 * (0.4 + 0.6 * clumps);   // faint gold sheath
@@ -680,7 +681,7 @@ vec3 wdThread(vec3 ro, vec3 rd, float tMax, float pixA, float t){
   float ahead = sBest - uThread;
   float body = smoothstep(0.03, -0.02, ahead);
   float beads = smoothstep(0.55, 0.9, sin(ahead * 260.0 - t * 3.0) * 0.5 + 0.5) * exp(-max(ahead, 0.0) / 0.025) * step(-0.02, ahead);
-  float bodyCl = clumps + 0.06;
+  float bodyCl = clumps + 0.18;                                    // a faint continuous stream between the clumps
   vec3 cC = mix(vec3(0.85, 0.07, 0.018), vec3(1.0, 0.45, 0.11), smoothstep(0.25, 0.95, sBest));
   vec3 cG = vec3(1.0, 0.55, 0.16);
   float far = smoothstep(0.8, 0.2, best);

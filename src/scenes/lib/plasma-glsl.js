@@ -191,6 +191,14 @@ vec3 boilMarch(vec3 ro, vec3 rd, out float depth){
       }
       float heat = f.heat + fi.x - (1.0 - rho) * uSkin;
       heat = mix(heat, uFarHeat.x + uFarHeat.y * f.heat, far * 0.7);
+      if (rho > 0.999){
+        // fully inside: heat and extinction are constant from here on (cached sample) and the body is many
+        // optical depths thick, so the rest of the integral is exactly the source term
+        col += T * fog * heatEmit(heat);
+        if (depth >= uTMax) depth = t;
+        T = 0.0;
+        break;
+      }
       float sig = uSigma * rho * max(0.15, 1.0 + fi.y);
       // each step descends ~1/4 of the skin, so grazing rays cross it in a few steps
       dt = max(dIn * (1.0 + t * 0.12), uSoft * 0.5 / max(-rd.y, 0.05));

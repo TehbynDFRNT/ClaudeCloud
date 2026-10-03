@@ -32,7 +32,7 @@ function shellPalette(H, frac) {
   return {
     uCHead0: novaEmit(H - 0.07), uCHead1: novaEmit(H + 0.01), uCHot: novaEmit(H + 0.13),
     uCTail0: novaEmit(H - 0.33), uCTail1: novaEmit(H - 0.2),
-    uCSheet: novaEmit(H - 0.03 - 0.1 * fr), uCGap: novaEmit(0.16), uCWisp: novaEmit(H - 0.26), uCSkin: [0.2, 0.5, 1.0],
+    uCSheet: novaEmit(H - 0.06 - 0.1 * fr), uCGap: novaEmit(0.16), uCWisp: novaEmit(H - 0.26), uCSkin: [0.2, 0.5, 1.0],
   };
 }
 
@@ -67,11 +67,11 @@ float giantHit(vec3 ro, vec3 rd){
   vec2 core = sphereHit(o, rd, vec3(0.0), uGiantR * (1.0 + uBulge * 1.2));
   if (core.y < 0.0 || core.x > core.y) return 1e9;
   float th = max(core.x, 0.0);
-  for (int i = 0; i < 40; i++){
+  for (int i = 0; i < 28; i++){
     vec3 p = o + rd * th; float r = length(p);
-    float d = r - giantRadius(p / r);
-    if (d < 0.0005 * uGiantR) return th;
-    th += d * 0.6;
+    float d = r - giantRadius0(p / r);
+    if (d < 0.0008 * uGiantR) return th;
+    th += d * 0.75;
     if (th > core.y) break;
   }
   return 1e9;
@@ -137,30 +137,20 @@ vec4 streamLayer(vec3 ro, vec3 rd, out float tS){
   return vec4(em * uStreamGain, sat(prof * alive * 0.6));
 }
 
-// hot shocked gas piling onto the giant's facing hemisphere once the shell arrives
+// hot shocked gas piling onto the giant's facing hemisphere once the shell arrives: an analytic column of an
+// exponential layer (GIANT chunk's gChapman), shaped by the facing angle and turbulence at the hit/tangent point
 vec3 bowLayer(vec3 ro, vec3 rd, float tG){
   if (uContact <= 0.0) return vec3(0.0);
-  vec3 oc = ro - uGiantPos;
-  float Rl = uGiantR * 1.45;
-  vec2 h = sphereHit(oc, rd, vec3(0.0), Rl);
-  if (h.y < 0.0 || h.x > h.y) return vec3(0.0);
-  float ta = max(h.x, 0.0), tb = min(h.y, tG);
-  if (tb <= ta) return vec3(0.0);
-  vec3 toN = normalize(uShadowSrc - uGiantPos);
-  vec3 acc = vec3(0.0);
-  float dt = (tb - ta) / 12.0;
-  float j = hash12(gl_FragCoord.xy * 0.913 + fract(uFrame * 0.618) * 97.0);
-  for (int k = 0; k < 12; k++){
-    vec3 p = oc + rd * (ta + (float(k) + j) * dt);
-    float r = length(p); vec3 n = p / r;
-    float hg = (r - giantRadius(n)) / uGiantR;
-    if (hg < 0.0) continue;
-    float face = dot(n, toN);
-    float turb = n3(p * 14.0 + vec3(uSpinT * 2.0, 0.0, 0.0)) * 0.5 + 0.5;
-    float d = exp(-hg / (0.025 + 0.05 * turb)) * smoothstep(0.0, 0.8, face + 0.3 * (turb - 0.5));
-    acc += novaEmit(0.66 + 0.16 * turb * face) * d * dt / uGiantR;
-  }
-  return acc * uContact * 1.2;
+  vec3 o = ro - uGiantPos;
+  if (sphereHit(o, rd, vec3(0.0), uGiantR * (1.0 + uBulge * 1.2) * 1.5).y < 0.0) return vec3(0.0);
+  float tH = tG < 1e8 ? tG : -1.0;
+  float colm = gChapman(o, rd, tH, 0.045);
+  vec3 pr = tH > 0.0 ? o + rd * tH : o + rd * max(dot(-o, rd), 0.0);
+  vec3 n = normalize(pr);
+  float face = dot(n, normalize(uShadowSrc - uGiantPos));
+  float turb = n3(n * 9.0 + vec3(uSpinT * 0.8, 0.0, 0.0)) * 0.5 + 0.5;
+  float d = smoothstep(-0.1, 0.8, face + 0.35 * (turb - 0.5)) * (0.5 + turb);
+  return novaEmit(0.52 + 0.14 * turb * sat(face)) * colm * d * uContact * 1.6;
 }
 
 void main(){
@@ -252,10 +242,13 @@ void main(){
       float irr = uNovaLight * pow(smoothstep(-0.15, 1.0, mu), 1.2) / (dl * dl);
       g.rgb *= 1.0 + 2.0 * irr;
       g.rgb += vec3(1.0, 0.6, 0.28) * 0.3 * irr * (0.3 + tex);
-      // shock heating once the shell arrives: ragged white-gold flare on the facing hemisphere
+      // shock heating once the shell arrives: a ragged flare on the facing hemisphere, gold at its edges and
+      // white-gold only toward the sub-nova point; the surface texture and a turbulent flare pattern survive it
       float rag = fbm3(n * 6.0 + vec3(0.0, uTime * 0.5, 0.0), 3) * 0.5 + 0.5;
+      float fl = n3(n * 17.0 + vec3(uTime * 0.9, 0.0, 0.0)) * 0.5 + 0.5;
       float burn = smoothstep(0.05, 0.85, mu + (rag - 0.5) * 0.7) * uContact;
-      g.rgb = mix(g.rgb, g.rgb * 0.4, burn * 0.5) + novaEmit(0.52 + 0.3 * rag) * burn * (0.4 + 0.9 * tex) * 1.4;
+      float hB = 0.42 + 0.13 * rag + 0.09 * fl + 0.15 * smoothstep(0.55, 1.0, mu) * uContact;
+      g.rgb = mix(g.rgb, g.rgb * 0.5, burn * 0.5) + novaEmit(hB) * burn * (0.45 + 0.9 * tex) * (0.55 + 0.9 * fl) * 0.9;
     }
     bg = bg * (1.0 - g.a) + g.rgb;
   }
@@ -298,14 +291,14 @@ export default {
     },
     // 3.83 s: system wide. The sphere swallows the disk, severs the stream and slams into the giant.
     'S23-eruption': {
-      mode: 'system', volScale: 0.38, dur: 3.83,
+      mode: 'system', volScale: 0.33, dur: 3.83, seed: 7.3,
       cam: SYS_CAM(0, 3.83),
-      fbR: [[0, 0.08], [3.83, 0.92, 'outSine']],
-      fbTurb: 0.12, fbDens: [[0, 30], [0.8, 10], [1.8, 2.5], [3.83, 0.9]], fbHeat: [[0, 1.08], [1.0, 1.0], [3.83, 0.96]], fbShell: [[0, 0.3], [1.2, 1.0]],
+      fbR: [[0, 0.2], [3.83, 0.92, 'outSine']],
+      fbTurb: 0.12, fbDens: [[0, 30], [0.8, 10], [1.8, 2.5], [3.83, 0.9]], fbHeat: [[0, 1.22], [0.6, 1.1], [1.2, 1.0], [3.83, 0.96]], fbShell: [[0, 0.3], [1.2, 1.0]],
       fbEvo: [[0, 2.2], [3.83, 4.5, 'linear']], fbBlue: 0.15, fbPh: [[0, 0], [0.7, 0.0], [0.71, 0.92], [1.5, 0.72], [3.83, 0.42]],
-      contact: [[1.9, 0], [3.2, 1.0]], novaLight: [[0, 0.35], [0.5, 0.55], [3.83, 0.45]], scar: [[2.2, 0], [3.83, 0.6]],
-      disk: 1, stream: 0.55, giantGlow: 1.0, starGain: 1,
-      post: { bloomStrength: 0.08, halation: 0.03, streakStrength: 0.01, saturation: 1.15, contrast: 1.06 },
+      contact: [[1.4, 0], [2.6, 1.0]], novaLight: [[0, 0.35], [0.5, 0.55], [3.83, 0.45]], scar: [[1.8, 0], [3.83, 0.6]],
+      disk: [[0, 1], [0.6, 1], [0.9, 0]], stream: [[0, 0.55], [1.2, 0.55], [1.6, 0]], giantGlow: 1.0, giantFar: true, starGain: 0.5,
+      post: { bloomStrength: 0.08, halation: 0.03, streakStrength: 0.01, saturation: 1.1, contrast: 1.06, lift: 0 },
     },
     // 2.5 s: the pressure wave passes through the camera: a wall of light approaches, envelops (refraction,
     // debris streaking past), then glowing hot gas all around. Peak of the Doppler roar.
@@ -324,8 +317,8 @@ export default {
     'S25-shell': {
       mode: 'shell', volScale: 0.7, dur: 2.88,
       cam: [[0, [1.2, 1.0, 5.6], [1.7, 1.2, 0.0], 36], [2.9, [1.45, 1.05, 5.9], [1.85, 1.25, 0.0], 36, 0, 'outCubic']],
-      shR: [[0, 3.0], [2.88, 3.25, 'outQuad']], frac: [[0, 0.04], [2.88, 0.95, 'inOutSine']], shHeat: [[0, 0.66], [2.88, 0.62]],
-      knotK: 13, knotKc: 34, prolate: 0.1, deform: 0.04, equator: 0.6, clump: 0.85, sheetW: 5, sheetWid: 0.026, knotGain: 1.0, tailGain: 1.2, tailL: 0.028,
+      shR: [[0, 3.0], [2.88, 3.25, 'outQuad']], frac: [[0, 0.04], [2.88, 0.95, 'inOutSine']], shHeat: [[0, 0.64], [2.88, 0.62]],
+      knotK: 13, knotKc: 34, prolate: 0.1, deform: 0.04, equator: 0.6, clump: 0.85, sheetW: 1.6, sheetWid: 0.026, knotGain: 1.0, tailGain: 1.2, tailL: 0.028,
       wisp: 6, diffuse: 1.8, skin: 0.3, giant: true, giantGlow: 0.8, scar: 0.8, dwarfLum: 1, starGain: 0.6,
       post: { bloomStrength: 0.1, lift: 0 },
     },
@@ -343,8 +336,8 @@ export default {
       mode: 'shell', volScale: 0.75, dur: 3.33,
       cam: [[0, [0.0, 58.0, 10.2], [0, 0, 0], 30], [5.5, [0.0, 58.0, 10.2], [0, 0, 0], 30]],
       shR: [[0, 10.0], [5.5, 10.15, 'linear']], frac: 1, shHeat: 0.62,
-      knotK: 11, prolate: 0.0, deform: 0, equator: 1.2, clump: 0.6, sheetW: 3, sheetWid: 0.012, knotGain: 25, tailGain: 6, tailL: 0.03,
-      wisp: 10, diffuse: 0.5, skin: 1.5, faceDim: 0.95, giant: true, giantGlow: 0.55, scar: 0.6, dwarfLum: 0.5, starGain: 0.6,
+      knotK: 11, knotKc: 34, prolate: 0.0, deform: 0, equator: 1.2, clump: 0.7, sheetW: 1.5, sheetWid: 0.012, knotGain: 0.55, tailGain: 1.0, tailL: 0.028,
+      wisp: 0, diffuse: 2.2, skin: 0.35, faceDim: 0.95, giant: true, giantGlow: 0.55, scar: 0.6, dwarfLum: 0.5, starGain: 0.6,
       post: { bloomStrength: 0.08, lift: 0 },
     },
     default: { mode: 'fire', fbR: 0.6 },
@@ -392,7 +385,7 @@ export default {
         ...cam.uniforms, ...fb(WD), ...gu, uShadowSrc: WD, uDiskR: R_DISK, uDiskGain: kv(P.disk, t, 1), uSpinT: S.t,
         uStreamGain: kv(P.stream, t, 1), uStream: this.stream, uContact: contact,
       }, vol);
-      Object.assign(comp, gu, { uUseGiant: 1, uNovaLight: kv(P.novaLight, t, 0), uContact: contact, uUseDwarf: 1, uDwarfPos: WD, uDwarfR: 0.0005, uDwarfLum: kv(P.dwarfLum, t, 1.5) });
+      Object.assign(comp, gu, { uUseGiant: 1, uGiantFar: P.giantFar ? 1 : 0, uNovaLight: kv(P.novaLight, t, 0), uContact: contact, uUseDwarf: 1, uDwarfPos: WD, uDwarfR: 0.0005, uDwarfLum: kv(P.dwarfLum, t, 1.5) });
     } else if (mode === 'shell') {
       const H = kv(P.shHeat, t, 0.62), fr = kv(P.frac, t, 1);
       E.draw(this.pShell, {

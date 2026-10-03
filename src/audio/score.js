@@ -30,7 +30,7 @@ export const DESIGN = {
   // bus trims. Both stems end in a 4x soft clipper whose ceiling is 1.0: the trims put that ceiling under the master
   // ceiling, so loudness at the strikes and the ignition comes from density (the stems' own saturation) and not
   // from peaks the master limiter would have to take back. Per-cue cannon levels come from the approach law.
-  cannonsDb: -1.5,
+  cannonsDb: -3.0,
   ignitionDb: -0.5,
   impactDriveDb: 6.0,              // ignition impact layers (sub, crack, saw stack, walls) into the stem saturator
   synthTrimDb: -24.0,            // source trim so the per-bar auto-level works around 0 dB
@@ -40,12 +40,12 @@ export const DESIGN = {
   // gentle glue: threshold relative to the loudness target (applied after the master gain), 50 ms RMS detector
   comp: { thresholdRel: 6, ratio: 1.5, kneeDb: 8, attack: 0.030, release: 0.40, rms: 0.050 },
   // cannon approach law: each cue's loudness (K-weighted, 400 ms from its transient) relative to the orchestra's
-  // (K-weighted, +-1 s around it) follows rel(d) = far + (near - far) * (1 - d)^shape, so the approach is monotone
+  // (K-weighted, the 500 ms before it: the music the hit breaks into) follows rel(d) = far + (near - far) * (1 - d)^shape, so the approach is monotone
   // whatever the music does underneath. Measured on a first render of the stem, corrected and re-rendered.
-  cannon: { relFar: -20, relNear: 5, shape: 1.5, maxCorrDb: 16, passes: 3, tolDb: 0.75 },
+  cannon: { relFar: -20, relNear: 5, shape: 1.5, maxCorrDb: 20, passes: 3, tolDb: 0.75 },
   // orchestra + synth duck under the five strike cannons (d <= maxD; depth grows toward d = 0): 5 ms attack,
-  // 50 ms hold, then a 90 ms exponential release (back within 1 dB after ~250 ms). The point-blank cannon masks it.
-  duck: { maxD: 0.12, depthDb: [3, 6], attack: 0.005, hold: 0.05, tau: 0.09 },
+  // 80 ms hold, then a 120 ms exponential release (within 1 dB after ~0.3 s), following the boom that masks it.
+  duck: { maxD: 0.12, depthDb: [3, 6], attack: 0.005, hold: 0.08, tau: 0.12 },
   // the ladder (bars 32-38) is the cannons' section: orchestra + synth sit a static 2.5 dB lower there (ramped
   // over the 2 s before the bar-32 downbeat), so the strikes have headroom under the ceiling. The internal dynamics
   // (tremolo swells, strikes) are untouched.
@@ -1157,7 +1157,7 @@ function autoLevelSynth(tl, orch, syn, synthInfo) {
 }
 
 // Cannon approach law: measure each cue (K-weighted, 400 ms from its transient) against the orchestra (K-weighted,
-// +-1 s around it) on the bus, return the correction toward rel(d) and the per-cue table.
+// the 500 ms before it) on the bus, return the correction toward rel(d) and the per-cue table.
 function cannonLevels(tl, kO, gO, canStem, gC, table, prev = {}) {
   const P = DESIGN.cannon;
   const kC = [kWeight(canStem[0]), kWeight(canStem[1])];
@@ -1166,7 +1166,7 @@ function cannonLevels(tl, kO, gO, canStem, gC, table, prev = {}) {
   for (const r of table) {
     const a = Math.round(r.t * SR), b = Math.round((r.t + 0.4) * SR);
     const lc = 10 * Math.log10(ms(kC, a, b) * gC * gC + 1e-20);
-    const lo = 10 * Math.log10(ms(kO, Math.round((r.t - 1) * SR), Math.round((r.t + 1) * SR)) * gO * gO + 1e-20);
+    const lo = 10 * Math.log10(ms(kO, Math.round((r.t - 0.5) * SR), a) * gO * gO + 1e-20);
     const target = P.relFar + (P.relNear - P.relFar) * Math.pow(1 - r.distance, P.shape);
     const err = target - (lc - lo);
     out[r.id] = clamp((prev[r.id] || 0) + err, -P.maxCorrDb, P.maxCorrDb);
@@ -1298,6 +1298,9 @@ export async function renderSoundtrack({ base = '/', log = console.log } = {}) {
 
   // --- balance ---
   const duck = duckGain(length, info.cannons);
+  // ladder ride (multiplied into the duck curve; both act on orchestra + synth only)
+  const LR = DESIGN.ladderRide, tRide = refinedAt(tl, tl.refined, LR.fromBar, 0);
+  for (let i = Math.max(0, Math.round((tRide - LR.rampS) * SR)); i < length; i++) duck[i] *= undb(LR.db * smooth(tRide - LR.rampS, tRide, i / SR));
   const orch = stems.orchestra.map((x) => { const y = new Float32Array(x.length); for (let i = 0; i < x.length; i++) y[i] = x[i] * gO * duck[i]; return y; });
   const lev = autoLevelSynth(tl, stems.orchestra.map((x) => x.map((v) => v * gO)), stems.synth, info.synth);
   const syn = stems.synth.map((x) => { const y = new Float32Array(x.length); for (let i = 0; i < x.length; i++) y[i] = x[i] * lev.gain[i] * duck[i]; return y; });

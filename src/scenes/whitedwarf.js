@@ -54,7 +54,7 @@ void main(){
   vec4 low = texture(uLow, gl_FragCoord.xy / uRes);
   if (low.a < 0.999) col = wdBackdrop(rd, t) * (1.0 - low.a);
   col += wdDetail(ro, rd, low.rgb, t, pixA);
-  cw = hit ? 0.35 : 0.35 + 0.65 * (1.0 - low.a);
+  cw = mix(1.0, 0.12, low.a);          // the thin atmosphere lies inside the opaque ocean: same occlusion on both sides of the limb
 #else
   if (cover < 1.0) col = wdBackdrop(rd, t);
   if (cover > 0.0) col = mix(col, wdSurface(n, mu, t), cover);
@@ -214,7 +214,7 @@ export default {
     'S14a-ocean': {
       rig: 'surface', lat: 6, lon: [[0, -24], [1, -22.6]], alt: [[0, 0.05], [1, 0.056]], heading: [[0, 78], [1, 84]], pitch: [[0, -15], [1, -13]], fov: 35, roll: [[0, -3], [1, -1]],
       spin: [0.2, 0.05], magTilt: 62, magAz: 160, surf: 1.4, fil: 1.4, filL: [1.03, 1.2], filW: 0.0014, shimmer: 0.02,
-      ocean: [[0, 0.40], [1, 0.82]], oceanH: 0.008, heat: [[0, 0.0], [1, 0.12]], oceanGain: 1.0, turbF: 62, turbV: 0.9, cells: 0.12,
+      ocean: [[0, 0.32], [1, 0.95]], oceanH: 0.009, heat: [[0, 0.0], [1, 0.2]], oceanGain: [[0, 0.85], [1, 1.25]], turbF: 62, turbV: 0.9, cells: 0.12,
       detail: 0.6, haze: 0.0006, hazeF: 60, crimson: 0.25, atmo: 1.0, stars: 0.8,
       post: { bloomStrength: 0.12, exposure: 1.0 },
     },
@@ -292,7 +292,7 @@ export default {
       rig: 'orbit', dist: [[0, 10.5], [1, 8.6, 'inOutSine']], az: [[0, 9], [1, 3]], el: [[0, 13], [1, 11]], fov: 34, screen: [[0, [0.16, 0.08]], [1, [0.15, 0.07]]], drift: 0.2,
       spin: [0.2, 0.05], magTilt: 24, magAz: 35, surf: 1.6, fil: [[0, 0.25], [1, 0.7]], filL: [1.3, 2.6], filW: 0.004, shimmer: 0.02,
       ocean: 0, scorch: 1.0,
-      shell: [[0, 2.2], [1, 1.3]], shellR: [[0, 0.60], [1, 0.70]], shellBlur: [[0, 0.06], [1, 0.14]],
+      shell: [[0, 2.0], [1, 1.1]], shellR: [[0, 0.64], [1, 0.76]], shellBlur: [[0, 0.12], [1, 0.30]],
       thread: [[0, 0.30], ['1s', 0.42], [1, 0.66, 'inOutSine']], threadGain: 1.0,
       haze: 0.0, hazePx: 1.2, hazeF: 4.5, crimson: 0.35, atmo: 1.2, stars: 1.0,
       post: { bloomStrength: 0.14, exposure: 1.0, vignette: 0.5 },

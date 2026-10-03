@@ -17,12 +17,13 @@ import { clamp, lerp, smoothstep } from '../engine/math.js';
 import { sparks, debris } from './lib/vortex-fx.js';
 
 const VOL = frag(DWARF, VORTEX, `
+uniform float uJitAmp;
 void main(){
   vec2 uv = frameUV();
   vec3 rd = cameraRay(uv);
   vec3 ro = uCamPos;
   float pixAngle = 2.0 * uTanHalfFov / uRes.y;
-  float jit = vxJit(gl_FragCoord.xy);
+  float jit = mix(0.5, vxJit(gl_FragCoord.xy), uJitAmp);
   vec2 hd = sphereHit(ro, rd, uDwarfPos, uDwarfR);
   bool hitD = hd.x < hd.y && hd.y > 0.0;
   float tMax = hitD ? max(hd.x, 0.0) : 60.0;
@@ -115,7 +116,7 @@ const presets = {
     lum: [0.5, 0.5],
     disk: {
       omega: 0.26, hot: 1.0, hotPhi: -2.873, streamDir: [0.965, 0, 0.261], streamW: 0.024, rb: 1.35,
-      arms: 0.35, rin: 0.12, sheet: 0.6, sheetMask: -0.1, curtain: 1.5, maxSteps: 44, irr: 4, tout: 1450, sheetHeat: 0.6, tinK: 0.35, edgeFade: 0.12,
+      arms: 0.35, rin: 0.12, sheet: 0.6, sheetMask: -0.1, curtain: 1.5, maxSteps: 52, irr: 4, tout: 1450, sheetHeat: 0.6, tinK: 0.35, edgeFade: 0.12,
     },
     sparks: {
       origin: [-0.93, 0.02, 0.26], axis: [-0.25, 0.75, 0.62], spread: 0.85, speed: 0.42, life: 1.1, count: 190,
@@ -267,7 +268,7 @@ export default {
       uGrain3: d.grain3, uIrr: d.irr, uArmFloor: d.armFloor, uArmHeat: d.armHeat, uVoid: d.void, uPuff: d.puff, uFloor: d.floor,
       uSheet: d.sheet, uSheetHeat: d.sheetHeat, uColdGas: d.coldGas, uSheetW: d.sheetW, uMaxSteps: d.maxSteps,
       uSheetMask: d.sheetMask, uFloorMid: d.floorMid, uKr: d.kr, uKy: d.ky,
-      uClear: [...cam.pos, P.clear || 0],
+      uClear: [...cam.pos, P.clear || 0], uJitAmp: P.jitAmp ?? 1,
     }, vt);
     E.draw(this.comp, {
       ...cam.uniforms, ...dwarf, uVol: vt, uStarGain: d.starGain,

@@ -85,7 +85,7 @@ vec4 fireballMarch(vec3 ro, vec3 rd, float tMin, float tMax, float jit){
   vec3 col = vec3(0.0); float T = 1.0;
   if (t1 <= t0) return vec4(col, T);
   float t = t0 + jit * 0.01 * R;
-  int iters = uFbShell > 0.5 ? 36 : 48;
+  int iters = uFbShell > 0.5 ? 28 : 48;
   for (int i = 0; i < 48; i++){
     if (t > t1 || i >= iters) break;
     vec3 p = ro + rd * t;
@@ -99,7 +99,7 @@ vec4 fireballMarch(vec3 ro, vec3 rd, float tMin, float tMax, float jit){
     float w2 = 0.0, w3 = 0.0;
     if (e > -0.05 && e < mix(0.08, 0.16, uFbShell)){  // fine turbulence only near the front
       w2 = n3(q * 17.0 + vec3(uFbEvo * 0.5, 0.0, 0.0));
-      if (abs(e) < 0.04) w3 = n3(q * 43.0 + vec3(0.0, 0.0, uFbEvo * 0.8));
+      if (abs(e) < 0.04) w3 = n3(q * 43.0 + vec3(0.0, 0.0, uFbEvo * 0.8)) * (1.0 - 0.75 * uFbShell);   // finest octave would fizz at low res
     }
     float ee = e + 0.045 * uFbTurb * (w1 + 0.5 * w2) + 0.006 * w3;
     float body = smoothstep(-0.004, 0.004, ee);
@@ -109,23 +109,32 @@ vec4 fireballMarch(vec3 ro, vec3 rd, float tMin, float tMax, float jit){
     float vein = 1.0 - abs(w2 + 0.5 * w3);
     // optically thin shell: clumpy density (billow tops and hot veins) so texture survives translucency
     float clumpd = 0.2 + 1.6 * hot * hot + 0.9 * pow(vein, 4.0) + 0.3 * w1;
-    float rho = body * mix(12.0, (0.1 + 0.9 * exp(-max(ee, 0.0) / 0.06)) * clumpd, uFbShell) + mix(0.55, 0.12, uFbShell) * cor;
+    float dl = (0.1 + 0.9 * exp(-max(ee, 0.0) / 0.06)) * clumpd;
+    float rhoB = body * mix(12.0, dl, uFbShell);
+    float rhoC = mix(0.55, 0.12, uFbShell) * cor;
     // opaque white-hot pseudo-photosphere receding through the ejecta
-    float ph = uFbPh > 0.0 ? smoothstep(-0.005, 0.005, s * uFbPh - r / R + 0.012 * w1 + 0.004 * w2) : 0.0;
-    rho += ph * 12.0;
-    rho *= FB_MASK(p);
+    float ph = uFbPh > 0.0 ? smoothstep(-0.018, 0.018, s * uFbPh - r / R + 0.012 * w1 + 0.004 * w2) : 0.0;   // soft enough for a low-res pass
+    float msk = FB_MASK(p);
+    // translucent ejecta (uFbShell -> 1) glow rather than smoke: emission keeps its density, absorption drops,
+    // and the outer veils barely absorb at all (no sooty edges in front of the bright interior)
+    float rhoE = (rhoB + rhoC + ph * 12.0) * msk;
+    float rhoA = (rhoB * mix(1.0, 0.3, uFbShell) + rhoC * mix(1.0, 0.04, uFbShell) + ph * 12.0) * msk;
     float hb = 0.30 + 0.3 * smoothstep(0.0, 0.03, ee) + 0.32 * (hot - 0.45) + 0.15 * pow(mu, 1.5) + 0.13 * pow(vein, 3.0);
-    // translucent swept-up shell (uFbShell -> 1): gold-white source, cooler thin interior
-    float hs = 0.2 + 0.24 * min(clumpd, 2.2) + 0.08 * (hot - 0.45) + 0.1 * pow(vein, 3.0) - 0.08 * smoothstep(0.04, 0.2, ee);
+    // swept-up shell: heat follows density and depth -> gold where dense and deep, crimson-ember skirts where thin
+    float hs = 0.18 + 0.4 * smoothstep(0.6, 2.0, dl) + 0.06 * smoothstep(0.03, 0.3, ee) + 0.05 * (hot - 0.45) + 0.05 * pow(vein, 3.0);
     hb = mix(hb, hs, uFbShell);
-    float h = uFbHeat * mix(hb, 0.22 + 0.1 * veil, (1.0 - body));
+    float h = uFbHeat * mix(hb, mix(0.22 + 0.1 * veil, 0.16 + 0.08 * veil, uFbShell), (1.0 - body));
     h = mix(h, uFbHeat * (0.47 + 0.2 * pow(mu, 1.2) + 0.22 * (hot - 0.45) + 0.1 * pow(vein, 3.0)), ph);
-    float dt = R * clamp(min(0.35 * abs(ee - 0.003), uFbPh > 0.0 ? max(0.35 * abs(eph0), 0.004) : 1.0), 0.004, mix(0.05, 0.09, uFbShell)) * (0.7 + 0.6 * fract(jit + float(i) * 0.618034));
-    float a = 1.0 - exp(-rho * uFbDens * min(dt, t1 - t) / R);   // last step clamped to the segment (no double counting at splits)
+    // translucent ejecta have no hard front to converge on: coarser minimum step (the photosphere is still found)
+    float dmin = mix(0.004, 0.018, uFbShell);
+    float dt = R * clamp(min(max(0.35 * abs(ee - 0.003), dmin), uFbPh > 0.0 ? max(0.35 * abs(eph0), 0.004) : 1.0), 0.004, mix(0.05, 0.09, uFbShell)) * (0.7 + 0.6 * fract(jit + float(i) * 0.618034));
+    float dtc = min(dt, t1 - t);                                  // last step clamped to the segment (no double counting at splits)
+    float aE = 1.0 - exp(-rhoE * uFbDens * dtc / R);
+    float aA = 1.0 - exp(-rhoA * uFbDens * dtc / R);
     vec3 em = novaEmit(h);
     em += C_ICE * uFbBlue * 3.0 * cor * exp(min(ee + 0.06, 0.0) / 0.03) * step(ee, -0.03);
-    col += T * a * em;
-    T *= 1.0 - a;
+    col += T * aE * em;
+    T *= 1.0 - aA;
     if (T < 0.02) break;
     t += dt;
   }
@@ -332,7 +341,7 @@ vec3 shellSide(vec3 oc, vec3 rd, float b, float p, float s, float tMax, float pa
   float hole = smoothstep(fr * 0.95 - 0.12, fr * 0.95 + 0.1, thick * 0.75 + 0.25 * fil);
   float sheetD = mix(1.0, 0.15 + 1.4 * fil, fr) * hole * (0.35 + 0.65 * thick);
   float sheet = shellCross(p, (0.962 + 0.02 * (thick - 0.5)) * sc, uSheetWid * sc) * sheetD;
-  c += mix(uCGap, uCSheet, thick * thick * (1.0 - 0.5 * fr) + 0.5 * fr * fil) * sheet * uSheetW * mix(1.0, gate, fr);
+  c += mix(uCGap * 1.6, uCSheet, smoothstep(0.38, 0.85, thick) * (1.0 - 0.5 * fr) + 0.5 * fr * fil) * sheet * uSheetW * mix(1.0, gate, fr);
   // torn filaments between the knots (fractured state)
   float wisp = shellCross(p, (0.958 + 0.03 * (thick - 0.5)) * sc, 0.016 * sc) * fil * fr;
   c += uCWisp * wisp * uWisp * gate * gate;
@@ -340,7 +349,7 @@ vec3 shellSide(vec3 oc, vec3 rd, float b, float p, float s, float tMax, float pa
   // clumpy diffuse nebulosity (deep crimson) gathered in the knot complexes; gives depth without filling the gaps
   c += uCGap * shellCross(p, 0.93 * sc, 0.05 * sc) * uDiffuse * (0.12 + 0.88 * gate * sqrt(gate)) * (0.3 + 1.4 * smoothstep(0.42, 0.8, thick));
   // thin cold-blue forward shock, just outside the knots: steady with gentle patches
-  float skin = shellCross(p, (1.035 + 0.006 * (Lg.w - 0.5)) * sc, 0.006 * sc) * (0.55 + 0.45 * smoothstep(0.35, 0.65, Lg.w));
+  float skin = shellCross(p, (1.012 + 0.006 * (Lg.w - 0.5)) * sc, 0.006 * sc) * (0.5 + 0.5 * smoothstep(0.35, 0.65, Lg.w));
   c += uCSkin * skin * uSkin;
   return col + c * wgt / sc;
 }
@@ -395,12 +404,19 @@ vec4 giantFar(vec3 ro, vec3 rd, float t, out float dist){
   float mu = sat(dot(gNormal0(p), -rd));
   vec3 ns = rotY(uGiantSpin) * n;
   vec4 c4 = n4(ns * 1.5 + vec3(0.0, t * 0.01, 3.0));
-  float T = 2280.0 + 170.0 * (c4.r - 0.5) * 2.0 + 80.0 * (c4.b - 0.5) * 2.0;
+  // broad convection cells with soft (never black) lanes
+  vec2 cb = cells3(ns * 2.2 + (c4.rgb - 0.5) * 1.2 + vec3(0.0, 0.0, t * 0.004));
+  float T = 2250.0 + 160.0 * smoothstep(0.85, 0.15, cb.x) * (0.6 + 0.4 * smoothstep(0.0, 0.25, cb.y)) + 110.0 * (c4.b - 0.5) * 2.0 - 60.0;
+  // granulation only where it is resolved (footprint-filtered), so a 20 px giant never aliases
+  float fp = th * 2.0 * uTanHalfFov / uRes.y / uGiantR;
+  float lod = 1.0 - smoothstep(0.004, 0.012, fp);
+  if (lod > 0.0){ vec2 cg = cells3(ns * 7.0 + c4.rgb * 0.8); T += lod * (130.0 * smoothstep(0.9, 0.1, cg.x) - 65.0 + 60.0 * (c4.g - 0.5)); }
   T *= mix(1.0 - 0.5 * uLimbDark, 1.0, pow(mu, 0.42));
   float f = dot(n, uScarDir) + (c4.b - 0.5) * 0.5;
   T += uScar * 380.0 * smoothstep(0.1, 0.9, f) * (0.75 + 0.25 * c4.r);
   dist = th;
-  return vec4(giantEmission(T) * uGiantGlow, 1.0);
+  vec4 hz = giantHaze(o, rd, th);                            // the shared analytic limb haze (soft crimson limb)
+  return vec4((giantEmission(T) * hz.a + hz.rgb) * uGiantGlow, 1.0);
 }
 `;
 
