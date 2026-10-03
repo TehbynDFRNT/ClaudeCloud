@@ -22,7 +22,7 @@ const clamp01 = (x) => Math.min(1, Math.max(0, x));
 const sstep = (a, b, x) => { const u = clamp01((x - a) / (b - a)); return u * u * (3 - 2 * u); };
 
 // CPU twin of novaRamp/novaLum in lib/nova-glsl.js (same anchors), for precomputed palette uniforms
-const NK = [[0.30, 0.012, 0.006], [0.80, 0.05, 0.014], [1, 0.2, 0.035], [1, 0.48, 0.12], [1, 0.76, 0.45], [1, 0.95, 0.88], [0.86, 0.93, 1.0]];
+const NK = [[0.30, 0.012, 0.006], [0.80, 0.05, 0.014], [1, 0.2, 0.035], [1, 0.48, 0.12], [1, 0.64, 0.22], [1, 0.93, 0.80], [0.86, 0.93, 1.0]];
 function novaEmit(h) {
   const x = clamp01(h) * 6, i = Math.min(5, Math.floor(x)), u = x - i, L = 0.12 * Math.exp(7.2 * h);
   return NK[i].map((v, k) => (v + (NK[i + 1][k] - v) * u) * L);
@@ -30,9 +30,9 @@ function novaEmit(h) {
 function shellPalette(H, frac) {
   const fr = sstep(0, 1, frac);
   return {
-    uCHead0: novaEmit(H - 0.06), uCHead1: novaEmit(H + 0.06), uCHead2: novaEmit(H - 0.05),
-    uCTail0: novaEmit(H - 0.19), uCTail1: novaEmit(H - 0.09), uCWall: novaEmit(H - 0.2),
-    uCSheet: novaEmit(H - 0.02 + (-0.16) * fr), uCHaze: novaEmit(H - 0.46), uCSkin: [0.2, 0.5, 1.0],
+    uCHead0: novaEmit(H - 0.07), uCHead1: novaEmit(H + 0.01), uCHot: novaEmit(H + 0.13),
+    uCTail0: novaEmit(H - 0.33), uCTail1: novaEmit(H - 0.2),
+    uCSheet: novaEmit(H - 0.03 - 0.1 * fr), uCGap: novaEmit(0.16), uCWisp: novaEmit(H - 0.26), uCSkin: [0.2, 0.5, 1.0],
   };
 }
 
@@ -193,12 +193,26 @@ void main(){
   fragColor = waveMarch(uCamPos, rd, hash12(gl_FragCoord.xy * 1.13 + fract(uFrame * 0.618) * 211.0));
 }`);
 
-const VOL_SHELL = frag(NOVA_COMMON, NOVA_SHELL, `
-uniform vec3 uOccC; uniform float uOccR;
+const VOL_SHELL = frag(GIANT, NOVA_COMMON, NOVA_SHELL, `
+// the giant (tidal teardrop) hides the far side of the shell
+float occHit(vec3 ro, vec3 rd){
+  if (uGiantR <= 0.0) return 1e9;
+  vec3 o = ro - uGiantPos;
+  vec2 core = sphereHit(o, rd, vec3(0.0), uGiantR * (1.0 + uBulge * 1.2));
+  if (core.y < 0.0 || core.x > core.y) return 1e9;
+  float th = max(core.x, 0.0);
+  for (int i = 0; i < 20; i++){
+    vec3 p = o + rd * th; float r = length(p);
+    float d = r - giantRadius0(p / r);
+    if (d < 0.002 * uGiantR) return th;
+    th += d * 0.7;
+    if (th > core.y) break;
+  }
+  return 1e9;
+}
 void main(){
   vec3 rd = cameraRay(frameUV());
-  vec2 og = sphereHit(uCamPos, rd, uOccC, uOccR);
-  float tMax = (og.x < og.y && og.x > 0.0) ? og.x : 1e9;
+  float tMax = occHit(uCamPos, rd);
   float j = hash12(gl_FragCoord.xy * 1.37 + fract(uFrame * 0.6180339) * 413.0);
   fragColor = vec4(shellMarch(uCamPos, rd, j, tMax), 1.0);
 }`);
@@ -306,29 +320,32 @@ export default {
       postKeys: { zoomBlur: [[0.6, 0.0], [1.05, 0.07], [1.6, 0.025], [2.5, 0.015]], exposure: [[0, 1.0], [0.95, 0.85], [1.12, 0.62], [1.4, 1.05], [2.5, 1.0]] },
       post: { bloomStrength: 0.12, halation: 0.04, saturation: 1.1, contrast: 1.06 },
     },
-    // 2.88 s: limb of the decelerating shell; the white-gold sheet fractures into golden filaments, knots, fingers.
+    // 2.88 s: limb of the decelerating shell; the gold sheet tears into filaments, knots condense, fingers grow.
     'S25-shell': {
-      mode: 'shell', volScale: 0.55, dur: 2.88, stepLen: 0.045,
+      mode: 'shell', volScale: 0.7, dur: 2.88,
       cam: [[0, [1.2, 1.0, 5.6], [1.7, 1.2, 0.0], 36], [2.9, [1.45, 1.05, 5.9], [1.85, 1.25, 0.0], 36, 0, 'outCubic']],
-      shR: [[0, 3.0], [2.88, 3.25, 'outQuad']], frac: [[0, 0.05], [2.88, 0.95, 'inOutSine']], shHeat: [[0, 0.72], [2.88, 0.63]],
-      gain: 1.0, skin: 0.5, knotK: 13, prolate: 0.1, equator: 0.5, sheetW: 1, steps: 14, giant: true, giantGlow: 0.8, scar: 0.8, dwarfLum: 1,
-      post: { bloomStrength: 0.1 },
+      shR: [[0, 3.0], [2.88, 3.25, 'outQuad']], frac: [[0, 0.04], [2.88, 0.95, 'inOutSine']], shHeat: [[0, 0.66], [2.88, 0.62]],
+      knotK: 13, prolate: 0.1, deform: 0.04, equator: 0.6, clump: 0.8, sheetW: 5, sheetWid: 0.026, knotGain: 40, tailGain: 9, tailL: 0.035,
+      wisp: 12, diffuse: 1, skin: 2, giant: true, giantGlow: 0.8, scar: 0.8, dwarfLum: 1, starGain: 0.6,
+      post: { bloomStrength: 0.1, lift: 0 },
     },
     // 6.0 s: the immense fractured golden shell (GK Per / T Pyx knots and fingers); the pair small inside; slow pull back.
     'S26-expansion': {
-      mode: 'shell', volScale: 0.6, dur: 6.0, stepLen: 0.042,
+      mode: 'shell', volScale: 0.75, dur: 6.0,
       cam: [[0, [3.6, 5.0, 12.4], [0, 0, 0], 34], [6.0, [7.6, 10.4, 25.6], [0, 0, 0], 34]],
-      shR: [[0, 7.0], [6.0, 7.45, 'linear']], frac: 1, shHeat: [[0, 0.62], [6.0, 0.56]],
-      gain: 1.0, skin: 0.5, knotK: 11, prolate: 0.12, equator: 0.6, sheetW: 1.6, steps: 32, giant: true, giantGlow: 0.55, scar: 0.6, dwarfLum: 0.6,
-      post: { bloomStrength: 0.09 },
+      shR: [[0, 7.0], [6.0, 7.45, 'linear']], frac: 1, shHeat: [[0, 0.62], [6.0, 0.57]],
+      knotK: 11, prolate: 0.12, deform: 0.06, equator: 0.8, clump: 0.85, sheetW: 2, knotGain: 40, tailGain: 9, tailL: 0.035,
+      wisp: 12, diffuse: 1, skin: 2, giant: true, giantGlow: 0.55, scar: 0.6, dwarfLum: 0.6, starGain: 0.6,
+      post: { bloomStrength: 0.09, lift: 0 },
     },
     // 3.33 s (+ dissolve tail to S29b): centred, still. A near-perfect limb-brightened ring, outer radius ~0.32 H.
     'S29a-ring': {
-      mode: 'shell', volScale: 0.6, dur: 3.33,
+      mode: 'shell', volScale: 0.75, dur: 3.33,
       cam: [[0, [0.0, 58.0, 10.2], [0, 0, 0], 30], [5.5, [0.0, 58.0, 10.2], [0, 0, 0], 30]],
-      shR: [[0, 10.0], [5.5, 10.15, 'linear']], frac: 1, shHeat: 0.63,
-      gain: 1.0, skin: 1.0, knotK: 11, prolate: 0.0, equator: 0.6, sheetW: 6.0, sheetWid: 0.01, knotGain: 0.5, faceDim: 0.8, steps: 24, giant: true, giantGlow: 0.55, scar: 0.6, dwarfLum: 0.5,
-      post: { bloomStrength: 0.08 },
+      shR: [[0, 10.0], [5.5, 10.15, 'linear']], frac: 1, shHeat: 0.62,
+      knotK: 11, prolate: 0.0, deform: 0, equator: 1.2, clump: 0.6, sheetW: 3, sheetWid: 0.012, knotGain: 25, tailGain: 6, tailL: 0.03,
+      wisp: 10, diffuse: 0.5, skin: 1.5, faceDim: 0.95, giant: true, giantGlow: 0.55, scar: 0.6, dwarfLum: 0.5, starGain: 0.6,
+      post: { bloomStrength: 0.08, lift: 0 },
     },
     default: { mode: 'fire', fbR: 0.6 },
   },
@@ -377,12 +394,15 @@ export default {
       }, vol);
       Object.assign(comp, gu, { uUseGiant: 1, uNovaLight: kv(P.novaLight, t, 0), uContact: contact, uUseDwarf: 1, uDwarfPos: WD, uDwarfR: 0.0005, uDwarfLum: kv(P.dwarfLum, t, 1.5) });
     } else if (mode === 'shell') {
+      const H = kv(P.shHeat, t, 0.62), fr = kv(P.frac, t, 1);
       E.draw(this.pShell, {
-        ...cam.uniforms, uShC: [0, 0, 0], uShR: kv(P.shR, t, 5), uShAxis: [0, 1, 0], uProlate: kv(P.prolate, t, 0.1), uFrac: kv(P.frac, t, 1),
-        ...shellPalette(kv(P.shHeat, t, 0.65), kv(P.frac, t, 1)),
-        uShHeat: kv(P.shHeat, t, 0.65), uShGain: kv(P.gain, t, 1), uSkin: kv(P.skin, t, 0.6), uKnotK: kv(P.knotK, t, 13), uShSeed: P.seed ?? 5.0,
-        uShEvo: S.t, uEquator: kv(P.equator, t, 0.5), uSheetW: kv(P.sheetW, t, 1), uSheetWid: kv(P.sheetWid, t, 0.026), uKnotGain: kv(P.knotGain, t, 1), uFaceDim: kv(P.faceDim, t, 0), uShSteps: P.steps ?? 32, uShStep: kv(P.stepLen, t, 0.035),
-        uOccC: GIANT_POS, uOccR: 0.31,
+        ...cam.uniforms, uShC: [0, 0, 0], uShR: kv(P.shR, t, 5), uShAxis: [0, 1, 0], uProlate: kv(P.prolate, t, 0.1), uDeform: kv(P.deform, t, 0),
+        uFrac: fr, ...shellPalette(H, fr),
+        uShGain: kv(P.gain, t, 1), uSkin: kv(P.skin, t, 2), uKnotK: kv(P.knotK, t, 12), uShSeed: P.seed ?? 5.0, uShEvo: S.t,
+        uEquator: kv(P.equator, t, 0.6), uSheetW: kv(P.sheetW, t, 2), uSheetWid: kv(P.sheetWid, t, 0.026), uKnotGain: kv(P.knotGain, t, 40),
+        uTailGain: kv(P.tailGain, t, 9), uTailL: kv(P.tailL, t, 0.035), uClump: kv(P.clump, t, 0.85), uWisp: kv(P.wisp, t, 12),
+        uDiffuse: kv(P.diffuse, t, 1), uFaceDim: kv(P.faceDim, t, 0),
+        ...giantU(1, 0), ...(P.giant ? {} : { uGiantR: 0 }),
       }, vol);
       if (P.giant) Object.assign(comp, giantU(kv(P.giantGlow, t, 0.6), kv(P.scar, t, 0.8)), { uUseGiant: 1, uGiantFar: 1, uNovaLight: 0, uContact: 0 });
       if (P.dwarfLum !== undefined) Object.assign(comp, { uUseDwarf: 1, uDwarfPos: WD, uDwarfR: 0.0005, uDwarfLum: kv(P.dwarfLum, t, 1) });

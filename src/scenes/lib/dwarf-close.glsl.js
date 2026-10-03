@@ -27,6 +27,7 @@ uniform float uSnap;         // seconds since the filaments snapped (<0: intact)
 uniform float uFilN;         // meridional planes carrying filaments (<= 16)
 uniform float uFilPhase;     // azimuth offset of those planes (rad)
 uniform float uFilK;         // strands per half-plane (1..3)
+uniform float uFilSpan;      // azimuth range covered by the planes (rad, PI = all around)
 uniform float uOcean;        // accreted hydrogen layer 0..1
 uniform float uOceanH;       // mean layer thickness at ocean = 1 (R)
 uniform float uOceanHeat;    // 0..1 hotter, whiter, brighter
@@ -197,7 +198,7 @@ vec3 wdFilaments(vec3 ro, vec3 rd, float tMax, float pixA, float t){
   for (int j = 0; j < 16; j++){
     float fj = float(j);
     if (fj >= NP) break;
-    float phi = uFilPhase + (fj + 0.5) / NP * PI + (hash11(fj * 7.31 + 2.0) - 0.5) * 2.4 / NP;
+    float phi = uFilPhase + ((fj + 0.5) + (hash11(fj * 7.31 + 2.0) - 0.5) * 0.75) / NP * uFilSpan;
     vec3 e = cos(phi) * a + sin(phi) * b;
     vec3 N = cross(m, e);
     float dn = dot(rd, N);
@@ -415,7 +416,7 @@ vec3 wdSurface(vec3 n, float mu, float t){
 // hot spots erupting through the layer (sharp pass): n = surface direction under the pixel
 vec3 wdFlares(vec3 n, float mu, float t){
   float f = wdFlareMask(n, t);
-  return mix(vec3(0.40, 0.66, 1.0), vec3(0.92, 0.96, 1.0), sat(f * 1.5)) * f * uSurfGain * 40.0 * (0.4 + 0.6 * mu);
+  return mix(vec3(0.40, 0.66, 1.0), vec3(0.92, 0.96, 1.0), sat(f * 1.5)) * f * uSurfGain * 14.0 * (0.4 + 0.6 * mu);
 }
 
 // ---------- convulsion: (height offset of the ocean in layer thicknesses, extra heat of the compression front)
@@ -455,9 +456,9 @@ float oceanField(vec3 n, vec3 warp, float t, float macro, float lod, out float h
            + 0.5 * sin(dot(q, vec3(-0.17, 0.33, 0.11)) * 2.3 - t * 6.3 + bill * 3.0);
   float fil = 1.0 - abs(n3(q * 3.1 + vec3(bill * 2.0, tv * 0.5, 0.0)));
   fil = fil * fil; fil *= fil; fil *= fil;                     // thin bright plasma threads inside the cells
-  heat = 0.08 + 0.50 * lane + 0.40 * lane * core + 0.10 * bill + 0.12 * fil * lane + 0.05 * sw * uOcean + 0.14 * macro;
+  heat = 0.05 + 0.36 * lane + 0.44 * lane * core * core + 0.08 * bill + 0.10 * fil * lane + 0.04 * sw * uOcean + 0.10 * macro;
   float top = 0.42 + 0.72 * lane + 0.30 * bill + 0.10 * sw - 0.40 * crack * (1.0 - lod);
-  heat = mix(heat, 0.62 + 0.14 * macro, lod);
+  heat = mix(heat, 0.52 + 0.10 * macro, lod);
   return mix(top, 0.95, lod);
 }
 
@@ -498,8 +499,8 @@ vec4 wdOcean(vec3 ro, vec3 rd, float tSurf, float t, float pixA){
     float cm = dot(nm, uMagAxis);
     float belt = exp(-cm * cm / 0.05);
     float cap = smoothstep(0.72, 0.95, abs(cm));
-    float patch = fbm3(rotY(uSpin) * nm * 2.4 + vec3(5.0, 1.0, tv * 0.02), 3);
-    bigH = uBig * (0.13 * belt - 0.32 * cap + 0.22 * patch);
+    float bpatch = fbm3(rotY(uSpin) * nm * 2.4 + vec3(5.0, 1.0, tv * 0.02), 3);
+    bigH = uBig * (0.13 * belt - 0.32 * cap + 0.22 * bpatch);
   }
   vec2 cv = wdConvulse(nm, t);
   float foot = pixA * tm / max(abs(dot(rd, nm)), 0.08);                  // pixel footprint on the layer
@@ -530,7 +531,7 @@ vec4 wdOcean(vec3 ro, vec3 rd, float tSurf, float t, float pixA){
   }
   if (capped){
     // the rest of a grazing ray is optically thick: finish with the layer's mean glow (also the far-field LOD)
-    vec3 Sm = oceanEmit(0.62 + 0.14 * macro + hb) * uOceanGain;
+    vec3 Sm = oceanEmit(0.56 + 0.10 * macro + hb) * uOceanGain;
     // only rays that dip below the mean top are opaque; rays skimming above the limb stay clear
     float bmin = length(ro + rd * max(dot(-ro, rd), 0.0));
     float fill = tSurf < 1e8 ? 1.0 : smoothstep(1.25, 0.65, (bmin - 1.0) / Hm);
@@ -557,10 +558,13 @@ vec3 wdDetail(vec3 ro, vec3 rd, vec3 low, float t, float pixA){
   float tv = t * uTurbV;
   vec3 q = n * F + vec3(0.0, tv * 0.45, tv * 0.3);
   float g1 = n3(q), g2 = n3(q * 2.3 + 7.0);
-  float tr = 1.0 - abs(n3(q * 0.45 + vec3(g1 * 0.9, 3.0, tv * 0.25)));
-  tr = tr * tr; tr *= tr; tr *= tr;
+  // sparse plasma threads: thin ridges, warped and masked so they read as strands, not a caustic web
+  vec3 qw = q * 0.35 + vec3(g1 * 1.4, 3.0, tv * 0.25);
+  float tr = 1.0 - abs(n3(qw));
+  tr = tr * tr; tr *= tr; tr *= tr; tr *= tr;
+  tr *= smoothstep(0.15, 0.55, n3(q * 0.09 + vec3(7.0, tv * 0.05, 1.0)));
   float k = uDetail * fade;
-  return low * max(1.0 + k * (0.55 * g1 + 0.30 * g2), 0.15) + low * tr * k * 1.4;
+  return low * max(1.0 + k * (0.55 * g1 + 0.30 * g2), 0.15) + low * tr * k * 0.9;
 }
 
 // ---------- accretion curtains: gas threaded onto field lines at r ~ L, falling along them onto the magnetic poles.

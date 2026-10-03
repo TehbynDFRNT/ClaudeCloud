@@ -140,7 +140,7 @@ const presets = {
     cam: [[0, [-0.272, -0.031, 0.202], [-0.13, 0.03, -0.05], 50, -0.72], [1, [-0.259, -0.027, 0.188], [-0.12, 0.034, -0.05], 48, -0.84, 'inOutSine']],
     headS: [[0, -0.012], [1, 0.08, 'inQuad']],
     streamAmt: 0.85, streamW: 1.0, rip: 0.5, flowRate: 1.2, detail: 0.6, rake: 1.2, rakeG: 0.12, starGain: 0.5,
-    giant: { relief: 0.006, plumes: 0.2, glow: 1.5 }, dwarfLum: 1.2, volScale: 0.5,
+    giant: { relief: 0.006, plumes: 0.2, glow: 1.5 }, dwarfLum: 1.2, volScale: 0.45,
     post: { bloomStrength: 0.08 },
   },
   // The stream rips out through L1 and arcs across to the dwarf; camera tracks alongside.
@@ -171,7 +171,7 @@ const presets = {
     cam: [[0, [-0.30, 0.060, 0.30], [-0.16, 0.0, 0.02], 42], [1, [-0.285, 0.052, 0.275], [-0.15, 0.0, 0.02], 41, 0, 'inOutSine']],
     streamAmt: 1.0, streamW: 1.15, streamGlow: 1.0, rip: 1.0, flowRate: 2.0, detail: 0.5, rake: 0.0, rakeG: 0.06, starGain: 0.5,
     diskAmt: 0, cutR: 0.26,
-    giant: { relief: 0.004, plumes: 0.25, atmo: 0.6 }, dwarfLum: 1.2, volScale: 0.5,
+    giant: { relief: 0.004, plumes: 0.25, atmo: 0.6 }, dwarfLum: 1.2, volScale: 0.45,
     post: { bloomStrength: 0.09 },
   },
   // The giant is drained: wide, high angle; a substantial disk fed by the stream.
@@ -322,7 +322,7 @@ export default {
     const vt = E.target('binaryVol', vs);
     const U = st.U;
     U.uPixAng = 2 * st.cam.tanH / vt.h;
-    if (!P.__skipVol) E.draw(this.vol, { ...U, uRelief: 0 }, vt);
+    E.draw(this.vol, { ...U, uRelief: 0 }, vt);
     E.draw(this.main, { ...U, uVol: vt, uVolRes: [vt.w, vt.h] }, target);
   },
 

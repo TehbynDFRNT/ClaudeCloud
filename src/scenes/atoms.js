@@ -1,6 +1,8 @@
-// ATOMS: tactile atomic intensity. Nuclei as clusters of glowing, translucent, shimmering nucleons
-// (protons molten gold, neutrons pale cold blue-white) with thin-lens depth of field, bokeh,
-// high-frequency vibration, interference wave rings, trails and sparks, on abyssal black.
+// ATOMS: tactile atomic intensity. Nuclei as clusters of dense, self-luminous nucleons (protons molten
+// gold, neutrons cold blue-white): limb-darkened like tiny stars, boiling granulation, jittering quark
+// cores, pressed together with contact shadows. Each shot has one crisp focal plane; everything else
+// melts into flat energy-conserving bokeh. Vibration, interference wave rings, trails and sparks, on
+// abyssal black; heat reads crimson -> ember -> gold -> white through emission, never a veil.
 //
 // Rendering: every element is projected on the CPU into a depth-sorted, tile-binned sprite list
 // (lib/atoms-sprites.js); one fullscreen pass composites the tile lists. Frames are pure functions of

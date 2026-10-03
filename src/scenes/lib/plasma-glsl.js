@@ -169,11 +169,11 @@ vec3 boilMarch(vec3 ro, vec3 rd, out float depth){
     float dy = p.y - f.h;
     float dt;
     if (dy < uSoft){
-      if (!inB && prevDt > dIn){
+      if (!inB && prevDt > dIn * 3.0){
         // a long outside step overshot the skin: bisect back onto its top so the entry depth is continuous
         // (otherwise grazing views show terraces that the DOF turns into stipple)
         float ta = t - prevDt, tb = t;
-        for (int j = 0; j < 4; j++){
+        for (int j = 0; j < 3; j++){
           float tm = 0.5 * (ta + tb);
           vec3 pm = ro + rd * tm;
           Cell fm = boilCoarse(pm.xz);

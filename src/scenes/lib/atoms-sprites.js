@@ -11,7 +11,8 @@
 //         T0 (x, y, boundR, type*1e5 + z)   x,y in full-frame pixels, y up
 //         T1 (r, coc, z, seed)              sharp radius px, circle-of-confusion radius px
 //         T2 (rgb emission, alpha)
-//         T3 sphere: (lightDir.xy, heat, cluster)   streak: (tail.xy offset px, fadeExp, 0)
+//         T3 sphere: (lightDir.xy, heat, kind 0 nucleon | 1 whole nucleus | 2 shutter ghost)
+//            streak: (tail.xy offset px, fadeExp, seam)   glow: (coreTint, 0, 0, 0)
 //   uIdx  1024 x 256: sprite indices, 4 per texel, -1 padded; tile lists start on texel boundaries
 //   uTileTex tilesX x tilesY: (offset texel, count, 0, 0)
 
