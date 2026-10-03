@@ -1,0 +1,357 @@
+{
+ "figure": "sol",
+ "source": {
+  "title": "Ideal portrait of Alexander the Great as Helios (plaster cast of a Hellenistic marble)",
+  "object": "SMK KAS283",
+  "url": "https://open.smk.dk/artwork/image/KAS283",
+  "download": "https://api.smk.dk/api/v1/download-3d/4t64gs845_84-smk-alexander-as-helios-inv-283.stl",
+  "license": "Public Domain Mark 1.0",
+  "license_url": "https://creativecommons.org/publicdomain/mark/1.0/",
+  "attribution": "Alexander the Great as Helios, plaster cast after a Hellenistic marble. 3D scan: SMK - Statens Museum for Kunst, Royal Cast Collection (open.smk.dk), public domain."
+ },
+ "counts": {
+  "vertices": 279555,
+  "triangles": 559998,
+  "sourceTriangles": 2003100
+ },
+ "layout": {
+  "file": "sol.bin",
+  "byteLength": 12870188,
+  "littleEndian": true,
+  "interleaved": false,
+  "attributes": {
+   "position": {
+    "offset": 0,
+    "byteLength": 3354660,
+    "type": "float32",
+    "components": 3,
+    "stride": 12,
+    "normalized": false
+   },
+   "normal": {
+    "offset": 3354660,
+    "byteLength": 1677330,
+    "type": "int16",
+    "components": 3,
+    "stride": 6,
+    "normalized": true
+   },
+   "bake": {
+    "offset": 5031992,
+    "byteLength": 1118220,
+    "type": "uint8",
+    "components": 4,
+    "stride": 4,
+    "normalized": true,
+    "channels": [
+     "ao",
+     "cavity",
+     "thickness",
+     "skin"
+    ]
+   }
+  },
+  "index": {
+   "offset": 6150212,
+   "byteLength": 6719976,
+   "type": "uint32",
+   "components": 1,
+   "count": 1679994
+  }
+ },
+ "bounds": {
+  "min": [
+   -0.49371,
+   -0.9202,
+   -0.65401
+  ],
+  "max": [
+   0.66162,
+   0.49989,
+   0.54113
+  ]
+ },
+ "frame": {
+  "units": "1.0 = chin-to-crown head height (vertical); source units per head = 63.0250",
+  "axes": "+Y up = vertical turn axis; +Z = measured gaze (a camera on +Z at eye height is stared at); +X = Y x Z = the figure's own left. L/R in anchor names = the figure's own left/right.",
+  "origin": "head centre: halfway between chin and crown, on the turn axis through the neck between the ears",
+  "sourceToHead": [
+   [
+    0.00847,
+    -0.01342,
+    -0.0,
+    0.21053
+   ],
+   [
+    0.0014,
+    0.00089,
+    0.01578,
+    -1.62352
+   ],
+   [
+    -0.01334,
+    -0.00842,
+    0.00166,
+    0.55181
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
+  "sourceUnitsPerHead": 63.02503,
+  "levelPitchDeg": 6.0,
+  "castUpInHead": [
+   0.0,
+   0.99452,
+   0.10453
+  ],
+  "restoreCastPosture": "rotate head-space geometry about +X by -6.000 deg to restore the cast's own vertical (the gaze then rises 6.00 deg above horizontal)",
+  "gazeYawFromFaceDeg": 1.89,
+  "facialForward": [
+   -0.03298,
+   -0.10447,
+   0.99398
+  ],
+  "profileSide": "-X",
+  "cropY": -0.92
+ },
+ "eyes": {
+  "L": {
+   "centre": [
+    0.11948,
+    -0.04927,
+    0.31728
+   ],
+   "radius": 0.07743,
+   "gaze": [
+    0.15692,
+    -0.37546,
+    0.91346
+   ]
+  },
+  "R": {
+   "centre": [
+    -0.13998,
+    -0.04894,
+    0.31839
+   ],
+   "radius": 0.07073,
+   "gaze": [
+    -0.15692,
+    -0.3644,
+    0.91792
+   ]
+  }
+ },
+ "anchors": {
+  "noseTip": [
+   -0.02527,
+   -0.25563,
+   0.50947
+  ],
+  "chin": [
+   0.00333,
+   -0.5,
+   0.33935
+  ],
+  "crown": [
+   -0.02377,
+   0.5,
+   0.07678
+  ],
+  "eyeballL": [
+   0.11948,
+   -0.04927,
+   0.31728
+  ],
+  "eyeL": [
+   0.11948,
+   -0.04927,
+   0.39471
+  ],
+  "eyeballR": [
+   -0.13998,
+   -0.04894,
+   0.31839
+  ],
+  "eyeR": [
+   -0.13998,
+   -0.04894,
+   0.38912
+  ],
+  "mouth": [
+   -0.01071,
+   -0.34685,
+   0.37739
+  ],
+  "earL": [
+   0.46035,
+   -0.1291,
+   0.0
+  ],
+  "earR": [
+   -0.40634,
+   -0.1291,
+   0.0
+  ],
+  "shoulderL": [
+   0.53441,
+   -0.55001,
+   -0.07868
+  ],
+  "shoulderR": [
+   -0.2549,
+   -0.55,
+   -0.29763
+  ],
+  "neckBase": [
+   0.14499,
+   -0.55001,
+   -0.17982
+  ],
+  "diademRing": [
+   [
+    0.0114,
+    0.16642,
+    0.01612
+   ],
+   [
+    0.11286,
+    0.73365,
+    -0.67009
+   ],
+   0.38221
+  ],
+  "rayHoles": [
+   [
+    -0.36196,
+    0.13271,
+    -0.08642
+   ],
+   [
+    -0.33823,
+    0.27056,
+    0.08565
+   ],
+   [
+    -0.20215,
+    0.40815,
+    0.23505
+   ],
+   [
+    0.00229,
+    0.42753,
+    0.28854
+   ],
+   [
+    0.19135,
+    0.37763,
+    0.27512
+   ],
+   [
+    0.29616,
+    0.30618,
+    0.24813
+   ],
+   [
+    0.37432,
+    0.20885,
+    0.10526
+   ]
+  ],
+  "rayHoleNormals": [
+   [
+    -0.92798,
+    0.25423,
+    -0.27243
+   ],
+   [
+    -0.74621,
+    0.64992,
+    0.14412
+   ],
+   [
+    -0.3881,
+    0.92125,
+    -0.02612
+   ],
+   [
+    0.05635,
+    0.81575,
+    0.57566
+   ],
+   [
+    0.24593,
+    0.65469,
+    0.71477
+   ],
+   [
+    0.75517,
+    0.54063,
+    0.37073
+   ],
+   [
+    0.92274,
+    0.13101,
+    0.36248
+   ]
+  ],
+  "rayHoleAzimuthDeg": [
+   -110.56,
+   -76.77,
+   -39.48,
+   -7.42,
+   22.58,
+   41.53,
+   69.56
+  ],
+  "crownSocket": [
+   0.04163,
+   0.4627,
+   -0.04209
+  ]
+ },
+ "torso": {
+  "forward": [
+   -0.57133,
+   -0.0,
+   0.82072
+  ],
+  "left": [
+   0.82072,
+   -0.0,
+   0.57133
+  ],
+  "neckAxisUp": [
+   0.02108,
+   0.96532,
+   -0.26023
+  ],
+  "note": "forward/left: horizontal directions the chest faces / its own left (from the cross-section above the cut); neckAxisUp: neck direction fitted through neck cross-sections under the jaw. shoulderL/R are the highest points 0.34-0.42 to either side of the neck along torso.left (where the cast is cut narrower, the extreme of what exists); neckBase is the neck axis at the shoulder line."
+ },
+ "bake": {
+  "ao": "channel 0: ambient visibility, 48 cosine-weighted rays per vertex, mean normalised free distance up to 0.25 head units (1 = open, 0 = enclosed)",
+  "cavity": "channel 1: signed multi-scale curvature, 0.5 = flat, < 0.5 crevice (curl undercuts, eye corners, lid creases, nostrils), > 0.5 ridge/edge; value = 0.5 + 0.5*tanh(c/2.5), c in robust-sigma units",
+  "thickness": "channel 2: inward free distance along -normal (7-ray 22 deg cone) / 0.12 head units; low = thin (nose wings, ears, lids, curl tips, lips): use for subsurface translucency",
+  "skin": "channel 3: 1 = broad smooth carved skin (face, neck, chest), 0 = hair/beard/deep carving; use for polish/gloss and SSS strength"
+ },
+ "diadem": {
+  "ring": "anchors.diademRing = [centre, unit normal (up/back), radius]: circle fitted through the 7 ray-hole mouths (radial residual max 0.0110, out-of-plane max 0.0208 head units). The fillet runs high over the brow and drops toward the nape.",
+  "holes": "anchors.rayHoles: mouths of the drilled attachment holes along the lower edge of the fillet, ordered from the figure's right (-) to left (+); rayHoleNormals = local surface normal of the band at each hole (the drill axis, roughly); rayHoleAzimuthDeg measured on the ring from the front (+Z), + = figure's left. Depths (head units): 0.0131, 0.0124, 0.0148, 0.0024, 0.0037, 0.0059, 0.0107. None at the back (the cast is unfinished there).",
+  "socket": "anchors.crownSocket: mouth of the larger rectangular socket on top of the skull (depth 0.035), centre of the original radiate crown / nimbus fixing."
+ },
+ "notes": [
+  "Gaze per eye measured relative to the facial symmetry plane (deg, +yaw = figure's left, +pitch = up): {\"eyeL\": {\"yaw\": 11.29, \"pitch\": -16.14}, \"eyeR\": {\"yaw\": -7.48, \"pitch\": -15.45}}.",
+  "Facial symmetry plane residual 0.0048 head units (mirror-ICP on the face).",
+  "Crop: one horizontal plane at y = -0.92, capped (flat cap facing -Y); keep it out of frame or in shadow.",
+  "Turn: yaw about +Y through the origin. The 90-degree turn starts with the camera on the figure's RIGHT (-X side, face pointing screen-right) and ends on +Z (stared at).",
+  "Ears: earL ESTIMATED: ear hidden by hair/beard; outer surface point beside the ear position estimated 0.318 behind the eyeball midpoint along the facial axis (ratio measured on david); earR ESTIMATED: ear hidden by hair/beard; outer surface point beside the ear position estimated 0.318 behind the eyeball midpoint along the facial axis (ratio measured on david)",
+  "Head units: 1.0 = 63.025 source units (raw STL units).",
+  "Blank (uncarved) eyes. Yaw = mean of the two eyeball caps (1.9 deg). The Hellenistic upturned gaze measured 6.0 deg above horizontal by visual judgement (renders at camera pitch 0..20 deg; the lid-aperture geometry is biased by the overhanging upper lid). CHOICE: levelled, so the blank eyes meet the lens at eye height for the final stare; the upward pathos remains in the face and the tilt of the head. frame.restoreCastPosture gives the original upturn back.",
+  "Scanner orange-peel removed from broad, low-curvature skin (cheeks, brow, neck) by a masked Taubin smooth; lids, lips, nostrils and curls are masked out and stay crisp.",
+  "The bust and nose tip are restorations (SMK). The bust back is hollow with a support post inside (only seen from behind)."
+ ]
+}

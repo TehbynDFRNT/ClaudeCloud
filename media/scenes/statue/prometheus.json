@@ -1,0 +1,257 @@
+{
+ "figure": "prometheus",
+ "source": {
+  "title": "Upper body of a giant (Klytios?), Pergamon Altar Gigantomachy frieze (plaster cast) - stand-in for Prometheus",
+  "object": "SMK KAS19/6",
+  "url": "https://open.smk.dk/artwork/image/KAS19/6",
+  "download": "https://api.smk.dk/api/v1/download-3d/1r66j588x_kas19f-overkrop-af-giganten-klytios.stl",
+  "license": "Public Domain Mark 1.0",
+  "license_url": "https://creativecommons.org/publicdomain/mark/1.0/",
+  "attribution": "Giant from the Pergamon Altar frieze, plaster cast. 3D scan: SMK - Statens Museum for Kunst, Royal Cast Collection (open.smk.dk), public domain."
+ },
+ "counts": {
+  "vertices": 265281,
+  "triangles": 530632,
+  "sourceTriangles": 791120
+ },
+ "layout": {
+  "file": "prometheus.bin",
+  "byteLength": 12203768,
+  "littleEndian": true,
+  "interleaved": false,
+  "attributes": {
+   "position": {
+    "offset": 0,
+    "byteLength": 3183372,
+    "type": "float32",
+    "components": 3,
+    "stride": 12,
+    "normalized": false
+   },
+   "normal": {
+    "offset": 3183372,
+    "byteLength": 1591686,
+    "type": "int16",
+    "components": 3,
+    "stride": 6,
+    "normalized": true
+   },
+   "bake": {
+    "offset": 4775060,
+    "byteLength": 1061124,
+    "type": "uint8",
+    "components": 4,
+    "stride": 4,
+    "normalized": true,
+    "channels": [
+     "ao",
+     "cavity",
+     "thickness",
+     "skin"
+    ]
+   }
+  },
+  "index": {
+   "offset": 5836184,
+   "byteLength": 6367584,
+   "type": "uint32",
+   "components": 1,
+   "count": 1591896
+  }
+ },
+ "bounds": {
+  "min": [
+   -0.46861,
+   -0.95,
+   -0.89738
+  ],
+  "max": [
+   0.60946,
+   0.5,
+   0.59384
+  ]
+ },
+ "frame": {
+  "units": "1.0 = chin-to-crown head height (vertical); source units per head = 39.0474",
+  "axes": "+Y up = vertical turn axis; +Z = measured gaze (a camera on +Z at eye height is stared at); +X = Y x Z = the figure's own left. L/R in anchor names = the figure's own left/right.",
+  "origin": "head centre: halfway between chin and crown, on the turn axis through the neck between the ears",
+  "sourceToHead": [
+   [
+    0.01146,
+    0.0,
+    -0.0229,
+    0.05919
+   ],
+   [
+    -0.00239,
+    0.02547,
+    -0.0012,
+    -2.60911
+   ],
+   [
+    0.02278,
+    0.00268,
+    0.0114,
+    -1.29338
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
+  "sourceUnitsPerHead": 39.04743,
+  "levelPitchDeg": 6.0,
+  "castUpInHead": [
+   0.0,
+   0.99452,
+   0.10453
+  ],
+  "restoreCastPosture": "rotate head-space geometry about +X by -6.000 deg to restore the cast's own vertical (the gaze then rises 6.00 deg above horizontal)",
+  "gazeYawFromFaceDeg": 0.226,
+  "facialForward": [
+   -0.00395,
+   -0.10453,
+   0.99451
+  ],
+  "profileSide": "-X",
+  "cropY": -0.95
+ },
+ "eyes": {
+  "L": {
+   "centre": [
+    0.11648,
+    -0.15411,
+    0.30736
+   ],
+   "radius": 0.09065,
+   "gaze": [
+    0.20289,
+    -0.09947,
+    0.97414
+   ]
+  },
+  "R": {
+   "centre": [
+    -0.11653,
+    -0.11277,
+    0.32864
+   ],
+   "radius": 0.07822,
+   "gaze": [
+    -0.20289,
+    0.01945,
+    0.97901
+   ]
+  }
+ },
+ "anchors": {
+  "noseTip": [
+   -0.02658,
+   -0.28543,
+   0.53348
+  ],
+  "chin": [
+   -2e-05,
+   -0.5,
+   0.42128
+  ],
+  "crown": [
+   0.18701,
+   0.5,
+   -0.00621
+  ],
+  "eyeballL": [
+   0.11648,
+   -0.15411,
+   0.30736
+  ],
+  "eyeL": [
+   0.13487,
+   -0.16313,
+   0.39567
+  ],
+  "eyeballR": [
+   -0.11653,
+   -0.11277,
+   0.32864
+  ],
+  "eyeR": [
+   -0.1324,
+   -0.11125,
+   0.40521
+  ],
+  "mouth": [
+   -0.01832,
+   -0.36774,
+   -0.50614
+  ],
+  "beardTip": [
+   -0.02031,
+   -0.88554,
+   0.1319
+  ],
+  "earL": [
+   0.37712,
+   -0.21344,
+   0.0
+  ],
+  "earR": [
+   -0.28552,
+   -0.21344,
+   0.0
+  ],
+  "shoulderL": [
+   0.29116,
+   -0.55004,
+   0.1199
+  ],
+  "shoulderR": [
+   -0.18427,
+   -0.55006,
+   -0.46799
+  ],
+  "neckBase": [
+   -0.00808,
+   -0.55006,
+   0.01578
+  ]
+ },
+ "torso": {
+  "forward": [
+   -0.86169,
+   0.0,
+   0.50743
+  ],
+  "left": [
+   0.50743,
+   -0.0,
+   0.86169
+  ],
+  "neckAxisUp": [
+   0.0069,
+   0.5266,
+   0.85009
+  ],
+  "note": "forward/left: horizontal directions the chest faces / its own left (from the cross-section above the cut); neckAxisUp: neck direction fitted through neck cross-sections under the jaw. shoulderL/R are the highest points 0.34-0.42 to either side of the neck along torso.left (where the cast is cut narrower, the extreme of what exists); neckBase is the neck axis at the shoulder line."
+ },
+ "bake": {
+  "ao": "channel 0: ambient visibility, 48 cosine-weighted rays per vertex, mean normalised free distance up to 0.25 head units (1 = open, 0 = enclosed)",
+  "cavity": "channel 1: signed multi-scale curvature, 0.5 = flat, < 0.5 crevice (curl undercuts, eye corners, lid creases, nostrils), > 0.5 ridge/edge; value = 0.5 + 0.5*tanh(c/2.5), c in robust-sigma units",
+  "thickness": "channel 2: inward free distance along -normal (7-ray 22 deg cone) / 0.12 head units; low = thin (nose wings, ears, lids, curl tips, lips): use for subsurface translucency",
+  "skin": "channel 3: 1 = broad smooth carved skin (face, neck, chest), 0 = hair/beard/deep carving; use for polish/gloss and SSS strength"
+ },
+ "notes": [
+  "Gaze per eye measured relative to the facial symmetry plane (deg, +yaw = figure's left, +pitch = up): {\"eyeL\": {\"yaw\": 11.93, \"pitch\": 0.17}, \"eyeR\": {\"yaw\": -11.57, \"pitch\": 6.99}}.",
+  "Facial symmetry plane residual 0.0096 head units (mirror-ICP on the face).",
+  "Crop: one horizontal plane at y = -0.95, capped (flat cap facing -Y); keep it out of frame or in shadow.",
+  "Turn: yaw about +Y through the origin. The 90-degree turn starts with the camera on the figure's RIGHT (-X side, face pointing screen-right) and ends on +Z (stared at).",
+  "Ears: earL ESTIMATED: ear hidden by hair/beard; outer surface point beside the ear position estimated 0.318 behind the eyeball midpoint along the facial axis (ratio measured on david); earR ESTIMATED: ear hidden by hair/beard; outer surface point beside the ear position estimated 0.318 behind the eyeball midpoint along the facial axis (ratio measured on david)",
+  "Head units: 1.0 = 39.047 source units (raw STL units).",
+  "STAND-IN: the giant (Klytios?) from the Pergamon Altar Gigantomachy; no freely licensed scan of a marble Prometheus exists. Same Hellenistic pathos face family as Laocoon and Adam's Prometheus.",
+  "Relief slab removed: cut at source z = 7 (relief ground) and x = 62 (its return), both capped. The big flat cap at the back faces head-space +X/-Z: approach the profile ONLY from the -X side (the turn arc -X -> +Z never sees it; from +X it is a flat wall). The arms are broken off at the shoulders (no hands).",
+  "Blank eyes. Yaw = mean of the two eyeball caps (0.2 deg); pitch 6.0 deg chosen visually (renders at camera pitch -15..+25); head space is levelled.",
+  "The chin is hidden in the beard: anchors.chin is an ESTIMATE (see frame); anchors.beardTip is the lowest point of the beard. Head units therefore use an anatomical chin, not the beard."
+ ]
+}

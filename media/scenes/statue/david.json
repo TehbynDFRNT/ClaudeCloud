@@ -61,14 +61,14 @@
  },
  "bounds": {
   "min": [
-   -0.44539,
+   -0.52883,
    -0.85019,
-   -0.52921
+   -0.48264
   ],
   "max": [
-   0.67195,
-   0.50003,
-   0.59223
+   0.5885,
+   0.50002,
+   0.63872
   ]
  },
  "frame": {
@@ -80,7 +80,7 @@
     0.00747,
     -0.00378,
     -0.0,
-    -0.18624
+    -0.26968
    ],
    [
     -0.00055,
@@ -92,7 +92,7 @@
     -0.00374,
     -0.00739,
     -0.00121,
-    0.89843
+    0.945
    ],
    [
     0.0,
@@ -121,9 +121,9 @@
  "eyes": {
   "L": {
    "centre": [
-    0.12061,
+    0.03716,
     -0.04862,
-    0.29082
+    0.33739
    ],
    "radius": 0.08931,
    "gaze": [
@@ -135,9 +135,9 @@
   },
   "R": {
    "centre": [
-    -0.12061,
+    -0.20405,
     -0.07335,
-    0.22918
+    0.27575
    ],
    "radius": 0.09381,
    "gaze": [
@@ -150,91 +150,91 @@
  },
  "anchors": {
   "noseTip": [
-   -0.02961,
+   -0.11306,
    -0.23244,
-   0.47447
+   0.52104
   ],
   "chin": [
-   0.01266,
+   -0.07078,
    -0.5,
-   0.34408
+   0.39065
   ],
   "crown": [
-   0.07105,
+   -0.0124,
    0.5,
-   0.15869
+   0.20526
   ],
   "eyeballL": [
-   0.12061,
+   0.03716,
    -0.04862,
-   0.29082
+   0.33739
   ],
   "eyeL": [
-   0.14098,
+   0.05753,
    -0.04758,
-   0.37777
+   0.42434
   ],
   "pupilL": [
-   0.14098,
+   0.05753,
    -0.04758,
-   0.37777
+   0.42434
   ],
   "eyeballR": [
-   -0.12061,
+   -0.20405,
    -0.07335,
-   0.22918
+   0.27575
   ],
   "eyeR": [
-   -0.142,
+   -0.22544,
    -0.07444,
-   0.32052
+   0.36708
   ],
   "pupilR": [
-   -0.142,
+   -0.22544,
    -0.07444,
-   0.32052
+   0.36708
   ],
   "mouth": [
-   -0.00093,
+   -0.08437,
    -0.352,
-   0.37917
-  ],
-  "earL": [
-   0.36087,
-   -0.16,
-   0.13
+   0.42574
   ],
   "earR": [
-   -0.1562,
-   -0.145,
-   -0.1075
+   -0.23976,
+   -0.14205,
+   -0.06127
+  ],
+  "earL": [
+   0.23976,
+   -0.102,
+   0.06127
   ],
   "shoulderL": [
-   0.41661,
-   -0.62595,
-   0.31594
+   0.33594,
+   -0.6246,
+   0.36196
   ],
   "shoulderR": [
-   0.23017,
-   -0.72504,
-   -0.36802
+   0.14254,
+   -0.72551,
+   -0.32168
   ],
   "neckBase": [
-   0.25313,
-   -0.60595,
-   -0.01577
+   0.16712,
+   -0.6046,
+   0.02815
   ]
  },
  "torso": {
   "forward": [
-   -0.99998,
+   -0.99999,
    0.0,
-   -0.00599
+   -0.00519
   ],
   "left": [
-   -0.00599,
+   -0.00519,
    0.0,
-   0.99998
+   0.99999
   ]
  },
  "bake": {
@@ -248,7 +248,7 @@
   "Facial symmetry plane residual 0.0043 head units (mirror-ICP on the face).",
   "Crop: one horizontal plane at y = -0.85, capped (flat cap facing -Y); keep it out of frame or in shadow.",
   "Turn: yaw about +Y through the origin. The 90-degree turn starts with the camera on the figure's RIGHT (-X side, face pointing screen-right) and ends on +Z (stared at).",
-  "Ears: earL measured: most medial point of the ear bowl (concha) seen from the side; earR measured: most medial point of the ear bowl (concha) seen from the side",
+  "Ears: earR measured: most medial point of the right concha seen from the side; earL mirror image of earR across the facial symmetry plane (the left ear is buried in curls)",
   "Head units: 1.0 = 119.475 source units (raw STL units).",
   "Carved heart-shaped pupils: each eye's gaze = eyeball sphere centre -> pupil pit centroid. Michelangelo's eyes diverge (the left eye looks further to his left); +Z is the mean of the two, 14.8 deg to the figure's left of the facial symmetry axis, so at yaw 0 the face is seen slightly turned while the eyes look into the lens.",
   "The cast's gaze runs 8.3 deg below horizontal; head space is levelled (head tipped back by that amount) so the stare is horizontal. frame.restoreCastPosture undoes it (then place the camera below eye level).",
