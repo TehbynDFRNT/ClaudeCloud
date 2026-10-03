@@ -216,24 +216,30 @@ vec3 wdFilaments(vec3 ro, vec3 rd, float tMax, float pixA, float t){
 }
 
 // ---------- surface features
-// small flares: hashed kernels on a 3D grid (exact, per-kernel random timing), bursting and flickering
+// small flares: hashed kernels on a 3D grid projected onto the sphere, per-kernel random timing.
+// The 2x2x2 neighbourhood covers every kernel within 0.5 lattice of q; depth (0.3) and radius (0.18) bounds keep
+// every contributing kernel inside it, so there are no seams at cell faces.
 float wdFlareMask(vec3 n, float t){
   if (uFlare <= 0.0) return 0.0;
-  vec3 q = n * 38.0;
-  vec3 c = floor(q);
-  vec3 h = hash33(c + 13.7);
-  vec3 fp = c + 0.25 + 0.5 * h;
-  vec3 dv = q - fp;
-  float d = length(dv - n * dot(dv, n));                               // kernels project radially onto the surface
-  float r1 = hash13(c * 1.31 + 7.1);
-  if (r1 > 0.25 + 0.55 * uFlare) return 0.0;                         // more kernels awake as activity grows
-  float r2 = hash13(c * 0.77 + 3.3), r3 = hash13(c * 2.11 + 9.9);
-  float ph = fract(t * (0.35 + 0.6 * r2) + r3);
-  float life = smoothstep(0.0, 0.04, ph) * smoothstep(0.32, 0.06, ph);   // fast rise, quick decay
-  float flick = 0.55 + 0.45 * sin(t * (31.0 + 23.0 * r2) + r3 * 40.0);
-  float core = exp(-d * d / 0.004);
-  float halo = exp(-d / 0.05) * 0.12 * smoothstep(0.24, 0.12, d);    // stays inside its own cell (no seams)
-  return (core + halo) * life * flick * (0.5 + uFlare);
+  const float F = 38.0;
+  vec3 q = n * F;
+  vec3 b0 = floor(q - 0.5);
+  float acc = 0.0;
+  for (int i = 0; i < 8; i++){
+    vec3 c = b0 + vec3(float(i & 1), float((i >> 1) & 1), float((i >> 2) & 1));
+    if (hash13(c * 1.31 + 7.1) > 0.35 + 0.6 * uFlare) continue;       // more kernels awake as activity grows
+    vec3 fp = c + 0.25 + 0.5 * hash33(c + 13.7);
+    float rf = length(fp);
+    if (abs(rf - F) > 0.3) continue;
+    float d = length(q - fp * (F / rf));
+    if (d > 0.18) continue;
+    float r2 = hash13(c * 0.77 + 3.3), r3 = hash13(c * 2.11 + 9.9);
+    float ph = fract(t * (0.35 + 0.6 * r2) + r3);
+    float life = smoothstep(0.0, 0.04, ph) * smoothstep(0.32, 0.06, ph);   // fast rise, quick decay
+    float flick = 0.55 + 0.45 * sin(t * (31.0 + 23.0 * r2) + r3 * 40.0);
+    acc += (exp(-d * d / 0.004) + exp(-d / 0.05) * 0.12 * smoothstep(0.18, 0.10, d)) * life * flick;
+  }
+  return acc * (0.5 + uFlare);
 }
 
 // the eruption above the flash point, seen along the ray (additive, sharp pass)

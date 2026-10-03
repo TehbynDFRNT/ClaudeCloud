@@ -635,10 +635,17 @@ export function collapse() {
 export function rings() {
   const D = new Drawing(2929);
   const C = [0, 0], R = 0.32;
+  // registration with S29a's last frame: the shell is centred on the centre of mass (r = 0.321H), the
+  // giant sits 0.0204H left of it (a red dot of radius ~0.011H), the dwarf 0.0112H right
+  const kS = R / 0.321;
+  const G = [C[0] - 0.0204 * kS, C[1]], WDp = [C[0] + 0.0112 * kS, C[1]], GR = 0.0118;
   D.at(-40);
   // compass construction: centre hole and a stylus circle
   D.stroke(arcPts(C[0], C[1], 0.9 * PX, 0, TAU, { step: 0.5 * PX }), { kind: 'relief', w: 2.2, d: 0.9, speed: 0.1, wet: false });
   D.stroke(arcPts(C[0], C[1], R * 1.12, 0, TAU, { step: 3 * PX }), { kind: 'relief', w: 1.3, d: 0.5, speed: 3, wet: false });
+  // the line of centres, ruled blind and then lightly inked (it runs through giant, centre and dwarf)
+  D.stroke(linePts(-R * 1.16, C[1], R * 1.16, C[1], { step: 3 * PX }), { kind: 'relief', w: 1.2, d: 0.45, speed: 3, wet: false, taper: [2, 2] });
+  D.stroke(linePts(-0.11, C[1] + 0.3 * PX, 0.1, C[1] - 0.2 * PX, { step: 2 * PX, wob: 0.2 * PX, seed: 31 }), { w: 0.75, d: 0.26, speed: 1.2, taper: [40, 40], press: 0.3, wet: false });
   // the shell: two firm compass rings with a hatched band between (tone), fainter echoes outside
   const r0 = R * 0.955, r1 = R * 1.03;
   circleStroke(D, C[0], C[1], R, { w: 2.8, d: 0.92, speed: 0.7, sweep: TAU * 1.02, wob: 0.2 * PX });
@@ -656,20 +663,22 @@ export function rings() {
     for (const [ka, kr, ks] of knots) { const kx = C[0] + Math.cos(ka) * R * kr, ky = C[1] + Math.sin(ka) * R * kr; v += 0.6 * Math.exp(-((x - kx) ** 2 + (y - ky) ** 2) / (ks * ks)); }
     return Math.min(1, v + 0.05 * Math.sin(a * 23));
   }, [C[0] - r1, C[1] - r1, C[0] + r1, C[1] + r1], { angle: 0.95, sp: 3.2, w: 0.9, d: 0.5, speed: 3, maxLen: 14, minLen: 3, gap: 0.002, thr: [0.25, 0.85] });
-  // the giant: a big circle, shaded on the side away from the dwarf
-  const G = [C[0] - 0.15, C[1] + 0.005], GR = 0.058;
-  circleStroke(D, G[0], G[1], GR, { w: 1.9, d: 0.8, speed: 0.5, wob: 0.5 * PX });
+  // the giant where S29a leaves it: the big circle beside the tiny point, shaded away from the dwarf
+  circleStroke(D, G[0], G[1], GR, { w: 1.7, d: 0.85, speed: 0.3, wob: 0.25 * PX });
   hatch(D, (x, y) => {
     const dx = (x - G[0]) / GR, dy = (y - G[1]) / GR;
-    if (dx * dx + dy * dy > 0.88) return 0;
-    return Math.max(0, -dx * 0.85 + dy * 0.35 + 0.45);
-  }, [G[0] - GR, G[1] - GR, G[0] + GR, G[1] + GR], { angle: 0.95, sp: 3.6, w: 1.1, d: 0.55, speed: 3, thr: [0.15, 0.95] });
-  // the dwarf: the tiny centre point (it survives)
-  dot(D, C[0], C[1], 2.6);
-  D.text('a', G[0] - 0.01, G[1] - GR - 0.016, { size: 20, d: 0.62 });
+    if (dx * dx + dy * dy > 0.8) return 0;
+    return Math.max(0, -dx * 0.85 + dy * 0.4 + 0.35);
+  }, [G[0] - GR, G[1] - GR, G[0] + GR, G[1] + GR], { angle: 0.95, sp: 2.4, w: 0.9, d: 0.6, speed: 3, minLen: 2, thr: [0.15, 0.9] });
+  // the dwarf: the tiny point (it survives)
+  dot(D, WDp[0], WDp[1], 2.6);
+  D.text('a', G[0] + 0.004, G[1] - GR - 0.012, { size: 17, d: 0.6 });
+  D.text('b', WDp[0] + 0.013, WDp[1] - 0.012, { size: 17, d: 0.6 });
+  // an older note at the left, faint: the great feeds the small
+  scriptBlock(D, ['il grande nutre', 'il picholo'], -0.43, 0.13, { size: 19, lh: 26, d: 0.4 });
   D.fitTo(0, -40, -1.0);
-  // during the shot: the pen finishes the last circle (outermost, slow and calm), then the motto
-  D.text('il sole nõ si move', 0.66, -0.38, { size: 30, d: 0.62, t0: -0.55, dur: 1.5 });
+  // during the shot: the motto (above right of the rings), and the pen finishes the last circle
+  D.text('il sole nõ si move', 0.63, -0.265, { size: 28, d: 0.62, t0: -0.55, dur: 1.5 });
   const last = arcPts(C[0], C[1], R * 1.07, -1.9, -1.9 + TAU * 1.01, { step: 1.6 * PX, wob: 0.3 * PX, seed: 77 });
   // already under way through the dissolve, the pen closes the outer circle as the title settles
   D.stroke(last, { w: 1.7, d: 0.75, t0: -1.2, dur: 4.0, taper: [10, 14], press: 0.2 });

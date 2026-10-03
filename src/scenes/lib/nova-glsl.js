@@ -85,8 +85,9 @@ vec4 fireballMarch(vec3 ro, vec3 rd, float tMin, float tMax, float jit){
   vec3 col = vec3(0.0); float T = 1.0;
   if (t1 <= t0) return vec4(col, T);
   float t = t0 + jit * 0.01 * R;
+  int iters = uFbShell > 0.5 ? 40 : 48;
   for (int i = 0; i < 48; i++){
-    if (t > t1) break;
+    if (t > t1 || i >= iters) break;
     vec3 p = ro + rd * t;
     vec3 v = p - uFbC; float r = length(v); vec3 n = v / max(r, 1e-6);
     float hot; float s = fbShape(n, hot);
@@ -96,9 +97,9 @@ vec4 fireballMarch(vec3 ro, vec3 rd, float tMin, float tMax, float jit){
     vec3 q = v / R;
     float w1 = n3(q * 6.5 + vec3(0.0, uFbEvo * 0.35, uFbSeed));
     float w2 = 0.0, w3 = 0.0;
-    if (e > -0.07){                                   // fine turbulence only near the front
+    if (e > -0.05 && e < mix(0.08, 0.35, uFbShell)){  // fine turbulence only near the front
       w2 = n3(q * 17.0 + vec3(uFbEvo * 0.5, 0.0, 0.0));
-      w3 = n3(q * 43.0 + vec3(0.0, 0.0, uFbEvo * 0.8));
+      if (abs(e) < 0.04) w3 = n3(q * 43.0 + vec3(0.0, 0.0, uFbEvo * 0.8));
     }
     float ee = e + 0.045 * uFbTurb * (w1 + 0.5 * w2) + 0.006 * w3;
     float body = smoothstep(-0.004, 0.004, ee);
@@ -119,7 +120,7 @@ vec4 fireballMarch(vec3 ro, vec3 rd, float tMin, float tMax, float jit){
     hb = mix(hb, hs, uFbShell);
     float h = uFbHeat * mix(hb, 0.22 + 0.1 * veil, (1.0 - body));
     h = mix(h, uFbHeat * (0.47 + 0.2 * pow(mu, 1.2) + 0.22 * (hot - 0.45) + 0.1 * pow(vein, 3.0)), ph);
-    float dt = R * clamp(min(0.35 * abs(ee - 0.003), uFbPh > 0.0 ? max(0.35 * abs(eph0), 0.004) : 1.0), 0.004, 0.05) * (0.7 + 0.6 * fract(jit + float(i) * 0.618034));
+    float dt = R * clamp(min(0.35 * abs(ee - 0.003), uFbPh > 0.0 ? max(0.35 * abs(eph0), 0.004) : 1.0), 0.004, mix(0.05, 0.09, uFbShell)) * (0.7 + 0.6 * fract(jit + float(i) * 0.618034));
     float a = 1.0 - exp(-rho * uFbDens * dt / R);
     vec3 em = novaEmit(h);
     em += C_ICE * uFbBlue * 3.0 * cor * exp(min(ee + 0.06, 0.0) / 0.03) * step(ee, -0.03);
@@ -153,6 +154,7 @@ uniform float uEquator;  // equatorial enhancement (orbital plane)
 uniform float uSheetW;   // continuous sheet weight multiplier
 uniform float uSheetWid; // sheet radial width (fraction of R): thinner = stronger limb brightening
 uniform float uKnotGain; // knot (heads + tails) brightness multiplier
+uniform float uFaceDim;  // 0..1 suppress the disc interior relative to the limb (calm ring for the final wide)
 uniform int uShSteps;    // max steps per segment
 uniform float uShStep;   // target step length (fraction of R)
 // palette, precomputed on the CPU with the same ramp (novaColor in nova-*.js)
@@ -295,7 +297,9 @@ vec3 shellMarch(vec3 ro, vec3 rd, float jit, float tMax){
       col += shellBody(nw, A, shScale(n) * uShR, r0, r1, dt);
     }
   }
-  return col * lsb * uShGain;
+  // final ring: dim the projected interior toward the centre, keep the limb
+  float face = 1.0 - uFaceDim * (1.0 - smoothstep(0.66, 0.97, p / (uShR * smax)));
+  return col * lsb * uShGain * face;
 }
 `;
 
@@ -356,7 +360,7 @@ vec4 waveMarch(vec3 ro, vec3 rd, float jit){
   float R = uWvR;
   vec3 col = vec3(0.0); float T = 1.0;
   float t = 0.003 * R * (0.5 + jit);
-  for (int i = 0; i < 72; i++){
+  for (int i = 0; i < 56; i++){
     vec3 p = ro + rd * t;
     float r = length(p); vec3 n = p / max(r, 1e-6);
     float x = r / R;
@@ -367,11 +371,12 @@ vec4 waveMarch(vec3 ro, vec3 rd, float jit){
     vec3 q = p / R;
     float w1 = n3(q * 6.5 + vec3(0.0, uFbEvo * 0.35, uFbSeed));
     float w2 = n3(q * 17.0 + vec3(uFbEvo * 0.5, 0.0, 0.0));
-    float w3 = n3(q * 43.0 + vec3(0.0, 0.0, uFbEvo * 0.8));
+    float w3 = abs(e) < 0.06 ? n3(q * 43.0 + vec3(0.0, 0.0, uFbEvo * 0.8)) : 0.0;
     float ee = e + 0.04 * (w1 + 0.5 * w2) + 0.008 * w3;
     float body = smoothstep(-0.004, 0.004, ee);
-    float layer = exp(-max(ee, 0.0) / 0.035);
+    float layer = exp(-max(ee, 0.0) / 0.022);
     float vein = 1.0 - abs(w2 + 0.5 * w3);
+    layer *= 0.3 + 1.4 * smoothstep(0.25, 0.85, 0.5 + 0.5 * w1 + 0.35 * (hot - 0.45) + 0.25 * w2);
     float clump = max(0.0, 0.05 + 1.1 * hot * hot + 0.3 * vein * vein + 0.6 * w1 + 0.05 * w3);
     float gas = (0.012 + 0.3 * pow(smoothstep(0.55, 1.3, clump), 2.0)) * smoothstep(0.42, 0.85, x);
     float rho = body * (5.0 * layer + gas);
@@ -392,7 +397,7 @@ vec4 waveMarch(vec3 ro, vec3 rd, float jit){
     vec3 em = novaEmit(h);
     // cold-blue radiative precursor just ahead of the front
     float pre = exp(-pow((ee + 0.03) / 0.03, 2.0)) * (1.0 - body) * (0.5 + 0.5 * w1);
-    float dt = clamp(min(0.35 * abs(ee - 0.003) * R + 0.002 * R, max(t * 0.07, 0.004 * R)), 0.002 * R, 0.07 * R) * (0.7 + 0.6 * fract(jit + float(i) * 0.618034));
+    float dt = clamp(min(0.35 * abs(ee - 0.003) * R + 0.002 * R, max(t * 0.09, 0.004 * R)), 0.002 * R, 0.09 * R) * (0.7 + 0.6 * fract(jit + float(i) * 0.618034));
     if (x < 0.4) dt = max(dt, (0.42 - x) * R * 0.9);     // empty hot interior: only the analytic core glow
     float a = 1.0 - exp(-rho * uWvDens * dt / R);
     // thin, very hot inner plasma around the surviving dwarf

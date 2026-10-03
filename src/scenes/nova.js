@@ -282,7 +282,7 @@ export default {
     },
     // 3.83 s: system wide. The sphere swallows the disk, severs the stream and slams into the giant.
     'S23-eruption': {
-      mode: 'system', volScale: 0.5, dur: 3.83,
+      mode: 'system', volScale: 0.4, dur: 3.83,
       cam: SYS_CAM(0, 3.83),
       fbR: [[0, 0.08], [3.83, 0.92, 'outSine']],
       fbTurb: 0.12, fbDens: [[0, 30], [0.8, 10], [1.8, 2.5], [3.83, 0.9]], fbHeat: [[0, 1.08], [1.0, 1.0], [3.83, 0.96]], fbShell: [[0, 0.3], [1.2, 1.0]],
@@ -294,19 +294,19 @@ export default {
     // 2.5 s: the pressure wave passes through the camera: a wall of light approaches, envelops (refraction,
     // debris streaking past), then glowing hot gas all around. Peak of the Doppler roar.
     'S24-shockfront': {
-      mode: 'wave', volScale: 0.5, dur: 2.5,
+      mode: 'wave', volScale: 0.4, dur: 2.5,
       cam: [[0, [0.05, 0.02, -1.0], [0, 0, 0], 58, 0], [1.05, [0.03, 0.01, -1.0], [0, 0, 0.2], 60, 0.03], [2.5, [0.0, 0.0, -0.98], [0.02, 0.02, 0.2], 62, 0.06]],
       wvR: [[0, 0.5], [1.05, 0.985, 'inQuad'], [2.5, 1.26, 'outQuad']],
       fbTurb: 0.12, fbEvo: [[0, 4.0], [2.5, 6.5, 'linear']], wvDens: 34, wvHeat: [[0, 0.88], [1.0, 0.9], [1.3, 1.0], [2.5, 1.0]],
       debris: [[0, 0.6], [1.0, 1.0], [2.5, 0.6]], adv: [[0, 0], [2.5, 9.0, 'linear']],
       refract: [[0.6, 0], [1.02, 1.0], [1.5, 0.35], [2.5, 0.12]],
       starGain: 1,
-      postKeys: { zoomBlur: [[0.6, 0.0], [1.05, 0.07], [1.6, 0.025], [2.5, 0.015]], exposure: [[0, 1.0], [0.95, 0.85], [1.1, 0.6], [1.4, 0.85], [2.5, 0.75]] },
+      postKeys: { zoomBlur: [[0.6, 0.0], [1.05, 0.07], [1.6, 0.025], [2.5, 0.015]], exposure: [[0, 1.0], [0.95, 0.85], [1.12, 0.62], [1.4, 1.05], [2.5, 1.0]] },
       post: { bloomStrength: 0.12, halation: 0.04, saturation: 1.1, contrast: 1.06 },
     },
     // 2.9 s: limb of the decelerating shell; it fractures into golden fingers and knots.
     'S25-shell': {
-      mode: 'shell', volScale: 0.6, dur: 2.88,
+      mode: 'shell', volScale: 0.55, dur: 2.88, stepLen: 0.045,
       cam: [[0, [1.2, 1.0, 5.6], [1.7, 1.2, 0.0], 36], [2.9, [1.45, 1.05, 5.9], [1.85, 1.25, 0.0], 36, 0, 'outCubic']],
       shR: [[0, 3.0], [2.88, 3.25, 'outQuad']], frac: [[0, 0.05], [2.88, 0.95, 'inOutSine']], shHeat: [[0, 0.72], [2.88, 0.63]],
       gain: 1.0, skin: 0.5, knotK: 13, prolate: 0.1, equator: 0.5, sheetW: 1, steps: 14, giant: true, giantGlow: 0.8, scar: 0.8, dwarfLum: 1,
@@ -314,7 +314,7 @@ export default {
     },
     // 6.8 s: the immense fractured golden shell; the pair small inside; slow pull back.
     'S26-expansion': {
-      mode: 'shell', volScale: 0.6, dur: 6.0,
+      mode: 'shell', volScale: 0.6, dur: 6.0, stepLen: 0.042,
       cam: [[0, [3.6, 5.0, 12.4], [0, 0, 0], 34], [6.0, [7.6, 10.4, 25.6], [0, 0, 0], 34]],
       shR: [[0, 7.0], [6.0, 7.45, 'linear']], frac: 1, shHeat: [[0, 0.62], [6.0, 0.56]],
       gain: 1.0, skin: 0.5, knotK: 11, prolate: 0.12, equator: 0.6, sheetW: 1.6, steps: 32, giant: true, giantGlow: 0.55, scar: 0.6, dwarfLum: 0.6,
@@ -324,8 +324,8 @@ export default {
     'S29a-ring': {
       mode: 'shell', volScale: 0.6, dur: 3.33,
       cam: [[0, [0.0, 58.0, 10.2], [0, 0, 0], 30], [5.5, [0.0, 58.0, 10.2], [0, 0, 0], 30]],
-      shR: [[0, 10.0], [5.5, 10.15, 'linear']], frac: 1, shHeat: 0.6,
-      gain: 1.0, skin: 1.0, knotK: 11, prolate: 0.0, equator: 0.6, sheetW: 15.0, sheetWid: 0.007, knotGain: 0.12, steps: 24, giant: true, giantGlow: 0.55, scar: 0.6, dwarfLum: 0.5,
+      shR: [[0, 10.0], [5.5, 10.15, 'linear']], frac: 1, shHeat: 0.63,
+      gain: 1.0, skin: 1.0, knotK: 11, prolate: 0.0, equator: 0.6, sheetW: 6.0, sheetWid: 0.01, knotGain: 0.5, faceDim: 0.8, steps: 24, giant: true, giantGlow: 0.55, scar: 0.6, dwarfLum: 0.5,
       post: { bloomStrength: 0.08 },
     },
     default: { mode: 'fire', fbR: 0.6 },
@@ -379,7 +379,7 @@ export default {
         ...cam.uniforms, uShC: [0, 0, 0], uShR: kv(P.shR, t, 5), uShAxis: [0, 1, 0], uProlate: kv(P.prolate, t, 0.1), uFrac: kv(P.frac, t, 1),
         ...shellPalette(kv(P.shHeat, t, 0.65), kv(P.frac, t, 1)),
         uShHeat: kv(P.shHeat, t, 0.65), uShGain: kv(P.gain, t, 1), uSkin: kv(P.skin, t, 0.6), uKnotK: kv(P.knotK, t, 13), uShSeed: P.seed ?? 5.0,
-        uShEvo: S.t, uEquator: kv(P.equator, t, 0.5), uSheetW: kv(P.sheetW, t, 1), uSheetWid: kv(P.sheetWid, t, 0.026), uKnotGain: kv(P.knotGain, t, 1), uShSteps: P.steps ?? 32, uShStep: kv(P.stepLen, t, 0.035),
+        uShEvo: S.t, uEquator: kv(P.equator, t, 0.5), uSheetW: kv(P.sheetW, t, 1), uSheetWid: kv(P.sheetWid, t, 0.026), uKnotGain: kv(P.knotGain, t, 1), uFaceDim: kv(P.faceDim, t, 0), uShSteps: P.steps ?? 32, uShStep: kv(P.stepLen, t, 0.035),
         uOccC: GIANT_POS, uOccR: 0.31,
       }, vol);
       if (P.giant) Object.assign(comp, giantU(kv(P.giantGlow, t, 0.6), kv(P.scar, t, 0.8)), { uUseGiant: 1, uGiantFar: 1, uNovaLight: 0, uContact: 0 });

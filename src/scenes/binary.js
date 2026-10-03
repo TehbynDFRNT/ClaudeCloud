@@ -48,18 +48,32 @@ vec4 volUpsample(bool hit){
   vec2 i0 = floor(p), fr = p - i0;
   ivec2 b = ivec2(i0), mx = ivec2(uVolRes) - 1;
   vec4 acc = vec4(0.0); float ws = 0.0;
-  vec4 plain = vec4(0.0);
   for (int k = 0; k < 4; k++){
     ivec2 o = ivec2(k & 1, k >> 1);
     vec4 s = texelFetch(uVol, clamp(b + o, ivec2(0), mx), 0);
     float w = (o.x == 1 ? fr.x : 1.0 - fr.x) * (o.y == 1 ? fr.y : 1.0 - fr.y);
     bool sh = s.a < 0.0;
     s.a = sh ? -s.a - 0.001 : s.a;
-    plain += s * w;
     float m = (sh == hit) ? 1.0 : 0.0;
     acc += s * w * m; ws += w * m;
   }
-  return ws > 1e-4 ? acc / ws : plain;
+  if (ws > 1e-4) return acc / ws;
+  // all four disagree (thin band along the limb): nearest agreeing texels in the 4x4 neighbourhood
+  acc = vec4(0.0); ws = 0.0;
+  for (int k = 0; k < 16; k++){
+    ivec2 o = ivec2(k & 3, k >> 2) - 1;
+    vec4 s = texelFetch(uVol, clamp(b + o, ivec2(0), mx), 0);
+    bool sh = s.a < 0.0;
+    if (sh != hit) continue;
+    s.a = sh ? -s.a - 0.001 : s.a;
+    vec2 d = vec2(o) - fr;
+    float w = exp(-dot(d, d) * 1.5);
+    acc += s * w; ws += w;
+  }
+  if (ws > 1e-5) return acc / ws;
+  vec4 s = texelFetch(uVol, clamp(b, ivec2(0), mx), 0);
+  s.a = s.a < 0.0 ? -s.a - 0.001 : s.a;
+  return s;
 }
 vec3 giantNormal(vec3 p){
   vec3 o = p - uGiantPos;
@@ -105,21 +119,23 @@ const smooth = (a, b, x) => { const u = clamp((x - a) / (b - a)); return u * u *
 const GIANT_DEF = { R: 0.317, bulge: 0.33, glow: 1.0, plumes: 0.3, relief: 0, boil: 1.0, limb: 0.62 };
 
 // ---------------------------------------------------------------------------------------------------------
-// Presets (shot ids from film-plan.json). Times are shot-local seconds.
+// Presets (shot ids from film-plan.json). Keyframe times are NORMALISED shot progress u = local / dur (0..1), so the
+// presets survive re-timing of the plan; decays, flow rates and drift stay in seconds.
 const presets = {
   // Act I. Scale and attraction: the giant swollen into a teardrop, the dwarf a speck; ice-blue diagram draws on.
   'S04-scale': {
-    cam: [[0, [-0.66, 0.50, 1.55], [-0.13, -0.03, 0.0], 36], [6.63, [-0.56, 0.455, 1.42], [-0.11, -0.03, 0.0], 36, 0, 'inOutSine']],
+    cam: [[0, [-0.66, 0.50, 1.55], [-0.13, -0.03, 0.0], 36], [1, [-0.56, 0.455, 1.42], [-0.11, -0.03, 0.0], 36, 0, 'inOutSine']],
     streamAmt: 0, diskAmt: 0, ringAmt: 0,
     giant: { plumes: 0.75 }, dwarfLum: 1.3, rakeG: 0.12,
-    overlay: 'diagram', volScale: 0.5,
+    overlay: 'diagram', diagram: { bary: [0.07, 0.17], orbit: [0.05, 0.5], lobes: [0.3, 0.8], mark: [0.77, 0.87], label: [0.82, 0.95] },
+    volScale: 0.5,
     post: { bloomStrength: 0.09, streakStrength: 0.02 },
   },
   // Close on the L1 tip: a tongue of plasma lifts toward the off-screen dwarf, raked by its light.
   'S06-first-pull': {
-    cam: [[0, [-0.272, -0.031, 0.202], [-0.13, 0.03, -0.05], 50, -0.72], [3.67, [-0.259, -0.027, 0.188], [-0.12, 0.034, -0.05], 48, -0.84, 'inOutSine']],
-    headS: [[0, -0.012], [3.67, 0.075, 'inQuad']],
-    streamAmt: 0.85, streamW: 1.0, rip: 0.5, flowRate: 1.2, detail: 1.0, rake: 3.5, rakeG: 0.12, starGain: 0.5,
+    cam: [[0, [-0.272, -0.031, 0.202], [-0.13, 0.03, -0.05], 50, -0.72], [1, [-0.259, -0.027, 0.188], [-0.12, 0.034, -0.05], 48, -0.84, 'inOutSine']],
+    headS: [[0, -0.012], [1, 0.08, 'inQuad']],
+    streamAmt: 0.85, streamW: 1.0, rip: 0.5, flowRate: 1.2, detail: 1.0, rake: 1.5, rakeG: 0.12, starGain: 0.5,
     giant: { relief: 0.006, plumes: 0.6, glow: 1.5 }, dwarfLum: 1.2, volScale: 0.6,
     post: { bloomStrength: 0.08 },
   },
@@ -127,20 +143,20 @@ const presets = {
   'S07-stream': {
     cam: [
       [0, [-0.31, 0.33, 0.44], [-0.15, -0.02, 0.03], 40],
-      [4.5, [-0.15, 0.38, 0.52], [-0.02, -0.02, 0.05], 40, 0, 'inOutSine'],
-      [9.38, [0.11, 0.46, 0.66], [0.19, -0.02, 0.04], 40, 0, 'inOutSine'],
+      [0.48, [-0.15, 0.38, 0.52], [-0.02, -0.02, 0.05], 40, 0, 'inOutSine'],
+      [1, [0.11, 0.46, 0.66], [0.19, -0.02, 0.04], 40, 0, 'inOutSine'],
     ],
-    headTau: [[0, 0.80], [9.38, 1.36, 'linear']],
+    headTau: [[0, 0.80], [1, 1.36, 'linear']],
     streamAmt: 1.0, rip: 1.0, flowRate: 1.6, rake: 0.06, rakeG: 0.1, streamGlow: 1.3, starGain: 0.55,
-    ringAmt: [[0, 0], [8.8, 0], [9.38, 0.06]],
+    ringAmt: [[0, 0], [0.92, 0], [1, 0.06]],
     giant: { plumes: 0.5 }, dwarfLum: 1.3, volScale: 0.5,
     post: { bloomStrength: 0.09, streakStrength: 0.02 },
   },
   // Ride with a clump along its ballistic arc; gold dashed trajectory and ticks draw ahead of it.
   'S08-parabola': {
-    chase: { tau: [[0, 1.0], [4.58, 1.30, 'linear']], back: 0.16, up: 0.23, side: 0.03, lead: 0.2, toDwarf: 0.3, look: 0.55, fov: 48 },
-    clump: { tau: [[0, 1.0], [4.58, 1.30, 'linear']], amt: 1.0 },
-    headTau: [[0, 1.014], [4.58, 1.314, 'linear']],
+    chase: { tau: [[0, 1.0], [1, 1.30, 'linear']], back: 0.16, up: 0.23, side: 0.03, lead: 0.2, toDwarf: 0.3, look: 0.55, fov: 48 },
+    clump: { tau: [[0, 1.0], [1, 1.30, 'linear']], amt: 1.0 },
+    headTau: [[0, 1.014], [1, 1.314, 'linear']],
     streamAmt: 1.0, streamGlow: 0.75, rip: 0.6, flowRate: 1.8, rake: 0.4, ringAmt: 0.0, starGain: 0.5,
     dwarfLum: 1.4, volScale: 0.5,
     overlay: 'trajectory',
@@ -148,15 +164,15 @@ const presets = {
   },
   // Goliath bleeds: the torn L1 tip pours matter into space.
   'S11-giant-bleeds': {
-    cam: [[0, [-0.30, 0.060, 0.30], [-0.16, 0.0, 0.02], 42], [2.46, [-0.285, 0.052, 0.275], [-0.15, 0.0, 0.02], 41, 0, 'inOutSine']],
+    cam: [[0, [-0.30, 0.060, 0.30], [-0.16, 0.0, 0.02], 42], [1, [-0.285, 0.052, 0.275], [-0.15, 0.0, 0.02], 41, 0, 'inOutSine']],
     streamAmt: 1.0, streamW: 1.15, streamGlow: 1.0, rip: 1.0, flowRate: 2.0, detail: 0.5, rake: 0.0, rakeG: 0.06, starGain: 0.5,
-    diskAmt: 0.8, diskOut: 0.27, hot: 1.0,
-    giant: { relief: 0.004, plumes: 0.6 }, dwarfLum: 1.2, volScale: 0.5,
+    diskAmt: 0, cutR: 0.26,
+    giant: { relief: 0.004, plumes: 0.6, atmo: 0.6 }, dwarfLum: 1.2, volScale: 0.5,
     post: { bloomStrength: 0.09 },
   },
   // The giant is drained: wide, high angle; a substantial disk fed by the stream.
   'S14c-mass-loss': {
-    cam: [[0, [-0.17, 1.40, 1.52], [-0.08, -0.05, 0.0], 40], [1.71, [-0.13, 1.32, 1.43], [-0.07, -0.05, 0.0], 40, 0, 'linear']],
+    cam: [[0, [-0.17, 1.40, 1.52], [-0.08, -0.05, 0.0], 40], [1, [-0.13, 1.32, 1.43], [-0.07, -0.05, 0.0], 40, 0, 'linear']],
     streamW: 1.35, streamGlow: 1.4, starGain: 0.6, streamAmt: 1.1, rip: 0.7, flowRate: 2.0, rake: 1.0,
     diskAmt: 1.0, diskOut: 0.27, hot: 1.2,
     dwarfLum: 2.2, volScale: 0.5,
@@ -164,7 +180,7 @@ const presets = {
   },
   // Frenzy vista: from behind the giant along the stream.
   'F27.1': {
-    cam: [[0, [-1.12, 0.56, 0.74], [0.28, -0.06, 0.06], 37], [0.88, [-0.98, 0.49, 0.66], [0.28, -0.06, 0.06], 36, 0, 'outQuad']],
+    cam: [[0, [-1.12, 0.56, 0.74], [0.28, -0.06, 0.06], 37], [1, [-0.98, 0.49, 0.66], [0.28, -0.06, 0.06], 36, 0, 'outQuad']],
     streamW: 1.35, streamGlow: 1.4, starGain: 0.6, streamAmt: 1.15, rip: 0.8, flowRate: 2.4, rake: 1.0,
     diskAmt: 1.0, diskOut: 0.27, hot: 1.2,
     dwarfLum: 2.2, volScale: 0.5,
@@ -172,7 +188,7 @@ const presets = {
   },
   // Frenzy vista: top-down orbital view with ice-blue diagram lines.
   'F29.4': {
-    cam: [[0, [0.02, 1.55, 0.02], [0.02, 0, 0.0], 40, 0.10], [0.92, [0.02, 1.38, 0.02], [0.02, 0, 0.0], 40, -0.06, 'outQuad']],
+    cam: [[0, [0.02, 1.55, 0.02], [0.02, 0, 0.0], 40, 0.10], [1, [0.02, 1.38, 0.02], [0.02, 0, 0.0], 40, -0.06, 'outQuad']],
     streamW: 1.35, streamGlow: 1.4, starGain: 0.6, streamAmt: 1.1, rip: 0.7, flowRate: 2.4, rake: 1.0,
     diskAmt: 1.0, diskOut: 0.27, hot: 1.2,
     dwarfLum: 2.2, volScale: 0.5,
@@ -181,10 +197,10 @@ const presets = {
   },
   // Strike 1: the whole system shudders; the disk flares white and decays, the stream whips.
   'S17-strike1': {
-    cam: [[0, [0.66, 0.53, 1.48], [-0.02, -0.03, 0.0], 40], [3.54, [0.58, 0.49, 1.36], [-0.02, -0.03, 0.0], 40, 0, 'outQuad']],
+    cam: [[0, [0.57, 0.43, 1.27], [-0.05, -0.03, 0.0], 40], [1, [0.50, 0.395, 1.16], [-0.05, -0.03, 0.0], 40, 0, 'outQuad']],
     streamW: 1.35, streamGlow: 1.4, starGain: 0.6, streamAmt: 1.15, rip: 0.8, flowRate: 2.2, rake: 1.0,
     diskAmt: 1.0, diskOut: 0.27, hot: 1.3,
-    flare: { amt: 2.2, decay: 0.6 }, whip: { amp: 0.018, speed: 0.55, decay: 0.9 },
+    flare: { amt: 3.6, decay: 0.75 }, whip: { amp: 0.045, speed: 0.75, decay: 0.8 },
     dwarfLum: 2.2, volScale: 0.5,
     post: { bloomStrength: 0.09, streakStrength: 0.02 },
   },
@@ -210,13 +226,14 @@ export default {
   // everything that is a function of the shot time: camera + uniforms
   state(E, S) {
     const P = S.params;
-    const t = clamp(S.local, 0, S.dur);
+    const t = clamp(S.local, 0, S.dur);          // seconds (decays, flow, drift)
+    const u = clamp(t / Math.max(S.dur, 1e-3));    // normalised progress (keyframes)
     const path = this.path;
     const G = { ...GIANT_DEF, ...(P.giant || {}) };
     // camera
     let cam;
-    if (P.chase) cam = this.chaseCam(P.chase, t);
-    else cam = camFromKeys(P.cam || [[0, [0, 1.2, 1.2], [0, 0, 0], 40]], t);
+    if (P.chase) cam = this.chaseCam(P.chase, u);
+    else cam = camFromKeys(P.cam || [[0, [0, 1.2, 1.2], [0, 0, 0], 40]], u);
     if (P.drift) {
       const [amp, sp] = P.drift;
       const o = [Math.sin(t * sp * 0.71 + 1.3) * amp, Math.sin(t * sp * 0.53 + 0.4) * amp * 0.6, Math.sin(t * sp * 0.61 + 2.1) * amp];
@@ -224,23 +241,24 @@ export default {
     }
     // stream development
     let head = 99;
-    if (P.headTau) head = sAtTau(path, ev(P.headTau, t));
-    else if (P.headS !== undefined) head = ev(P.headS, t);
-    const diskAmt = ev(P.diskAmt, t, 0);
-    const diskOut = ev(P.diskOut, t, 0.27);
+    if (P.headTau) head = sAtTau(path, ev(P.headTau, u));
+    else if (P.headS !== undefined) head = ev(P.headS, u);
+    const diskAmt = ev(P.diskAmt, u, 0);
+    const diskOut = ev(P.diskOut, u, 0.27);
     let cut = path.total, fade = path.total - path.sPeri + 0.05, hot = [0, 0, 0, 1];
-    if (diskAmt > 0.05) {
-      cut = sAtDwarfRadius(path, diskOut * 0.95);
+    const cutR = P.cutR ?? (diskAmt > 0.05 ? diskOut * 0.95 : null);
+    if (cutR) {
+      cut = sAtDwarfRadius(path, cutR);
       fade = 0.03;
       const h = pathAtS(path, cut);
-      hot = [h.x, h.z, ev(P.hot, t, 1.0), 1.3];
+      hot = [h.x, h.z, diskAmt > 0.05 ? ev(P.hot, u, 1.0) : 0, 1.3];
     }
     let flare = 0;
-    if (P.flare) flare = P.flare.amt * Math.exp(-t / P.flare.decay) * smooth(-0.01, 0.06, t);
+    if (P.flare) flare = P.flare.amt * Math.exp(-t / P.flare.decay);
     let whip = [0, 0, 0, 0];
     if (P.whip) whip = [P.whip.amp, t, P.whip.speed, P.whip.decay];
     let clumpS = -9, clumpAmt = 0;
-    if (P.clump) { clumpS = sAtTau(path, ev(P.clump.tau, t)); clumpAmt = P.clump.amt; }
+    if (P.clump) { clumpS = sAtTau(path, ev(P.clump.tau, u)); clumpAmt = P.clump.amt; }
     const boxX = Math.max(0.66, XW + Math.max(diskOut, R_CIRC + 0.1) * 1.25 + 0.02);
     const boxZ = Math.max(0.32, Math.max(diskOut, R_CIRC + 0.1) * 1.25 + 0.02);
     const U = {
@@ -248,23 +266,24 @@ export default {
       // giant (GIANT chunk owned by the redgiant department: uniforms only)
       uGiantPos: [XG, 0, 0], uGiantR: G.R, uGiantSpin: 0.6, uBoil: G.boil, uBulge: G.bulge, uBulgeDir: [1, 0, 0],
       uScar: 0, uScarDir: [1, 0, 0], uGiantGlow: G.glow, uPlumes: G.plumes, uRelief: G.relief, uLimbDark: G.limb,
+      uGiantAtmo: G.atmo ?? 0,
       uGiantOn: 1,
       // dwarf
-      uDwarfPos: [XW, 0, 0], uDwarfR: 2.5e-5, uDwarfLum: ev(P.dwarfLum, t, 1.3),
+      uDwarfPos: [XW, 0, 0], uDwarfR: 2.5e-5, uDwarfLum: ev(P.dwarfLum, u, 1.3),
       // stream + disk
       uStreamField: this.field,
       uFieldBox: [FIELD.x0, FIELD.z0, 1 / (FIELD.x1 - FIELD.x0), 1 / (FIELD.z1 - FIELD.z0)],
       uStreamHead: head, uStreamCut: cut, uStreamFade: fade,
-      uStreamAmt: ev(P.streamAmt, t, 1), uStreamW: ev(P.streamW, t, 1), uStreamGlow: ev(P.streamGlow, t, 1),
-      uRip: ev(P.rip, t, 0.6), uFlowT: t * ev(P.flowRate, 0, 1.6) + (S.seed % 17), uDetail: ev(P.detail, t, 0),
-      uWhip: whip, uWD: [XW, 0, 0], uRake: ev(P.rake, t, 1.0),
-      uDiskIn: 0.03, uDiskOut: diskOut, uDiskAmt: diskAmt, uDiskH: ev(P.diskH, t, 0.034), uDiskT: t + 4.0,
-      uDiskGlow: ev(P.diskGlow, t, 1.0), uRingAmt: ev(P.ringAmt, t, 0), uRCirc: R_CIRC, uFlare: flare, uHot: hot,
+      uStreamAmt: ev(P.streamAmt, u, 1), uStreamW: ev(P.streamW, u, 1), uStreamGlow: ev(P.streamGlow, u, 1),
+      uRip: ev(P.rip, u, 0.6), uFlowT: t * ev(P.flowRate, 0, 1.6) + (S.seed % 17), uDetail: ev(P.detail, u, 0),
+      uWhip: whip, uWD: [XW, 0, 0], uRake: ev(P.rake, u, 1.0),
+      uDiskIn: 0.03, uDiskOut: diskOut, uDiskAmt: diskAmt, uDiskH: ev(P.diskH, u, 0.034), uDiskT: t + 4.0,
+      uDiskGlow: ev(P.diskGlow, u, 1.0), uRingAmt: ev(P.ringAmt, u, 0), uRCirc: R_CIRC, uFlare: flare, uHot: hot,
       uClump: [clumpS, clumpAmt],
       uBoxMin: [-0.50, -0.15, -boxZ], uBoxMax: [boxX, 0.15, Math.max(0.38, boxZ)],
-      uStarGain: ev(P.starGain, t, 0.6), uRakeG: ev(P.rakeG, t, 0.06),
+      uStarGain: ev(P.starGain, u, 0.6), uRakeG: ev(P.rakeG, u, 0.06),
     };
-    return { cam, U, t, head, cut, diskOut, diskAmt };
+    return { cam, U, t, u, head, cut, diskOut, diskAmt };
   },
 
   // chase camera riding a point of the ballistic path (S08)
@@ -312,8 +331,8 @@ export default {
     if (!P.overlay) return null;
     const st = this.state(E, S);
     const t = st.t;
-    if (P.overlay === 'diagram') this.drawDiagram(E, ctx, st, t, P);
-    else if (P.overlay === 'topdiagram') this.drawTopDiagram(E, ctx, st, t, P);
+    if (P.overlay === 'diagram') this.drawDiagram(E, ctx, st, st.u, P);
+    else if (P.overlay === 'topdiagram') this.drawTopDiagram(E, ctx, st, st.u, P);
     else if (P.overlay === 'trajectory') this.drawTrajectory(E, ctx, st, t, P);
     return 'add';
   },
@@ -410,17 +429,17 @@ export default {
     const fadeAll = D.fade ?? 1;
     // barycentre
     const bc = cam.project([0, 0, 0], E.W, E.H);
-    const ub = ramp(0.5, 1.1);
+    const ub = ramp(...(D.bary || [0.07, 0.17]));
     if (bc && ub > 0) {
       const vis = !occludedByGiant(cam.pos, [0, 0, 0], G.R, G.bulge);
       this.crossMark(ctx, bc.x, bc.y, 5 * k * ease(ub), ICE, 0.7 * fadeAll * (vis ? 1 : 0.2), k);
     }
     // the dwarf's orbit about the barycentre, drawn in the orbital sense (fine, secondary)
     const oW = this.projectLine(E, cam, this.circle3(0, 0, XW, 200, 0, -1), G);
-    const tipW = this.strokeLine(ctx, oW, ease(ramp(0.4, 3.2)), ICE, w * 0.9, 0.42 * fadeAll, { hidden: 0.1 });
+    const tipW = this.strokeLine(ctx, oW, ease(ramp(...(D.orbit || [0.05, 0.5]))), ICE, w * 0.9, 0.42 * fadeAll, { hidden: 0.1 });
     this.penTip(ctx, tipW, ICE, k, 0.7 * fadeAll);
     // Roche figure-eight: two pens leave L1 together, one around each lobe
-    const uL = ease(ramp(2.1, 5.2));
+    const uL = ease(ramp(...(D.lobes || [0.3, 0.8])));
     const lg = this.projectLine(E, cam, this.lobeG, G);
     const lw = this.projectLine(E, cam, this.lobeW, G);
     const t1 = this.strokeLine(ctx, lg, uL, ICE, w * 1.1, 0.95 * fadeAll, { hidden: 0.12 });
@@ -428,12 +447,12 @@ export default {
     this.penTip(ctx, t1, ICE, k, fadeAll); this.penTip(ctx, t2, ICE, k, fadeAll);
     // L1 mark and label
     const l1 = cam.project(L1, E.W, E.H);
-    const um = ease(ramp(4.7, 5.4));
+    const um = ease(ramp(...(D.mark || [0.77, 0.87])));
     if (l1 && um > 0) {
       ctx.save(); ctx.translate(l1.x, l1.y); ctx.rotate(Math.PI / 4);
       this.crossMark(ctx, 0, 0, 7 * k * um, ICE, 0.95 * fadeAll, k);
       ctx.restore();
-      const ul = ramp(5.0, 5.9);
+      const ul = ramp(...(D.label || [0.82, 0.95]));
       if (ul > 0) {
         ctx.lineWidth = 0.9 * k; ctx.strokeStyle = `rgba(${ICE},${0.45 * ul * fadeAll})`;
         ctx.beginPath(); ctx.moveTo(l1.x + 6 * k, l1.y - 6 * k); ctx.lineTo(l1.x + 26 * k, l1.y - 30 * k); ctx.stroke();
@@ -447,7 +466,7 @@ export default {
   drawTopDiagram(E, ctx, st, t, P) {
     const k = E.H / 1080, cam = st.cam, ICE = '160,205,255';
     const w = 1.2 * k;
-    const u = clamp(0.45 + t / 0.55);
+    const u = clamp(0.45 + t * 0.85);
     const ease = (x) => 1 - Math.pow(1 - x, 3);
     const lg = this.projectLine(E, cam, this.lobeG, null);
     const lw = this.projectLine(E, cam, this.lobeW, null);
@@ -473,7 +492,7 @@ export default {
   drawTrajectory(E, ctx, st, t, P) {
     const k = E.H / 1080, cam = st.cam, GOLD = '255,196,110';
     const path = this.path;
-    const tauC = ev(P.clump.tau, t);
+    const tauC = ev(P.clump.tau, st.u);
     const tauEnd = Math.min(1.395, tauC + 0.012 + 0.16 * (1 - Math.exp(-t / 1.1)) + 0.02 * t);
     const pts = [];
     for (let tau = tauC + 0.006; tau <= tauEnd; tau += 0.0025) { const p = pathAtS(path, sAtTau(path, tau)); pts.push([p.x, 0, p.z]); }

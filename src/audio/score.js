@@ -170,6 +170,13 @@ function drive(ctx, buf, params, t0) {
 }
 
 const G = (ctx, v = 1) => { const g = ctx.createGain(); g.gain.value = v; return g; };
+// Determinism guard: Chrome disables nodes whose inputs have all finished, and the moment a finished source is
+// cleaned up depends on main-thread timing; re-enabling then resets residual filter/convolver state (~1e-5 level
+// differences between runs). A silent ConstantSource that never stops keeps every chain it feeds permanently active.
+function keepAlive(ctx) {
+  const z = ctx.createConstantSource(); z.offset.value = 0; z.start(0);
+  return (...nodes) => { for (const n of nodes) z.connect(n); return nodes[0]; };
+}
 const BQ = (ctx, type, f, q = 0.707, gain = 0) => { const b = ctx.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; b.gain.value = gain; return b; };
 function chain(...nodes) { for (let i = 0; i < nodes.length - 1; i++) nodes[i].connect(nodes[i + 1]); return nodes[nodes.length - 1]; }
 
@@ -202,7 +209,7 @@ export async function loadTimeline(base = '/') {
 // ----------------------------------------------------------------------------------------------------------
 // stem 1: orchestra (two placements of the recording)
 // ----------------------------------------------------------------------------------------------------------
-function buildOrchestra(ctx, tl, winter) {
+export function buildOrchestra(ctx, tl, winter) {
   const out = ctx.destination;
   const info = [];
   for (const a of tl.plan.audio) {
@@ -406,7 +413,7 @@ function voiceParams(s) {
     : { cutBase: 900 + 300 * s.u, cutEnv: 5.5, tauC: 0.085, sus: 0.5, tauA: 0.08, gate: 0.62 };
 }
 
-function buildSynth(ctx, tl) {
+export function buildSynth(ctx, tl) {
   const out = G(ctx, undb(DESIGN.synthTrimDb)); out.connect(ctx.destination);
   const { a4, T, music, grid } = tl;
   const { steps, drones } = synthSteps(tl);
@@ -469,11 +476,13 @@ function buildSynth(ctx, tl) {
   const sub = ctx.createOscillator(); sub.type = 'sine';
   const lw = tl.lat ? tl.lat['2x'] : 0;  // saws run through the 2x 'warm' shaper: start them early by its latency
   drive(ctx, bF1, [o1.frequency], t0 - lw); drive(ctx, bF2, [o2.frequency], t0 - lw); drive(ctx, bFs, [sub.frequency], t0);
+  const alive = keepAlive(ctx);
   const mixO = G(ctx, 1); o1.connect(G(ctx, 0.5)).connect(mixO); o2.connect(G(ctx, 0.5)).connect(mixO);
+  alive(mixO);
   const warm = ctx.createWaveShaper(); warm.curve = tanhCurve(1.4); warm.oversample = '2x';
   const lp1 = BQ(ctx, 'lowpass', 100, 7), lp2 = BQ(ctx, 'lowpass', 100, 0.5);
   drive(ctx, bCut, [lp1.frequency, lp2.frequency], t0);
-  const vca = G(ctx, 0); drive(ctx, bAmp, [vca.gain], t0);
+  const vca = G(ctx, 0); drive(ctx, bAmp, [vca.gain], t0); alive(vca);
   chain(mixO, warm, lp1, lp2, vca);
   sub.connect(G(ctx, 0.5)).connect(vca);
   // bus EQ: keep the violins clear (gentle presence dip + high shelf), remove sub-rumble
@@ -519,7 +528,7 @@ function buildSynth(ctx, tl) {
         const o = ctx.createOscillator(); o.type = i === 2 ? 'triangle' : 'sawtooth'; o.frequency.value = hz(m); o.detune.value = c;
         o.connect(G(ctx, i === 0 ? 0.35 : 0.22)).connect(lp); o.start(tp); o.stop(te + 0.05);
       }));
-      lp.connect(pad).connect(out);
+      alive(lp); lp.connect(pad).connect(out);
       pad.connect(G(ctx, 0.3)).connect(verb);
       Object.assign(padInfo, { active: true, start: tp, end: te, notes: notes.map((m) => m) });
     }
@@ -534,7 +543,7 @@ function buildSynth(ctx, tl) {
 // ----------------------------------------------------------------------------------------------------------
 // stem 3: cannons (director's 1812 samples, processed for distance)
 // ----------------------------------------------------------------------------------------------------------
-function analyseSample(buf) {
+export function analyseSample(buf) {
   const L = buf.getChannelData(0), R = buf.numberOfChannels > 1 ? buf.getChannelData(1) : L;
   let pk = 0, pi = 0;
   for (let i = 0; i < L.length; i++) { const v = Math.max(Math.abs(L[i]), Math.abs(R[i])); if (v > pk) { pk = v; pi = i; } }
@@ -577,13 +586,15 @@ export function cannonTime(c, tl) {
   return { t: ft, basis: 'frame' };
 }
 
-function buildCannons(ctx, tl, samples) {
+export function buildCannons(ctx, tl, samples) {
   const clip = softClip(ctx, 0.55); clip.output.connect(ctx.destination);
   const out = clip.input;
   const cues = tl.plan.cues.filter((c) => c.kind === 'cannon').sort((a, b) => a.frame - b.frame);
   const verb = ctx.createConvolver(); verb.normalize = false;
   verb.buffer = impulse(ctx, { seconds: 5.5, rt60: 4.2, seed: 1812, hiHz: 5000, loHz: 260, early: 18, earlyMs: 110 });
   const verbOut = G(ctx, 1); verb.connect(verbOut).connect(out);
+  const alive = keepAlive(ctx);
+  alive(verb);
   const rng = mulberry32(1812);
   const pans = cues.map(() => rng() * 2 - 1);
   const nearCues = cues.filter((c) => c.distance <= 0.2), farCues = cues.filter((c) => c.distance > 0.2);
@@ -608,7 +619,7 @@ function buildCannons(ctx, tl, samples) {
     const dist = BQ(ctx, 'lowpass', lpHz, 0.6);
     const p = ctx.createStereoPanner(); p.pan.value = pan;
     const gDry = G(ctx, dry * lvl), gWet = G(ctx, wet * lvl), dPre = ctx.createDelay(1); dPre.delayTime.value = pre;
-    dist.connect(p); p.connect(gDry).connect(out); p.connect(dPre).connect(gWet).connect(verb);
+    alive(dist, dPre); dist.connect(p); p.connect(gDry).connect(out); p.connect(dPre).connect(gWet).connect(verb);
     const starts = [];
     for (const L of layers) {
       const S = samples[L.id], meta = CANNON_SAMPLES[L.id];
@@ -621,6 +632,7 @@ function buildCannons(ctx, tl, samples) {
       tone.frequency.setValueAtTime(18000, start);
       tone.frequency.setValueAtTime(18000, tc + open);
       tone.frequency.exponentialRampToValueAtTime(meta.bodyHz * (0.8 + 0.4 * (1 - d)), tc + open + 0.07);
+      alive(tone);
       let node = src.connect(tone);
       for (const f of meta.notches) node = node.connect(BQ(ctx, 'peaking', f * rate, 14, -20));
       const env = G(ctx, 0);
@@ -642,7 +654,7 @@ function buildCannons(ctx, tl, samples) {
       o.frequency.setValueAtTime(45, tc); o.frequency.exponentialRampToValueAtTime(28, tc + 0.45);
       const g = G(ctx, 0);
       curveEnv(g.gain, tc, 1.2, (x) => Math.min(1, x / 0.003) * Math.exp(-x / 0.25) * (1 - smooth(1.0, 1.2, x)), 2000);
-      o.connect(g).connect(G(ctx, 0.75 * thump * lvl)).connect(out);
+      alive(g); o.connect(g).connect(G(ctx, 0.75 * thump * lvl)).connect(out);
       o.start(tc); o.stop(tc + 1.25);
     }
     table.push({ id: c.id, frame: c.frame, frameTime: +(c.frame / tl.fps).toFixed(4), t: +tcue.toFixed(4), basis, offsetMs: +((tcue - c.frame / tl.fps) * 1000).toFixed(1),
@@ -672,7 +684,7 @@ export function dopplerModel(T, { M = 0.5, tau = 1.25 } = {}) {
   };
 }
 
-function buildIgnition(ctx, tl) {
+export function buildIgnition(ctx, tl) {
   const out = ctx.destination;
   const { T, a4 } = tl;
   const l4 = tl.lat ? tl.lat['4x'] : 0;
@@ -680,11 +692,12 @@ function buildIgnition(ctx, tl) {
   const tsh = t - l4;                                    // sub + saw stack also pass their own 4x saturator
   const clip = softClip(ctx, 0.6); clip.output.connect(out);
   const bus = G(ctx, undb(-9)); bus.connect(clip.input);  // only the impact reaches the clipper knee
+  const alive = keepAlive(ctx);
   // enormous reverb tail (seeded IR with a slow swell)
   const verb = ctx.createConvolver(); verb.normalize = false;
   verb.buffer = impulse(ctx, { seconds: 11, rt60: 8.0, seed: 2725, hiHz: 7000, loHz: 220, early: 20, earlyMs: 140, swell: 0.22 });
   const vIn = G(ctx, 1), vPre = ctx.createDelay(1); vPre.delayTime.value = 0.03;
-  chain(vIn, vPre, verb, G(ctx, 0.9), bus);
+  chain(vIn, vPre, verb, G(ctx, 0.9), bus); alive(vIn, vPre, verb);
   const send = (node, g) => node.connect(G(ctx, g)).connect(vIn);
 
   // 1) sub-bass impact (sine dive 74 -> 27 Hz) + octave harmonic, gently saturated
@@ -696,7 +709,7 @@ function buildIgnition(ctx, tl) {
   curveEnv(subEnv.gain, tsh, 8, (x) => Math.min(1, x / 0.005) * Math.exp(-x / 1.6) * (1 - smooth(7, 8, x)), 1000);
   curveEnv(sub2Env.gain, tsh, 4, (x) => Math.min(1, x / 0.004) * Math.exp(-x / 0.5) * (1 - smooth(3.5, 4, x)), 1000);
   const subSat = ctx.createWaveShaper(); subSat.curve = tanhCurve(1.8); subSat.oversample = '4x';
-  sub.connect(subEnv).connect(subSat); sub2.connect(sub2Env).connect(G(ctx, 0.35)).connect(subSat);
+  alive(subEnv, sub2Env, subSat); sub.connect(subEnv).connect(subSat); sub2.connect(sub2Env).connect(G(ctx, 0.35)).connect(subSat);
   const subOut = subSat.connect(G(ctx, 0.95)); subOut.connect(bus); send(subOut, 0.06);
   [sub, sub2].forEach((o) => { o.start(tsh); o.stop(tsh + 8.1); });
 
@@ -707,7 +720,7 @@ function buildIgnition(ctx, tl) {
   cbp.frequency.setValueAtTime(2600, t); cbp.frequency.exponentialRampToValueAtTime(240, t + 0.3);
   const cEnv = G(ctx, 0);
   curveEnv(cEnv.gain, t, 1.0, (x) => Math.min(1, x / 0.0008) * (0.25 * Math.exp(-x / 0.012) + Math.exp(-x / 0.11)) * (1 - smooth(0.85, 1.0, x)), 4000);
-  const crackOut = chain(crack, cbp, cEnv, G(ctx, 1.1)); crackOut.connect(bus); send(crackOut, 0.7);
+  alive(cbp); const crackOut = chain(crack, cbp, cEnv, G(ctx, 1.1)); crackOut.connect(bus); send(crackOut, 0.7);
   crack.start(t); crack.stop(t + 1.05);
 
   // 3) detuned saw stack (C power chord tuned to A4 = a4) -> waveshaper -> sweeping resonant low-pass
@@ -724,6 +737,7 @@ function buildIgnition(ctx, tl) {
     o.start(tsh); o.stop(tsh + 9.2);
   }
   dive.start(tsh); dive.stop(tsh + 9.2);
+  alive(stack);
   const sat = ctx.createWaveShaper(); sat.curve = tanhCurve(3.0); sat.oversample = '4x';
   const sweep = BQ(ctx, 'lowpass', 55, 12);
   sweep.frequency.setValueAtTime(55, t);   // post-saturator: bus compensation only
@@ -742,11 +756,12 @@ function buildIgnition(ctx, tl) {
   wlp.frequency.setValueAtTime(12000, t); wlp.frequency.exponentialRampToValueAtTime(700, t + 7);
   const wEnv = G(ctx, 0);
   curveEnv(wEnv.gain, t, 9, (x) => smooth(0, 0.035, x) * (0.08 + 0.92 * Math.exp(-x / 0.7)) * (1 - smooth(3, 6, x)), 500);
-  const wallOut = chain(wall, BQ(ctx, 'highpass', 45, 0.7), wlp, wEnv, G(ctx, 0.9)); wallOut.connect(bus); send(wallOut, 0.5);
+  const wHp = alive(BQ(ctx, 'highpass', 45, 0.7));
+  const wallOut = chain(wall, wHp, wlp, wEnv, G(ctx, 0.9)); wallOut.connect(bus); send(wallOut, 0.5);
   const rum = ctx.createBufferSource(); rum.buffer = wallBuf; // offset start for decorrelation
   const rEnv = G(ctx, 0);
   curveEnv(rEnv.gain, t, 10, (x) => smooth(0, 0.08, x) * Math.exp(-x / 2.0) * (1 - smooth(6, 9, x)), 500);
-  chain(rum, BQ(ctx, 'lowpass', 90, 0.7), BQ(ctx, 'lowpass', 90, 0.7), rEnv, G(ctx, 2.2), bus);
+  chain(rum, alive(BQ(ctx, 'lowpass', 90, 0.7)), BQ(ctx, 'lowpass', 90, 0.7), rEnv, G(ctx, 2.2), bus);
   wall.start(t); wall.stop(t + 9.1); rum.start(t, 3.3); rum.stop(t + 10.1);
 
   // 5) descending Doppler roar -> C drone resolving into bar 56
@@ -781,7 +796,7 @@ function buildIgnition(ctx, tl) {
   const panCurve = (x) => { const tt = r0 + x, s = dop(tt); return 0.9 * s.pan * (1 - smooth(T.pass + 2.0, T.pass + 4.0, tt)); };
 
   const fBase = ctx.createConstantSource(); curveEnv(fBase.offset, r0, rd, fCurve, rate);
-  const tone = G(ctx, 1);
+  const tone = alive(G(ctx, 1));
   const cluster = [[1, -8, 'sawtooth', 0.28], [1, 8, 'sawtooth', 0.28], [2, 3, 'sawtooth', 0.16], [1.5, -4, 'sawtooth', 0.09], [0.5, 0, 'sine', 0.35]];
   for (const [mul, cents, type, g] of cluster) {
     const o = ctx.createOscillator(); o.type = type; o.frequency.value = 0; o.detune.value = cents;
@@ -800,9 +815,10 @@ function buildIgnition(ctx, tl) {
   for (const [fc, q, g] of [[230, 0.9, 1.0], [880, 0.7, 0.7], [2600, 0.8, 0.25]]) {
     const bp = BQ(ctx, 'bandpass', 0, q); bp.frequency.value = 0;
     fBase.connect(G(ctx, fc / f0)).connect(bp.frequency);
-    rn.connect(bp).connect(G(ctx, g)).connect(nSum);
+    alive(bp); rn.connect(bp).connect(G(ctx, g)).connect(nSum);
   }
-  rn.connect(BQ(ctx, 'lowpass', 110, 0.7)).connect(G(ctx, 1.4)).connect(nSum);
+  rn.connect(alive(BQ(ctx, 'lowpass', 110, 0.7))).connect(G(ctx, 1.4)).connect(nSum);
+  alive(nSum);
   const nLp = BQ(ctx, 'lowpass', 1000, 0.7); curveEnv(nLp.frequency, r0, rd, (x) => 1.6 * cutCurve(x), rate);
   const nG = G(ctx, 0); curveEnv(nG.gain, r0, rd, noiseLevel, rate);
   chain(nSum, nLp, nG, pan);
@@ -811,7 +827,7 @@ function buildIgnition(ctx, tl) {
   // C1 sine under the drone
   const c1 = ctx.createOscillator(); c1.type = 'sine'; c1.frequency.value = C1;
   const c1G = G(ctx, 0); curveEnv(c1G.gain, r0, rd, (x) => { const tt = r0 + x; return smooth(T.pass + 1.0, T.pass + 3.0, tt) * droneShape(tt) * 1.1; }, rate);
-  const c1Out = c1.connect(c1G); c1Out.connect(bus); send(c1Out, 0.1);
+  alive(c1G); const c1Out = c1.connect(c1G); c1Out.connect(bus); send(c1Out, 0.1);
   c1.start(r0); c1.stop(r1 + 0.05);
 
   return {
@@ -1025,7 +1041,7 @@ export function wav(L, R, { bits = 24, float = false, seed = 1 } = {}) {
 
 // Chrome's oversampled WaveShaper delays its output (up/down-sampling filters). Measured here, in the same browser,
 // so every path through a shaper can be scheduled early by exactly its latency (transients stay on their cues).
-async function measureShaperLatency() {
+export async function measureShaperLatency() {
   const lat = { none: 0 };
   for (const os of ['2x', '4x']) {
     const ctx = new OfflineAudioContext(1, 4800, SR);

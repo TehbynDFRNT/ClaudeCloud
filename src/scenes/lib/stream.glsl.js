@@ -66,11 +66,17 @@ vec4 fieldAt(vec2 xz){
 float streamW(float s){ return uStreamW * (0.0105 + 0.037 * exp(-max(s, 0.0) / 0.075)); }
 float streamWarpAmt(float s){ return 0.5 + 0.55 * uRip * exp(-max(s, 0.0) / 0.12); }
 
+// strike pulse travelling down the stream (0..1)
+float whipEnv(float s){
+  if (uWhip.x <= 0.0) return 0.0;
+  float front = uWhip.y * uWhip.z;
+  return exp(-uWhip.y * uWhip.w) * smoothstep(-0.02, 0.06, front - s) * exp(-max(0.0, front - s) * 3.0) * smoothstep(-0.05, 0.25, s);
+}
 // transverse whip wave after a strike: displacement of the centreline (in-plane, vertical)
 vec2 whipOffset(float s){
   if (uWhip.x <= 0.0) return vec2(0.0);
   float front = uWhip.y * uWhip.z;                 // wave front position along the stream
-  float ph = (front - s) * 28.0;
+  float ph = (front - s) * 20.0;
   float env = exp(-uWhip.y * uWhip.w) * smoothstep(-0.02, 0.06, front - s) * exp(-max(0.0, front - s) * 3.0);
   float grow = smoothstep(-0.05, 0.25, s);
   return uWhip.x * env * grow * vec2(sin(ph), 0.6 * cos(ph * 0.83 + 1.0));
@@ -108,7 +114,7 @@ float streamSample(vec3 p, vec4 f, out vec3 j){
   float fr = 0.03 + 0.05 * min(uStreamHead, 1.0);
   float hn = hd + 0.05 * (sh - 0.45) + 0.03 * (wn.g - 0.5) - 0.01 * re * re;
   float head = smoothstep(-0.005, fr, hn);
-  float headT = smoothstep(-0.05, fr * 0.5, hn);          // threads run ahead of the bulk
+  float headT = smoothstep(-0.022, fr * 0.6, hn);         // threads run ahead of the bulk
   float m = head * cut;
   if (headT * cut <= 0.001) return 0.0;
   // braided threads along the flow (coarse + fine)
@@ -126,8 +132,11 @@ float streamSample(vec3 p, vec4 f, out vec3 j){
   float cool = env * smoothstep(0.42, 0.8, cn) * (1.0 - 0.7 * sat(sh)) * m * uStreamAmt * (0.4 + 0.6 * exp(-max(s, 0.0) / 0.25));
   // temperature: gas heats as it falls into the dwarf's potential; sheets and threads hotter in their cores
   float rD = length(p.xz - uWD.xz);
-  float T = 2000.0 * pow(0.56 / max(rD, 0.03), 0.8) * (0.72 + 0.42 * sh + 0.22 * fl);
+  float T = 2000.0 * pow(0.56 / max(rD, 0.03), 0.72) * (0.72 + 0.42 * sh + 0.22 * fl);
   T *= 1.0 + 0.2 * bulb;   // shocked head
+  float we = whipEnv(s);
+  T *= 1.0 + 0.5 * we;
+  hot *= 1.0 + 1.5 * we;
   T *= 1.0 + 0.6 * knot;
   // raking light from the dwarf: scattered by all gas, on the side facing it (envelope sampled toward the dwarf)
   vec3 rake = vec3(0.0);
@@ -165,7 +174,7 @@ float diskDensity(vec3 p, out float T){
   float streaks = sat(0.5 + 0.85 * g1 + 0.5 * g2);
   float arm = 0.5 + 0.5 * cos(2.0 * (phi - 1.7 * lr) + 0.9);           // tidal two-armed spiral, fixed in the binary frame
   float rOut = uDiskOut * (1.0 + 0.035 * n3(vec3(cos(phi) * 3.0, sin(phi) * 3.0, uDiskT * 0.05)));
-  float edge = smoothstep(rOut, rOut * 0.93, r);
+  float edge = smoothstep(rOut * 1.03, rOut * 0.86, r);
   float rim = 1.0 + 0.5 * exp(-pow((r - rOut * 0.95) / (0.03 * rOut), 2.0));
   float sig = smoothstep(uDiskIn * 0.45, uDiskIn * 1.5, r) * edge * pow(max(r, 0.01) / 0.1, -0.5) * rim;
   float tex = (0.3 + 0.7 * streaks) * pow(sat(0.62 + 0.85 * n), 1.4) * (0.62 + 0.7 * arm);

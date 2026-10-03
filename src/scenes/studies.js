@@ -135,10 +135,12 @@ const presets = {
   },
   'S29b-drawing': {
     drawing: 'rings', paperSeed: 23.4, design: 6.042,
-    view: [[-0.75, 0.0, 0.0, 1.0, 0.0], [6.042, 0.0, 0.0, 1.035, 0.0]],
-    key: { pos: [0.0, -0.12], r: 0.62, pow: 1.25, dir: [-0.75, -0.5, 0.42], col: [1.15, 0.93, 0.68] },
+    // ring registration with S29a (r = 0.32H, centred) while the nova is still visible, then a calm ease
+    // out so the lowest ink settles near 0.75H, clear of the end title (caps at 0.83-0.86H)
+    view: [[-0.75, 0.0, 0.0, 1.0, 0.0], [0.8, 0.0, 0.0, 1.0, 0.0], [2.4, 0.0, 0.05, 0.86, 0.0], [6.042, 0.004, 0.052, 0.856, 0.002, 'linear']],
+    key: { pos: [0.0, -0.06], r: 0.66, pow: 1.25, dir: [-0.75, -0.5, 0.42], col: [1.15, 0.93, 0.68] },
     level: [[-0.75, 0.12], [0.6, 0.75], [1.4, 1.0]],
-    shadeY: [0.12, 0.4, 0.9, 0],
+    shadeY: [0.28, 0.52, 0.92, 0],
     postEase: [0.0, 1.25],
   },
   'S30-credits': { black: true },
