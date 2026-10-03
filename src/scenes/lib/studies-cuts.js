@@ -109,15 +109,15 @@ function timedStroke(D, pts, occ, o) {
 // the stone leaves along the tangent (ruled) while its real path bends into a parabola.
 export function sling() {
   const D = new Drawing(2911);
-  const C = [0.0, 0.15], R = 0.225;
+  const C = [0.02, 0.105], R = 0.272;
   const thR = -2.72;                                                 // release: left of the hand, a little above
   const at = (th, r = R) => [C[0] + Math.cos(th) * r, C[1] + Math.sin(th) * r];
   const tan = (th) => [-Math.sin(th), Math.cos(th)];                 // clockwise on screen = page angle increasing
   const Pr = at(thR), vel = tan(thR), rad = [Math.cos(thR), Math.sin(thR)];
-  const s = vel[1] / vel[0], k = 2.85;
+  const s = vel[1] / vel[0], k = 3.3;
   const parY = (x) => Pr[1] + s * (x - Pr[0]) + k * (x - Pr[0]) ** 2;
   const apex = [Pr[0] - s / (2 * k), parY(Pr[0] - s / (2 * k))];
-  const pw = 0.058, bul = 0.05, stR = 0.034;                         // pouch half-width, belly; the stone
+  const pw = 0.04, bul = 0.036, stR = 0.027;                         // pouch half-width, belly; the stone
 
   // ---- the fist (as S10's, in ink), the cords leaving its top toward the pouch; the forearm runs down-right
   D.at(-14);
@@ -143,21 +143,21 @@ export function sling() {
     }
     const lens = (b) => { const pts = []; for (let i = 0; i <= 44; i++) { const u = i / 44; pts.push(add(lerp2(E1, E2, u), r, Math.sin(Math.PI * u) * b)); } return pts; };
     D.stroke(lens(bul), { w: o.pw, d: o.d * 1.02, speed: o.speed * 0.5, taper: [4, 4], wet: o.wet });
-    D.stroke(lens(-0.016), { w: o.pw * 0.7, d: o.d * 0.88, speed: o.speed * 0.5, taper: [4, 4], wet: o.wet });
-    const St = add(P0, r, 0.016);
+    D.stroke(lens(-0.012), { w: o.pw * 0.7, d: o.d * 0.88, speed: o.speed * 0.5, taper: [4, 4], wet: o.wet });
+    const St = add(P0, r, 0.012);
     circleStroke(D, St[0], St[1], stR, { w: o.pw * 0.9, d: o.d, speed: o.speed * 0.4, wob: 0.5 * PX, wet: o.wet });
     return { P0, v, r, E1, E2, St, lens };
   };
   // ghosts: the sling a tenth and a fifth of a turn earlier, fading back
   for (let g = 1; g <= 2; g++) slingAt(thR - g * 0.63, { cw: 1.2, pw: 1.5, d: 0.38 - g * 0.07, speed: 1.4, wet: false, seed: 40 + 3 * g });
   // the construction under the cut's pen: the tangent ruled blind with the stylus, the stone's curve sketched faint
-  const tEnd0 = add(Pr, vel, 0.6);
+  const tEnd0 = add(Pr, vel, 0.5);
   D.stroke(linePts(Pr[0], Pr[1], tEnd0[0], tEnd0[1], { step: 3 * PX }), { kind: 'relief', w: 1.4, d: 0.5, speed: 3, wet: false, taper: [2, 2] });
   const guide = [];
   for (let x = Pr[0] + 0.01; x <= 0.47; x += 0.003) guide.push([x, parY(x) + 0.004 * Math.sin(x * 40)]);
   D.stroke(resample(guide, 1.6 * PX), { w: 1.0, d: 0.3, speed: 1.0, taper: [30, 30], press: 0.4, wet: false });
   scriptBlock(D, ['la fromba gira', 'e lascia il sasso', 'per la linia', 'contingente'], -0.12, -0.405, { size: 19, lh: 26, d: 0.55 });
-  scriptBlock(D, ['il moto circulare', 'si fa retto'], 0.285, -0.17, { size: 18, lh: 25, d: 0.5 });
+  scriptBlock(D, ['il moto circulare', 'si fa retto'], 0.3, -0.215, { size: 18, lh: 25, d: 0.5 });
   D.text('a', C[0] - 0.03, C[1] - 0.016, { size: 22, d: 0.7 });
   D.text('b', Pr[0] - 0.062, Pr[1] - 0.042, { size: 22, d: 0.7 });
   D.fitTo(g0, -13, -0.45);
@@ -171,7 +171,7 @@ export function sling() {
   // the stone: dark, lit from the upper left; the pouch's belly in shadow behind it
   hatch(D, (x, y) => (inStone(x, y) > 0.86 ? 0 : 0.45 + 0.6 * ((x - L.St[0]) * 0.6 + (y - L.St[1]) * 0.8) / stR), sbb, { angle: 0.95, sp: 2.6, w: 1.2, d: 0.82, speed: 3, minLen: 2, thr: [0.2, 0.9], wet: true });
   hatch(D, (x, y) => (inStone(x, y) > 0.86 ? 0 : 0.2 + 0.7 * ((x - L.St[0]) * 0.6 + (y - L.St[1]) * 0.8) / stR), sbb, { angle: -0.6, sp: 2.9, w: 1.1, d: 0.75, speed: 3, minLen: 2, thr: [0.2, 0.9], wet: true });
-  const pouchPoly = poly([...L.lens(bul), ...L.lens(-0.016).reverse()]);
+  const pouchPoly = poly([...L.lens(bul), ...L.lens(-0.012).reverse()]);
   hatch(D, (x, y) => {
     if (!inP(pouchPoly, x, y) || inStone(x, y) < 1.15) return 0;
     const dx = x - L.P0[0], dy = y - L.P0[1];
@@ -182,6 +182,13 @@ export function sling() {
     const a = add(lerp2(L.E1, L.E2, u), L.r, -0.012), b = add(lerp2(L.E1, L.E2, u), L.r, bul * 0.92 * Math.sin(Math.PI * u));
     D.stroke(linePts(a[0], a[1], b[0], b[1]), { w: 1.3, d: 0.7, speed: 0.6, taper: [3, 3] });
   }
+  // the release cord's knotted end, held between thumb and finger, flicking back over the thumb
+  const tail = [F.T(0.2, -2.55), F.T(-0.6, -3.15), F.T(-1.7, -3.25), F.T(-2.6, -2.85), F.T(-3.1, -2.4)];
+  for (const run of clipOut(spline(tail, 1.3 * PX), [])) D.stroke(run, { w: 2.6, d: 0.9, speed: 0.6, taper: [4, 6], wet: true });
+  const kn = F.T(-3.25, -2.3);
+  circleStroke(D, kn[0], kn[1], 0.0075, { w: 2.6, d: 0.92, speed: 0.15, sweep: TAU * 1.3, wet: true });
+  dot(D, kn[0], kn[1], 5.5, { wet: true });
+  D.stroke(spline([kn, F.T(-3.7, -2.0), F.T(-4.0, -1.7)], 1.3 * PX), { w: 1.8, d: 0.85, speed: 0.4, taper: [3, 10], wet: true });
   D.fitTo(s0, -0.42, -0.04);
 
   // ---- during the cut: the whirl swept by the pen (clockwise) from the pouch's leading edge round to its
@@ -195,9 +202,9 @@ export function sling() {
     arrowHead(D, at(aa, R), tan(aa), 0.032, { w: 3.0, d: 0.92, t0: Math.max(-0.3, penTime(ring, Math.min(1, q + 0.02))), dur: 0.03 });
   }
   // the release: the tangent ruled fast from the pouch
-  const T0 = add(L.St, vel, pw + 0.006), tEnd = add(L.St, vel, 0.62);
+  const T0 = add(L.St, vel, pw + 0.006), tEnd = add(L.St, vel, 0.5);
   D.stroke(linePts(T0[0], T0[1], tEnd[0], tEnd[1], { wob: 0.15 * PX, seed: 83 }), { w: 2.0, d: 0.78, t0: 0.18, dur: 0.12, taper: [3, 30], gap: 0 });
-  D.text('d', tEnd[0] + 0.035, tEnd[1] + 0.035, { size: 22, d: 0.7, t0: 0.31, dur: 0.05 });
+  D.text('d', tEnd[0] + 0.04, tEnd[1] + 0.05, { size: 22, d: 0.7, t0: 0.31, dur: 0.05 });
   // the stone's path: one bold sweep from b over the apex c, the stone drawn at equal times along it
   const par = [];
   let xs = Pr[0];
