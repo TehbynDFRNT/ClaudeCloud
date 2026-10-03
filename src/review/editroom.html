@@ -1,0 +1,791 @@
+<title>David &amp; Goliath Edit Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a grading-suite workspace — picture and timeline on the left, the current shot and the notes in a rail on the right; one column on a phone. */
+:root {
+  color-scheme: dark;
+  --bg: #121110;
+  --panel: #1b1a18;
+  --panel-2: #23211e;
+  --line: #34302b;
+  --fg: #ece5d9;
+  --muted: #a39a8d;
+  --dim: #6f685f;
+  --gold: #e3a53c;
+  --crimson: #d4473b;
+  --ice: #8db7f5;
+  --ok: #7cb586;
+  --display: 'Cinzel', 'Trajan Pro', Georgia, serif;
+  --ui: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --r: 6px;
+}
+html, body { height: auto; }
+body { background: var(--bg); color: var(--fg); font: 14px/1.45 var(--ui); padding-inline: 16px; padding-block: 0 24px; }
+* { box-sizing: border-box; }
+button { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; padding-block: 14px 12px; border-bottom: 1px solid var(--line); }
+.top h1 { margin: 0; font: 500 18px/1.2 var(--display); letter-spacing: 0.14em; text-transform: uppercase; }
+.top .meta { color: var(--muted); font: 12px/1.4 var(--mono); }
+.top .status { margin-left: auto; color: var(--muted); font-size: 12px; }
+.top .status b { color: var(--fg); font-weight: 500; }
+
+.suite { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; padding-top: 14px; align-items: start; }
+@media (max-width: 1080px) { .suite { grid-template-columns: minmax(0, 1fr); } }
+.left { min-width: 0; display: grid; gap: 10px; }
+
+/* picture */
+.stage { position: relative; width: min(100%, calc((100vh - 372px) * 16 / 9)); min-width: min(100%, 480px); margin-inline: auto; aspect-ratio: 16 / 9; background: #000; border-radius: var(--r); overflow: hidden; cursor: crosshair; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+.stage video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; opacity: 0; }
+.stage video.show { opacity: 1; }
+.stage .hint { position: absolute; left: 12px; bottom: 10px; font-size: 12px; color: rgba(236,229,217,0.72); background: rgba(10,9,8,0.55); padding: 4px 8px; border-radius: 4px; pointer-events: none; transition: opacity .3s; }
+.stage.playing .hint { opacity: 0; }
+.stage .loadmsg { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 13px; pointer-events: none; text-align: center; padding: 16px; }
+.pins { position: absolute; inset: 0; pointer-events: none; }
+.pin { position: absolute; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; border: 2px solid var(--crimson); background: rgba(18,17,16,0.78); color: var(--fg); font: 600 11px/22px var(--mono); text-align: center; pointer-events: auto; cursor: pointer; box-shadow: 0 0 0 1px rgba(0,0,0,0.6); transition: transform .12s, opacity .12s; }
+.pin.on { background: var(--crimson); transform: scale(1.12); }
+.pin.done { border-color: var(--ok); }
+.pin.done.on { background: var(--ok); color: #111; }
+.pin.sel { box-shadow: 0 0 0 3px rgba(227,165,60,0.85); }
+.bubble { position: absolute; max-width: min(320px, 70%); background: rgba(27,26,24,0.96); border: 1px solid var(--line); border-radius: var(--r); padding: 8px 10px; font-size: 13px; pointer-events: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.bubble .who { color: var(--muted); font-size: 11px; margin-top: 4px; }
+
+/* composer */
+.composer { position: absolute; width: min(320px, calc(100% - 16px)); background: var(--panel); border: 1px solid var(--gold); border-radius: var(--r); padding: 10px; display: grid; gap: 8px; pointer-events: auto; cursor: default; z-index: 3; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+.composer .where { font: 12px var(--mono); color: var(--gold); }
+.composer textarea { width: 100%; min-height: 76px; resize: vertical; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 7px 8px; font: 13px/1.4 var(--ui); }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 2px 9px; font-size: 12px; color: var(--muted); cursor: pointer; }
+.tag[aria-pressed="true"] { border-color: var(--gold); color: var(--fg); background: rgba(227,165,60,0.14); }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.btn { border: 1px solid var(--line); background: var(--panel-2); border-radius: 5px; padding: 5px 11px; cursor: pointer; font-size: 13px; }
+.btn:hover { border-color: var(--dim); }
+.btn.primary { background: var(--gold); border-color: var(--gold); color: #1a1408; font-weight: 600; }
+.btn.ghost { background: transparent; }
+.btn[disabled] { opacity: .45; cursor: default; }
+
+/* transport */
+.transport { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 8px 10px; }
+.tc { font: 500 20px/1 var(--mono); letter-spacing: 0.02em; font-variant-numeric: tabular-nums; min-width: 9.6ch; }
+.tcsub { font: 12px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.keys { display: flex; gap: 4px; flex-wrap: wrap; }
+.key { width: 34px; height: 32px; border-radius: 5px; border: 1px solid var(--line); background: var(--panel-2); cursor: pointer; display: grid; place-items: center; }
+.key:hover { border-color: var(--dim); }
+.key svg { width: 15px; height: 15px; fill: currentColor; }
+.key.play { width: 44px; background: var(--fg); color: #121110; border-color: var(--fg); }
+.shotchip { font: 500 13px var(--mono); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--line); white-space: nowrap; }
+.spacer { flex: 1; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 4px 9px; font: 12px var(--mono); color: var(--muted); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--panel-2); color: var(--fg); }
+.toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); cursor: pointer; }
+.toggle input { accent-color: var(--gold); }
+
+/* timeline */
+.timeline { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 8px 10px 10px; display: grid; gap: 6px; }
+.tlhead { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font-size: 12px; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.tlwrap { position: relative; }
+#tl { display: block; width: 100%; height: 132px; touch-action: none; cursor: col-resize; border-radius: 4px; }
+.tip { position: absolute; top: -8px; transform: translate(-50%, -100%); background: var(--panel-2); border: 1px solid var(--line); border-radius: 5px; padding: 5px; pointer-events: none; z-index: 4; display: grid; gap: 4px; justify-items: start; }
+.tip .thumb { width: 160px; height: 90px; background-color: #000; background-repeat: no-repeat; border-radius: 3px; }
+.tip .t { font: 11px var(--mono); color: var(--fg); white-space: nowrap; }
+
+/* rail */
+.rail { display: grid; gap: 12px; min-width: 0; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 12px; min-width: 0; }
+.card h2 { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 8px; font: 600 11px/1.2 var(--ui); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.shot .id { font: 500 16px var(--mono); }
+.shot .scene { font-size: 12px; color: var(--muted); }
+.shot dl { margin: 10px 0 0; display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 6px 10px; font-size: 13px; }
+.shot dt { color: var(--dim); font-size: 12px; }
+.shot dd { margin: 0; min-width: 0; }
+.notes .tools { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px; }
+.notelist { display: grid; gap: 8px; max-height: 60vh; overflow: auto; padding-right: 2px; }
+.note { border: 1px solid var(--line); border-radius: 5px; padding: 8px 9px; display: grid; gap: 5px; background: var(--panel-2); cursor: pointer; }
+.note.sel { border-color: var(--gold); }
+.note.done { opacity: .62; }
+.note .h { display: flex; gap: 8px; align-items: center; font: 12px var(--mono); color: var(--muted); flex-wrap: wrap; }
+.note .num { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--crimson); display: grid; place-items: center; font: 600 10px var(--mono); color: var(--fg); }
+.note.done .num { border-color: var(--ok); }
+.note .txt { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; }
+.note .foot { display: flex; gap: 8px; align-items: center; font-size: 11px; color: var(--muted); flex-wrap: wrap; }
+.note .foot img { width: 16px; height: 16px; border-radius: 50%; }
+.note .acts { margin-left: auto; display: flex; gap: 4px; }
+.note .acts button { border: 1px solid var(--line); background: transparent; border-radius: 4px; padding: 1px 7px; font-size: 11px; color: var(--muted); cursor: pointer; }
+.note .acts button:hover { color: var(--fg); border-color: var(--dim); }
+.chip { font-size: 10px; letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--line); border-radius: 999px; padding: 0 6px; color: var(--muted); }
+.empty { color: var(--muted); font-size: 13px; padding: 10px 2px; display: grid; gap: 6px; }
+.empty b { color: var(--fg); font-weight: 500; }
+.banner { font-size: 12px; color: var(--muted); border: 1px dashed var(--line); border-radius: 5px; padding: 7px 9px; }
+.help { font-size: 12px; color: var(--muted); display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 10px; }
+.help kbd { font: 11px var(--mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; color: var(--fg); justify-self: start; }
+@media (prefers-reduced-motion: reduce) { .pin, .stage .hint { transition: none; } }
+</style>
+
+<header class="top">
+  <h1>David &amp; Goliath</h1>
+  <span class="meta" id="buildmeta"></span>
+  <span class="status" id="status">Loading picture…</span>
+</header>
+
+<div class="suite">
+  <section class="left" aria-label="Picture and timeline">
+    <div class="stage" id="stage">
+      <video id="vA" class="show" muted playsinline preload="auto"></video>
+      <video id="vB" muted playsinline preload="auto"></video>
+      <audio id="aud" preload="auto"></audio>
+      <div class="pins" id="pins"></div>
+      <div class="pins" id="compLayer"></div>
+      <div class="loadmsg" id="loadmsg">Loading picture…</div>
+      <div class="hint" id="hint">Pause, then click the picture to pin a note</div>
+    </div>
+
+    <div class="transport" role="group" aria-label="Transport">
+      <div class="keys">
+        <button class="key" id="kPrevShot" title="Previous shot (↑)" aria-label="Previous shot"><svg viewBox="0 0 16 16"><path d="M3 2h2v12H3zM14 2v12L6 8z"/></svg></button>
+        <button class="key" id="kPrevFrame" title="Back one frame (←)" aria-label="Back one frame"><svg viewBox="0 0 16 16"><path d="M11 2v12L3 8z"/></svg></button>
+        <button class="key play" id="kPlay" title="Play / pause (Space)" aria-label="Play"><svg viewBox="0 0 16 16" id="playIcon"><path d="M4 2l10 6-10 6z"/></svg></button>
+        <button class="key" id="kNextFrame" title="Forward one frame (→)" aria-label="Forward one frame"><svg viewBox="0 0 16 16"><path d="M5 2v12l8-6z"/></svg></button>
+        <button class="key" id="kNextShot" title="Next shot (↓)" aria-label="Next shot"><svg viewBox="0 0 16 16"><path d="M11 2h2v12h-2zM2 2v12l8-6z"/></svg></button>
+      </div>
+      <div>
+        <div class="tc" id="tc">00:00:00:00</div>
+        <div class="tcsub" id="tcsub">frame 0 / 0</div>
+      </div>
+      <span class="shotchip" id="shotchip">—</span>
+      <span class="spacer"></span>
+      <div class="seg" role="group" aria-label="Playback speed">
+        <button data-rate="0.25" aria-pressed="false">¼×</button>
+        <button data-rate="0.5" aria-pressed="false">½×</button>
+        <button data-rate="1" aria-pressed="true">1×</button>
+      </div>
+      <label class="toggle"><input type="checkbox" id="loopShot"> Loop shot</label>
+      <button class="btn" id="addNote" title="Pin a note at the current frame (N)">Add note</button>
+    </div>
+
+    <div class="timeline">
+      <div class="tlhead">
+        <div class="seg" role="group" aria-label="Timeline zoom">
+          <button data-zoom="1" aria-pressed="true">Fit</button>
+          <button data-zoom="3" aria-pressed="false">3×</button>
+          <button data-zoom="8" aria-pressed="false">8×</button>
+          <button data-zoom="20" aria-pressed="false">20×</button>
+        </div>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div class="tlwrap">
+        <canvas id="tl" aria-label="Timeline: drag to scrub"></canvas>
+        <div class="tip" id="tip" hidden><div class="thumb" id="tipThumb"></div><div class="t" id="tipText"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="rail" aria-label="Shot and notes">
+    <section class="card shot" aria-live="polite">
+      <h2>Current shot</h2>
+      <div class="id" id="shotId">—</div>
+      <div class="scene" id="shotScene"></div>
+      <dl>
+        <dt>In / out</dt><dd id="shotIO"></dd>
+        <dt>Purpose</dt><dd id="shotPurpose"></dd>
+        <dt>Action</dt><dd id="shotAction"></dd>
+        <dt>Framing</dt><dd id="shotFraming"></dd>
+      </dl>
+    </section>
+
+    <section class="card notes">
+      <h2>Notes <button class="btn ghost" id="copyNotes" title="Copy every note as text" style="letter-spacing:0;text-transform:none;font-weight:400;padding:2px 9px;font-size:12px">Copy all</button></h2>
+      <div class="tools">
+        <div class="seg" role="group" aria-label="Filter notes">
+          <button data-filter="open" aria-pressed="true">Open</button>
+          <button data-filter="all" aria-pressed="false">All</button>
+          <button data-filter="done" aria-pressed="false">Resolved</button>
+        </div>
+        <label class="toggle"><input type="checkbox" id="thisShot"> This shot</label>
+      </div>
+      <div class="banner" id="storeBanner" hidden></div>
+      <div class="notelist" id="notelist"></div>
+    </section>
+
+    <section class="card">
+      <h2>Keys</h2>
+      <div class="help">
+        <kbd>Space</kbd><span>Play / pause</span>
+        <kbd>← →</kbd><span>One frame (Shift: one second)</span>
+        <kbd>↑ ↓</kbd><span>Previous / next shot</span>
+        <kbd>[ ]</kbd><span>Previous / next note</span>
+        <kbd>N</kbd><span>Note at frame centre</span>
+        <kbd>⌘/Ctrl ↵</kbd><span>Save note</span>
+      </div>
+    </section>
+  </aside>
+</div>
+
+<script type="application/json" id="film-data">__FILM_DATA__</script>
+<script>
+(() => {
+  'use strict';
+  const D = JSON.parse(document.getElementById('film-data').textContent);
+  const FPS = D.fps, FRAMES = D.frames;
+  const $ = (id) => document.getElementById(id);
+  const stage = $('stage'), pinsEl = $('pins');
+  const vids = [$('vA'), $('vB')], aud = $('aud');
+  const clips = D.media.clips;
+  const SCENE_COLOR = { redgiant: '#a83a2a', binary: '#c07a2c', whitedwarf: '#6f9fd8', vortex: '#d4a640', plasma: '#b8577a', atoms: '#4fa3a0', studies: '#b9a27a', nova: '#e8dcc0' };
+  const SCENE_NAME = { redgiant: 'Red giant', binary: 'Binary system', whitedwarf: 'White dwarf', vortex: 'Accretion vortex', plasma: 'Plasma', atoms: 'Atoms', studies: 'Renaissance studies', nova: 'Nova' };
+  const TAGS = ['Picture', 'Timing', 'Sound', 'Story'];
+
+  const S = {
+    frame: 0, playing: false, notes: [], filter: 'open', thisShot: false, zoom: 1, viewStart: 0,
+    selected: null, composer: null, db: null, user: null, me: null, canWrite: true, local: false, hover: null,
+  };
+
+  // ---------- time helpers ----------
+  const pad = (n, w = 2) => String(n).padStart(w, '0');
+  const tc = (f) => { const s = Math.floor(f / FPS); return `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}:${pad(f % FPS)}`; };
+  const tcShort = (f) => { const s = Math.floor(f / FPS); return `${Math.floor(s / 60)}:${pad(s % 60)}.${pad(f % FPS)}`; };
+  const clampF = (f) => Math.max(0, Math.min(FRAMES - 1, Math.round(f)));
+  const frameOf = (t) => clampF(Math.floor(t * FPS + 1e-3));
+  const shotAt = (f) => D.shots.find((s) => f >= s.start && f < s.end) || D.shots[D.shots.length - 1];
+
+  // ---------- player ----------
+  // The soundtrack is the master clock (continuous, glitch-free). Picture comes from 10 s muted clips in
+  // two alternating <video> elements: one shown, the other preloading the next clip. Paused seeks land
+  // on the exact frame; during playback the visible clip is nudged to stay within a frame of the sound.
+  let cur = vids[0], nxt = vids[1];
+  function setStatus(html) { $('status').innerHTML = html; }
+  const clipIdx = (f) => { for (let k = clips.length - 1; k >= 0; k--) if (f >= clips[k].start) return k; return 0; };
+  const kOf = (el) => (el.dataset.k === undefined ? -1 : +el.dataset.k);
+  // If the host serves no byte ranges a media element cannot seek; then fetch the whole file once and play
+  // it from memory (clips are small). Detected per element after its metadata loads.
+  const blobs = new Map(); let useBlobs = false;
+  async function blobUrl(file) {
+    if (!blobs.has(file)) blobs.set(file, fetch(file).then((r) => r.blob()).then((b) => URL.createObjectURL(b)));
+    return blobs.get(file);
+  }
+  let blobSwitch = null;
+  function toBlobMode() {   // one-time: reload the soundtrack and both clips from memory, then restore the frame
+    if (blobSwitch) return blobSwitch;
+    useBlobs = true;
+    blobSwitch = (async () => {
+      if (S.playing) pause();
+      const loaded = new Promise((r) => aud.addEventListener('loadedmetadata', r, { once: true }));
+      aud.src = await blobUrl(D.media.audio); aud.load();
+      await loaded;
+      for (const v of vids) { const k = kOf(v); if (k >= 0) { delete v.dataset.k; v._ready = null; loadInto(v, k); } }
+      seekFrame(S.frame);
+    })();
+    return blobSwitch;
+  }
+  function checkSeekable(el) {
+    el.addEventListener('loadedmetadata', () => {
+      if (useBlobs || (el.seekable.length && el.seekable.end(0) > 1)) return;
+      toBlobMode();
+    }, { once: true });
+  }
+  // load clip k into an element; resolves true once THAT clip's metadata is ready on the element
+  function loadInto(el, k) {
+    if (kOf(el) === k && el._ready) return el._ready;
+    el.dataset.k = String(k);
+    el._ready = (async () => {
+      const src = useBlobs ? await blobUrl(clips[k].file) : clips[k].file;
+      if (kOf(el) !== k) return false;
+      const loaded = new Promise((r) => el.addEventListener('loadedmetadata', r, { once: true }));
+      el.src = src; el.load();
+      if (!useBlobs) checkSeekable(el);
+      await loaded;
+      return kOf(el) === k;
+    })();
+    return el._ready;
+  }
+  function showClip(k, localT, playing) {
+    if (kOf(cur) !== k && kOf(nxt) === k) { const t = cur; cur = nxt; nxt = t; }
+    const el = cur;
+    loadInto(el, k).then((ok) => {
+      if (!ok || kOf(el) !== k || el !== cur) return;
+      if (Math.abs(el.currentTime - localT) > 0.25 / FPS) el.currentTime = Math.max(0, localT);
+      if (playing) { el.playbackRate = aud.playbackRate; const p = el.play(); if (p && p.catch) p.catch(() => {}); }
+    });
+    for (const v of vids) { v.classList.toggle('show', v === cur); if (v !== cur) v.pause(); }
+    const n = k + 1 < clips.length ? k + 1 : (k > 0 ? k - 1 : -1);
+    if (n >= 0 && kOf(nxt) !== n) { const other = nxt; loadInto(other, n).then((ok) => { if (ok && other !== cur) other.currentTime = 0; }); }
+  }
+  function loadPicture() {
+    aud.src = D.media.audio;
+    checkSeekable(aud);
+    for (const v of vids) v.addEventListener('loadeddata', () => { $('loadmsg').hidden = true; setStatus(statusText()); }, { once: true });
+    aud.addEventListener('error', () => setStatus('The soundtrack could not be loaded; picture only.'));
+    vids.forEach((v) => v.addEventListener('error', () => { if (v === cur) $('loadmsg').textContent = 'The picture could not be loaded in this browser.'; }));
+    showClip(0, 0.5 / FPS, false);
+  }
+  function statusText() {
+    const n = S.notes.length, open = S.notes.filter((x) => x.status !== 'done').length;
+    return `<b>${open}</b> open · ${n} notes${S.local ? ' · this browser only' : ''}`;
+  }
+  function seekFrame(f) {
+    f = clampF(f);
+    S.frame = f;
+    const k = clipIdx(f);
+    aud.currentTime = (f + 0.5) / FPS;
+    showClip(k, (f - clips[k].start + 0.5) / FPS, false);
+    onFrame(true);
+  }
+  function play() { const p = aud.play(); if (p && p.catch) p.catch(() => { setStatus('Tap play again to start sound.'); }); }
+  function pause() { aud.pause(); for (const v of vids) v.pause(); }
+  function isPaused() { return aud.paused; }
+  function toggle() { isPaused() ? play() : (pause(), seekFrame(frameOf(aud.currentTime))); }
+  aud.addEventListener('play', () => {
+    S.playing = true; stage.classList.add('playing'); closeComposer();
+    $('playIcon').innerHTML = '<path d="M3 2h4v12H3zM9 2h4v12H9z"/>'; $('kPlay').setAttribute('aria-label', 'Pause');
+    const f = frameOf(aud.currentTime), k = clipIdx(f); showClip(k, aud.currentTime - clips[k].start / FPS, true);
+    tick();
+  });
+  aud.addEventListener('pause', () => { S.playing = false; stage.classList.remove('playing'); for (const v of vids) v.pause(); $('playIcon').innerHTML = '<path d="M4 2l10 6-10 6z"/>'; $('kPlay').setAttribute('aria-label', 'Play'); onFrame(true); });
+  aud.addEventListener('seeked', () => {
+    if (S.playing) return;
+    const f = frameOf(aud.currentTime);
+    if (f !== S.frame) { S.frame = f; const k = clipIdx(f); showClip(k, (f - clips[k].start + 0.5) / FPS, false); }
+    onFrame(true);
+  });
+  aud.addEventListener('ended', () => { S.playing = false; });
+  function tick() {
+    if (!S.playing) return;
+    const t = aud.currentTime;
+    let f = frameOf(t);
+    if ($('loopShot').checked) { const sh = shotAt(S.frame); if (f >= sh.end || f < sh.start) { aud.currentTime = (sh.start + 0.5) / FPS; f = sh.start; } }
+    const k = clipIdx(f), localT = t - clips[k].start / FPS;
+    if (kOf(cur) !== k) showClip(k, localT, true);
+    else if (cur.readyState >= 2) {
+      const d = cur.currentTime - localT;
+      if (Math.abs(d) > 0.12) cur.currentTime = Math.max(0, localT);
+      else cur.playbackRate = aud.playbackRate * (1 - Math.max(-0.06, Math.min(0.06, d * 2)));
+      if (cur.paused) { const p = cur.play(); if (p && p.catch) p.catch(() => {}); }
+    }
+    if (f !== S.frame) { S.frame = f; onFrame(false); }
+    requestAnimationFrame(tick);
+  }
+
+  // ---------- per-frame UI ----------
+  let lastShot = null;
+  function onFrame(force) {
+    const f = S.frame;
+    $('tc').textContent = tc(f);
+    $('tcsub').textContent = `frame ${f} / ${FRAMES - 1}`;
+    const sh = shotAt(f);
+    if (sh !== lastShot || force) {
+      lastShot = sh;
+      const chip = $('shotchip'); chip.textContent = sh.id; chip.style.borderColor = SCENE_COLOR[sh.scene] || 'var(--line)';
+      $('shotId').textContent = sh.id;
+      $('shotScene').textContent = (SCENE_NAME[sh.scene] || sh.scene) + ' · ' + sh.act;
+      $('shotIO').textContent = `${tc(sh.start)} – ${tc(sh.end)}  (${((sh.end - sh.start) / FPS).toFixed(2)} s)`;
+      $('shotPurpose').textContent = sh.purpose; $('shotAction').textContent = sh.action; $('shotFraming').textContent = sh.framing;
+      if (S.thisShot) renderNotes();
+    }
+    followPlayhead();
+    renderPins();
+    drawTimeline();
+  }
+
+  // ---------- pins + bubble ----------
+  function sortedNotes() { return [...S.notes].sort((a, b) => a.frame - b.frame || String(a.createdAt).localeCompare(String(b.createdAt))); }
+  function noteNumber(id) { return sortedNotes().findIndex((n) => n.id === id) + 1; }
+  function renderPins() {
+    pinsEl.replaceChildren();
+    const f = S.frame;
+    for (const n of sortedNotes()) {
+      const d = Math.abs(n.frame - f);
+      if (d > 12) continue;
+      const p = document.createElement('button');
+      p.className = 'pin' + (d === 0 ? ' on' : '') + (n.status === 'done' ? ' done' : '') + (S.selected === n.id ? ' sel' : '');
+      p.style.left = (n.x * 100) + '%'; p.style.top = (n.y * 100) + '%';
+      p.style.opacity = d === 0 ? 1 : Math.max(0.25, 1 - d / 13);
+      p.textContent = noteNumber(n.id);
+      p.setAttribute('aria-label', `Note ${noteNumber(n.id)} at ${tc(n.frame)}`);
+      p.addEventListener('click', (e) => { e.stopPropagation(); selectNote(n.id, true); });
+      pinsEl.appendChild(p);
+      if (S.selected === n.id && d === 0) pinsEl.appendChild(bubbleFor(n));
+    }
+  }
+  function bubbleFor(n) {
+    const b = document.createElement('div'); b.className = 'bubble';
+    const left = n.x < 0.6;
+    b.style[left ? 'left' : 'right'] = left ? `calc(${n.x * 100}% + 18px)` : `calc(${(1 - n.x) * 100}% + 18px)`;
+    b.style.top = `min(calc(${n.y * 100}% - 12px), calc(100% - 80px))`;
+    b.textContent = n.text;
+    const who = document.createElement('div'); who.className = 'who'; who.textContent = authorName(n.author) + ' · ' + tc(n.frame);
+    b.appendChild(who);
+    return b;
+  }
+
+  // ---------- composer ----------
+  function openComposer(x, y) {
+    if (!S.canWrite) return;
+    pause();
+    const f = S.frame;
+    const el = document.createElement('form'); el.className = 'composer';
+    const left = x < 0.55, top = y < 0.5;
+    el.style[left ? 'left' : 'right'] = left ? `min(calc(${x * 100}% + 16px), calc(100% - 330px))` : `calc(${(1 - x) * 100}% + 16px)`;
+    el.style[top ? 'top' : 'bottom'] = top ? `calc(${y * 100}% - 8px)` : `calc(${(1 - y) * 100}% - 8px)`;
+    el.innerHTML = `<div class="where"></div><textarea id="noteText" aria-label="Note" placeholder="What should change here?"></textarea><div class="tags"></div><div class="row"><button type="submit" class="btn primary">Save note</button><button type="button" class="btn ghost" data-cancel>Cancel</button></div>`;
+    el.querySelector('.where').textContent = `${tc(f)} · ${shotAt(f).id}`;
+    const tags = new Set();
+    const tagBox = el.querySelector('.tags');
+    for (const t of TAGS) {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'tag'; b.textContent = t; b.setAttribute('aria-pressed', 'false');
+      b.addEventListener('click', () => { tags.has(t) ? tags.delete(t) : tags.add(t); b.setAttribute('aria-pressed', String(tags.has(t))); });
+      tagBox.appendChild(b);
+    }
+    const marker = document.createElement('div'); marker.className = 'pin on'; marker.style.left = (x * 100) + '%'; marker.style.top = (y * 100) + '%'; marker.textContent = '+';
+    el.addEventListener('click', (e) => e.stopPropagation());
+    el.addEventListener('pointerdown', (e) => e.stopPropagation());
+    el.querySelector('[data-cancel]').addEventListener('click', closeComposer);
+    el.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = el.querySelector('textarea').value.trim();
+      if (!text) { el.querySelector('textarea').focus(); return; }
+      el.querySelector('button[type=submit]').disabled = true;
+      try { await createNote({ frame: f, x: +x.toFixed(4), y: +y.toFixed(4), text, tags: [...tags] }); closeComposer(); }
+      catch (err) { el.querySelector('button[type=submit]').disabled = false; el.querySelector('.where').textContent = 'Could not save: ' + (err && (err.message || err.code) || 'unknown error'); }
+    });
+    el.querySelector('textarea').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); el.requestSubmit(); }
+      if (e.key === 'Escape') { e.preventDefault(); closeComposer(); }
+    });
+    S.composer = { el, marker };
+    $('compLayer').replaceChildren(marker, el);
+    setTimeout(() => el.querySelector('textarea').focus(), 0);
+  }
+  function closeComposer() { if (!S.composer) return; S.composer = null; $('compLayer').replaceChildren(); }
+  stage.addEventListener('click', (e) => {
+    if (S.composer) { closeComposer(); return; }
+    if (!isPaused()) { pause(); seekFrame(frameOf(aud.currentTime)); return; }
+    const r = stage.getBoundingClientRect();
+    openComposer((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
+  });
+
+  // ---------- notes store (db when available, else this browser) ----------
+  const LS = 'editroom-notes-v1';
+  function loadLocal() { try { return JSON.parse(localStorage.getItem(LS) || '[]'); } catch { return []; } }
+  function saveLocal() { try { localStorage.setItem(LS, JSON.stringify(S.notes)); } catch { /* storage unavailable */ } }
+  async function createNote(n) {
+    const body = { ...n, shot: shotAt(n.frame).id, timecode: tc(n.frame), status: 'open', author: S.me ? S.me.id : null, createdAt: new Date().toISOString(), render: D.build.render };
+    if (S.db) { await S.db.collection('notes').add(body); }
+    else { S.notes.push({ id: 'l' + Date.now().toString(36), ...body }); saveLocal(); renderAll(); }
+  }
+  async function updateNote(id, patch) {
+    if (S.db) await S.db.doc('notes/' + id).update({ ...patch, updatedAt: new Date().toISOString() });
+    else { const n = S.notes.find((x) => x.id === id); Object.assign(n, patch); saveLocal(); renderAll(); }
+  }
+  async function deleteNote(id) {
+    if (S.db) await S.db.doc('notes/' + id).delete();
+    else { S.notes = S.notes.filter((x) => x.id !== id); saveLocal(); renderAll(); }
+    if (S.selected === id) S.selected = null;
+  }
+  let profiles = {};
+  function authorName(id) { if (!id) return 'Someone'; if (S.me && id === S.me.id) return 'You'; return (profiles[id] && profiles[id].name) || 'Someone'; }
+  async function refreshProfiles() {
+    if (!S.user) return;
+    const ids = [...new Set(S.notes.map((n) => n.author).filter(Boolean))];
+    if (!ids.length) return;
+    try { profiles = await S.user.profiles(ids); renderNotes(); } catch { /* names stay generic */ }
+  }
+  async function initStore() {
+    const banner = $('storeBanner');
+    let db = null, user = null;
+    try {
+      if (window.claude && window.claude.use) [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+    } catch { db = null; }
+    S.user = user;
+    if (user) { try { S.me = await user.me(); } catch { S.me = null; } }
+    if (db) {
+      S.db = db;
+      try { const can = user ? await user.can('data.write') : null; if (can === false) { S.canWrite = false; banner.hidden = false; banner.textContent = 'You can read these notes. Ask the owner for Contributor access to add your own.'; } } catch { /* keep inputs */ }
+      db.collection('notes').onSnapshot((snap) => {
+        S.notes = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        renderAll(); refreshProfiles();
+      }, (err) => { banner.hidden = false; banner.textContent = 'Notes stopped syncing (' + err.code + '). Reload the page to reconnect.'; });
+    } else {
+      S.local = true; S.notes = loadLocal();
+      banner.hidden = false; banner.textContent = 'Notes are being kept in this browser only. Open the edit room from claude.ai while signed in to share them.';
+      renderAll();
+    }
+    $('addNote').disabled = !S.canWrite;
+  }
+
+  // ---------- notes list ----------
+  function visibleNotes() {
+    let list = sortedNotes();
+    if (S.filter === 'open') list = list.filter((n) => n.status !== 'done');
+    if (S.filter === 'done') list = list.filter((n) => n.status === 'done');
+    if (S.thisShot) { const sh = shotAt(S.frame); list = list.filter((n) => n.frame >= sh.start && n.frame < sh.end); }
+    return list;
+  }
+  function renderNotes() {
+    const box = $('notelist');
+    box.replaceChildren();
+    const list = visibleNotes();
+    if (!list.length) {
+      const e = document.createElement('div'); e.className = 'empty';
+      e.innerHTML = S.notes.length ? '<b>Nothing in this view.</b><span>Change the filter to see the other notes.</span>'
+        : '<b>No notes yet.</b><span>Pause on any frame and click the spot in the picture you want to talk about. The note keeps that exact frame and position.</span>';
+      box.appendChild(e);
+    }
+    for (const n of list) {
+      const el = document.createElement('article');
+      el.className = 'note' + (n.status === 'done' ? ' done' : '') + (S.selected === n.id ? ' sel' : '');
+      const h = document.createElement('div'); h.className = 'h';
+      const num = document.createElement('span'); num.className = 'num'; num.textContent = noteNumber(n.id);
+      const where = document.createElement('span'); where.textContent = `${tc(n.frame)} · ${n.shot || shotAt(n.frame).id}`;
+      h.append(num, where);
+      for (const t of n.tags || []) { const c = document.createElement('span'); c.className = 'chip'; c.textContent = t; h.appendChild(c); }
+      const txt = document.createElement('div'); txt.className = 'txt'; txt.textContent = n.text;
+      const foot = document.createElement('div'); foot.className = 'foot';
+      if (S.user && n.author && profiles[n.author]) { const img = document.createElement('img'); img.alt = ''; img.src = profiles[n.author].avatarUrl; foot.appendChild(img); }
+      const who = document.createElement('span'); who.textContent = authorName(n.author) + (n.render ? ` · render ${n.render}` : '');
+      foot.appendChild(who);
+      const acts = document.createElement('span'); acts.className = 'acts';
+      if (S.canWrite) {
+        const res = document.createElement('button'); res.type = 'button'; res.textContent = n.status === 'done' ? 'Reopen' : 'Resolve';
+        res.addEventListener('click', (e) => { e.stopPropagation(); updateNote(n.id, { status: n.status === 'done' ? 'open' : 'done' }).catch(showErr); });
+        const ed = document.createElement('button'); ed.type = 'button'; ed.textContent = 'Edit';
+        ed.addEventListener('click', (e) => { e.stopPropagation(); editInline(el, n); });
+        const del = document.createElement('button'); del.type = 'button'; del.textContent = 'Delete';
+        del.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (del.dataset.armed) { deleteNote(n.id).catch(showErr); } else { del.dataset.armed = '1'; del.textContent = 'Confirm'; setTimeout(() => { if (del.isConnected) { delete del.dataset.armed; del.textContent = 'Delete'; } }, 3000); }
+        });
+        acts.append(res, ed, del);
+      }
+      foot.appendChild(acts);
+      el.append(h, txt, foot);
+      el.addEventListener('click', () => selectNote(n.id, true));
+      box.appendChild(el);
+    }
+  }
+  function editInline(el, n) {
+    const ta = document.createElement('textarea'); ta.value = n.text; ta.style.cssText = 'width:100%;min-height:70px;background:var(--bg);color:var(--fg);border:1px solid var(--gold);border-radius:4px;padding:6px 8px;font:13px/1.4 var(--ui)';
+    ta.setAttribute('aria-label', 'Edit note');
+    const txt = el.querySelector('.txt'); txt.replaceWith(ta); ta.focus();
+    ta.addEventListener('click', (e) => e.stopPropagation());
+    const done = async (save) => { if (save && ta.value.trim() && ta.value.trim() !== n.text) { await updateNote(n.id, { text: ta.value.trim() }).catch(showErr); } renderNotes(); };
+    ta.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) done(true); if (e.key === 'Escape') done(false); });
+    ta.addEventListener('blur', () => done(true));
+  }
+  function showErr(err) { $('storeBanner').hidden = false; $('storeBanner').textContent = 'That change was not saved: ' + ((err && (err.message || err.code)) || 'unknown error'); }
+  function selectNote(id, seek) {
+    S.selected = id;
+    const n = S.notes.find((x) => x.id === id);
+    if (n && seek) { pause(); seekFrame(n.frame); }
+    renderNotes(); renderPins();
+    const el = $('notelist').querySelector('.note.sel'); if (el) el.scrollIntoView({ block: 'nearest' });
+  }
+  function renderAll() { renderNotes(); renderPins(); drawTimeline(); setStatus(statusText()); }
+
+  $('copyNotes').addEventListener('click', async () => {
+    const lines = sortedNotes().map((n, i) => `${i + 1}. ${tc(n.frame)} (frame ${n.frame}, ${n.shot}) [${n.status === 'done' ? 'resolved' : 'open'}]${(n.tags || []).length ? ' {' + n.tags.join(', ') + '}' : ''} @ ${(n.x * 100).toFixed(0)}%,${(n.y * 100).toFixed(0)}%\n   ${n.text.replace(/\n/g, '\n   ')}`);
+    const text = lines.join('\n') || 'No notes yet.';
+    try { await navigator.clipboard.writeText(text); $('copyNotes').textContent = 'Copied'; }
+    catch { $('copyNotes').textContent = 'Copy failed'; }
+    setTimeout(() => { $('copyNotes').textContent = 'Copy all'; }, 1600);
+  });
+  document.querySelectorAll('[data-filter]').forEach((b) => b.addEventListener('click', () => {
+    S.filter = b.dataset.filter; document.querySelectorAll('[data-filter]').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); renderNotes();
+  }));
+  $('thisShot').addEventListener('change', (e) => { S.thisShot = e.target.checked; renderNotes(); });
+
+  // ---------- timeline ----------
+  const tl = $('tl'), ctx = tl.getContext('2d');
+  const wave = Uint8Array.from(atob(D.wave), (c) => c.charCodeAt(0));
+  const ROWS = { act: [0, 16], shot: [18, 30], music: [52, 52], notes: [108, 20] };
+  function span() { return FRAMES / S.zoom; }
+  function xOf(f, w) { return ((f - S.viewStart) / span()) * w; }
+  function fOf(x, w) { return S.viewStart + (x / w) * span(); }
+  function followPlayhead() {
+    if (S.zoom === 1) { S.viewStart = 0; return; }
+    const sp = span();
+    if (S.frame < S.viewStart + sp * 0.1 || S.frame > S.viewStart + sp * 0.85) S.viewStart = Math.max(0, Math.min(FRAMES - sp, S.frame - sp * 0.3));
+  }
+  function drawTimeline() {
+    const dpr = window.devicePixelRatio || 1;
+    const w = tl.clientWidth, h = tl.clientHeight;
+    if (tl.width !== Math.round(w * dpr) || tl.height !== Math.round(h * dpr)) { tl.width = Math.round(w * dpr); tl.height = Math.round(h * dpr); }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#151412'; ctx.fillRect(0, 0, w, h);
+    ctx.font = '10px "IBM Plex Mono", monospace'; ctx.textBaseline = 'middle';
+    // acts
+    for (const a of D.acts) {
+      const x0 = xOf(a.start, w), x1 = xOf(a.end, w);
+      if (x1 < 0 || x0 > w) continue;
+      ctx.fillStyle = 'rgba(236,229,217,0.05)'; ctx.fillRect(x0, ROWS.act[0], x1 - x0 - 1, ROWS.act[1]);
+      ctx.fillStyle = '#a39a8d';
+      const label = x1 - x0 > 90 ? a.name : a.short;
+      if (x1 - x0 > 26) { ctx.save(); ctx.beginPath(); ctx.rect(x0, 0, x1 - x0 - 2, 18); ctx.clip(); ctx.fillText(label, Math.max(x0, 0) + 4, ROWS.act[0] + 8); ctx.restore(); }
+    }
+    // shots
+    for (const s of D.shots) {
+      const x0 = xOf(s.start, w), x1 = xOf(s.end, w);
+      if (x1 < 0 || x0 > w) continue;
+      const cur = S.frame >= s.start && S.frame < s.end;
+      ctx.globalAlpha = cur ? 1 : 0.72;
+      ctx.fillStyle = SCENE_COLOR[s.scene] || '#666';
+      ctx.fillRect(x0, ROWS.shot[0], Math.max(1, x1 - x0 - 1), ROWS.shot[1]);
+      ctx.globalAlpha = 1;
+      if (x1 - x0 > 34) { ctx.save(); ctx.beginPath(); ctx.rect(x0, ROWS.shot[0], x1 - x0 - 2, ROWS.shot[1]); ctx.clip(); ctx.fillStyle = 'rgba(12,11,10,0.86)'; ctx.fillText(s.id, x0 + 4, ROWS.shot[0] + ROWS.shot[1] / 2); ctx.restore(); }
+      if (cur) { ctx.strokeStyle = '#ece5d9'; ctx.lineWidth = 1.5; ctx.strokeRect(x0 + 0.75, ROWS.shot[0] + 0.75, Math.max(1, x1 - x0 - 2.5), ROWS.shot[1] - 1.5); }
+    }
+    // music: waveform, bar lines, cues
+    const my = ROWS.music[0], mh = ROWS.music[1], mid = my + mh / 2;
+    ctx.fillStyle = 'rgba(163,154,141,0.10)'; ctx.fillRect(0, my, w, mh);
+    ctx.fillStyle = 'rgba(163,154,141,0.55)';
+    const n = wave.length;
+    for (let x = 0; x < w; x++) {
+      const f0 = fOf(x, w), f1 = fOf(x + 1, w);
+      const i0 = Math.max(0, Math.floor((f0 / FRAMES) * n)), i1 = Math.min(n - 1, Math.ceil((f1 / FRAMES) * n));
+      let m = 0; for (let i = i0; i <= i1; i++) m = Math.max(m, wave[i]);
+      const a = (m / 255) * (mh / 2 - 2);
+      if (a > 0.3) ctx.fillRect(x, mid - a, 1, a * 2);
+    }
+    const pxPerBar = (3 * FPS / span()) * w;
+    for (const b of D.bars) {
+      const x = xOf(b.frame, w); if (x < -1 || x > w + 1) continue;
+      const strong = b.bar % 4 === 1;
+      if (!strong && pxPerBar < 6) continue;
+      ctx.fillStyle = strong ? 'rgba(236,229,217,0.32)' : 'rgba(236,229,217,0.14)';
+      ctx.fillRect(Math.round(x), my, 1, strong ? mh : 8);
+      if (strong && pxPerBar > 9) { ctx.fillStyle = 'rgba(236,229,217,0.5)'; ctx.fillText(String(b.bar), Math.round(x) + 3, my + 6); }
+    }
+    for (const c of D.cues) {
+      const x = xOf(c.frame, w); if (x < -4 || x > w + 4) continue;
+      if (c.kind === 'cannon') { ctx.fillStyle = 'rgba(141,183,245,0.75)'; ctx.fillRect(Math.round(x) - 1, my + mh - 7, 2, 7); continue; }
+      const col = c.kind === 'edit-cut' ? '#f3ece0' : c.kind === 'music-reentry' ? '#8db7f5' : '#e3a53c';
+      ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(x, my + 2); ctx.lineTo(x + 5, my + 9); ctx.lineTo(x, my + 16); ctx.lineTo(x - 5, my + 9); ctx.closePath(); ctx.fill();
+      ctx.fillRect(Math.round(x), my, 1, mh);
+    }
+    // notes row
+    const ny = ROWS.notes[0] + ROWS.notes[1] / 2;
+    for (const note of S.notes) {
+      const x = xOf(note.frame, w); if (x < -6 || x > w + 6) continue;
+      ctx.fillStyle = note.status === 'done' ? '#7cb586' : '#d4473b';
+      ctx.beginPath(); ctx.arc(x, ny, note.id === S.selected ? 5.5 : 4, 0, Math.PI * 2); ctx.fill();
+    }
+    // playhead
+    const px = xOf(S.frame + 0.5, w);
+    ctx.fillStyle = '#e3a53c'; ctx.fillRect(Math.round(px) - 1, 0, 2, h);
+    ctx.beginPath(); ctx.moveTo(px - 5, 0); ctx.lineTo(px + 5, 0); ctx.lineTo(px, 6); ctx.closePath(); ctx.fill();
+    // hover guide
+    if (S.hover !== null) { const hx = xOf(S.hover + 0.5, w); ctx.fillStyle = 'rgba(236,229,217,0.35)'; ctx.fillRect(Math.round(hx), 0, 1, h); }
+  }
+  function legend() {
+    const lg = $('legend');
+    const used = [...new Set(D.shots.map((s) => s.scene))];
+    lg.replaceChildren(...used.map((sc) => { const s = document.createElement('span'); const i = document.createElement('i'); i.style.background = SCENE_COLOR[sc] || '#666'; s.append(i, document.createTextNode(SCENE_NAME[sc] || sc)); return s; }));
+    const add = (color, label, round) => { const s = document.createElement('span'); const i = document.createElement('i'); i.style.background = color; if (round) i.style.borderRadius = '50%'; s.append(i, document.createTextNode(label)); lg.appendChild(s); };
+    add('#e3a53c', 'Strike'); add('#f3ece0', 'Ignition cut'); add('#8db7f5', 'Cannon / re-entry'); add('#d4473b', 'Note', true);
+  }
+  // scrubbing + hover preview
+  let dragging = false;
+  function frameAtEvent(e) { const r = tl.getBoundingClientRect(); return clampF(fOf(e.clientX - r.left, r.width)); }
+  tl.addEventListener('pointerdown', (e) => { dragging = true; tl.setPointerCapture(e.pointerId); pause(); seekFrame(frameAtEvent(e)); });
+  tl.addEventListener('pointermove', (e) => {
+    const f = frameAtEvent(e);
+    if (dragging) { seekFrame(f); }
+    S.hover = f; showTip(e, f); drawTimeline();
+  });
+  const endDrag = () => { dragging = false; };
+  tl.addEventListener('pointerup', endDrag); tl.addEventListener('pointercancel', endDrag);
+  tl.addEventListener('pointerleave', () => { S.hover = null; $('tip').hidden = true; drawTimeline(); });
+  tl.addEventListener('wheel', (e) => {
+    if (S.zoom === 1 && !e.ctrlKey) return;
+    e.preventDefault();
+    if (e.ctrlKey) { const levels = [1, 3, 8, 20]; const i = levels.indexOf(S.zoom); setZoom(levels[Math.max(0, Math.min(levels.length - 1, i + (e.deltaY < 0 ? 1 : -1)))]); return; }
+    const d = (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) / tl.clientWidth * span();
+    S.viewStart = Math.max(0, Math.min(FRAMES - span(), S.viewStart + d)); drawTimeline();
+  }, { passive: false });
+  function showTip(e, f) {
+    const tip = $('tip'), r = tl.getBoundingClientRect();
+    const th = D.thumbs;
+    if (th) {
+      const i = Math.min(th.count - 1, Math.floor(f / FPS / th.every));
+      const col = i % th.cols, row = Math.floor(i / th.cols);
+      const box = $('tipThumb');
+      box.style.backgroundImage = `url(${th.file})`;
+      box.style.backgroundSize = `${th.cols * 160}px ${th.rows * 90}px`;
+      box.style.backgroundPosition = `-${col * 160}px -${row * 90}px`;
+    }
+    $('tipText').textContent = `${tc(f)} · ${shotAt(f).id}`;
+    tip.hidden = false;
+    const x = Math.max(88, Math.min(r.width - 88, e.clientX - r.left));
+    tip.style.left = x + 'px';
+  }
+  function setZoom(z) {
+    S.zoom = z; document.querySelectorAll('[data-zoom]').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.zoom === z)));
+    if (z === 1) S.viewStart = 0; else S.viewStart = Math.max(0, Math.min(FRAMES - span(), S.frame - span() / 2));
+    drawTimeline();
+  }
+  document.querySelectorAll('[data-zoom]').forEach((b) => b.addEventListener('click', () => setZoom(+b.dataset.zoom)));
+  new ResizeObserver(() => drawTimeline()).observe(tl);
+
+  // ---------- transport + keys ----------
+  const shotStep = (dir) => {
+    const cur = shotAt(S.frame), i = D.shots.indexOf(cur);
+    pause();
+    if (dir < 0) seekFrame(S.frame > cur.start ? cur.start : D.shots[Math.max(0, i - 1)].start);
+    else if (i < D.shots.length - 1) seekFrame(D.shots[i + 1].start);
+  };
+  const noteStep = (dir) => {
+    const list = sortedNotes(); if (!list.length) return;
+    const next = dir > 0 ? list.find((n) => n.frame > S.frame) || list[0] : [...list].reverse().find((n) => n.frame < S.frame) || list[list.length - 1];
+    selectNote(next.id, true);
+  };
+  $('kPlay').addEventListener('click', toggle);
+  $('kPrevFrame').addEventListener('click', () => { pause(); seekFrame(S.frame - 1); });
+  $('kNextFrame').addEventListener('click', () => { pause(); seekFrame(S.frame + 1); });
+  $('kPrevShot').addEventListener('click', () => shotStep(-1));
+  $('kNextShot').addEventListener('click', () => shotStep(1));
+  $('addNote').addEventListener('click', () => { pause(); openComposer(0.5, 0.5); });
+  document.querySelectorAll('[data-rate]').forEach((b) => b.addEventListener('click', () => {
+    aud.playbackRate = +b.dataset.rate; cur.playbackRate = +b.dataset.rate; document.querySelectorAll('[data-rate]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  }));
+  document.addEventListener('keydown', (e) => {
+    const t = e.target; if (t && (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT')) return;
+    const step = e.shiftKey ? FPS : 1;
+    switch (e.key) {
+      case ' ': e.preventDefault(); toggle(); break;
+      case 'ArrowLeft': e.preventDefault(); pause(); seekFrame(S.frame - step); break;
+      case 'ArrowRight': e.preventDefault(); pause(); seekFrame(S.frame + step); break;
+      case 'ArrowUp': e.preventDefault(); shotStep(-1); break;
+      case 'ArrowDown': e.preventDefault(); shotStep(1); break;
+      case '[': noteStep(-1); break;
+      case ']': noteStep(1); break;
+      case 'n': case 'N': e.preventDefault(); pause(); openComposer(0.5, 0.5); break;
+      case 'Escape': closeComposer(); S.selected = null; renderAll(); break;
+      default: break;
+    }
+  });
+
+  // ---------- boot (keeps the playhead across republishes) ----------
+  function start(data) {
+    $('buildmeta').textContent = `${D.build.label} · ${(FRAMES / FPS).toFixed(1)} s · ${FPS} fps`;
+    if (D.build.note) { const b = $('storeBanner'); b.hidden = false; b.textContent = D.build.note; }
+    legend();
+    loadPicture();
+    S.frame = clampF((data && data.frame) || 0);
+    if (S.frame) aud.addEventListener('loadedmetadata', () => seekFrame(S.frame), { once: true });
+    onFrame(true);
+    renderNotes();
+    initStore();
+  }
+  const hot = window.claude && window.claude.hot;
+  if (hot && hot.snapshot) hot.snapshot(() => ({ frame: S.frame }));
+  if (hot && hot.ready) hot.ready(start); else start((hot && hot.data) || {});
+})();
+</script>
