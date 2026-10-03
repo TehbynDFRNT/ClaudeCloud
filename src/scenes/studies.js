@@ -5,19 +5,20 @@
 //         flame [x, y, r, strength], level keys, drawing id.
 import { frag } from '../engine/glsl.js';
 import { keys } from '../engine/math.js';
-import { PAPER, PAPER_BAKE, BAKE_RECT, BAKE_DENSITY, makePaperTexture } from './lib/studies-paper.js';
+import { PAPER, PAPER_BAKE, BAKE_RECT, BAKE_DENSITY, BAKE_RECT_P, BAKE_DENSITY_P, makePaperTexture } from './lib/studies-paper.js';
 import { renderDrawing } from './lib/studies-ink.js';
 import * as DR from './lib/studies-drawings.js';
 
 const FS = frag(PAPER, `
 uniform vec4 uShadeY;   // lower page falling into shadow: y0, y1, amount
 uniform vec4 uGutter;   // the page curling down into the binding: x of the fold, curl width, depth, side (+1 right, -1 left, 0 none)
+uniform float uPx;      // output pixels per 1080p page pixel (landscape: H / 1080; portrait: zoom * H / 1080)
 void main(){
   vec2 p = pagePos();
   Paper P = paper(p);
   vec3 alb = P.alb;
   vec2 uv = gl_FragCoord.xy / uRes;
-  vec2 r1 = vec2(1.7 * uFull.y / 1080.0) / uRes;
+  vec2 r1 = vec2(1.7 * uPx) / uRes;
   vec4 o0 = texture(uOverlay, uv) * uInk;
   vec4 oxp = texture(uOverlay, uv + vec2(r1.x, 0.0)) * uInk;
   vec4 oxm = texture(uOverlay, uv - vec2(r1.x, 0.0)) * uInk;
@@ -52,7 +53,7 @@ void main(){
   alb *= mix(vec3(1.0), vec3(0.95, 0.85, 0.79), sat(ob.g * 0.25 + oh.g * 0.3) * (1.0 - cover));
 
   // ---- relief: stylus grooves (no ink) and the wet ink bead (on ink)
-  vec2 gR = vec2(oxp.b - oxm.b, oym.b - oyp.b) * 0.5 / (1.7 * uFull.y / 1080.0);
+  vec2 gR = vec2(oxp.b - oxm.b, oym.b - oyp.b) * 0.5 / (1.7 * uPx);
   float sgn = mix(-1.0, 1.0, smoothstep(0.05, 0.3, ink));
   vec2 grad = P.grad + gR * sgn * 0.06;
   // gutter: the sheet slopes down into the fold (turned from the light), a dark crease, the facing page rising
@@ -93,7 +94,9 @@ const BLACK = frag(`void main(){ fragColor = vec4(0.0, 0.0, 0.0, 1.0); }`);
 
 const BUILD = {
   codex: DR.codex,
+  codexV: () => DR.codex({ vertical: true }),
   prometheus: DR.prometheus,
+  prometheusV: () => DR.prometheus({ vertical: true }),
   deluge: DR.deluge,
   parabola: DR.parabola,
   eye: DR.eye,
@@ -117,6 +120,12 @@ const presets = {
     view: [[0, 0.0, 0.0, 1.0, -0.008], [2.917, 0.03, 0.006, 1.035, 0.004]],
     key: { pos: [-0.28, -0.2], r: 0.95, pow: 1.4, dir: [-0.8, -0.45, 0.42], col: [1.14, 0.93, 0.68] },
     gutter: [0.862, 0.12, 0.034, 1], cockle: 2.4,   // a notebook: the sheet curls into the binding at the right
+    // 9:16: the eight stands upright, the giant's lobe above (like the rolled space shots), the binding at the right edge
+    portrait: {
+      drawing: 'codexV',
+      view: [[0, 0.0, -0.008, 0.615, -0.008], [2.917, 0.012, -0.004, 0.635, 0.004]],
+      gutter: [0.455, 0.1, 0.03, 1],
+    },
   },
   'S10-prometheus': {
     drawing: 'prometheus', design: 3.5,
@@ -126,11 +135,17 @@ const presets = {
     paperSeed: 3.7, age: [0.7, 0.3, 0.55, 1.0],
     key: { pos: [-0.22, -0.2], r: 0.95, pow: 1.4, dir: [-0.8, -0.45, 0.42], col: [1.08, 0.89, 0.66] },
     flameKeys: [[0.45, 0], [2.1, 1]], flameGain: 2.0,
+    portrait: {
+      drawing: 'prometheusV',
+      view: [[0, -0.13, -0.02, 0.76, 0.006], [3.5, -0.14, -0.035, 0.82, -0.004]],
+    },
   },
   'S14d-deluge': {
     drawing: 'deluge', paperSeed: 7.3, design: 1.5, wetTau: 0.45, wetGain: 0.5,
     view: [[0, 0.0, 0.0, 1.0, 0.07], [1.5, 0.0, 0.0, 1.13, -0.06, 'linear']],
     key: { pos: [-0.1, -0.1], r: 0.9, pow: 1.3, dir: [-0.7, -0.55, 0.45], col: [1.1, 0.9, 0.67] },
+    // 9:16: the whole vortex fills the 3:4 window (arms to the sides, volutes top and bottom), same turn
+    portrait: { view: [[0, 0.0, 0.0, 0.6, 0.07], [1.5, 0.0, 0.0, 0.68, -0.06, 'linear']] },
   },
   'F27.3': {
     drawing: 'parabola', paperSeed: 11.1, design: 0.75,
@@ -152,6 +167,7 @@ const presets = {
     // hold the scale (a slight pull-out) so the shrinking circles and the blot carry the compression
     view: [[0, 0.0, 0.0, 1.06, 0.035], [0.375, 0.0, 0.0, 0.96, -0.045, 'linear']],
     key: { pos: [0.0, -0.05], r: 0.85, pow: 1.3, dir: [-0.8, -0.4, 0.42], col: [1.1, 0.9, 0.67] },
+    portrait: { view: [[0, 0.0, 0.0, 0.69, 0.035], [0.375, 0.0, 0.0, 0.625, -0.045, 'linear']] },
   },
   'S29b-drawing': {
     drawing: 'rings', paperSeed: 23.4, design: 6.042,
@@ -220,15 +236,17 @@ export default {
     return this.priv.tex;
   },
   // the static low-frequency page, baked once per (seed, ageing) — a cache, not state
+  bakeRect(E) { return E.portrait ? BAKE_RECT_P : BAKE_RECT; },
   bake(E, seed, age) {
-    const key = `${seed}|${age.join(',')}|${E.H}`;
+    const R = this.bakeRect(E), dens = E.portrait ? BAKE_DENSITY_P : BAKE_DENSITY;
+    const key = `${seed}|${age.join(',')}|${E.H}|${R.join(',')}`;
     this._tick = (this._tick || 0) + 1;
     const hit = this.bakes.find((b) => b.key === key);
     if (hit) { hit.used = this._tick; return hit.t; }
     const slot = this.bakes.length < 3 ? this.bakes.length : this.bakes.reduce((m, b, i, a) => (b.used < a[m].used ? i : m), 0);
-    const w = Math.round((BAKE_RECT[2] - BAKE_RECT[0]) * BAKE_DENSITY * E.H), h = Math.round((BAKE_RECT[3] - BAKE_RECT[1]) * BAKE_DENSITY * E.H);
+    const w = Math.round((R[2] - R[0]) * dens * E.H), h = Math.round((R[3] - R[1]) * dens * E.H);
     const t = E.G.target('studiesBake' + slot, w, h, 'rgba16f');
-    E.G.draw(this.bakeProg, { uBakeRect: BAKE_RECT, uPaperSeed: seed, uAge: age, uFull: [E.W, E.H] }, t);
+    E.G.draw(this.bakeProg, { uBakeRect: R, uPaperSeed: seed, uAge: age, uFull: [E.W, E.H] }, t);
     this.bakes[slot] = { key, t, used: this._tick };
     return t;
   },
@@ -249,7 +267,8 @@ export default {
     // it, which the bloom pyramid then reads: clear the whole target first so a frame never depends on history
     E.draw(this.black, {}, target, { scissor: [0, 0, target.w, target.h] });
     E.draw(this.prog, {
-      uOverlay: ink, uPaper: this.paperTex.tex, uPaperN: this.paperTex.nrm, uPaperSize: this.paperTex.size, uInk: ink ? 1 : 0, uBake: bk, uBakeRect: BAKE_RECT,
+      uOverlay: ink, uPaper: this.paperTex.tex, uPaperN: this.paperTex.nrm, uPaperSize: this.paperTex.size, uInk: ink ? 1 : 0, uBake: bk, uBakeRect: this.bakeRect(E),
+      uPx: E.portrait ? v.zoom * E.H / 1080 : E.H / 1080,
       uView: [v.cx, v.cy, v.zoom, v.rot],
       uKey: [key.pos[0], key.pos[1], key.r, key.pow], uKeyDir: key.dir, uKeyCol: key.col,
       uFillCol: P.fill || LOOK.fill, uAge: age,

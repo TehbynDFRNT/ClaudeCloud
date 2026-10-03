@@ -29,16 +29,28 @@ function scriptBlock(D, lines, x, y, o = {}) {
 }
 
 // --- S05: the Roche figure-eight in iron-gall ink -------------------------------------------------
-export function codex() {
+// o.vertical (the 9:16 cut): the same construction turned a quarter clockwise on the page, the giant's lobe
+// above and the dwarf's below (as the space shots are rolled for portrait), the notes still written level
+export function codex(o = {}) {
+  const V = !!o.vertical;
   const D = new Drawing(505);
   // scaled and placed so L1 and the dwarf fall where S04's ice-blue diagram left them (match cut)
-  const S = 0.8, YC = 0.0, X1 = -0.0889;
-  const P = (x, z) => [(x - L1[0]) * S + X1, z * S + YC];
+  const S = V ? 0.58 : 0.8, YC = 0.0, X1 = -0.0889;
+  const Y1V = -0.075;                                        // vertical: L1 sits a little above the page centre
+  const P = V ? (x, z) => [-z * S, (x - L1[0]) * S + Y1V] : (x, z) => [(x - L1[0]) * S + X1, z * S + YC];
   const gx = P(XG, 0), wx = P(XW, 0), l1 = P(L1[0], 0), com = P(0, 0);
+  // the axis runs along the line of centres; `lp` maps (along, across) offsets from L1 onto the page
+  const lp = V ? (a, c) => [l1[0] - c, l1[1] + a] : (a, c) => [a, YC + c];
+  const k = V ? S / 0.8 : 1;
   D.at(-30);
   // stylus-ruled axis (blind incision) then a light ink rule
-  D.stroke(linePts(-0.88, YC, 0.88, YC, { step: 3 * PX }), { kind: 'relief', w: 1.6, d: 0.55, speed: 3, wet: false, taper: [2, 2] });
-  D.stroke(linePts(-0.78, YC + 0.4 * PX, 0.84, YC - 0.6 * PX, { step: 2 * PX, wob: 0.25 * PX, seed: 3 }), { w: 0.9, d: 0.32, speed: 1.4, taper: [20, 40], press: 0.3 });
+  if (V) {
+    D.stroke(linePts(0, -0.62, 0, 0.62, { step: 3 * PX }), { kind: 'relief', w: 1.6, d: 0.55, speed: 3, wet: false, taper: [2, 2] });
+    D.stroke(linePts(-0.4 * PX, -0.56, 0.6 * PX, 0.6, { step: 2 * PX, wob: 0.25 * PX, seed: 3 }), { w: 0.9, d: 0.32, speed: 1.4, taper: [20, 40], press: 0.3 });
+  } else {
+    D.stroke(linePts(-0.88, YC, 0.88, YC, { step: 3 * PX }), { kind: 'relief', w: 1.6, d: 0.55, speed: 3, wet: false, taper: [2, 2] });
+    D.stroke(linePts(-0.78, YC + 0.4 * PX, 0.84, YC - 0.6 * PX, { step: 2 * PX, wob: 0.25 * PX, seed: 3 }), { w: 0.9, d: 0.32, speed: 1.4, taper: [20, 40], press: 0.3 });
+  }
   // compass construction: orbits about the centre of mass, giant's volume circle, circularisation circle
   for (const [c, r, d] of [[com, 0.645 * S, 0.22], [com, 0.355 * S, 0.2], [gx, R_LOBE_GIANT * S, 0.28], [wx, R_CIRC * S, 0.3]]) {
     D.stroke(arcPts(c[0], c[1], r, 0, TAU, { step: 3 * PX }), { kind: 'relief', w: 1.2, d: 0.5, speed: 3, wet: false, taper: [2, 2] });
@@ -47,7 +59,8 @@ export function codex() {
   // compass pivot holes
   for (const c of [com, gx, wx]) D.stroke(arcPts(c[0], c[1], 0.8 * PX, 0, TAU, { step: 0.5 * PX }), { kind: 'relief', w: 2.0, d: 0.9, speed: 0.1, wet: false });
   // perpendicular through L1
-  D.stroke(linePts(l1[0], -0.36, l1[0] + 0.002, 0.36, { step: 2 * PX, wob: 0.3 * PX, seed: 9 }), { w: 0.8, d: 0.3, speed: 1.5, taper: [30, 30] });
+  const pa = lp(0, -0.36 * k), pb = lp(V ? -0.002 : 0.002, 0.36 * k);
+  D.stroke(linePts(V ? pa[0] : l1[0], pa[1], V ? pb[0] : l1[0] + 0.002, pb[1], { step: 2 * PX, wob: 0.3 * PX, seed: 9 }), { w: 0.8, d: 0.3, speed: 1.5, taper: [30, 30] });
   // centres
   cross(D, com[0], com[1], 5, { d: 0.55 });
   dot(D, gx[0], gx[1], 3.2);
@@ -68,27 +81,39 @@ export function codex() {
     const dx = (x - gx[0]) / (R_LOBE_GIANT * S), dy = (y - gx[1]) / (R_LOBE_GIANT * S);
     return Math.min(1, Math.max(0, (dx * 0.5 + dy * 0.85 + 0.05) / 0.95));
   };
-  hatch(D, shade, [gx[0] - 0.32, gx[1] - 0.32, gx[0] + 0.38, gx[1] + 0.38], { angle: Math.PI * 0.3, sp: 6, w: 1.0, d: 0.45, maxLen: 110, speed: 2.5, gap: 0.01, thr: [0.2, 0.95] });
+  const hr = V ? 0.32 * k : 0.32;
+  hatch(D, shade, [gx[0] - hr, gx[1] - hr, gx[0] + hr + 0.06 * k, gx[1] + hr + 0.06 * k], { angle: Math.PI * 0.3, sp: 6, w: 1.0, d: 0.45, maxLen: 110, speed: 2.5, gap: 0.01, thr: [0.2, 0.95] });
   // mirror-script notes (written earlier)
-  scriptBlock(D, ['la luna non à lume da sé', 'ma tanto quanto il sole', 'la vede tanto alumina', 'ogni grave tende al cientro'], -0.56, -0.33, { size: 19, lh: 25, d: 0.55 });
-  scriptBlock(D, ['dove l’una sfera tocca', 'l’altra, quivi è il punto', 'che non à parte'], -0.6, 0.26, { size: 19, lh: 25, d: 0.5 });
-  scriptBlock(D, ['il sole nõ si move'], 0.74, 0.335, { size: 18, d: 0.5 });
-  // letters on the figure
-  D.text('a', gx[0] - 0.012, gx[1] - 0.014, { size: 20, d: 0.7 });
-  D.text('b', wx[0] + 0.02, wx[1] - 0.016, { size: 20, d: 0.7 });
-  D.text('n', l1[0] - 0.006, l1[1] - 0.02, { size: 20, d: 0.7 });
+  if (V) {
+    scriptBlock(D, ['la luna non à lume da sé', 'ma tanto quanto il sole', 'la vede tanto alumina', 'ogni grave tende al cientro'], 0.4, -0.5, { size: 19, lh: 25, d: 0.55 });
+    scriptBlock(D, ['dove l’una sfera tocca', 'l’altra, quivi è il punto', 'che non à parte'], -0.2, 0.0, { size: 19, lh: 25, d: 0.5 });
+    scriptBlock(D, ['il sole nõ si move'], 0.4, 0.47, { size: 18, d: 0.5 });
+    D.text('a', gx[0] + 0.03, gx[1] - 0.01, { size: 20, d: 0.7 });
+    D.text('b', wx[0] + 0.03, wx[1] + 0.005, { size: 20, d: 0.7 });
+    D.text('n', l1[0] + 0.03, l1[1] - 0.008, { size: 20, d: 0.7 });
+  } else {
+    scriptBlock(D, ['la luna non à lume da sé', 'ma tanto quanto il sole', 'la vede tanto alumina', 'ogni grave tende al cientro'], -0.56, -0.33, { size: 19, lh: 25, d: 0.55 });
+    scriptBlock(D, ['dove l’una sfera tocca', 'l’altra, quivi è il punto', 'che non à parte'], -0.6, 0.26, { size: 19, lh: 25, d: 0.5 });
+    scriptBlock(D, ['il sole nõ si move'], 0.74, 0.335, { size: 18, d: 0.5 });
+    // letters on the figure
+    D.text('a', gx[0] - 0.012, gx[1] - 0.014, { size: 20, d: 0.7 });
+    D.text('b', wx[0] + 0.02, wx[1] - 0.016, { size: 20, d: 0.7 });
+    D.text('n', l1[0] - 0.006, l1[1] - 0.02, { size: 20, d: 0.7 });
+  }
   // ---- the figure-eight: one continuous line, giant lobe then dwarf lobe, completing at t ~ 0.65 s
   const wl = lobeContour('wd', 220).map(([x, z]) => P(x, z));
   const eight = resample([...gl, ...wl.slice(1)], 1.6 * PX);
   D.fitTo(0, -30, -3.3);
   D.at(-3.2);
-  const fig = D.stroke(eight, { w: 3.1, d: 0.93, speed: 0.95, taper: [6, 10], press: 0.22, pfreq: 6, nib: 0.45, load: 0.3 });
+  const fig = D.stroke(eight, { w: 3.1, d: 0.93, speed: 0.95 * k, taper: [6, 10], press: 0.22, pfreq: 6, nib: 0.45, load: 0.3 });
   D.shift(0.65 - fig.t1, D.items.indexOf(fig));
   // ---- then the pen goes on: the stream leaves L1 and swings past the dwarf (ballistic path)
   const sp = streamPath({ maxT: 1.42, every: 10 }).map((q) => P(q.x, q.z));
   D.at(0.85);
   D.stroke(resample(sp, 1.6 * PX), { w: 1.6, d: 0.82, dur: 1.4, taper: [10, 26], press: 0.25, nib: 0.35, load: 0.2 });
-  D.text('il fiume', sp[Math.floor(sp.length * 0.6)][0] + 0.08, sp[Math.floor(sp.length * 0.6)][1] + 0.055, { size: 18, d: 0.6, t0: 2.35, dur: 0.5 });
+  const sq = sp[Math.floor(sp.length * 0.6)];
+  if (V) D.text('il fiume', sq[0] - 0.035, sq[1] + 0.06, { size: 18, d: 0.6, t0: 2.35, dur: 0.5 });
+  else D.text('il fiume', sq[0] + 0.08, sq[1] + 0.055, { size: 18, d: 0.6, t0: 2.35, dur: 0.5 });
   return D;
 }
 

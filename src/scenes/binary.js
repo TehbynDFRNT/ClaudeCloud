@@ -508,6 +508,25 @@ export default {
     ctx.fillText(text, x, y);
   },
 
+  // upright 'L1' label beside the L1 mark. `off` = end of the leader in ink units from the mark (screen, y down);
+  // the text sits beyond it on that side (left-aligned right of the mark, right-aligned left of it).
+  // T = { px, sub, dx, dy }: type sizes and the subscript's offset, in ink units. `a` = text alpha.
+  l1Label(ctx, l1, k, off, T, rgb, a, leader) {
+    const ex = l1.x + off[0] * k, ey = l1.y + off[1] * k;
+    if (leader) {
+      const l = Math.hypot(off[0], off[1]) || 1;
+      const s0 = off[0] && off[1] ? [6 * Math.sign(off[0]), 6 * Math.sign(off[1])] : [off[0] / l * 8.5, off[1] / l * 8.5];
+      ctx.lineWidth = 0.9 * k; ctx.strokeStyle = `rgba(${rgb},${a * 0.45 / 0.92})`;
+      ctx.beginPath(); ctx.moveTo(l1.x + s0[0] * k, l1.y + s0[1] * k); ctx.lineTo(ex, ey); ctx.stroke();
+    }
+    ctx.font = `italic 400 ${(T.sub * k).toFixed(1)}px "Cormorant Garamond"`;
+    const wTxt = T.dx * k + ctx.measureText('1').width;
+    const x = off[0] >= 0 ? ex + 3 * k : ex - 3 * k - wTxt;
+    const y = off[1] < 0 ? ey - 4 * k : ey + T.px * 0.62 * k;
+    this.label(ctx, 'L', x, y, T.px * k, rgb, a);
+    this.label(ctx, '1', x + T.dx * k, y + T.dy * k, T.sub * k, rgb, a);
+  },
+
   // S04: orbit, Roche figure-eight, L1 — fine ice-blue lines drawn on through the shot
   drawDiagram(E, ctx, st, t, P) {
     const k = this.inkScale(E), cam = st.cam, ICE = '160,205,255';
@@ -544,10 +563,7 @@ export default {
       ctx.restore();
       const ul = ramp(...(D.label || [0.82, 0.95]));
       if (ul > 0) {
-        ctx.lineWidth = 0.9 * k; ctx.strokeStyle = `rgba(${ICE},${0.45 * ul * fadeAll})`;
-        ctx.beginPath(); ctx.moveTo(l1.x + 6 * k, l1.y - 6 * k); ctx.lineTo(l1.x + 26 * k, l1.y - 30 * k); ctx.stroke();
-        this.label(ctx, 'L', l1.x + 29 * k, l1.y - 34 * k, 32 * k, ICE, 0.92 * ul * fadeAll);
-        this.label(ctx, '1', l1.x + 44 * k, l1.y - 28 * k, 20 * k, ICE, 0.92 * ul * fadeAll);
+        this.l1Label(ctx, l1, k, D.labelOff || [26, -30], { px: 32, sub: 20, dx: 15, dy: 6 }, ICE, 0.92 * ul * fadeAll, true);
       }
     }
   },
@@ -574,7 +590,7 @@ export default {
     const l1 = cam.project(L1, E.W, E.H);
     if (l1) {
       ctx.save(); ctx.translate(l1.x, l1.y); ctx.rotate(Math.PI / 4); this.crossMark(ctx, 0, 0, 6 * k, ICE, 0.9, k); ctx.restore();
-      this.label(ctx, 'L', l1.x + 9 * k, l1.y - 11 * k, 26 * k, ICE, 0.85); this.label(ctx, '1', l1.x + 21 * k, l1.y - 6 * k, 17 * k, ICE, 0.85);
+      this.l1Label(ctx, l1, k, P.labelOff || [6, -7], { px: 26, sub: 17, dx: 12, dy: 5 }, ICE, 0.85, false);
     }
   },
 

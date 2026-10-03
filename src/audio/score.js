@@ -1,18 +1,22 @@
-// Soundtrack renderer for "David & Goliath": orchestra (USAF Band, Vivaldi "Winter" I), an eighties synth pulse,
-// approaching cannon strikes (US Army Band 1812 samples), the ignition pressure wave + Doppler roar, and the master.
+// Soundtrack renderer for "David & Goliath" / "Prometheus" (both 9:16 cuts share one timeline and this score):
+// orchestra (USAF Band, Vivaldi "Winter" I), an eighties synth pulse, approaching cannon strikes (US Army Band 1812
+// samples) with a building undertow, the climax in the dark (vacuum suck-in, detonation, pressure wave, Doppler roar
+// into bar 56), the night of the coda (wind, distant drone, the new star's shimmer), and the master.
 //
-// Everything is derived from film-plan.json (fps, audio placements, cues, shots, assets) and analysis/grid.json
-// (bar/eighth grid in source seconds, bassMidi per eighth, tuning). The only authored numbers are sound-design
-// constants (levels, filter shapes, envelopes) and the section structure in bars given by the director.
+// Everything is derived from film-plan.json (fps, audio placements, cues, shots, effects, assets) and
+// analysis/grid.json (bar/eighth grid in source seconds, bassMidi per eighth, tuning). The only authored numbers are
+// sound-design constants (levels, filter shapes, envelopes) and the section structure in bars given by the director.
 //
 // Determinism: no Math.random / Date. All noise and impulse responses come from seeded mulberry32 generators, every
 // measured quantity (shaper latency, grid check) is derived robustly, so the output is a function of (plan, grid,
 // media). Chrome's native Web Audio kernels still differ between runs at float-rounding level (SIMD paths): two
 // renders agree to about -104 dBFS peak / -125 dB RMS in the mix, not bit for bit.
-// Each stem is rendered in its own OfflineAudioContext(2, 48000 * 156.5, 48000); the mix/master stage runs in plain
-// JS on the rendered buffers: cannon approach law (measure each cue against the orchestra, correct, re-render) and
-// cannon-stem limiter, synth auto-level (per bar / envelope-following drone), duck + ladder ride of the music under
-// the strikes, bus compression, true-peak limiting and loudness.
+// Each stem is rendered in its own OfflineAudioContext(2, 48000 * plan duration, 48000); the mix/master stage runs
+// in plain JS on the rendered buffers: cannon approach law (measure each cue against the orchestra, correct,
+// re-render) and cannon-stem limiter, synth + undertow auto-level, duck + ladder ride + vacuum of the music under the
+// strikes and into the ignition, then three buses: music (glue compression, short-term loudness cap), climax (own
+// transient-preserving true-peak limiter, set to a short-term loudness target) and coda (set to a loudness target),
+// summed into a final true-peak limiter; the music gain is iterated to the programme loudness target.
 import { Music, evalFps } from '../engine/music.js';
 import { mulberry32 } from '../engine/rng.js';
 
@@ -36,14 +40,25 @@ export const DESIGN = {
   // cannon stem limiter (JS): ceiling ceilDb, raised toward nearDb for the strike cues as d -> 0 (the closest hits
   // get the most headroom; the deeper duck keeps the master limiter out of it). Per-cue levels: approach law.
   cannonLimiter: { ceilDb: -3.5, nearDb: -2.0, lookMs: 2.0, relMs: 90 },
-  ignitionDb: -0.5,
-  impactDriveDb: 6.0,              // ignition impact layers (sub, crack, saw stack, walls) into the stem saturator
+  impactDriveDb: 6.0,              // ignition impact layers (sub, crack, cluster, saw stack, walls) into the stem saturator
   synthTrimDb: -24.0,            // source trim so the per-bar auto-level works around 0 dB
-  targetLufs: -15.8,
+  targetLufs: -16.0,
   ceilingDbtp: -1.0,
   limiterCeilingDb: -1.35,         // internal ceiling (true-peak estimate, 4x oversampled) leaves margin
-  // gentle glue: threshold relative to the loudness target (applied after the master gain), 50 ms RMS detector
+  // gentle glue on the music bus: threshold relative to the loudness target (after the music gain), 50 ms RMS detector
   comp: { thresholdRel: 6, ratio: 1.5, kneeDb: 8, attack: 0.030, release: 0.40, rms: 0.050 },
+  // THE CLIMAX (picture black from the ignition cue to dark-end): its own bus, set so its short-term loudness (3 s,
+  // K-weighted) peaks at targetST inside the director's window (ignition + windowFrames), then a look-ahead true-peak
+  // limiter (2 ms, so the detonation keeps its attack shape; slow release so the sustain is not pumped).
+  // The music bus is capped marginLu under the climax's short-term peak (slow ride of the loudest tutti only).
+  climax: { targetST: -6.0, windowFrames: 75, ceilDb: -1.5, lookMs: 2.0, relMs: 160, marginLu: 6.0 },
+  // vacuum: the music (orchestra, synth, cannons, undertow) is pulled down under the suck-in swell before the cut,
+  // with a near-silent gap of gapMs right before the detonation
+  vacuum: { leadS: 0.42, depthDb: -7, gapMs: 28, gapDb: -30 },
+  // strike undertow (stem 'tension'): K-weighted level relative to the orchestra over the strikes section
+  tension: { relLu: -9.5 },
+  // coda: night air, set by loudness of the wind-only stretch (picture faded up, before the star)
+  coda: { windLufs: -35.0 },
   // cannon approach law: each cue's loudness (K-weighted, 400 ms from its transient) relative to the orchestra's
   // (K-weighted, the 500 ms before it: the music the hit breaks into) follows rel(d) = far + (near - far) * (1 - d)^shape, so the approach is monotone
   // whatever the music does underneath. Measured on a first render of the stem, corrected and re-rendered. Close
@@ -52,10 +67,10 @@ export const DESIGN = {
   // orchestra + synth duck under the five strike cannons (d <= maxD; depth grows toward d = 0): 5 ms attack,
   // 80 ms hold, then a 120 ms exponential release (within 1 dB after ~0.35 s), following the boom that masks it.
   duck: { maxD: 0.12, depthDb: [4, 10], attack: 0.005, hold: 0.08, tau: 0.12 },
-  // the ladder (bars 32-38) is the cannons' section: orchestra + synth sit a static 4.5 dB lower there (ramped
-  // over the 2 s before the bar-32 downbeat), so the strikes have headroom under the ceiling. The internal dynamics
-  // (tremolo swells, strikes) are untouched.
-  ladderRide: { db: -4.5, fromBar: 32, rampS: 2.0 },
+  // the ladder (bars 32-38) is the cannons' section: orchestra + synth sit 4.5 dB lower there (ramped over the 2 s
+  // before the bar-32 downbeat), so the strikes have headroom under the ceiling; from the first strike the ride
+  // eases back toward endDb at the ignition, so the music itself climbs strike by strike into the vacuum.
+  ladderRide: { db: -4.5, endDb: -1.5, fromBar: 32, rampS: 2.0 },
   // synth sections (bars from the director's notes); offsets = K-weighted level relative to the orchestra
   synth: {
     sections: [
@@ -225,14 +240,33 @@ export async function loadTimeline(base = '/') {
   const shot = (id) => plan.shots.find((s) => s.id === id);
   const synthPl = plan.audio.find((a) => a.generated);
   const ign = cue('ignition'), ret = cue('return-bar56');
-  const S24 = shot('S24-shockfront');
+  const S24 = shot('S24-shockfront'), S25 = shot('S25-shell');
+  const dark = cue('dark-end'), coda = cue('coda'), star = cue('coda-star');
+  const fades = (plan.effects || []).filter((e) => e.type === 'fade');
+  // the picture fades up from black at the coda cut, and to black at the very end
+  const codaUp = coda && fades.find((e) => e.start === coda.frame && e.to === 0);
+  const lastOut = fades.filter((e) => e.to === 1 && e.end >= plan.frames - 1).sort((a, b) => b.start - a.start)[0];
+  // the star is fully arrived at the frame the cue's evidence names (else one and a half seconds after it begins)
+  const starFull = star && /fully arrived at frame (\d+)/.exec(star.evidence || '');
+  const winterEnd = Math.max(...plan.audio.filter((a) => a.path && a.path.includes('winter')).map((a) => a.timelineEnd));
   const T = {
     ignition: ign.frame / fps,
+    // end of the black hold: the eruption is first seen
+    darkEnd: (dark ? dark.frame : ign.frame + 54) / fps,
     // bar-56 downbeat in film time, through the winter-b placement (source onset from the cue)
     return56: music.sourceToFilm(ret.sourceSeconds),
-    // closest approach of the Doppler source: one third into S24-shockfront (= frame 2881 per the director)
+    // closest approach of the Doppler source: one third into S24-shockfront (the shock front passes the camera)
     pass: (S24.start + (S24.end - S24.start) / 3) / fps,
+    shock: [S24.start / fps, S24.end / fps],
+    fracture: S25 ? S25.start / fps : null,
     synthEnd: synthPl.timelineEnd / fps,
+    winterEnd: winterEnd / fps,
+    coda: coda ? coda.frame / fps : null,
+    codaUp: codaUp ? codaUp.end / fps : (coda ? coda.frame / fps + 2.5 : null),
+    star: star ? star.frame / fps : null,
+    starFull: star ? (starFull ? +starFull[1] : star.frame + 1.5 * fps) / fps : null,
+    pictureOut: lastOut ? lastOut.start / fps : duration - 1.5,
+    end: duration,
   };
   return { plan, grid, fps, duration, length, music, cue, shot, T, a4: grid.tuningA4Hz || 441.53 };
 }
@@ -555,7 +589,7 @@ export function buildSynth(ctx, tl) {
   const bar63 = grid.bars.find((b) => b.bar === 63);
   const padInfo = { active: false };
   if (bar63) {
-    const tp = music.at(63, 0), te = T.synthEnd;
+    const tp = music.at(63, 0), te = T.winterEnd; // the pad lives on the fermata only (it decays with it)
     const root = bar63.bassMidi.find((m) => m != null);
     if (tp != null && root != null && te > tp + 1) {
       const pad = G(ctx, 0);

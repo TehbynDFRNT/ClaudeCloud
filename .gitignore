@@ -9,3 +9,4 @@ dist/*.verify.json
 dist/chunks/concat.txt
 dist/preview/concat.txt
 tmp/
+media/statues/raw/

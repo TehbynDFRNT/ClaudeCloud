@@ -79,13 +79,14 @@ function horizonCam(alt, pitchDeg, yawDeg = 0, x = 0) {
   return [p, [p[0] + d[0], p[1] + d[1], p[2] + d[2]]];
 }
 // orbit camera that puts the giant centre at frame position (sx, sy) in [-1,1] (frameUV, y up).
-// returns [pos, target]; azimuth 0 = camera on -Z (screen right = -X).
-function aimCam(dist, azDeg, elDeg, sx, sy, fov, center = [0, 0, 0]) {
+// returns [pos, target]; azimuth 0 = camera on -Z (screen right = -X). aspect: frame width / height
+// (16/9 for the landscape presets; the portrait cameras pass 9/16).
+function aimCam(dist, azDeg, elDeg, sx, sy, fov, center = [0, 0, 0], aspect = 16 / 9) {
   const az = azDeg * D2R, el = elDeg * D2R;
   const p = [center[0] + Math.sin(az) * Math.cos(el) * dist, center[1] + Math.sin(el) * dist, center[2] - Math.cos(az) * Math.cos(el) * dist];
   const nrm = (v) => { const l = Math.hypot(...v); return v.map((x) => x / l); };
   const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
-  const tanH = Math.tan((fov * D2R) / 2), X = sx * tanH * (16 / 9), Y = sy * tanH;
+  const tanH = Math.tan((fov * D2R) / 2), X = sx * tanH * aspect, Y = sy * tanH;
   const g = nrm([center[0] - p[0], center[1] - p[1], center[2] - p[2]]);
   let f = g;
   for (let i = 0; i < 4; i++) {                       // solve for the forward vector that maps g to (X, Y)
@@ -132,6 +133,25 @@ export default {
       ],
       heroOnly: 1,
       spin: [0.0, 0.006], boil: 1.0, plumes: 1.0, relief: 0.008, limbDark: 0.28, atmo: -0.5, glow: 1.05, starGain: 0.5,
+      // 9:16: the horizon (a real up, so no roll) sits low in the 3:4 window and the abyss above it does the work.
+      // A wider vertical lens; the camera tilts down from looking up so the limb rises out of the bottom bar,
+      // and the heroes are gathered into the narrower view and stretched taller to climb into the black.
+      portrait: {
+        cam: [
+          [0, ...horizonCam(0.033, -11.2, 0), 62],
+          [1, ...horizonCam(0.038, 0.2, 2), 62, 0, 'inOutSine'],
+        ],
+        heroes: [
+          { c: [0.05, 0.86, 0.48], a: [1, 0, 0.15], span: 0.075, height: 0.12, width: 0.010, phase: 0.3 },
+          { c: [-0.17, 0.80, 0.60], a: [0.8, 0, -0.6], span: 0.06, height: 0.08, width: 0.008, phase: 0.7 },
+        ],
+        heroPlumes: [
+          { c: [0.15, 0.88, 0.44], l: [1, 0, 0], height: 0.11, width: 0.014, lean: 1.6, phase: 0.2 },
+          { c: [0.0, 0.85, 0.52], l: [-1, 0, 0.3], height: 0.17, width: 0.018, lean: 0.9, phase: 0.6 },
+          { c: [0.17, 0.79, 0.58], l: [0.6, 0.2, -0.8], height: 0.13, width: 0.016, lean: 2.0, phase: 0.85 },
+          { c: [-0.02, 0.76, 0.66], l: [1, 0, 0], height: 0.12, width: 0.012, lean: 0.4, phase: 0.45 },
+        ],
+      },
     },
     'S02-goliath': {
       cam: [
@@ -147,6 +167,23 @@ export default {
         { c: [-0.85, -0.45, -0.25], l: [0.3, -1, 0], height: 0.09, width: 0.025, lean: 0.8, phase: 0.75 },
       ],
       spin: [2.6, 0.012], boil: 1.3, plumes: 0.9, relief: 0.004, limbDark: 0.62, glow: 1.3, starGain: 0.6,
+      // 9:16: the same pull-back, but GOLIATH never fits: the disk overflows the top and right of the 3:4 window,
+      // its limb a great arc from upper left to lower right, leaving the lower-left dark for the name card.
+      // The hero loop and plumes move to the visible (left / lower-left) limb.
+      portrait: {
+        cam: [
+          [0, ...aimCam(2.0, -22, 4, 0.30, 0.30, 40, [0, 0, 0], 9 / 16), 40],
+          [0.34, ...aimCam(2.75, -12, 7, 0.60, 0.60, 40, [0, 0, 0], 9 / 16), 40, 0, 'outCubic'],
+          [1, ...aimCam(3.0, -6, 9, 0.62, 0.62, 40, [0, 0, 0], 9 / 16), 40, 0, 'inOutSine'],
+        ],
+        heroes: [
+          { c: [0.043, -0.983, -0.133], a: [0.978, 0.069, -0.2], span: 0.22, height: 0.22, width: 0.012, phase: 1.15 },
+        ],
+        heroPlumes: [
+          { c: [0.682, -0.685, -0.232], l: [0.4, 0.9, 0], height: 0.12, width: 0.03, lean: 1.2, phase: 0.4 },
+          { c: [-0.128, -0.98, -0.095], l: [-1, 0, 0], height: 0.09, width: 0.025, lean: 0.8, phase: 0.75 },
+        ],
+      },
     },
     'F28.2': {
       cam: [
@@ -164,6 +201,10 @@ export default {
       heroOnly: 1, scarDir: [0.02, 0.74, 0.67], embers: { count: 900, gain: 5.0, size: 2.0, speed: 2.5, streak: 0.06 },
       spin: [1.3, 0.02], boil: 4.0, plumes: 2.0, relief: 0.01, limbDark: 0.35, glow: 1.5, atmo: -0.3, starGain: 0.4,
       post: { bloomStrength: 0.11 },
+      // 9:16: wider, so the hero loop becomes an arch spanning the window with the plumes rising through it
+      portrait: {
+        framing: { zoom: 0.78, pan: [-0.27, 0], roll: 0, dolly: 0 },
+      },
     },
     'S27-devastation': {
       cam: [
@@ -178,6 +219,11 @@ export default {
         { c: [0.85, 0.55, 0.10], l: [-0.2, 1, 0], height: 0.11, width: 0.035, lean: 1.8, phase: 0.8 },
         { c: [0.99, -0.02, 0.12], l: [0.3, 0.2, -1], height: 0.20, width: 0.05, lean: 0.8, phase: 0.33 },
       ],
+      // 9:16 (full frame, after ignition): the landscape composition turned a quarter so GOLIATH hangs above and
+      // its stripped, burning hemisphere faces down toward where the nova was; embers drift down into the dark.
+      portrait: {
+        framing: { roll: 90, zoom: 0.6, pan: [0.06, 0], dolly: 0 },
+      },
     },
     default: { cam: [[0, [0, 0, -3.2], [0, 0, 0], 40]] },   // cam key times are fractions of the shot (camAbs: seconds)
   },
@@ -265,13 +311,14 @@ export default {
       if (occluded(p1)) continue;
       const a = cam.project(p1, W, H), b = cam.project(p0, W, H);
       if (!a || !b) continue;
-      if (a.x < -20 || a.x > W + 20 || a.y < -20 || a.y > H + 20) continue;
+      const mg = 20 * E.k;
+      if (a.x < -mg || a.x > W + mg || a.y < -mg || a.y > H + mg) continue;
       const u = age / life;
       const heat = Math.pow(1 - u, 1.4) * (0.35 + 0.65 * h(10)) * Math.min(1, age * 3);
       const flick = 0.75 + 0.25 * Math.sin(t * (9 + 7 * h(11)) + i);
       const I = heat * flick;
       if (I < 0.02) continue;
-      const size = Math.min(5.0, Math.max(1.0, ((em.size ?? 2.0) * 2.6 / a.z) * (0.5 + h(12) * h(12) * 2.0))) * (H / 1080);
+      const size = Math.min(5.0, Math.max(1.0, ((em.size ?? 2.0) * 2.6 / a.z) * (0.5 + h(12) * h(12) * 2.0))) * E.k;
       // colour cools from molten gold to crimson
       const g = Math.round(40 + 150 * Math.pow(1 - u, 2)), bl = Math.round(10 + 50 * Math.pow(1 - u, 3));
       ctx.strokeStyle = `rgba(255,${g},${bl},${Math.min(1, I).toFixed(3)})`;

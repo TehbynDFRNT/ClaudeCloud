@@ -91,7 +91,7 @@ void main(){
     col += T * uHazeCol * hz * uHaze;
   }
   if (uFill > 0.0){
-    vec2 uv = q / uFull.y;
+    vec2 uv = q / min(uFull.x, uFull.y);
     float n = fbm3(vec3(uv * 3.2, uTime * 0.6), 3) * 0.5 + 0.5;
     float rad = 1.0;
     if (uFillC.z > 0.0){ vec2 dq = (q - uFillC.xy) / uFillC.z; rad = 0.12 + 0.88 * exp(-dot(dq, dq)); }
@@ -521,7 +521,8 @@ GEN.cno = function (B, P, t, S, fx) {
   const f = S.f;
   const Rr = P.ringR;
   const C = P.center || [0, 0, 0];
-  const tilt = axisAngle([1, 0, 0], P.tilt ?? 0.3);
+  // tilt axis: x (default) lays the ring back into a wide ellipse; y (portrait) turns it edge-on into a tall one
+  const tilt = axisAngle(norm(P.tiltAxis || [1, 0, 0]), P.tilt ?? 0.3);
   const spin = (P.spin0 ?? 0) + (P.spin ?? 0) * t;
   const stations = [];
   for (let s = 0; s < 6; s++) {
@@ -726,6 +727,55 @@ const presets = {
     post: { exposure: 1.0, bloomStrength: 0.09, bloomThreshold: 1.3, halation: 0.04, vignette: 0.58, streakStrength: 0.05, lift: 0.03, contrast: 1.08 },
   },
 };
+
+// ------------------------------------------------------------------------------- portrait (9:16)
+// Portrait-only overrides (film.js merges `portrait` over the preset in a portrait render; landscape ignores
+// it). Compose inside the 3:4 window (bars cover the top and bottom 12.8% until ignition), phone first:
+// subjects larger than in the 16:9 cut, the same motion and intent.
+{
+  const P = presets;
+  // S13: keep world up so the proton rain falls straight down the tall frame onto the layer
+  P['S13-atoms'].portrait = {
+    framing: { zoom: 0.72 },
+    rain: { ...P['S13-atoms'].rain, x: [-13, 13], rate: 30, trail: 12, trailInt: 6.0 },
+  };
+  // S14f: the ring turned about the vertical axis (a tall ellipse, symmetric about the frame's centre line);
+  // the hero proton falls from above through the empty interior onto carbon at the bottom
+  P['S14f-cno'].portrait = {
+    framing: { zoom: 0.72 },
+    tiltAxis: [0, 1, 0], tilt: 0.9,
+    // level with the ring, so the tall ellipse stands upright and mirror-symmetric
+    cam: [[0, [0, 0.8, -65], [0, 0, 0], 26], [1.7, [0, 0.8, -62], [0, 0, 0], 26]],
+    dof: { focus: [[0, 64], [1.7, 61]], K: 40, max: 120 },
+    field: { ...P['S14f-cno'].field, n: 22, box: [[-40, 40], [-50, 40], [45, 170]] },
+  };
+  // S20: macro on the crushed lattice, world up (the chain reaction spreads across the tall frame)
+  P['S20-strike4'].portrait = {
+    framing: { zoom: 0.72 },
+    // strikes punch the exposure down now (plan dip), so the build must not end in a frame-filling white burn
+    // before strike 5: the emission climbs to a white-hot core with the edges left ember
+    heat: [[0, 0.2], [0.1, 0.3], [0.38, 0.85], [0.8, 0.55], [2.0, 0.95], [2.65, 1.6], [3.042, 3.3, 'inQuad']],
+    haze: [[0, 0.04], [2.4, 0.07], [3.042, 0.13, 'inQuad']],
+    fill: [[0, 0], [2.74, 0], [3.042, 1.3, 'inCubic']], fillR: [[2.74, 0.15], [3.042, 0.38]],
+  };
+  // F28.1: exact rotation: the 12-wide close-packed layer runs down the tall frame
+  P['F28.1'].portrait = { framing: { roll: 90, zoom: 0.5625 } };
+  // F30.1: rotated so the proton drops in from the top onto carbon, tighter
+  P['F30.1'].portrait = { framing: { roll: 90, zoom: 0.85 } };
+  // F31.3: rotated: the head-on collision runs top to bottom
+  // (wide enough on the first frame to see both nuclei coming, then a crash-in on the impact)
+  // the nuclei start a little nearer so both are in the 3:4 window on the first frame; the frame recoils
+  // after the impact so the sprayed nucleons stay in it
+  P['F31.3'].portrait = {
+    framing: [[0, { roll: 90, zoom: 0.55 }], [0.28, { roll: 90, zoom: 0.76 }, 'inQuad'], [1, { roll: 90, zoom: 0.62 }, 'outQuad']],
+    bodies: [
+      { ...P['F31.3'].bodies[0], p0: [-6.2, -0.6, 1.1] },
+      { ...P['F31.3'].bodies[1], p0: [6.2, 0.9, -0.7] },
+    ],
+  };
+  // F31.8: rotated: the lateral track becomes a vertical one through the swarm, Dutch tilt kept
+  P['F31.8'].portrait = { framing: { roll: 90, zoom: 0.62 } };
+}
 presets.default = presets['S13-atoms'];
 
 // ------------------------------------------------------------------------------------------ scene
@@ -737,7 +787,7 @@ export default {
   presets,
   init(E) {
     this.prog = E.program(FS, 'atoms');
-    this.B = new SpriteBatch(E.G, E.W, E.H);
+    this.B = new SpriteBatch(E.G, E.W, E.H, E.k);
   },
   camera(P, t) {
     const cam0 = camFromKeys(P.cam, t);
@@ -763,7 +813,12 @@ export default {
     const cam = this.camera(P, t);
     const B = this.B;
     const dof = P.dof || { focus: 20, K: 20 };
-    B.begin(cam, { focus: kv(dof.focus, t, 20), K: dof.K, max: dof.max, fog: P.fog });
+    // optical pixel scale: px per world unit relative to a 1080-high 16:9 frame through the same lens. In
+    // landscape it is E.k; a portrait framing magnifies by (H / 1080) * zoom, and the bokeh, refraction and
+    // fill grow with the image so a reframed shot keeps the look of the 16:9 cut (E.k under roll 90, zoom 0.5625)
+    const os = (E.H / 1080) * (cam.raw ? cam.raw.tanH / cam.tanH : 1);
+    B.os = os;
+    B.begin(cam, { focus: kv(dof.focus, t, 20), K: dof.K, max: dof.max, fog: P.fog, scale: os });
     const fx = { rings: [], ringMode: 1, ringPlane: [0, 1, 0, 0] };
     (GEN[P.mode] || GEN.lattice).call(this, B, P, t, S, fx);
     B.finish();
@@ -781,7 +836,7 @@ export default {
     E.draw(this.prog, {
       ...cam.uniforms, ...B.uniforms(),
       uRingC: rc, uRingW: rw, uRingS: rs, uNR: nr, uRingMode: fx.ringMode, uRingPlane: fx.ringPlane,
-      uRingCol: P.ringCol || [1.0, 0.6, 0.25], uRefract: (P.refract ?? 6) * (E.H / 1080),
+      uRingCol: P.ringCol || [1.0, 0.6, 0.25], uRefract: (P.refract ?? 6) * os,
       uFill: kv(P.fill, t, 0), uFillCol: kc(P.fillCol, t, WHITE), uFillC: this.fillCenter(B, P, t),
       uHaze: kv(P.haze, t, 0), uHazeCol: kc(P.hazeCol, t, CRIMSON),
     }, target);
@@ -813,7 +868,7 @@ export default {
   fillCenter(B, P, t) {
     if (!P.fillAt) return [0, 0, 0];
     const q = B.proj(P.fillAt);
-    return q ? [q[0], q[1], kv(P.fillR, t, 0.35) * B.H] : [0, 0, 0];
+    return q ? [q[0], q[1], kv(P.fillR, t, 0.35) * 1080 * (B.os ?? B.H / 1080)] : [0, 0, 0];
   },
   post(E, S) {
     const P = S.params;

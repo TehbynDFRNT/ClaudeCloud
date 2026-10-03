@@ -103,6 +103,10 @@ export function makePaperTexture(G, size = 1024, seed = 1517) {
 // into a page-space texture (PAPER_BAKE) and the per-frame shader adds only fibres, tooth and media.
 export const BAKE_RECT = [-1.2, -0.75, 1.2, 0.75];
 export const BAKE_DENSITY = 0.8;            // texels per output pixel of frame height
+// portrait (9:16): the page is seen through a tall frame at zoom ~0.5-0.9, so the baked sheet must reach
+// further up and down; a page unit spans zoom x H pixels there, hence the lower density per H
+export const BAKE_RECT_P = [-1.0, -1.2, 1.0, 1.2];
+export const BAKE_DENSITY_P = 0.5;
 
 const PAPER_COMMON = `
 uniform vec4 uAge;            // x: umber ageing, y: stains, z: foxing, w: relief strength

@@ -191,7 +191,13 @@ export default {
     gl.generateMipmap(gl.TEXTURE_2D);
     gl.bindTexture(gl.TEXTURE_2D, null);
     const D = dofAt(P, S);
-    const k = A.w / 1920;
+    // pixel scales (preset values are px of the 1920x1080 landscape frame). Portrait: E.k-style (short side
+    // / 1080) times the magnification the framing zoom gives relative to the landscape frame (zoom 0.5625 =
+    // the landscape pixel scale, rotated). DOF follows the magnification (a tighter frame enlarges the blur
+    // with the subject); stroke widths follow it by sqrt by default (P.strokeK overrides).
+    const mag = S.portrait ? ((S.framing && S.framing.zoom) || 1) * 16 / 9 : 1;
+    const kc = S.portrait ? Math.pow(mag, P.dofMag ?? 1) : 1;
+    const k = S.portrait ? (Math.min(A.w, A.h) / 1080) * kc : A.w / 1920;
     const maxCoc = (D.max ?? 0) * k;
     E.draw(this.pDof, { uSrc: A, uFocus: D.focus ?? 3, uAperture: (D.aperture ?? 0) * k, uMaxCoc: maxCoc, uTaps: maxCoc < 10 ? 20 : maxCoc < 18 ? 26 : 32 }, B);
     // filaments / sparks as soft HDR geometry at full output resolution
@@ -201,6 +207,11 @@ export default {
     if (strokes) {
       this.lines.begin(Lt.w, Lt.h);
       const Pd = { ...P, dof: { ...D, focus: D.focus ?? 3 } };
+      if (S.portrait) {
+        const ks = Math.min(Lt.w, Lt.h) / 1080;   // = E.k for this full-resolution stroke target
+        Pd.kW = ks * (P.strokeK ?? Math.sqrt(mag));
+        Pd.kCoc = ks * kc;
+      }
       if (P.fil && P.fil.events) Pd.fil = { ...P.fil, events: P.fil.events.map((e) => ({ ...e, t: at(P, S, e.t) })) };
       if (P.sparks) {
         const w = P.sparks.window || [-1.5, 0];

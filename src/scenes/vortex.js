@@ -88,7 +88,18 @@ const P0 = {
   post: { bloomStrength: 0.07, streakStrength: 0.004 },
 };
 
-const D = (o) => ({ ...P0, ...o, disk: { ...DISK, ...(o.disk || {}) }, post: { ...P0.post, ...(o.post || {}) } });
+// A `portrait` block (9:16 renders only; engine/film.js merges it SHALLOWLY over the preset) may override nested
+// objects partially: its disk / post / sparks are completed here from the preset's own, so a portrait override
+// like { disk: { h0: 0.06 } } keeps the rest of the preset's disk.
+const D = (o) => {
+  const out = { ...P0, ...o, disk: { ...DISK, ...(o.disk || {}) }, post: { ...P0.post, ...(o.post || {}) } };
+  if (o.portrait) {
+    const p = { ...o.portrait };
+    for (const k of ['disk', 'post', 'sparks']) if (p[k]) p[k] = { ...(out[k] || {}), ...p[k] };
+    out.portrait = p;
+  }
+  return out;
+};
 
 // low skim along the CCW orbit at azimuth phi, radius r, height y; the view turns `inward` (rad) from the orbital
 // tangent toward the dwarf and pitches `down` (rad). Returns [pos, target].
@@ -119,6 +130,9 @@ const presets = {
     disk: { omega: 0.3, maxSteps: 52, sheet: 0.8, sheetHeat: 0.6, sheetMask: -0.05, arms: 1.0, armFloor: 0.05, cloud: 1.0,
       void: 0.0, voidW: 0.1, turb: 0.9, floor: 0.12, coldGas: 0.33, irr: 1.2 },
     post: { zoomBlur: 0.012, exposure: 0.8 },
+    // 9:16: the disk plane is tilted across the tall frame and keeps rolling as the camera sinks (the vortex
+    // taking hold), widening a touch so the rising upper layers close in from both sides around the centred dwarf
+    portrait: { framing: [[0, { roll: 20, zoom: 0.68 }], [1, { roll: 50, zoom: 0.6 }, 'inOutSine']] },
   }),
   // Resistance: the stream slams the young disk's rim. Impact point from lib/binary.js streamPath()
   // (first rim crossing at local (-0.96, 0.27), azimuth -2.87, velocity (0.965, 0.261)).
@@ -140,6 +154,9 @@ const presets = {
       gravity: [0.30, -0.30, -0.08], drift: [0.07, 0, 0.25], shutter: 0.035, gain: 1.3, width: 0.0018, jitter: 0.05,
     },
     post: { overlayGain: 5.0 },
+    // 9:16: the picture turned a quarter so the stream pours straight down the tall frame and slams the rim in the
+    // upper third; the sparks fan out, the shocked gas streams on down toward the young disk's dwarf at the bottom
+    portrait: { framing: { roll: 90, zoom: 0.66, pan: [-0.14, 0.02] } },
   }),
   // The real vortex answers Leonardo's ink drawing: top-down, centred, counter-clockwise, spiral strands filling frame.
   // (camera slightly +Z of the axis so screen-up = -Z, screen-right = +X: CCW on screen = CCW from +Y)
@@ -154,6 +171,9 @@ const presets = {
     disk: { omega: 0.3, arms: 1.0, armM: 2, armPitch: 0.30, armFloor: 0.05, armHeat: 0.35, sheet: 0.9, sheetHeat: 0.5,
       kr: 7.0, ky: 9.0, sheetMask: -0.35, floorMid: 0.25, maxSteps: 40, edgeFade: 0.35, tinK: 0.1, rimPuff: 0.5, curtain: 0.02 },
     post: { bloomStrength: 0.05 },
+    // 9:16: same pole-on centred spiral, opened up so its strands fill the tall frame edge to edge (a roll never
+    // mirrors, so the counter-clockwise sense that rhymes with the S14d ink is kept)
+    portrait: { framing: { zoom: 0.78 } },
   }),
   // Ladder: held breath. A slow oblique push (~55 degrees elevation, long lens: the flare and the thickness of the disk
   // read, unlike the flat pole-on S14e answer); the vortex visibly accelerates, the dwarf brightens.
@@ -168,8 +188,11 @@ const presets = {
     disk: { omega: 0.3, arms: 0.9, armM: 2, armPitch: 0.33, armFloor: 0.06, sheet: 0.9, sheetHeat: 0.6, sheetMask: -0.25,
       maxSteps: 46, armSpeed: 0.08, tinK: 0.35, curtain: 0.06, h0: 0.085 },
     post: { bloomStrength: 0.05 },
+    // 9:16: the oblique disk turned a quarter so its long axis runs up the tall frame and the ellipse fills it
+    portrait: { framing: { roll: 90, zoom: 0.62 } },
   }),
-  // Strike 2: medium, closer and more compressed; the inner disk flares white-hot on the strike, then pulses/decays.
+  // Strike 2: medium, closer and more compressed; the inner disk flares white-hot on the strike, then pulses/decays
+  // (16:9; the 9:16 cut inverts the strike into a dark punch, see portrait).
   'S18-strike2': D({
     vol: 0.5,
     cam: [
@@ -181,6 +204,10 @@ const presets = {
     disk: { omega: 0.34, h0: 0.05, dens: 9, tout: 1000, tinK: 0.6, arms: 0.6, sheet: 0.9, sheetHeat: 0.5, coldGas: 0.5, sheetMask: -0.2,
       rimPuff: 0.6, curtain: 1.2, maxSteps: 46, irr: 1.5 },
     post: {},
+    // 9:16: level, the inner ring big across the frame, the disk above and below it. The strike is a dark punch now
+    // (plan `dip`, no white flash), so the disk answers it in kind: it cuts in extinguished - only the dwarf and its
+    // blue curtains burning - and re-ignites ring by ring from the inside out to the white-hot hold (~1 s).
+    portrait: { framing: { zoom: 0.9 }, heat: [1.0, -0.55, 0.22, 0], flare: [-0.9, 0.25, 0.12] },
   }),
   // Frenzy 27.4: a spiral arm rushes toward the lens (camera low, looking upstream into the flow).
   'F27.4': D({
@@ -195,6 +222,8 @@ const presets = {
     disk: { omega: 0.32, arms: 1.0, armFloor: 0.04, armHeat: 0.2, armSpeed: 0.6, sheet: 0.9, sheetHeat: 0.55, sheetMask: -0.15,
       maxSteps: 46, cloud: 1.0, void: 0.0, voidW: 0.1, turb: 0.9, floor: 0.32, coldGas: 0.28, irr: 1.0, sheetW: 0.03 },
     post: { blur: [4, 0] },
+    // 9:16: tight on the arm crest silhouetted against the stars, the near flow below
+    portrait: { framing: { zoom: 0.9, pan: [0.3, -0.2] } },
   }),
   // Frenzy 29.2: the white-hot inner edge, close: dwarf large, curtains arcing to its poles, rim wall blazing.
   'F29.2': D({
@@ -207,6 +236,8 @@ const presets = {
     heat: [0.85, 0, 0.5, 0], lum: [1.0, 1.0],
     disk: { omega: 0.32, curtain: 0.5, maxSteps: 56, stepK: 0.4, sheet: 0.9, sheetHeat: 0.5, rimPuff: 0.8, tinK: 0.4, rb: 0.8, dwarfSurf: 0.2, irr: 1.5, tout: 1000 },
     post: { exposure: 0.5, bloomStrength: 0.04 },
+    // 9:16: the dwarf big at the centre, the hole filling the width, the curtains running up and down the frame
+    portrait: { framing: { zoom: 0.68 } },
   }),
   // Frenzy 31.1: extreme speed - a banking skim just above the arm crests, racing along the CCW orbit (not another
   // radial approach like S12): the crests tear past below, the dwarf blazes off-centre on the left horizon.
@@ -222,6 +253,9 @@ const presets = {
     disk: { omega: 0.32, sheet: 0.9, sheetHeat: 0.6, sheetMask: -0.15, maxSteps: 48, arms: 1.0, armFloor: 0.05, cloud: 1.2,
       floor: 0.2, coldGas: 0.32, irr: 1.5, void: -0.1, voidW: 0.12 },
     post: { blur: [34, 0], zoomBlur: 0.012, exposure: 0.85 },
+    // 9:16: the bank steepened into a diagonal that climbs the tall frame (same sense as the landscape bank), the
+    // blazing crests on the right, the streaking stars on the left; the motion blur turns with it (post below)
+    portrait: { framing: { roll: -60, zoom: 0.66, pan: [-0.45, 0] } },
   }),
 };
 
@@ -315,6 +349,14 @@ export default {
     const F = this.frameState(E, S);
     const out = { ...P.post };
     if (P.postFn) Object.assign(out, P.postFn(F, S));
+    // directional motion blur is authored in 1080p pixels along the landscape screen axes: scale it with the
+    // frame and, in portrait, turn it with the framing roll so it keeps following the on-screen motion
+    // (a camera roll of r degrees CCW turns the picture r degrees CW). Identical in a 1080p landscape render.
+    if (out.blur && (out.blur[0] || out.blur[1])) {
+      const a = -((S.framing && S.framing.roll) || 0) * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
+      const [bx, by] = out.blur, k = E.k || 1;
+      out.blur = [(bx * c - by * s) * k, (bx * s + by * c) * k];
+    }
     return out;
   },
 };

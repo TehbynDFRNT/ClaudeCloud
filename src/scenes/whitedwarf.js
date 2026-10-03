@@ -23,11 +23,59 @@ import { drift } from './lib/util.js';
 // PASS 2: full-res sharp pass (backdrop, detail, limb, corona, filaments, columns, thread, plume, point glow) over PASS 1.
 const MAIN = `
 uniform sampler2D uLow;
+// implosion (S21 end): the whole view is lensed into a disc of radius uImp.x (half short sides) around frame centre that
+// collapses to a point. uImp: (horizon radius, central zoom-out, swirl at the rim rad, gain);
+// uImpCore: (point brightness, point width, infall streaks, collapse phase)
+uniform vec4 uImp;
+uniform vec4 uImpCore;
+vec3 impCore(vec2 uv){
+  vec2 p = uv * vec2(frameAspect(), 1.0);
+  float rho = length(p) / min(frameAspect(), 1.0);
+  vec3 c = vec3(0.0);
+  if (uImpCore.x > 0.0){
+    float q = rho / uImpCore.y;
+    c += vec3(1.0, 0.86, 0.70) * uImpCore.x * (exp(-q * q) + 0.04 / (1.0 + q * q * 0.06));
+  }
+  if (uImpCore.z > 0.0){
+    // light dragged in from outside the horizon: thin converging streaks, spiralling with the twist, running inward
+    float x = rho / uImp.x;
+    float a = atan(p.y, p.x) + uImp.z * 0.35 / max(x, 0.3);
+    float lr = log(max(x, 1e-3));
+    float s1 = n3(vec3(cos(a) * 14.0, sin(a) * 14.0, lr * 2.2 + uImpCore.w * 9.0));
+    float s2 = n3(vec3(cos(a) * 31.0 + 5.0, sin(a) * 31.0, lr * 3.0 + uImpCore.w * 13.0 + 7.0));
+    float st = smoothstep(0.30, 0.85, s1) * 0.7 + smoothstep(0.45, 0.9, s2) * 0.5;
+    float env = smoothstep(0.92, 1.02, x) * exp(-max(x - 1.0, 0.0) * 2.2);
+    vec3 sc = mix(vec3(1.0, 0.55, 0.20), vec3(0.55, 0.75, 1.0), smoothstep(0.2, 0.8, s2 * 0.5 + 0.5));
+    c += sc * st * env * uImpCore.z;
+  }
+  return c;
+}
 void main(){
   vec2 uv = frameUV();
   vec3 ro = uCamPos;
-  vec3 rd = cameraRay(uv);
   float pixA = 2.0 * uTanHalfFov / uRes.y;
+  vec3 rd;
+  float impW = 1.0;
+  if (uImp.x > 0.0){
+    // gravitational-lens style pull: radius rho maps to rho * Z / (1 - x^2), x = rho / R, so the whole forward
+    // hemisphere is squeezed inside the horizon disc (its rim = rays bent to 90 deg), with a twist near the rim
+    vec2 p = uv * vec2(frameAspect(), 1.0);
+    float rho = length(p) / min(frameAspect(), 1.0);
+    float x = rho / uImp.x;
+    if (x >= 1.0){
+#if PASS == 1
+      fragColor = vec4(0.0, 0.0, 0.0, 1.0);
+#else
+      fragColor = vec4(impCore(uv), 1.0);
+#endif
+      return;
+    }
+    float om = 1.0 - x * x;
+    vec2 ps = rot2(uImp.z * x * x) * p * (uImp.y / om);
+    rd = normalize(uCamRot * vec3(ps * uTanHalfFov, 1.0));
+    pixA *= min(uImp.y * (1.0 + x * x) / (om * om), 64.0);          // local compression: keep detail at pixel scale
+    impW = smoothstep(1.0, 0.86, x) * uImp.w;
+  } else rd = cameraRay(uv);
   float t = uTime;
   rd = wdHaze(ro, rd, t);
   // dwarf body with an anti-aliased limb
@@ -77,6 +125,7 @@ void main(){
     col += vec3(1.0, 0.96, 0.90) * (45.0 * w * w * w * exp(-r * r / (0.003 + 0.09 * w * w)) + 2.5 * w * w * pull);
     col += vec3(1.0, 0.97, 0.93) * 2.0 * smoothstep(0.78, 1.0, w);
   }
+  if (uImp.x > 0.0) col = col * impW + impCore(uv);
   fragColor = vec4(col, 1.0);
 #endif
 }`;
@@ -108,7 +157,9 @@ function horizAt(n, headingD) {
   return v3.add(v3.mul(north, Math.cos(h)), v3.mul(east, Math.sin(h)));
 }
 
-export function rig(P, t) {
+// aspect: the frame aspect the `screen` offset is measured in. 16/9 in landscape and whenever a portrait `framing`
+// reframes the shot (framing works on the 16:9 composition); the real frame aspect in an unframed portrait render.
+export function rig(P, t, aspect = 16 / 9) {
   if (P.rig === 'surface') {
     const n = sph(kv(P.lat, t, 0), kv(P.lon, t, 0));
     const alt = kvLog(P.alt, t);
@@ -125,7 +176,7 @@ export function rig(P, t) {
   const fov = kv(P.fov, t, 35);
   const pos = [d * Math.cos(el) * Math.sin(az), d * Math.sin(el), d * Math.cos(el) * Math.cos(az)];
   const [sx, sy] = kv(P.screen, t, [0, 0]);
-  const tanH = Math.tan(fov * D2R / 2), aspect = 16 / 9;
+  const tanH = Math.tan(fov * D2R / 2);
   // aim so that the origin lands at (sx, sy) in frame coordinates
   const f0 = v3.norm(v3.mul(pos, -1));
   const yaw = Math.atan(sx * tanH * aspect), pitch = Math.atan(sy * tanH);
@@ -195,6 +246,26 @@ export function resolveParams(P, dur, fps) {
   return out;
 }
 
+// The implosion (S21 end) from its progress s in [0, 1]. The lens horizon (radius in half short sides, around the frame
+// centre) closes with collapse-like acceleration and is a point at s = end; on the way in the light is concentrated
+// (gain), gathers in a small hot point, and is extinguished between killA and killB (black after that, no flash).
+// shape (preset implodeShape): r0, pow, end, zoom (central zoom-out), swirl (rad at the rim), gain, core, streaks, killA, killB.
+function implosion(s, sh, minPx) {
+  if (!(s > 0)) return { imp: [0, 1, 0, 1], core: [0, 1, 0, 0] };
+  const end = sh.end ?? 0.9;
+  const u = clamp(s / end);
+  const R = (sh.r0 ?? 5.0) * Math.pow(1 - u, sh.pow ?? 2.2) + 0.004;
+  const kill = 1 - smoothstep(sh.killA ?? 0.8, sh.killB ?? 0.93, s);
+  const Z = 1 + (sh.zoom ?? 1.5) * u * u;
+  const swirl = (sh.swirl ?? 1.4) * Math.pow(u, 1.5);
+  const gain = (1 + (sh.gain ?? 0.8) * u * u) * kill;
+  const px = 2 / minPx;                                   // one output pixel in half-short-side units
+  const coreW = Math.max(R * 0.18, px * 1.2);
+  const core = (sh.core ?? 30) * smoothstep(0.55, 0.9, u) * kill;
+  const streaks = (sh.streaks ?? 0.6) * smoothstep(0.08, 0.35, u) * (1 - smoothstep(0.7, 0.95, u)) * kill;
+  return { imp: [R, Z, swirl, gain], core: [core, coreW, streaks, u] };
+}
+
 export default {
   id: 'whitedwarf',
   scale: 1,
@@ -208,6 +279,9 @@ export default {
       spin: [0.2, 0.05], magTilt: 24, magAz: 35, surf: [[0, 1.9], [0.5, 1.7], [1, 1.0]], fil: 1.5, filL: [1.25, 2.1], filW: 0.0045, shimmer: 0.015,
       ocean: 0, haze: 0.0, hazePx: [[0, 0], [0.5, 1.0], [1, 3.2]], hazeF: 4.0, crimson: 0.5, atmo: [[0, 1.0], [1, 0.55]], stars: 0.75, dust: 2.5,
       post: { exposure: [[0, 1.15], [1, 1.0]], bloomStrength: [[0, 0.2], [1, 0.22]], bloomThreshold: 1.1, streakStrength: [[0, 0.28], [0.5, 0.10], [1, 0.04]], vignette: 0.6 },
+      // 9:16: the point upper centre-right; the push ends with the disc ~0.6W wide in the upper half of the 3:4 window,
+      // leaving the bottom-left name card (x >= 0.09W, 0.72H-0.84H) on black
+      portrait: { fov: [[0, 45], [1, 43]], screen: [[0, [0.3, 0.3]], [1, [0.14, 0.24]]] },
     },
     // Compression: the hydrogen ocean piles up. Skimming the horizon; smooth swirling layer, convection not yet set in.
     // The layer visibly thickens against the horizon over the shot.
@@ -217,6 +291,8 @@ export default {
       ocean: [[0, 0.32], [1, 0.95]], oceanH: 0.009, heat: [[0, 0.0], [1, 0.2]], oceanGain: [[0, 0.85], [1, 1.25]], turbF: 62, turbV: 0.9, cells: 0.12,
       detail: 0.6, haze: 0.0006, hazeF: 60, crimson: 0.25, atmo: 1.0, stars: 0.8,
       post: { bloomStrength: 0.12, exposure: 1.0 },
+      // 9:16: the horizon high in the 3:4 window (sky ~30%), the thickening ocean below
+      portrait: { fov: 40, pitch: [[0, -21], [1, -19]] },
     },
     // First flickers: the surface brightens, small flares; oblique view with the limb against black
     'S14h-flare': {
@@ -234,6 +310,8 @@ export default {
       ocean: 0.6, oceanH: 0.014, heat: 0.15, oceanGain: 1.0, turbF: 55, turbV: 1.2, cells: 0.7, warp: 0.45, big: 1.0,
       columns: 1.0, colL: [3.0, 4.6], haze: 0.004, hazeF: 6, crimson: 0.25, atmo: 1.0, stars: 0.9,
       post: { bloomStrength: 0.15, streakStrength: 0.05 },
+      // 9:16: the whole sphere ~0.76W, rolled so the magnetic axis stands upright: curtains fall down the height
+      portrait: { dist: [[0, 5.2], [1, 4.6]], fov: 52, screen: [0, 0.02], roll: [[0, -49], [1, -53]] },
     },
     // Frenzy: the surface ocean, hotter (top-down, rushing)
     'F30.4': {
@@ -253,6 +331,8 @@ export default {
       plume: [[0, 0.05], [1, 0.9, 'outCubic']],
       haze: 0.004, hazeF: 8, crimson: 0.2, atmo: 1.2, stars: 0.6,
       post: { bloomStrength: [[0, 0.12], ['1f', 0.2], [1, 0.12]], streakStrength: [[0, 0.08], ['1f', 0.6], ['3f', 0.22], [1, 0.08]], streakTint: [0.3, 0.55, 1.0], halation: 0.008, exposure: 1.0 },
+      // 9:16: recentred on the flash; the limb crosses the frame above it, the fingers shoot up into the black
+      portrait: { framing: { pan: [-0.22, 0.3], zoom: 0.8 } },
     },
     // Strike 3 (cut on the strike): the surface layer convulses, blue filaments snap at local = 0. The biggest whip and
     // recoil land 6-24 frames in, after the plan's strike flash has decayed; torn ends drag hot plasma and fade over ~2.5 s,
@@ -264,6 +344,8 @@ export default {
       conv: { dir: [0.05, 0.25, 0.97], at: 0.0, amp: 1.4 },
       haze: 0.003, hazeF: 10, crimson: 0.2, atmo: 1.2, stars: 0.8,
       post: { bloomStrength: 0.16 },
+      // 9:16: the landscape composition turned a quarter: the star below, the limb across, the filaments rising above
+      portrait: { framing: { roll: 90, zoom: 0.5625 } },
     },
     // Strike 5 + final tremolo: extreme close; the curved horizon and black sky across the top of the scope band, a
     // corridor of blue magnetic arches over the convecting ocean, vibrating in tremolo; the heat haze bends limb, stars
@@ -285,6 +367,29 @@ export default {
         vignette: [[0, 0.55], ['e-12f', 0.6], ['e-4f', 0.9], [1, 0.4]],
         saturation: 1.08,
       },
+      // 9:16: no white-out. The glow and the tremolo climb to e-26f; then, in the last second, the camera tips down
+      // into the ocean while the whole view is lensed inward into a disc at frame centre that collapses to a hot point
+      // and goes out: the last 3 frames are black (the held breath before the ignition, which is dark).
+      portrait: {
+        fov: [[0, 50], ['e-26f', 47], [1, 42, 'inQuad']],
+        alt: [[0, 0.076], ['e-26f', 0.066], [1, 0.03, 'inQuad']],
+        pitch: [[0, -28], [0.45, -27.5], ['e-26f', -25.5], [1, -62, 'inOutSine']],
+        roll: [[0, 5], ['e-26f', 11], [1, 26, 'inQuad']],
+        surf: [[0, 1.7], ['e-26f', 2.2], [1, 2.6, 'inQuad']],
+        heat: [[0, 0.12], ['e-26f', 0.38], [1, 0.6, 'inQuad']],
+        oceanGain: [[0, 1.0], ['e-26f', 1.4], [1, 1.8, 'inQuad']],
+        haze: [[0, 0.0008], [0.4, 0.0014], ['e-26f', 0.0045], [1, 0.008, 'inQuad']],
+        white: 0,
+        implode: [[0, 0], ['e-26f', 0], [1, 1, 'linear']],
+        implodeShape: { r0: 4.2, pow: 1.6, end: 0.92, zoom: 1.2, swirl: 4.0, gain: 0.5, core: 10, streaks: 0.8, killA: 0.82, killB: 0.93 },
+        post: {
+          bloomStrength: [[0, 0.16], ['e-26f', 0.2], ['e-14f', 0.15], [1, 0.12]],
+          exposure: 1.0,
+          zoomBlur: [[0, 0], ['e-26f', 0], ['e-8f', 0.07, 'inQuad'], [1, 0.04]],
+          vignette: [[0, 0.55], ['e-26f', 0.62], [1, 0.62]],
+          saturation: 1.08,
+        },
+      },
     },
     // Aftermath: survival. Full 16:9. Ocean blown away (scorched, quieter surface); the shell recedes as a soft ring of
     // knots around the dwarf (rhymes with S29a); a new thread of matter enters from the left within the first second.
@@ -296,6 +401,8 @@ export default {
       thread: [[0, 0.30], ['1s', 0.42], [1, 0.66, 'inOutSine']], threadGain: 1.0,
       haze: 0.0, hazePx: 1.2, hazeF: 4.5, crimson: 0.35, atmo: 1.2, stars: 1.0,
       post: { bloomStrength: 0.14, exposure: 1.0, vignette: 0.5 },
+      // 9:16: the survivor centred (ring centred like S29a's, radius ~0.44W-0.52W), disc ~0.36W growing to ~0.44W
+      portrait: { fov: 50, screen: [[0, [0, 0.05]], [1, [0, 0.04]]], shellR: [[0, 0.25], [1, 0.29]] },
     },
     default: {
       rig: 'orbit', dist: 6, az: 0, el: 8, fov: 32, screen: [0.2, 0.05],
@@ -318,7 +425,10 @@ export default {
 
   render(E, S, target) {
     const { P, t } = this._p(S);
-    const cam = rig(P, t);
+    const aspect = S.portrait && !S.framing ? S.W / S.H : 16 / 9;
+    const cam = rig(P, t, aspect);
+    // reference pixel: one pixel of the frame's long-axis-independent 1080 scale (1080p in landscape, 1080 wide in portrait)
+    const refH = S.H / E.k;
     const spin = P.spin || [0, 0.05];
     // shot-relative clock: framing (magnetic geometry) and the look stay stable if the plan is re-timed
     const tl = clamp(S.local, -1, S.dur + 1) + (P.tOff || 0);
@@ -336,13 +446,15 @@ export default {
     const flashDir = v3.norm(P.flashDir || [0, 0, 1]);
     // point-source weight: fade the glow out as the disk resolves (apparent radius in 1080p pixels)
     const dist = v3.len(cam.pos);
-    const rpx = (1 / dist) / (2 * cam.tanH / 1080);
+    const rpx = (1 / dist) / (2 * cam.tanH / refH);
     const point = P.rig === 'surface' ? 0 : smoothstep(9, 1.6, rpx);
     const snapAt = P.snapAt;
     // heat haze: R units, plus an angular part given in 1080p pixels (constant on screen whatever the distance)
-    const haze = kv(P.haze, t, 0) + kv(P.hazePx, t, 0) * (2 * cam.tanH / 1080) * dist;
+    const haze = kv(P.haze, t, 0) + kv(P.hazePx, t, 0) * (2 * cam.tanH / refH) * dist;
     const shellR = kv(P.shellR, t, 0.7) * 2 * cam.tanH;
+    const imp = implosion(kv(P.implode, t, 0), P.implodeShape || {}, Math.min(S.W, S.H));
     const U = {
+      uImp: imp.imp, uImpCore: imp.core,
       ...cam.uniforms, uTime: tl,
       uDwarfPos: [0, 0, 0], uDwarfR: 1, uDwarfLum: 0.9,
       uSurfGain: kv(P.surf, t, 6), uSpin: spinA, uMagAxis: mf.ax, uMagRef: mf.ref,

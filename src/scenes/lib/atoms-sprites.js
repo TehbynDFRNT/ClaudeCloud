@@ -51,7 +51,7 @@ void shadeSprite(int id, float type, vec4 a, vec2 d, float dd, inout vec3 col, i
       return;
     }
     if (m > 0.0){                                         // cat's-eye: second aperture shifted toward the centre
-      vec2 fp = (a.xy - 0.5 * uFull) / (0.5 * uFull.y);
+      vec2 fp = (a.xy - 0.5 * uFull) / (0.5 * min(uFull.x, uFull.y));   // short side: same lens in 9:16
       float dc = length(d + fp * 0.2 * R);
       edge *= mix(1.0, sat((R - dc) / aa + 0.5), m);
       if (edge <= 0.0) return;
@@ -190,9 +190,10 @@ const IDXW = 1024, IDXH = 256;
 const TILE_CAP = 600;       // max sprites per tile (front-most kept)
 
 export class SpriteBatch {
-  constructor(G, W, H) {
+  // k: pixel scale for widths, thresholds and tiles (E.k: 1.0 at 1080 px on the frame's SHORT side)
+  constructor(G, W, H, k = Math.min(W, H) / 1080) {
     this.G = G; this.W = W; this.H = H;
-    this.k = H / 1080;
+    this.k = k;
     this.ts = Math.max(8, Math.round(24 * this.k));
     this.tx = Math.ceil(W / this.ts); this.ty = Math.ceil(H / this.ts);
     this.raw = new Float32Array(MAXS * 16);
@@ -212,11 +213,13 @@ export class SpriteBatch {
     this.lb = 0.11; // cull rows hidden by the scope letterbox (with margin)
   }
 
-  // cam: engine camera; dof: {focus, K (CoC px at 1080 for z -> inf), max}
+  // cam: engine camera; dof: {focus, K (CoC px at 1080 for z -> inf), max, scale (optical px scale of the
+  // CoC: defaults to k; a portrait reframing that magnifies the image passes the magnification here)}
   begin(cam, dof) {
     this.n = 0;
     this.cam = cam;
-    this.focus = dof.focus; this.K = dof.K * this.k; this.cmax = (dof.max ?? 160) * this.k;
+    const os = dof.scale ?? this.k;
+    this.focus = dof.focus; this.K = dof.K * os; this.cmax = (dof.max ?? 160) * os;
     this.tanH = cam.tanH; this.asp = this.W / this.H;
     this.fogN = dof.fog ? dof.fog[0] : 1e9; this.fogL = dof.fog ? dof.fog[1] : 1e9;
   }

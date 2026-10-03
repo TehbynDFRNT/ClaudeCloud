@@ -11,10 +11,18 @@ const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a
 const keyed = (v, t) => (Array.isArray(v) ? v[0] + (v[1] - v[0]) * smooth(0, 1, t) : v);
 const lin = (c) => [(c[0] / 255) ** 2.2, (c[1] / 255) ** 2.2, (c[2] / 255) ** 2.2];
 
-// circle-of-confusion diameter in output pixels (params are in px at 1920 wide; k = W / 1920)
+// circle-of-confusion diameter in output pixels (params are in px of the 1920x1080 landscape frame;
+// k = W / 1920 in landscape, P.kCoc in portrait: see plasma.js)
 function cocPx(z, D, k) {
   if (!D || !D.aperture) return 0;
   return Math.min(D.max ?? 30, D.aperture * Math.abs(1 - (D.focus ?? 3) / Math.max(z, 1e-3))) * k;
+}
+
+// pixel scales: [stroke widths / glow sizes, circle of confusion]. Landscape: W / 1920 for both (unchanged).
+// Portrait: E.k-based scales computed by the scene from the framing (P.kW, P.kCoc).
+function pxScales(P, W) {
+  const k = W / 1920;
+  return [P.kW ?? k, P.kCoc ?? k];
 }
 
 // visibility of point p behind an opaque sphere (c, r) seen from the camera
@@ -84,7 +92,7 @@ export function drawFilaments(L, cam, t, P, W, H, S) {
   const e1 = norm(cross(A, Math.abs(A[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0]));
   const e2 = cross(A, e1);
   const toW = (q) => [C[0] + A[0] * q[0] + e1[0] * q[1] + e2[0] * q[2], C[1] + A[1] * q[0] + e1[1] * q[1] + e2[1] * q[2], C[2] + A[2] * q[0] + e1[2] * q[1] + e2[2] * q[2]];
-  const k = W / 1920;
+  const [k, kc] = pxScales(P, W);
   const u = clamp(t / Math.max(S.dur, 1e-3));
   const n = F.n ?? 40, M = F.samples ?? 160, Ls = F.len ?? 5;
   const D = P.dof;
@@ -162,7 +170,7 @@ export function drawFilaments(L, cam, t, P, W, H, S) {
       const vis = occl ? sphereVis(cam, wp, C, Rc) : 1;
       const fr = F.frontDim ? frontOf(cam, wp, C, Rc) : 0;
       b *= vis;
-      const [hw, f] = dofWidth(pr.z, sw * k, D, k);
+      const [hw, f] = dofWidth(pr.z, sw * k, D, kc);
       const e = b * bi * gain * f * (1 - (F.frontDim ?? 0) * fr);
       const hot = clamp((e - 0.9) * 0.7);
       const c = [(col[0] + (white[0] - col[0]) * hot) * e * hdr, (col[1] + (white[1] - col[1]) * hot) * e * hdr, (col[2] + (white[2] - col[2]) * hot) * e * hdr];
@@ -204,7 +212,7 @@ export function drawFilaments(L, cam, t, P, W, H, S) {
         const d = dist(Math.max(0, dt - 0.045 * (1 - m / 3)));
         const pr = cam.project([c0[0] + dir[0] * d, c0[1] + dir[1] * d - 0.3 * d * d, c0[2] + dir[2] * d], W, H);
         if (!pr) break;
-        const [hw, f] = dofWidth(pr.z, (0.9 + 1.4 * hash1(id, 93)) * k, D, k);
+        const [hw, f] = dofWidth(pr.z, (0.9 + 1.4 * hash1(id, 93)) * k, D, kc);
         const fade = Math.pow(1 - dt / life, 1.5) * (0.2 + 0.8 * (m / 3) ** 2) * f;
         pts.push({ x: pr.x, y: pr.y, w: hw, c: [0.7 * fade * 30, 0.85 * fade * 30, 1.0 * fade * 30] });
       }
@@ -264,7 +272,7 @@ function sparkPos(Sp, id, age, out) {
 
 export function drawSparks(L, cam, t, P, W, H, S) {
   const Sp = P.sparks || {};
-  const k = W / 1920;
+  const [k, kc] = pxScales(P, W);
   const n = Sp.n ?? 800;
   const win = Sp.window || [-1.5, S.dur];
   const life = Sp.life || [0.4, 1.2];
@@ -295,7 +303,7 @@ export function drawSparks(L, cam, t, P, W, H, S) {
       if (!pr) break;
       if (pr.x < -60 || pr.x > W + 60 || pr.y < -60 || pr.y > H + 60) off++;
       const f = q / NS;
-      const [hw, fw] = dofWidth(pr.z, size, D, k);
+      const [hw, fw] = dofWidth(pr.z, size, D, kc);
       const c = sparkColor(clamp(T - (1 - f) * 0.25));
       const e = base * fw * (0.12 + 0.88 * f * f);
       pts.push({ x: pr.x, y: pr.y, w: hw * (0.65 + 0.35 * f), c: [c[0] * e, c[1] * e, c[2] * e] });

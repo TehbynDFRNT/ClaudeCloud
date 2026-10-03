@@ -14,6 +14,9 @@ function sparkRGB(h) {
 export function sparks(ctx, E, F, o) {
   const { cam, local } = F;
   const W = E.W, H = E.H;
+  // pixel clamps follow the frame's short side (E.k = 1 at 1080), so a 9:16 frame and a 16:9 frame draw the same
+  // stroke weights; the projected width itself is resolution-independent (H / (z * 2 tanH) px per world unit)
+  const pk = E.k || H / 1080;
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
   ctx.lineCap = 'round';
@@ -46,7 +49,7 @@ export function sparks(ctx, E, F, o) {
     if (!A || !B) continue;
     const heat = Math.exp(-3.0 * a / lk) * (0.6 + 0.4 * hash2(id, 9, 5));
     const fade = Math.min(1, a / 0.03);
-    const wpx = Math.max(0.5, Math.min(3.0, (o.width || 0.004) * H / (B.z * cam.tanH * 2)));
+    const wpx = Math.max(0.5 * pk, Math.min(3.0 * pk * (o.maxW || 1), (o.width || 0.004) * H / (B.z * cam.tanH * 2)));
     const alpha = Math.min(1, heat * fade * (o.gain || 1));
     if (alpha < 0.01) continue;
     // tapered streak: transparent tail -> hot head, plus a tiny bright head dot
@@ -68,6 +71,7 @@ export function sparks(ctx, E, F, o) {
 export function debris(ctx, E, F, o) {
   const { cam, tau } = F;
   const W = E.W, H = E.H;
+  const pk = E.k || H / 1080;   // pixel clamps follow the frame's short side (see sparks)
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
   ctx.lineCap = 'round';
@@ -87,7 +91,7 @@ export function debris(ctx, E, F, o) {
     const alpha = Math.min(1, (o.gain || 0.5) * near * (0.4 + 0.6 * temp));
     if (alpha < 0.01) continue;
     ctx.strokeStyle = `rgba(${c[0]},${Math.round(c[1] * (0.6 + 0.6 * temp))},${c[2]},${alpha.toFixed(3)})`;
-    ctx.lineWidth = Math.max(0.7, Math.min(6, (o.width || 0.003) * H / (B.z * cam.tanH * 2)));
+    ctx.lineWidth = Math.max(0.7 * pk, Math.min(6 * pk, (o.width || 0.003) * H / (B.z * cam.tanH * 2)));
     ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke();
   }
   ctx.restore();
