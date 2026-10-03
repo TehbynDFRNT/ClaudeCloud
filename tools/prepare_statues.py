@@ -675,7 +675,8 @@ def smooth_skin(V, F, N, A, mode, H_edge, crop_y):
     """Selective Taubin smoothing of broad, low-curvature skin only (scanner orange-peel, thin plaster
     mould-seam ridges). Carving (lids, lips, nostrils, curls) has high medium-scale curvature and is
     masked out, so it stays crisp."""
-    Vs = smooth_positions(V, A, 12)
+    n_med = int(np.clip(round(2 * (mode.get('sigma', 0.010) / H_edge) ** 2), 4, 60))   # ~physical sigma
+    Vs = smooth_positions(V, A, n_med)
     cm = np.abs(((V - Vs) * N).sum(1))
     cm = scalar_smooth(cm, A, 6)
     t0, t1 = mode['t']
@@ -685,13 +686,14 @@ def smooth_skin(V, F, N, A, mode, H_edge, crop_y):
     V2 = taubin(V, A, mode['iters'], W=w)
     V2 = V + ((V2 - V) * N).sum(1, keepdims=True) * N      # keep only the normal component (no tangential drift)
     moved = np.abs(((V2 - V) * N).sum(1))
-    log('  smoothing: mask mean %.2f, moved mean %.5f max %.5f (head units)' % (w.mean(), moved.mean(), moved.max()))
+    log('  smoothing (%d mask its, %d taubin its): mask mean %.2f, normal move mean %.5f max %.5f (head units)'
+        % (n_med, mode['iters'], w.mean(), moved.mean(), moved.max()))
     return V2, w
 
 
 SMOOTH_MODES = {
-    'skin': dict(t=(0.0006, 0.0020), iters=10, strength=1.0),     # sol: scanner orange-peel on cheeks/brow/neck
-    'seams': dict(t=(0.0005, 0.0016), iters=8, strength=0.9),     # david: thin mould-seam ridges on cheek/neck/nose
+    'skin': dict(t=(0.0007, 0.0018), iters=30, strength=1.0, sigma=0.010),   # sol: scanner orange-peel on cheeks/brow/neck
+    'seams': dict(t=(0.0007, 0.0018), iters=10, strength=0.9, sigma=0.010),  # david: thin mould-seam ridges on cheek/neck/nose
 }
 
 

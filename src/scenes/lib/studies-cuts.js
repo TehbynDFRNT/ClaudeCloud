@@ -117,7 +117,7 @@ export function sling() {
   const s = vel[1] / vel[0], k = 3.3;
   const parY = (x) => Pr[1] + s * (x - Pr[0]) + k * (x - Pr[0]) ** 2;
   const apex = [Pr[0] - s / (2 * k), parY(Pr[0] - s / (2 * k))];
-  const pw = 0.046, stR = 0.022, forkL = 0.048, bow = 0.008;          // pouch half-length, the stone, fork, cord bow
+  const pw = 0.052, stR = 0.025, forkL = 0.048, bow = 0.008;          // pouch half-length, the stone, fork, cord bow
 
   // ---- the fist (as S10's, in ink), the cords leaving its top toward the pouch; the forearm runs down-right
   D.at(-14);
@@ -138,7 +138,7 @@ export function sling() {
   const slingAt = (th, o) => {
     const P0 = at(th), v = tan(th), r = [Math.cos(th), Math.sin(th)];
     const St = add(P0, r, 0.012);                                    // the stone's centre
-    const Pc = add(St, r, -0.008);                                   // the pouch's centre line: the stone rides outward in it
+    const Pc = add(St, r, -0.009);                                   // the pouch's centre line: the stone rides outward in it
     const E1 = add(Pc, v, pw), E2 = add(Pc, v, -pw);                 // the pouch tips, beside the stone
     const fk = R + 0.012 - forkL, Fk = add(add(C, r, fk), v, -0.002); // the fork, a short way short of the pouch
     const cord = [];
@@ -156,16 +156,20 @@ export function sling() {
     }
     // the leaf: tip to tip, the far flap round the outside of the stone, the near flap across its inner side
     const flap = (b, e, n = 56) => { const pts = []; for (let i = 0; i <= n; i++) { const u = i / n; pts.push(add(lerp2(E1, E2, u), r, b * Math.sin(Math.PI * u) ** e)); } return pts; };
-    const outer = flap(stR + 0.018, 0.7), inner = flap(-(stR - 0.006), 0.9);
+    const outer = flap(stR + 0.017, 0.7), inner = flap(-(stR - 0.007), 0.9);
     D.stroke(outer, { w: o.pw, d: o.d * 1.02, speed: o.speed * 0.5, taper: [3, 3], gap: 0, wet: o.wet });
     D.stroke(inner, { w: o.pw * 0.9, d: o.d, speed: o.speed * 0.5, taper: [3, 3], gap: 0, wet: o.wet });
     const front = poly([...inner, ...flap(-(stR + 0.03), 1).reverse()]);   // the near side of that flap
     const ring = arcPts(St[0], St[1], stR, th - Math.PI * 0.4, th - Math.PI * 0.4 + TAU * 1.02, { step: 1.5 * PX, wob: 0.4 * PX, seed: 5 + o.seed });
     for (const run of clipOut(ring, [front])) D.stroke(run, { w: o.pw * 0.85, d: o.d, speed: o.speed * 0.4, taper: [3, 3], gap: 0, wet: o.wet });
+    if (o.fill) {   // a faded sling: the stone shaded in a few strokes, so it reads as the same object
+      hatch(D, (x, y) => { const dx = (x - St[0]) / stR, dy = (y - St[1]) / stR; return dx * dx + dy * dy <= 0.8 ? 0.55 + 0.4 * (dx * 0.6 + dy * 0.8) : 0; },
+        [St[0] - stR, St[1] - stR, St[0] + stR, St[1] + stR], { angle: 0.95, sp: 3.2, w: 1.0, d: o.d * 0.9, speed: 3, minLen: 2, thr: [0.2, 0.9], wet: false });
+    }
     return { P0, v, r, E1, E2, St, Pc, outer, inner, front, Fk };
   };
   // ghosts: the sling a tenth and a fifth of a turn earlier, fading back
-  for (let g = 1; g <= 2; g++) slingAt(thR - g * 0.63, { cw: 1.5, sw: 1.0, pw: 1.3, d: 0.4 - g * 0.07, speed: 1.4, wet: false, seed: 40 + 3 * g });
+  for (let g = 1; g <= 2; g++) slingAt(thR - g * 0.63, { cw: 1.5, sw: 1.0, pw: 1.4, d: 0.42 - g * 0.07, speed: 1.4, wet: false, fill: true, seed: 40 + 3 * g });
   // the construction under the cut's pen: the tangent ruled blind with the stylus, the stone's curve sketched faint
   const tEnd0 = add(Pr, vel, 0.5);
   D.stroke(linePts(Pr[0], Pr[1], tEnd0[0], tEnd0[1], { step: 3 * PX }), { kind: 'relief', w: 1.4, d: 0.5, speed: 3, wet: false, taper: [2, 2] });
