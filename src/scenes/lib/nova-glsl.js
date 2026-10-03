@@ -242,8 +242,8 @@ vec3 knotEval(vec3 oc, vec3 rd, vec3 cid, float tMax, float pa){
   float fr = smoothstep(0.0, 1.0, uFrac);
   float scK = shScale(nk) * uShR;
   vec3 Ph = nk * (0.972 + 0.026 * (h2.y - 0.5) * 2.0) * scK;
-  float s = (0.0011 + 0.0014 * h2.y + 0.0011 * q * q) * scK;
-  float B = 0.1 + 0.6 * q * q * q * q + 1.6 * pow(q, 40.0);    // power law: a few blazing knots
+  float s = (0.0011 + 0.0015 * h2.y + 0.0006 * q * q) * scK;
+  float B = 0.1 + 0.6 * q * q * q * q + 0.9 * pow(q, 60.0);    // power law: a few blazing knots
   vec3 col = vec3(0.0);
   // head (column normalised to peak 1 when resolved; flux-conserving blur to the pixel footprint)
   float th = dot(Ph - oc, rd);

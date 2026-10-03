@@ -64,7 +64,7 @@ export function sparks(ctx, E, F, o) {
 }
 
 // debris: foreground glowing clumps swept past the lens along the Keplerian flow
-// { count, rmin, rmax, ymax, omega, shutter, gain, width, color:[r,g,b] }
+// { count, rmin, rmax, ymax, omega, shutter, gain, width, color:[r,g,b], zmax (only foreground: max depth) }
 export function debris(ctx, E, F, o) {
   const { cam, tau } = F;
   const W = E.W, H = E.H;
@@ -80,7 +80,7 @@ export function debris(ctx, E, F, o) {
     const phi0 = hash1(k, 33) * Math.PI * 2;
     const P = (tt) => { const ph = phi0 + om * tt; return [r * Math.cos(ph), y, -r * Math.sin(ph)]; };
     const A = cam.project(P(tau - sh), W, H), B = cam.project(P(tau), W, H);
-    if (!A || !B || B.z < 0.02) continue;
+    if (!A || !B || B.z < 0.02 || B.z > (o.zmax || 1e9)) continue;
     const near = Math.min(1, 0.12 / B.z);
     const temp = hash1(k, 34);
     const c = o.color || [255, 120, 40];

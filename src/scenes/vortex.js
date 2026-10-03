@@ -93,16 +93,20 @@ const D = (o) => ({ ...P0, ...o, disk: { ...DISK, ...(o.disk || {}) }, post: { .
 const presets = {
   // a neutral oblique look-dev view
   default: D({ cam: [[0, [0, 0.85, 1.75], [0, -0.05, 0], 38]] }),
+  // Engulf: the camera sinks from above the disk down through its billowing upper layers toward the plane; clumps
+  // pass close to the lens, and at the end the disk's own upper layers rise across the frame and swallow the dwarf.
   'S12-engulf': D({
     vol: 0.6,
     cam: [
-      [0, [0.42, 0.30, 1.02], [0, 0.0, 0], 58],
-      [0.476, [0.30, 0.14, 0.84], [0, 0.0, 0], 66, 0.02],
-      [1, [0.21, 0.07, 0.63], [0, 0.0, 0], 78, -0.05],
+      [0, [0.40, 0.26, 0.98], [0, 0.0, 0], 58],
+      [0.5, [0.30, 0.13, 0.80], [0, 0.0, 0], 66, 0.03],
+      [1, [0.22, 0.05, 0.58], [0, 0.004, 0], 74, -0.04],
     ],
     tau: [10, 1.0, 0],
-    disk: { omega: 0.3, maxSteps: 48, sheet: 0.7, sheetHeat: 0.7, sheetMask: -0.05 },
-    post: { zoomBlur: 0.012 },
+    clear: 0.07,
+    disk: { omega: 0.3, maxSteps: 52, sheet: 0.8, sheetHeat: 0.6, sheetMask: -0.05, arms: 0.7 },
+    debris: { count: 140, rmin: 0.5, rmax: 0.8, ymax: 0.14, omega: 0.3, shutter: 0.03, gain: 0.55, width: 0.0025, color: [255, 110, 35], zmax: 0.3 },
+    post: { zoomBlur: 0.012, overlayGain: 2.0 },
   }),
   // Resistance: the stream slams the young disk's rim. Impact point from lib/binary.js streamPath()
   // (first rim crossing at local (-0.96, 0.27), azimuth -2.87, velocity (0.965, 0.261)).

@@ -44,8 +44,9 @@ export const DESIGN = {
   comp: { thresholdRel: 6, ratio: 1.5, kneeDb: 8, attack: 0.030, release: 0.40, rms: 0.050 },
   // cannon approach law: each cue's loudness (K-weighted, 400 ms from its transient) relative to the orchestra's
   // (K-weighted, the 500 ms before it: the music the hit breaks into) follows rel(d) = far + (near - far) * (1 - d)^shape, so the approach is monotone
-  // whatever the music does underneath. Measured on a first render of the stem, corrected and re-rendered.
-  cannon: { relFar: -20, relNear: 5, shape: 1.5, maxCorrDb: 14, passes: 3, tolDb: 0.75 },
+  // whatever the music does underneath. Measured on a first render of the stem, corrected and re-rendered. Close
+  // cues are capped at nearMaxCorrDb, where the stem limiter still leaves the boom a natural decay.
+  cannon: { relFar: -20, relNear: 5, shape: 1.5, maxCorrDb: 14, nearMaxCorrDb: 7, passes: 3, tolDb: 0.75 },
   // orchestra + synth duck under the five strike cannons (d <= maxD; depth grows toward d = 0): 5 ms attack,
   // 80 ms hold, then a 120 ms exponential release (within 1 dB after ~0.35 s), following the boom that masks it.
   duck: { maxD: 0.12, depthDb: [4, 10], attack: 0.005, hold: 0.08, tau: 0.12 },
@@ -1181,7 +1182,9 @@ function cannonLevels(tl, kO, gO, canStem, gC, table, prev = {}) {
     const lo = 10 * Math.log10(ms(kO, Math.round((r.t - 0.5) * SR), a) * gO * gO + 1e-20);
     const target = P.relFar + (P.relNear - P.relFar) * Math.pow(1 - r.distance, P.shape);
     const err = target - (lc - lo);
-    out[r.id] = clamp((prev[r.id] || 0) + err, -P.maxCorrDb, P.maxCorrDb);
+    // close cues stop at nearMaxCorrDb: beyond it the stem limiter would flatten the boom's decay into a roar
+    const cap = r.distance <= DESIGN.duck.maxD ? P.nearMaxCorrDb : P.maxCorrDb;
+    out[r.id] = clamp((prev[r.id] || 0) + err, -P.maxCorrDb, cap);
     rows.push({ id: r.id, distance: r.distance, target: +target.toFixed(2), rel: +(lc - lo).toFixed(2), errDb: +err.toFixed(2) });
   }
   return { gains: out, rows, maxErr: Math.max(...rows.map((x) => Math.abs(x.errDb))) };
