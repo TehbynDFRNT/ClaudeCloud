@@ -328,7 +328,7 @@ export default {
     if (P.whip) {
       whip = [P.whip.amp, t, P.whip.speed, P.whip.decay];
       // swing the stream across the line of sight: mix of the in-plane normal and +Y perpendicular to the view
-      const m = pathAtS(path, 0.15), n = [-m.tz, 0, m.tx], f = cam.fwd;
+      const m = pathAtS(path, 0.15), n = [-m.tz, 0, m.tx], f = (cam.raw || cam).fwd;   // unframed: same whip in every aspect
       let a = f[1], b = -v3.dot(n, f); const l = Math.hypot(a, b) || 1; a /= l; b /= l;
       if (b < 0) { a = -a; b = -b; }
       whipK = [P.whip.k ?? 14, a, b];
@@ -423,6 +423,10 @@ export default {
     return 'add';
   },
 
+  // pixel scale for the ink (line weights, marks, type): E.k (1.0 per 1080 px of the short side); the vertical
+  // cut is watched on a phone, so its ink is drawn heavier (same 1.3x as the titles)
+  inkScale(E) { return E.k * (E.portrait ? 1.3 : 1); },
+
   // project a 3D polyline; returns [{x,y,vis,len}] (len = cumulative world length)
   projectLine(E, cam, pts3, G) {
     const out = [];
@@ -506,7 +510,7 @@ export default {
 
   // S04: orbit, Roche figure-eight, L1 — fine ice-blue lines drawn on through the shot
   drawDiagram(E, ctx, st, t, P) {
-    const k = E.H / 1080, cam = st.cam, ICE = '160,205,255';
+    const k = this.inkScale(E), cam = st.cam, ICE = '160,205,255';
     const G = { ...GIANT_DEF, ...(P.giant || {}) };
     const D = P.diagram || {};
     const w = 1.25 * k;
@@ -550,7 +554,7 @@ export default {
 
   // F29.4: top-down orbital diagram, fast
   drawTopDiagram(E, ctx, st, t, P) {
-    const k = E.H / 1080, cam = st.cam, ICE = '160,205,255';
+    const k = this.inkScale(E), cam = st.cam, ICE = '160,205,255';
     const w = 1.2 * k;
     const u = clamp(0.45 + t * 0.85);
     const ease = (x) => 1 - Math.pow(1 - x, 3);
@@ -576,7 +580,7 @@ export default {
 
   // S08: gold dashed ballistic trajectory with tick marks, drawing ahead of the clump
   drawTrajectory(E, ctx, st, t, P) {
-    const k = E.H / 1080, cam = st.cam, GOLD = '255,196,110';
+    const k = this.inkScale(E), cam = st.cam, GOLD = '255,196,110';
     const path = this.path;
     const tauC = ev(P.clump.tau, st.u);
     const tauEnd = Math.min(1.395, tauC + 0.012 + 0.16 * (1 - Math.exp(-t / 1.1)) + 0.02 * t);
