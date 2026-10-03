@@ -4,7 +4,7 @@
 //
 // Preset params (all scalar params accept a number or keys [[localSec, value, easing?], ...]):
 //   mode: 'fire' | 'system' | 'wave' | 'shell'
-//   cam: camera keys (lib/util.js), volScale: resolution of the volumetric pass
+//   cam: camera keys (lib/util.js), volScale: resolution of the volumetric pass (number or keys)
 //   fire/system: fbR, fbTurb, fbDens, fbHeat, fbShell, fbEvo, fbBlue, contact, novaLight, disk, stream
 //   wave: wvR, wvDens, wvHeat, debris, adv, refract (composite refraction strength)
 //   shell: shR, frac, shHeat, gain, skin, knotK, prolate, equator, sheetW, sheetWid, knotGain, faceDim, steps, stepLen, giant/dwarf
@@ -303,7 +303,7 @@ export default {
     // 2.5 s: the pressure wave passes through the camera: a wall of light approaches, envelops (refraction,
     // debris streaking past), then glowing hot gas all around. Peak of the Doppler roar.
     'S24-shockfront': {
-      mode: 'wave', volScale: 0.55, dur: 2.5,
+      mode: 'wave', volScale: [[0, 0.55], [1.04, 0.55], [1.06, 0.45]], dur: 2.5,   // drops at the contact white-out
       cam: [[0, [0.05, 0.02, -1.0], [0, 0, 0], 58, 0], [1.05, [0.03, 0.01, -1.0], [0, 0, 0.2], 60, 0.03], [2.5, [0.0, 0.0, -0.98], [0.02, 0.02, 0.2], 62, 0.06]],
       wvR: [[0, 0.5], [1.05, 0.985, 'inQuad'], [2.5, 1.26, 'outQuad']],
       fbTurb: 0.12, fbEvo: [[0, 4.0], [1.05, 5.2], [2.5, 10.5, 'linear']], wvDens: 34, wvHeat: [[0, 0.8], [0.9, 0.9], [1.3, 1.0], [2.5, 1.1]],
@@ -359,7 +359,9 @@ export default {
     const P = S.params;
     const t = this.localT(S);
     const cam = camFromKeys(P.cam || [[0, [0, 0, -2], [0, 0, 0], 40]], t);
-    const vol = E.target('nova-vol-' + (target.name || 'x'), P.volScale ?? 0.5);
+    // volScale may be keyed (quantised to 0.05 so the target is not reallocated every frame)
+    const vs = Math.round(kv(P.volScale, t, 0.5) * 20) / 20;
+    const vol = E.target('nova-vol-' + (target.name || 'x'), vs);
     const mode = P.mode || 'fire';
     const comp = { ...cam.uniforms, uVol: vol, uStarGain: kv(P.starGain, t, 1), uUseGiant: 0, uGiantFar: 0, uUseDwarf: 0, uNovaLight: 0, uContact: 0, uVolGain: 1, uRefract: 0, uNovaPos: WD };
     const giantU = (glow, scar, spin = 0.3) => ({

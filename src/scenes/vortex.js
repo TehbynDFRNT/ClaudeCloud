@@ -99,14 +99,15 @@ const presets = {
     vol: 0.6,
     cam: [
       [0, [0.40, 0.26, 0.98], [0, 0.0, 0], 58],
-      [0.5, [0.30, 0.13, 0.80], [0, 0.0, 0], 66, 0.03],
-      [1, [0.22, 0.05, 0.58], [0, 0.004, 0], 74, -0.04],
+      [0.55, [0.31, 0.16, 0.81], [0, 0.0, 0], 64, 0.03],
+      [0.8, [0.27, 0.10, 0.71], [0, 0.002, 0], 68, 0.0],
+      [1, [0.22, 0.042, 0.58], [0, 0.004, 0], 74, -0.04, 'inQuad'],
     ],
     tau: [10, 1.0, 0],
-    clear: 0.07,
-    disk: { omega: 0.3, maxSteps: 52, sheet: 0.8, sheetHeat: 0.6, sheetMask: -0.05, arms: 1.0, armFloor: 0.05,
-      void: 0.0, voidW: 0.1, turb: 0.9, floor: 0.12, coldGas: 0.36, irr: 2 },
-    post: { zoomBlur: 0.012 },
+    clear: 0.06,
+    disk: { omega: 0.3, maxSteps: 52, sheet: 0.8, sheetHeat: 0.6, sheetMask: -0.05, arms: 1.0, armFloor: 0.05, cloud: 1.0,
+      void: 0.0, voidW: 0.1, turb: 0.9, floor: 0.12, coldGas: 0.33, irr: 1.2 },
+    post: { zoomBlur: 0.012, exposure: 0.8 },
   }),
   // Resistance: the stream slams the young disk's rim. Impact point from lib/binary.js streamPath()
   // (first rim crossing at local (-0.96, 0.27), azimuth -2.87, velocity (0.965, 0.261)).
@@ -176,9 +177,10 @@ const presets = {
     ],
     tau: [78.0, 3.5, 0],
     heat: [1.12, 0, 0.5, 0],
+    clear: 0.04,
     disk: { omega: 0.32, arms: 1.0, armFloor: 0.04, armHeat: 0.5, armSpeed: 0.6, sheet: 0.9, sheetHeat: 0.75, sheetMask: -0.15,
-      maxSteps: 46 },
-    post: { blur: [6, 0] },
+      maxSteps: 46, cloud: 1.0, void: 0.0, voidW: 0.1, turb: 0.9, floor: 0.32, coldGas: 0.28, irr: 1.0, sheetW: 0.03 },
+    post: { blur: [4, 0] },
   }),
   // Frenzy 29.2: the white-hot inner edge, close: dwarf large, curtains arcing to its poles, rim wall blazing.
   'F29.2': D({

@@ -46,14 +46,14 @@ export const DESIGN = {
   // (K-weighted, the 500 ms before it: the music the hit breaks into) follows rel(d) = far + (near - far) * (1 - d)^shape, so the approach is monotone
   // whatever the music does underneath. Measured on a first render of the stem, corrected and re-rendered. Close
   // cues are capped at nearMaxCorrDb, where the stem limiter still leaves the boom a natural decay.
-  cannon: { relFar: -20, relNear: 5, shape: 1.5, maxCorrDb: 14, nearMaxCorrDb: 7, passes: 3, tolDb: 0.75 },
+  cannon: { relFar: -20, relNear: 5, shape: 1.5, maxCorrDb: 14, nearMaxCorrDb: 10, passes: 3, tolDb: 0.75 },
   // orchestra + synth duck under the five strike cannons (d <= maxD; depth grows toward d = 0): 5 ms attack,
   // 80 ms hold, then a 120 ms exponential release (within 1 dB after ~0.35 s), following the boom that masks it.
   duck: { maxD: 0.12, depthDb: [4, 10], attack: 0.005, hold: 0.08, tau: 0.12 },
-  // the ladder (bars 32-38) is the cannons' section: orchestra + synth sit a static 3.5 dB lower there (ramped
+  // the ladder (bars 32-38) is the cannons' section: orchestra + synth sit a static 4.5 dB lower there (ramped
   // over the 2 s before the bar-32 downbeat), so the strikes have headroom under the ceiling. The internal dynamics
   // (tremolo swells, strikes) are untouched.
-  ladderRide: { db: -3.5, fromBar: 32, rampS: 2.0 },
+  ladderRide: { db: -4.5, fromBar: 32, rampS: 2.0 },
   // synth sections (bars from the director's notes); offsets = K-weighted level relative to the orchestra
   synth: {
     sections: [

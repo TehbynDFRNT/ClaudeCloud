@@ -16,9 +16,10 @@ uniform float uStreamGlow;   // emission multiplier
 uniform float uRip;          // violence near L1 (sheets tear, edges spray) 0..1
 uniform float uFlowT;        // advection clock (stream)
 uniform float uDetail;       // extra octave weight for close-ups (0..1)
-uniform vec4 uWhip;          // amplitude, seconds since strike, wave speed (arc length / s), decay rate
+uniform vec4 uWhip;          // strike whip: amplitude, seconds since strike, front speed (arc length / s), decay (1/s)
+uniform vec3 uWhipK;         // whip wavenumber (rad per unit arc length), weight of in-plane (d) and vertical (y) swing
 uniform vec3 uWD;            // white dwarf position
-uniform float uRake;         // dwarf irradiation (blue-white raking light) strength
+uniform float uRake;         // dwarf irradiation: cold blue-white rim light on the dwarf-facing gas
 uniform float uDiskIn, uDiskOut, uDiskAmt, uDiskH, uDiskT, uDiskGlow;
 uniform float uRingAmt;      // forming ring at the circularisation radius (before the disk exists)
 uniform float uRCirc;
@@ -27,8 +28,9 @@ uniform vec4 uHot;           // hot spot: x, z, strength, arc length along the r
 uniform vec3 uBoxMin, uBoxMax;
 uniform float uPixAng;       // radians per volume-target pixel
 uniform float uCool;         // amount of cool absorbing veils in the stream (1 = default)
-uniform vec2 uClump;
-uniform vec2 uDiskBound;     // disk/ring bounding radius and half-height (0 = no disk), from JS         // bright knot riding the stream: arc length, strength
+uniform vec2 uClump;         // bright knot riding the stream: arc length, strength
+uniform vec2 uDiskBound;     // disk/ring bounding radius and half-height (0 = no disk), from JS
+uniform float uStepK;        // march step multiplier (1 = default; close-ups may relax it)
 
 // display temperature -> film palette (crimson -> ember -> gold -> white -> ice blue), linear
 vec3 heatColor(float T){
@@ -38,10 +40,10 @@ vec3 heatColor(float T){
   vec3 c2 = vec3(1.00, 0.230, 0.040);
   vec3 c3 = vec3(1.00, 0.500, 0.130);
   vec3 c4 = vec3(1.00, 0.780, 0.480);
-  vec3 c5 = vec3(1.00, 0.940, 0.880);
-  vec3 c6 = vec3(0.86, 0.920, 1.000);
-  vec3 c7 = vec3(0.68, 0.820, 1.000);
-  vec3 c8 = vec3(0.52, 0.720, 1.000);
+  vec3 c5 = vec3(1.00, 0.920, 0.840);
+  vec3 c6 = vec3(0.80, 0.890, 1.000);
+  vec3 c7 = vec3(0.58, 0.760, 1.000);
+  vec3 c8 = vec3(0.42, 0.640, 1.000);
   if (x < 1.0) return mix(c0, c1, sat(x));
   if (x < 2.0) return mix(c1, c2, x - 1.0);
   if (x < 3.0) return mix(c2, c3, x - 2.0);
@@ -51,12 +53,14 @@ vec3 heatColor(float T){
   if (x < 7.0) return mix(c6, c7, x - 6.0);
   return mix(c7, c8, sat(x - 7.0));
 }
+// stream radiance law: steep through crimson/gold, strongly compressed above white heat so the hottest gas keeps
+// its texture (threads vs lanes) instead of burning out to a flat white
 vec3 heatEmission(float T){
-  float b = T < 6000.0 ? pow(T / 2600.0, 2.4) : 7.45 * pow(T / 6000.0, 1.1);   // softer above white heat
+  float b = T < 5200.0 ? pow(T / 2600.0, 2.4) : 5.28 * pow(T / 5200.0, 0.55);
   return heatColor(T) * b * 1.25;
 }
-// disk: gentler radiance law so the inner disk blazes without swallowing the frame
-vec3 diskEmission(float T){ return heatColor(T) * pow(T / 2600.0, 1.15) * 1.2; }
+// disk source function: optically thick, the inner disk blazes white / ice blue, the rim glows crimson
+vec3 diskEmission(float T){ return heatColor(T) * pow(T / 2600.0, 1.7) * 1.15; }
 
 vec4 fieldAt(vec2 xz){
   vec2 uv = (xz - uFieldBox.xy) * uFieldBox.zw;
@@ -69,24 +73,32 @@ float gRe = 9.0;          // envelope radius of the last stream sample (adaptive
 float streamW(float s){ return uStreamW * (0.0105 + 0.037 * exp(-max(s, 0.0) / 0.075)); }
 float streamWarpAmt(float s){ return 0.5 + 0.55 * uRip * exp(-max(s, 0.0) / 0.12); }
 
-// strike pulse travelling down the stream (0..1)
-float whipEnv(float s){
-  if (uWhip.x <= 0.0) return 0.0;
-  float front = uWhip.y * uWhip.z;
-  return exp(-uWhip.y * uWhip.w) * smoothstep(-0.02, 0.06, front - s) * exp(-max(0.0, front - s) * 3.0) * smoothstep(-0.05, 0.25, s);
-}
-// transverse whip wave after a strike: displacement of the centreline (in-plane, vertical)
+// ---- strike whip: one big transverse kink jerked into the root at L1 that runs down the whole stream -------
+// x = arc length behind the travelling front; the kink is a 1.5-cycle wavelet riding just behind the front
+float whipAmp(){ return uWhip.x * exp(-uWhip.y * uWhip.w); }
+float whipX(float s){ return uWhip.y * uWhip.z - s; }
 vec2 whipOffset(float s){
   if (uWhip.x <= 0.0) return vec2(0.0);
-  float front = uWhip.y * uWhip.z;                 // wave front position along the stream
-  float ph = (front - s) * 20.0;
-  float env = exp(-uWhip.y * uWhip.w) * smoothstep(-0.02, 0.06, front - s) * exp(-max(0.0, front - s) * 3.0);
-  float grow = smoothstep(-0.05, 0.25, s);
-  return uWhip.x * env * grow * vec2(sin(ph), 0.6 * cos(ph * 0.83 + 1.0));
+  float x = whipX(s);
+  float lam = TAU / uWhipK.x;
+  float on = smoothstep(-0.01, 0.12 * lam, x);
+  float pk = exp(-pow((x - 0.45 * lam) / (0.55 * lam), 2.0));
+  float ring = 0.25 * exp(-max(x - lam, 0.0) * 4.0) * step(lam, x);   // small ringing left behind the kink
+  float grow = 0.6 + 0.4 * smoothstep(0.0, 0.3, s);                  // the whip's lash grows toward the tip
+  float d = whipAmp() * grow * on * sin(uWhipK.x * x) * (pk + ring);
+  return d * uWhipK.yz;
+}
+// brightening crest: compressed gas in the bend of the kink
+float whipCrest(float s){
+  if (uWhip.x <= 0.0) return 0.0;
+  float x = whipX(s);
+  float lam = TAU / uWhipK.x;
+  return exp(-uWhip.y * uWhip.w * 0.7) * exp(-pow((x - 0.25 * lam) / (0.3 * lam), 2.0)) * smoothstep(-0.02, 0.02, x);
 }
 
 // stream sample at p from a field sample f: returns extinction k (per unit length) and emission rate j (radiance
-// per unit length). Hot sheets and threads glow and barely absorb; cool dense clumps absorb (dark lanes, depth).
+// per unit length). Hot sheets and threads glow and absorb a little (more when very hot and dense); cool clumps
+// absorb strongly (dark lanes, depth).
 float streamSample(vec3 p, vec4 f, out vec3 j){
   j = vec3(0.0);
   float s = f.y;
@@ -134,28 +146,36 @@ float streamSample(vec3 p, vec4 f, out vec3 j){
   // cool, dense gas between the sheets: absorbing veils
   float cn = wn.g * 0.75 + 0.25 * (1.0 - sh);
   float cool = uCool * env * smoothstep(0.42, 0.8, cn) * (1.0 - 0.7 * sat(sh)) * m * uStreamAmt * (0.4 + 0.6 * exp(-max(s, 0.0) / 0.25));
-  // temperature: gas heats as it falls into the dwarf's potential; sheets and threads hotter in their cores
+  // temperature: gas heats as it falls into the dwarf's potential. The radial law sets the base; sheets and
+  // threads carry the contrast (lanes between them stay much cooler, so the hook near pericentre keeps texture)
   float rD = length(p.xz - uWD.xz);
-  float T = 2000.0 * pow(0.56 / max(rD, 0.03), 0.72) * (0.72 + 0.42 * sh + 0.22 * fl);
+  float Tb = 2000.0 * pow(0.56 / max(rD, 0.03), 0.72);
+  float hk = smoothstep(3500.0, 9000.0, Tb);              // 0 far out .. 1 near pericentre
+  float T = Tb * mix(0.72 + 0.42 * sh + 0.22 * fl, 0.50 + 0.62 * sh + 0.45 * fl, hk);
   T *= 1.0 + 0.2 * bulb;   // shocked head
-  float we = whipEnv(s);
-  T *= 1.0 + 0.5 * we;
-  hot *= 1.0 + 1.5 * we;
+  float we = whipCrest(s);
+  T *= 1.0 + 0.35 * we;
+  hot *= 1.0 + 1.6 * we;
   T *= 1.0 + 0.6 * knot;
-  // raking light from the dwarf: scattered by all gas, on the side facing it (envelope sampled toward the dwarf)
-  vec3 rake = vec3(0.0);
-  if (uRake > 0.1){
-    vec3 l = normalize(uWD - p);
-    vec3 p2 = p + l * w * 1.2;
+  // hot dense gas near pericentre: dimmer per unit density (it is thin and fast) but more opaque, so the threads
+  // in front shadow those behind instead of summing to a flat white
+  float kb = 1.0 / (1.0 + pow(Tb / 7000.0, 3.0));
+  vec3 em = heatEmission(T) * uStreamGlow * hot * (0.35 + 0.65 * kb);
+  // the dwarf's cold light: a rim light on the side of the gas facing it (never on the cool veils, never a fill)
+  if (uRake > 0.3 && re > 0.4 && hot > 1e-3){
+    vec3 L = uWD - p; float r2 = dot(L, L); L *= inversesqrt(r2);
+    // facing test: does stepping toward the dwarf leave the stream envelope (lit rim) or go deeper (shadow)?
+    vec3 p2 = p + L * w * 0.9;
     vec4 f2 = fieldAt(p2.xz);
     float w2 = streamW(f2.y);
-    float e22 = (f2.x * f2.x) / (w2 * w2) + p2.y * p2.y / (w2 * w2 * 0.64);
-    float lit = exp(-6.0 * exp(-e22 * 0.6));
-    float rD2 = dot(p - uWD, p - uWD);
-    rake = vec3(0.55, 0.75, 1.0) * uRake * lit / (0.02 + rD2 * 6.0);
+    float e2 = (f2.x - wo.x) * (f2.x - wo.x) / (w2 * w2) + (p2.y - wo.y) * (p2.y - wo.y) / (w2 * w2 * 0.64);
+    float e0 = d * d / (w * w) + y * y / (h * h);
+    float facing = smoothstep(0.1, 0.9, e2 - e0) * exp(-4.0 * exp(-e2 * 0.7));
+    float rim = smoothstep(0.4, 1.2, re);
+    em += vec3(0.20, 0.46, 1.0) * (uRake * 5.5 * facing * rim / (0.02 + r2 * 6.0)) * hot;
   }
-  j = (heatEmission(T) * uStreamGlow * hot + rake * (hot + cool) * 0.5) * 24.0;
-  return (hot * 0.3 + cool * 1.7) * 26.0;
+  j = em * 24.0;
+  return (hot * mix(0.3, 0.9, 1.0 - kb) + cool * 1.7) * 26.0;
 }
 
 // accretion disk (and forming ring) around the dwarf
@@ -172,16 +192,21 @@ float diskDensity(vec3 p, out float T){
   float om = 0.34 * pow(max(r, 0.012) / 0.1, -1.5);                  // visual Keplerian angular speed (rad/s)
   float pa = phi + om * uDiskT;                                        // pattern frozen into the gas
   vec2 cp = vec2(cos(pa), sin(pa));
-  float n = fbm3(vec3(cp * 2.2, lr * 9.0 + q.y / H * 0.2), 3);          // large turbulent patches
-  float g1 = n3(vec3(cp * 1.5, lr * 52.0));                             // fine concentric shear streaks
-  float g2 = n3(vec3(cp * 3.6, lr * 23.0) + 7.0);
-  float streaks = sat(0.5 + 0.85 * g1 + 0.5 * g2);
-  float arm = 0.5 + 0.5 * cos(2.0 * (phi - 1.7 * lr) + 0.9);           // tidal two-armed spiral, fixed in the binary frame
+  // large sheared turbulent clumps (low radial frequency), then soft shear streaks
+  float n = fbm3(vec3(cp * 1.9, lr * 4.5 + q.y / H * 0.15), 3);
+  float g2 = n3(vec3(cp * 3.2, lr * 15.0) + 7.0);
+  float g1 = n3(vec3(cp * 1.5, lr * 44.0));
+  float streaks = sat(0.5 + 0.30 * g1 + 0.55 * g2);
+  // tidal two-armed spiral shocks (trailing, fixed in the binary frame), strongest in the outer disk
+  float armPh = 2.0 * (phi - 2.0 * lr) + 0.9 + 0.6 * n;
+  float arm = pow(0.5 + 0.5 * cos(armPh), 3.0);
+  float armW = smoothstep(0.06, 0.18, r);
   float rOut = uDiskOut * (1.0 + 0.035 * n3(vec3(cos(phi) * 3.0, sin(phi) * 3.0, uDiskT * 0.05)));
   float edge = smoothstep(rOut * 1.03, rOut * 0.86, r);
   float rim = 1.0 + 0.5 * exp(-pow((r - rOut * 0.95) / (0.03 * rOut), 2.0));
   float sig = smoothstep(uDiskIn * 0.45, uDiskIn * 1.5, r) * edge * pow(max(r, 0.01) / 0.1, -0.5) * rim;
-  float tex = (0.3 + 0.7 * streaks) * pow(sat(0.62 + 0.85 * n), 1.4) * (0.62 + 0.7 * arm);
+  float clumps = smoothstep(-0.35, 0.45, n);                           // dark gaps between turbulent clumps
+  float tex = (0.45 + 0.55 * streaks) * mix(0.25, 1.0, clumps) * mix(1.0, 0.45 + 1.1 * arm, armW);
   float dens = uDiskAmt * sig * tex;
   // hot spot and the heated rim downstream of it (downstream = decreasing phi)
   float hs = 0.0;
@@ -200,8 +225,8 @@ float diskDensity(vec3 p, out float T){
     dens += uRingAmt * ring;
   }
   float vert = exp(-0.35 * z2 * sqrt(z2));                              // flat-topped, sharp-edged vertical profile
-  // display temperature: steep radial law (inner ice-white, outer crimson)
-  T = 2050.0 * pow(r / max(uDiskOut, 0.05), -1.2) * (0.85 + 0.3 * streaks);
+  // display temperature: steep radial law (inner white / ice blue, outer crimson); arms and clumps run hotter
+  T = 2000.0 * pow(r / max(uDiskOut, 0.05), -1.25) * (0.80 + 0.25 * streaks + 0.22 * arm * armW + 0.12 * n);
   T += hs * 3200.0;
   T *= 1.0 + uFlare * 0.45 * exp(-r / 0.12);
   return dens * vert;
@@ -211,14 +236,14 @@ float diskDensity(vec3 p, out float T){
 float volBound(vec3 p, vec4 f, out float scale){
   float w = streamW(f.y);
   float bulb = uStreamHead < 50.0 ? exp(-max(uStreamHead - f.y, 0.0) / 0.035) : 0.0;
-  float ws = w * (2.5 + 1.3 * (streamWarpAmt(f.y) + 0.8 * bulb)) + uWhip.x * 1.2;
+  float ws = w * (2.5 + 1.3 * (streamWarpAmt(f.y) + 0.8 * bulb)) + whipAmp() * 1.1;
   float bS = max(abs(f.x) - ws, abs(p.y) - ws * 0.8);
   if (uStreamAmt <= 0.0) bS = 1e3;
   bS = max(bS, (min(f.y - uStreamHead, f.y - uStreamCut) - 0.1) * 0.8);
   vec3 q = p - uWD;
   float r = length(q.xz);
   float bD = uDiskBound.x > 0.0 ? max(r - uDiskBound.x, abs(q.y) - uDiskBound.y) : 1e3;
-  scale = bS < bD ? w * (0.78 - 0.25 * uDetail) * (1.0 - 0.3 * bulb) : uDiskH * max(r, 0.02) + 0.001;
+  scale = bS < bD ? w * (0.78 - 0.25 * uDetail) * (1.0 - 0.3 * bulb) : -(uDiskH * max(r, 0.02) + 0.001);
   return min(bS, bD);
 }
 
@@ -234,15 +259,22 @@ vec4 marchSystem(vec3 ro, vec3 rd, float tMax, float jit){
   float tr = 1.0;
   float t = tn;
   bool skipping = true;
-  for (int i = 0; i < 110; i++){
-    if (t >= tf || tr < 0.012) break;
+  const int NMAX = 64;
+  for (int i = 0; i < NMAX; i++){
+    if (t >= tf || tr < 0.015) break;
     vec3 p = ro + rd * t;
     vec4 f = fieldAt(p.xz);
     float scale;
     float b = volBound(p, f, scale);
     float foot = t * uPixAng;
     if (b > foot * 1.5 + 0.0015){ t += max(b * 0.85, foot); skipping = true; continue; }
-    float dt = clamp(scale * 0.32, foot * 1.1, 0.025);
+    bool inDisk = scale < 0.0;
+    scale = abs(scale);
+    float dt = clamp(scale * 0.32 * uStepK, foot * 1.1, 0.025);
+    // thin disk: resolve its vertical profile along oblique rays
+    if (inDisk) dt = clamp(min(dt, 0.7 * scale / max(abs(rd.y), 0.08)), foot * 0.6, 0.025);
+    // never run out of steps inside the volume: spread what is left over the rest of the box
+    dt = max(dt, (tf - t) / float(NMAX - i) * 0.6);
     if (skipping){ t += dt * jit; p = ro + rd * t; f = fieldAt(p.xz); skipping = false; }
     vec3 J = vec3(0.0); float K = 0.0;
     if (uStreamAmt > 0.0){
@@ -254,8 +286,11 @@ vec4 marchSystem(vec3 ro, vec3 rd, float tMax, float jit){
       float T;
       float dd = diskDensity(p, T);
       if (dd > 0.0){
-        vec3 e = diskEmission(T) * uDiskGlow * (1.0 + uFlare * (0.35 + exp(-length(p.xz - uWD.xz) / 0.12)));
-        J += e * dd * 26.0; K += dd * 26.0;
+        float rr = length(p.xz - uWD.xz);
+        // optically thick inner disk (radiance -> source function), translucent outer disk and rim
+        float kd = dd * 26.0 * (1.0 + 70.0 * exp(-rr / 0.06));
+        vec3 S = diskEmission(T) * uDiskGlow * (1.0 + uFlare * (0.35 + exp(-rr / 0.12)));
+        J += S * kd; K += kd;
       }
     }
     if (gRe > 1.5) dt *= 1.0 + 1.2 * sat((gRe - 1.5) / 0.9);

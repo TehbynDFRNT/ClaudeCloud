@@ -189,7 +189,8 @@ vec4 vxField(vec3 p, vec3 rd, float tau, float seg, inout vec4 xs, inout vec2 xf
   float vert = exp(-0.5 * zz * zz);
   if (uCloud > 0.0){
     float zc = max(zz - 0.8, 0.0);
-    vert *= smoothstep(-0.12, 0.12, n + 0.6 * puff + 0.3 - uCloud * 0.35 * zc) * (1.0 + uCloud * 0.6 * zc);
+    float cw = 0.12 + 0.4 * k1;                     // edges are point-sampled: soften them when steps are coarse
+    vert *= smoothstep(-cw, cw, n + 0.6 * puff + 0.3 - uCloud * 0.35 * zc) * (1.0 + uCloud * 0.6 * zc);
   }
   float clump = exp(uTurb * (n * 3.6 - 0.5)) * smoothstep(uVoid - uVoidW, uVoid + uVoidW, n + 0.3 * puff);
   float patchy = smoothstep(uSheetMask - 0.18, uSheetMask + 0.18, puff * 1.4 + 0.5 * n);
