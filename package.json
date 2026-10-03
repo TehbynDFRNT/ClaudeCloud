@@ -1,0 +1,18 @@
+{
+  "name": "david-goliath-nova",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Hyperreal cosmic short film: a white dwarf, a red giant and a nova. Code-rendered with WebGL2 in headless Chromium.",
+  "type": "module",
+  "scripts": {
+    "validate": "python3 tools/validate_plan.py film-plan.json",
+    "stills": "node tools/render.mjs stills",
+    "render": "node tools/render.mjs film",
+    "audio": "node tools/render-audio.mjs",
+    "encode": "node tools/encode.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "1.56.1"
+  },
+  "engines": { "node": ">=22" }
+}
