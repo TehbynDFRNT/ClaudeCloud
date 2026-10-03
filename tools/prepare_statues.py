@@ -67,9 +67,8 @@ FIGURES = {
                         'Royal Cast Collection (open.smk.dk), public domain.'),
         face_dir=(-0.42, -0.91, 0.0),
         hints=dict(nose=[32.14, 23.81, 107.45], eyeR=[26.76, 44.85, 126.93], eyeL=[52.05, 22.82, 128.58],
-                   chin=[42.68, 38.88, 79.96], mouth=[39.39, 32.38, 95.45]),
-        # head-space hints (head units, final frame), snapped on the mesh
-        head_hints=dict(earR=[None, -0.13, -0.10], earL=[None, -0.13, 0.10]),
+                   chin=[42.68, 38.88, 79.96], mouth=[39.39, 32.38, 95.45],
+                   earR=[49.66, 90.19, 127.33]),  # right concha (visible); the left ear is buried in curls
         torso_dir=(-1.0, 0.0, 1.0),     # rough direction the chest faces, head space (sign hint only)
         pupils=True,                    # carved (heart-shaped) pupils: gaze measured from them
         gaze_pitch=None,                # None = measured
@@ -89,8 +88,12 @@ FIGURES = {
                         'Statens Museum for Kunst, Royal Cast Collection (open.smk.dk), public domain.'),
         face_dir=(-0.92, -0.38, 0.0),
         hints=dict(nose=[2.18, 18.27, 85.35], eyeR=[6.5, 29.98, 95.58], eyeL=[14.83, 16.09, 95.32],
-                   chin=[9.37, 22.88, 69.86], mouth=[8.86, 22.4, 78.95]),
-        head_hints=dict(),
+                   chin=[9.37, 22.88, 69.86], mouth=[8.86, 22.4, 78.95],
+                   # drilled ray-attachment holes in the diadem (fillet), front to sides, and the crown socket
+                   rayHoles=[[14.27, 39.83, 125.19], [18.59, 26.65, 126.76], [24.68, 17.96, 123.94],
+                             [30.28, 12.10, 118.53], [39.00, 12.48, 111.76], [16.80, 51.50, 115.65],
+                             [24.35, 58.04, 105.88]],
+                   crownSocket=[36.01, 35.91, 124.22]),
         torso_dir=(0.0, 0.0, 1.0),
         pupils=False,
         gaze_pitch=6.0,                 # blank eyes: upturn judged visually (see notes)
@@ -112,7 +115,6 @@ FIGURES = {
         face_dir=(0.90, 0.14, 0.42),
         hints=dict(nose=[53.32, 98.43, 30.49], eyeR=[46.7, 103.93, 31.27], eyeL=[51.02, 102.46, 22.1],
                    mouth=[50.99, 93.82, 29.31], beard=[42.47, 76.97, 26.23]),
-        head_hints=dict(),
         torso_dir=(-1.0, 0.0, 0.3),
         pupils=False,
         gaze_pitch=6.0,
@@ -395,7 +397,9 @@ def head_transform(name, cfg, m, fr):
 
 
 CHIN_RATIO = 1.35  # stomion->gnathion / nose-tip->stomion, measured: david 1.29, sol 1.42
-K_EAR = 0.26       # ear-canal midpoint lies this far (head units) behind the eyeball centres along +Z (measured on david)
+K_EAR = 0.26       # provisional origin depth only; the origin is then moved to the ear midpoint (ear_anchors)
+K_EAR_FW = 0.318   # ear midpoint behind the eyeball midpoint along the horizontal facial axis, head units (measured on david)
+EAR_DROP = 0.08    # concha below the eyeball centres, head units (measured on david)
 
 
 def smoothstep(a, b, x):
@@ -426,19 +430,34 @@ def midline_front_profile(Vc, n, d, fw, ylo, yhi, tol, Rm, O_rot, H):
     return P[k], f[k]
 
 
-def snap_mouth(Ph, f, hint_y, span=0.03):
-    """stomion: deepest point (along the facial forward axis) of the midline front profile near hint_y."""
-    bins = np.arange(hint_y - span, hint_y + span, 0.002)
-    best = None
+def snap_mouth(Ph, f, hint_y, f_nose, span=0.035, step=0.002):
+    """stomion on the midline front profile near hint_y. Only the front of the face counts (f > f_nose - 0.2).
+    Closed lips: the deepest point of the profile between the lips. Parted lips (bins with no front surface,
+    or a sudden deep notch): the centre of the opening, at the depth of the lip fronts."""
+    front = f > f_nose - 0.20
+    bins = np.arange(hint_y - span, hint_y + span, step)
     prof = []
     for b0 in bins:
-        k = (Ph[:, 1] >= b0) & (Ph[:, 1] < b0 + 0.002)
+        k = front & (Ph[:, 1] >= b0) & (Ph[:, 1] < b0 + step)
         if k.any():
             i = np.argmax(np.where(k, f, -1e9))
-            prof.append((f[i], Ph[i]))
-    fs = np.array([p[0] for p in prof])
-    i = int(np.argmin(fs[2:-2])) + 2 if len(fs) > 5 else int(np.argmin(fs))
-    return prof[i][1]
+            prof.append((b0 + step / 2, f[i], Ph[i]))
+        else:
+            prof.append((b0 + step / 2, None, None))
+    fs = np.array([np.nan if q[1] is None else q[1] for q in prof])
+    lip = np.nanpercentile(fs, 80)
+    gap = np.isnan(fs) | (fs < lip - 0.045)
+    if gap.any():
+        gi = np.where(gap)[0]
+        runs = np.split(gi, np.where(np.diff(gi) > 1)[0] + 1)
+        run = min(runs, key=lambda r_: abs(prof[int(r_.mean())][0] - hint_y))
+        y = float(np.mean([prof[i][0] for i in run]))
+        nb = [prof[i] for i in (run[0] - 1, run[-1] + 1) if 0 <= i < len(prof) and prof[i][1] is not None]
+        pt = np.mean([q[2] for q in nb], axis=0)
+        pt[1] = y
+        return pt, 'parted lips: centre of the opening at the depth of the lip fronts'
+    i = int(np.nanargmin(fs[2:-2])) + 2
+    return prof[i][2], 'closed lips: deepest point of the midline profile between the lips'
 
 
 def region_weights(V, an, fw):
@@ -618,14 +637,26 @@ def side_ray_point(caster, y, z, side, spread=0.0, medial=False):
     return loc[0]
 
 
-def body_anchors(m, caster, an, cfg):
+def hull_centroid(P2):
+    from scipy.spatial import ConvexHull
+    h = ConvexHull(P2)
+    poly = P2[h.vertices]
+    x, z = poly[:, 0], poly[:, 1]
+    a = x * np.roll(z, -1) - np.roll(x, -1) * z
+    A = a.sum() / 2
+    return np.array([((x + np.roll(x, -1)) * a).sum() / (6 * A), ((z + np.roll(z, -1)) * a).sum() / (6 * A)])
+
+
+def body_anchors(m, caster, an, cfg, rough16):
+    """Shoulders, neck axis and neck base on the dense head-space surface.
+    Torso axes: principal axis of the cross-section just above the cut.
+    Shoulders: rays cast straight down from just under the jaw over a band 0.30-0.46 to either side of the
+    neck along the torso's lateral axis; the highest hit is the top of the shoulder (hair or beard lying on it
+    count as the shoulder's silhouette).
+    Neck axis: line through the convex-hull centroids of thin horizontal slabs of SMOOTH (skin) vertices under the
+    jaw within 0.3 of the axis (hair and beard are rough and excluded); neckBase = that axis at shoulder height."""
     V = np.asarray(m.vertices)
     up = np.array([0, 1.0, 0])
-    # neck axis just under the jaw
-    y_jaw = an['chin'][1] - 0.10
-    nl = neck_loop(m, y_jaw)
-    neck_top = nl[1]
-    # torso lateral axis from the cross-section just above the cut
     y_s = cfg['crop_y'] + 0.06
     band = np.abs(V[:, 1] - y_s) < 0.01
     P = V[band][:, [0, 2]]
@@ -635,39 +666,70 @@ def body_anchors(m, caster, an, cfg):
     fwd_t = np.cross(lat, up)
     if fwd_t @ np.asarray(cfg['torso_dir'], float) < 0:
         fwd_t = -fwd_t
-    left_t = np.cross(up, fwd_t)                 # torso's own left
+    left_t = np.cross(up, fwd_t)
+    # neck axis
+    cen, cur = [], np.zeros(2)
+    smooth = rough16 < 1.0
+    for y in np.linspace(an['chin'][1] - 0.08, an['chin'][1] - 0.24, 9):
+        k = smooth & (np.abs(V[:, 1] - y) < 0.008) & (np.hypot(V[:, 0] - cur[0], V[:, 2] - cur[1]) < 0.30)
+        if k.sum() < 30:
+            continue
+        cxz = hull_centroid(V[k][:, [0, 2]])
+        cen.append([cxz[0], y, cxz[1]])
+        cur = cxz
+    cen = np.array(cen)
+    A_ = np.c_[cen[:, 1], np.ones(len(cen))]
+    kx = np.linalg.lstsq(A_, cen[:, 0], rcond=None)[0]
+    kz = np.linalg.lstsq(A_, cen[:, 2], rcond=None)[0]
+    axis_at = lambda y: np.array([kx[0] * y + kx[1], y, kz[0] * y + kz[1]])
     out = {}
+    y0 = an['chin'][1] - 0.08
+    nt = axis_at(y0)
     for lab, sgn in (('shoulderL', 1), ('shoulderR', -1)):
-        rel = V - neck_top
-        lt = rel @ left_t
-        ft = rel @ fwd_t
-        sel = (sgn * lt > 0.34) & (sgn * lt < 0.42) & (np.abs(ft) < 0.18) & (V[:, 1] < an['chin'][1] - 0.05)
-        if sel.any():
-            out[lab] = V[np.argmax(np.where(sel, V[:, 1], -1e9))]
-    ys = [out[k][1] for k in out]
-    y_nb = (max(ys) if ys else an['chin'][1] - 0.25) + 0.02
-    nb = neck_loop(m, y_nb, (neck_top[0], neck_top[2]))
-    out['neckBase'] = nb[1] if nb else neck_top
+        O = np.array([nt + left_t * sgn * s_ + fwd_t * f_ for s_ in np.linspace(0.30, 0.46, 9) for f_ in np.linspace(-0.15, 0.15, 7)])
+        O[:, 1] = y0
+        loc, ir, it = caster.first(O, np.tile([0, -1.0, 0], (len(O), 1)))
+        if len(loc):
+            out[lab] = loc[np.argmax(loc[:, 1])]
+    ys = [out[k][1] for k in ('shoulderL', 'shoulderR') if k in out]
+    y_nb = float(np.mean(ys)) if ys else an['chin'][1] - 0.25
+    out['neckBase'] = axis_at(y_nb)
+    out['_neckAxis'] = nrm(np.array([kx[0], 1.0, kz[0]]))
     out['_torso'] = dict(forward=fwd_t, left=left_t)
-    out['_neckTop'] = neck_top
+    out['_neckTop'] = nt
     return out
 
 
-def ear_anchors(caster, an, cfg):
+def ear_anchors(caster, an, cfg, th, Rm, sym_n):
+    """Ear anchors + the ear midpoint (the turn axis passes through it).
+    A visible concha (hint) is snapped to the most medial surface point seen from the side; the other ear
+    is its mirror image across the facial symmetry plane. Without a visible ear the midpoint is placed
+    K_EAR_FW behind the eyeball midpoint along the horizontal facial forward axis (measured on david)."""
+    e = 0.5 * (an['eyeballL'] + an['eyeballR'])
+    nh = nrm(Rm @ sym_n)
+    nh = nh * np.sign(nh[0])                       # facial symmetry normal, toward the figure's left
+    fwh = nrm(np.cross(nh, [0, 1.0, 0]))
+    fwh = fwh * np.sign(fwh[2])
+    fwh = nrm(fwh - fwh[1] * np.array([0, 1.0, 0]))
     out, notes = {}, {}
-    hh = cfg.get('head_hints', {})
-    for lab, sgn in (('earL', 1), ('earR', -1)):
-        if lab in hh:
-            _, y, z = hh[lab]
-            p = side_ray_point(caster, y, z, sgn, spread=0.03, medial=True)
-            out[lab] = p
-            notes[lab] = 'measured: most medial point of the ear bowl (concha) seen from the side'
-        else:
-            y = 0.5 * (an['eyeballL'][1] + an['eyeballR'][1]) - 0.07
-            p = side_ray_point(caster, y, 0.0, sgn)
-            out[lab] = p
-            notes[lab] = 'ESTIMATED: ear covered by hair; surface point beside the turn axis, 0.07 below eye height'
-    return out, notes
+    if 'earR' in cfg['hints']:
+        h = th(to_cast(cfg['hints']['earR'], cfg['zup']))
+        q = side_ray_point(caster, h[1], h[2], -1, spread=0.025, medial=True)
+        qm = q - 2 * ((q - e) @ nh) * nh
+        out['earR'], out['earL'] = q, qm
+        notes['earR'] = 'measured: most medial point of the right concha seen from the side'
+        notes['earL'] = 'mirror image of earR across the facial symmetry plane (the left ear is buried in curls)'
+        mid = 0.5 * (q + qm)
+        k = float((e - mid) @ fwh)
+        log('  ears: concha depth behind the eyeball midpoint along the facial axis %.3f, drop %.3f' % (k, e[1] - q[1]))
+    else:
+        mid = e - fwh * K_EAR_FW
+        mid[1] = e[1] - EAR_DROP
+        for lab, sgn in (('earL', 1), ('earR', -1)):
+            out[lab] = side_ray_point(caster, mid[1], mid[2], sgn)
+            notes[lab] = ('ESTIMATED: ear hidden by hair/beard; outer surface point beside the ear position estimated '
+                          '%.3f behind the eyeball midpoint along the facial axis (ratio measured on david)' % K_EAR_FW)
+    return out, notes, mid
 
 
 # ------------------------------------------------------------------------------------------------
@@ -718,16 +780,14 @@ def process(name, args):
         e = fr['eyes'][lab]
         an['eyeball' + lab] = th(e['centre'])
         g = e.get('gaze_pupil', e['gaze_cap'])
-        # eye anchor: the point of the eyeball facing the lens (along the eye's own gaze for carved pupils,
-        # along +Z for blank eyes) - the visible centre of the eye when stared at
-        look = nrm(Rm @ g) if 'gaze_pupil' in e else np.array([0, 0, 1.0])
-        an['eye' + lab] = th(e['centre']) + look * e['radius'] / H
+        # eye anchor: centre of the exposed eyeball (direction of the visible cap's centroid, on the sphere)
+        an['eye' + lab] = th(e['apex'])
         eyes_json[lab] = dict(centre=th(e['centre']), radius=e['radius'] / H, gaze=nrm(Rm @ g))
         if 'pupil' in e:
             an['pupil' + lab] = th(e['pupil'])
             eyes_json[lab]['pupilDepth'] = e['pupil_depth'] / H
     Ph, f = midline_front_profile(Vc_full, fr['n'], fr['d'], fw, an['chin'][1] - 0.02, an['noseTip'][1], 0.006 * H, Rm, O_rot, H)
-    an['mouth'] = snap_mouth(Ph, f, th(fr['hint']['mouth'])[1])
+    an['mouth'], mouth_note = snap_mouth(Ph, f, th(fr['hint']['mouth'])[1], float(an['noseTip'] @ fw))
     if 'beard' in fr['hint']:
         bh = th(fr['hint']['beard'])
         Vh0 = th(Vc_full)
@@ -747,6 +807,19 @@ def process(name, args):
         if on:
             V, _ = smooth_skin(V, F, N, A, SMOOTH_MODES[key], edge, cfg['crop_y'])
             N = vnormals(V, F)
+    # ears -> the turn axis passes through the ear midpoint: shift the origin there (x, z)
+    ears, ear_notes, ear_mid = ear_anchors(Caster(V, F), an, cfg, th, Rm, fr['n'])
+    an.update(ears)
+    shift = np.array([ear_mid[0], 0.0, ear_mid[2]])
+    V = V - shift
+    for k_ in list(an):
+        if an[k_] is not None:
+            an[k_] = an[k_] - shift
+    for e_ in eyes_json.values():
+        e_['centre'] = e_['centre'] - shift
+    O_rot = O_rot + shift * H
+    th = to_head_fn(Rm, O_rot, H)
+    log('  origin moved to the ear midpoint: shift (%.3f, %.3f) head units' % (shift[0], shift[2]))
     mh = trimesh.Trimesh(V, F, process=False)
     # curvature fields on the dense surface (transferred to the decimated mesh below)
     cav_full, rough_full = curvature_fields(V, F, N, A, edge)
@@ -785,6 +858,9 @@ def process(name, args):
     cav = cav_full[nn].mean(1)
     rough = {k: v[nn].mean(1) for k, v in rough_full.items()}
     skin = 1 - smoothstep(BAKE['skin_rough'][0], BAKE['skin_rough'][1], rough['r16'])
+    wr = region_weights(Vd, an, fw)
+    w_face = np.maximum(wr['face'], wr['core'])
+    skin = np.maximum(skin, w_face * (1 - smoothstep(1.2, 1.8, rough['r16'])))   # the whole face is skin unless curls
     skin = scalar_smooth(skin, adjacency(Fd, len(Vd)), 8)
     bake = np.stack([np.clip(ao, 0, 1) * 255,
                      128 + 127 * np.tanh(cav / BAKE['cav_scale']),
@@ -792,16 +868,19 @@ def process(name, args):
                      skin * 255], 1).round().clip(0, 255).astype(np.uint8)
     # ---- anchors (dense surface)
     caster_full = Caster(V, F)
-    ears, ear_notes = ear_anchors(caster_full, an, cfg)
-    an.update(ears)
-    body = body_anchors(mh, caster_full, an, cfg)
+    body = body_anchors(mh, caster_full, an, cfg, rough_full['r16'])
     torso = body.pop('_torso')
     neck_top = body.pop('_neckTop')
+    torso['neckAxis'] = body.pop('_neckAxis')
     an.update(body)
     extra = {}
     if name == 'sol':
-        extra = sol_diadem(mh, caster_full, an)
-    res = dict(name=name, cfg=cfg, V=Vd, F=Fd, N=Nd, bake=bake, an=an, eyes=eyes_json, fr=fr, ht=ht, H=H, O_rot=O_rot,
+        extra = sol_diadem(cfg, th, Vd, Fd, bake[:, 0] / 255.0, V, F)
+    cuts = [dict(what='bottom crop', normal=[0.0, -1.0, 0.0], point=[0.0, cfg['crop_y'], 0.0])]
+    for (nr, org), what in zip(cfg['preclip'], ('relief ground slab (source z = 7)', 'slab return on the +X edge (source x = 62)')):
+        n_out = nrm(Rm @ -nrm(to_cast(nr, cfg['zup'])))
+        cuts.append(dict(what=what, normal=r5(n_out), point=r5(th(to_cast(org, cfg['zup'])))))
+    res = dict(cuts=cuts, mouth_note=mouth_note, name=name, cfg=cfg, V=Vd, F=Fd, N=Nd, bake=bake, an=an, eyes=eyes_json, fr=fr, ht=ht, H=H, O_rot=O_rot,
                Rm=Rm, fw=fw, ear_notes=ear_notes, torso=torso, neck_top=neck_top, extra=extra, n_src=n_src,
                rough=rough, dense=(V, F), edge_src=edge, regions=dict(source=reg_counts, final=reg_final), t=time.time() - t_start)
     return res
@@ -810,9 +889,103 @@ def process(name, args):
 BAKE = dict(ao_maxd=0.25, thick_maxd=0.12, cav_scale=2.5, skin_rough=(0.5, 1.0))
 
 
-def sol_diadem(m, caster, an):
-    """Placeholder until the diadem is measured (filled in below)."""
-    return {}
+def hole_mouth(Vd, ao, tree_d, Vdense, tree_dense, hint, r_find, r_in, r_out):
+    """Snap a hole: bottom = most enclosed vertex (lowest AO) near the hint; the surrounding surface
+    (annulus r_in..r_out around the bottom, dense mesh) gives the mouth plane; mouth = bottom projected on it."""
+    ii = tree_d.query_ball_point(hint, r_find)
+    b = Vd[ii[int(np.argmin(ao[ii]))]]
+    jj = np.array(tree_dense.query_ball_point(b, r_out))
+    ann = Vdense[jj[np.linalg.norm(Vdense[jj] - b, axis=1) > r_in]]
+    c = ann.mean(0)
+    _, _, vt = np.linalg.svd(ann - c, full_matrices=False)
+    n = vt[2] * np.sign(vt[2] @ (c - b))
+    depth = float((c - b) @ n)
+    return b + n * depth, nrm(n), depth
+
+
+def fit_ring(P):
+    c0 = P.mean(0)
+    _, sv, vt = np.linalg.svd(P - c0, full_matrices=False)
+    n = vt[2] * np.sign(vt[2][1])
+    e1 = vt[0]
+    e2 = np.cross(n, e1)
+    xy = np.c_[(P - c0) @ e1, (P - c0) @ e2]
+    sol = np.linalg.lstsq(np.c_[2 * xy, np.ones(len(xy))], (xy ** 2).sum(1), rcond=None)[0]
+    cc = sol[:2]
+    R = math.sqrt(sol[2] + cc @ cc)
+    centre = c0 + cc[0] * e1 + cc[1] * e2
+    rad_res = np.linalg.norm(xy - cc, axis=1) - R
+    plane_res = (P - centre) @ n
+    return centre, n, R, rad_res, plane_res
+
+
+def sol_diadem(cfg, th, Vd, Fd, ao, Vdense, Fdense):
+    """Diadem (fillet) ring and the drilled holes where the bronze sun-rays were attached, measured on the mesh."""
+    zup = cfg['zup']
+    td, tD = cKDTree(Vd), cKDTree(Vdense)
+    holes = []
+    for h in cfg['hints']['rayHoles']:
+        m, n, dep = hole_mouth(Vd, ao, td, Vdense, tD, th(to_cast(h, zup)), 0.015, 0.018, 0.035)
+        holes.append((m, n, dep))
+    P = np.array([h[0] for h in holes])
+    centre, n, R, rad_res, plane_res = fit_ring(P)
+    fwd = nrm(np.array([0, 0, 1.0]) - n * n[2])
+    side = np.cross(n, fwd)
+    az = [math.degrees(math.atan2((p - centre) @ side, (p - centre) @ fwd)) for p in P]
+    order = np.argsort(az)
+    holes = [holes[i] for i in order]
+    az = [az[i] for i in order]
+    sock, sock_n, sock_d = hole_mouth(Vd, ao, td, Vdense, tD, th(to_cast(cfg['hints']['crownSocket'], zup)), 0.04, 0.05, 0.085)
+    log('  diadem ring: centre %s normal %s radius %.3f; radial residual max %.4f, plane residual max %.4f'
+        % (centre.round(3), n.round(3), R, np.abs(rad_res).max(), np.abs(plane_res).max()))
+    log('  ray holes (azimuth on the ring, + = figure\'s left): %s' % ', '.join('%.0f' % a for a in az))
+    anchors = dict(
+        diademRing=[r5(centre), r5(n), round(float(R), 5)],
+        rayHoles=[r5(h[0]) for h in holes],
+        rayHoleNormals=[r5(h[1]) for h in holes],
+        rayHoleAzimuthDeg=[round(float(a), 2) for a in az],
+        crownSocket=r5(sock),
+    )
+    info = dict(
+        diadem=dict(
+            ring='anchors.diademRing = [centre, unit normal (up/back), radius]: circle fitted through the %d ray-hole '
+                 'mouths (radial residual max %.4f, out-of-plane max %.4f head units). The fillet runs high over the '
+                 'brow and drops toward the nape.' % (len(holes), float(np.abs(rad_res).max()), float(np.abs(plane_res).max())),
+            holes='anchors.rayHoles: mouths of the drilled attachment holes along the lower edge of the fillet, ordered '
+                  'from the figure\'s right (-) to left (+); rayHoleNormals = local surface normal of the band at each hole '
+                  '(the drill axis, roughly); rayHoleAzimuthDeg measured on the ring from the front (+Z), + = figure\'s '
+                  'left. Depths (head units): %s. None at the back (the cast is unfinished there).' % ', '.join('%.4f' % h[2] for h in holes),
+            socket='anchors.crownSocket: mouth of the larger rectangular socket on top of the skull (depth %.3f), '
+                   'centre of the original radiate crown / nimbus fixing.' % sock_d,
+        ))
+    return dict(anchors=anchors, json=info, preview=sol_preview)
+
+
+def sol_preview(pv, res):
+    an = res['an']
+    ex = res['extra']['anchors']
+    c, n, R = (np.array(ex['diademRing'][0]), np.array(ex['diademRing'][1]), ex['diademRing'][2])
+    e1 = nrm(np.cross(n, [1.0, 0, 0]))
+    e2 = np.cross(n, e1)
+    mk = {'h%d' % i: np.array(p) for i, p in enumerate(ex['rayHoles'])}
+    for k in range(0, 360, 10):
+        a = math.radians(k)
+        mk['.%d' % k] = c + R * (math.cos(a) * e1 + math.sin(a) * e2)
+    mk['socket'] = np.array(ex['crownSocket'])
+    top = np.array([0, 0.22, 0.0])
+    ims = []
+    cav = res['bake'][:, 1] / 255.0
+    for el, az in ((55, 0), (40, 55), (40, -55), (35, -110)):
+        a, e = math.radians(az), math.radians(el)
+        eye = top + 6 * np.array([math.sin(a) * math.cos(e), math.sin(e), math.cos(a) * math.cos(e)])
+        ims.append(pv.render(eye, top, fov=10.5, W=560, H=560, mode='attr', attr=np.clip((cav - 0.2) / 0.6, 0, 1),
+                             markers=mk, label='sol diadem: ray holes h*, ring (dots), socket  el %d az %d' % (el, az)))
+    for el, az in ((10, 0), (10, -60)):
+        a, e = math.radians(az), math.radians(el)
+        eye = np.array([0, 0.1, 0]) + 4.2 * np.array([math.sin(a) * math.cos(e), math.sin(e), math.cos(a) * math.cos(e)])
+        ims.append(pv.render(eye, np.array([0, 0.1, 0]), fov=24, W=560, H=560, rim_col=RIM['sol'], markers=mk,
+                             label='ring anchors at eye level, az %d' % az))
+    grid(ims, 3).save(PREV / 'sol-diadem.png')
 
 
 # ------------------------------------------------------------------------------------------------
@@ -857,6 +1030,7 @@ def write_outputs(res):
     M[:3, 3] = -O_rot / H
     p = math.radians(fr['pitch'])
     anchors = {k: r5(v) for k, v in an.items() if v is not None}
+    anchors.update(res['extra'].get('anchors', {}))
     j = dict(
         figure=name,
         source=cfg['source'],
@@ -879,12 +1053,21 @@ def write_outputs(res):
             facialForward=r5(res['fw']),
             profileSide='-X',
             cropY=cfg['crop_y'],
+            cuts=res['cuts'],
+            cutsNote='capped plane cuts: normal = outward normal of the flat cap (head space), point = a point on the '
+                     'plane. A cap is seen only from cameras on its outward side.',
         ),
         eyes={k: dict(centre=r5(e['centre']), radius=round(float(e['radius']), 5), gaze=r5(e['gaze']),
                       **({'pupilDepth': round(float(e['pupilDepth']), 5)} if 'pupilDepth' in e else {}))
               for k, e in res['eyes'].items()},
         anchors=anchors,
-        torso=dict(forward=r5(res['torso']['forward']), left=r5(res['torso']['left'])),
+        torso=dict(forward=r5(res['torso']['forward']), left=r5(res['torso']['left']),
+                   neckAxisUp=r5(res['torso']['neckAxis']),
+                   note='forward/left: horizontal directions the chest faces / its own left (from the cross-section above '
+                        'the cut); neckAxisUp: neck direction fitted through smooth-skin cross-section centroids under '
+                        'the jaw. shoulderL/R: highest surface hit by rays cast down from under the jaw, 0.30-0.46 to '
+                        'either side of the neck along torso.left; neckBase is the neck axis at the mean '
+                        'shoulder line (approximate, +-0.05; on the bearded giant the throat is hidden).'),
         bake=dict(
             ao='channel 0: ambient visibility, 48 cosine-weighted rays per vertex, mean normalised free distance '
                'up to %.2f head units (1 = open, 0 = enclosed)' % BAKE['ao_maxd'],
@@ -913,7 +1096,7 @@ class Preview:
         self.c = Caster(V, F)
 
     def render(self, eye, target, fov=20.0, W=480, H=640, key=(-0.6, 0.7, 0.5), rim=(0.8, 0.3, -0.7),
-               mode='marble', attr=None, markers=None, label=None, rim_col=(0.6, 0.75, 1.0)):
+               mode='marble', attr=None, markers=None, label=None, rim_col=(0.6, 0.75, 1.0), markers_hidden=True):
         eye = np.asarray(eye, float)
         f = nrm(np.asarray(target, float) - eye)
         r = nrm(np.cross(f, [0, 1, 0]))
@@ -961,18 +1144,26 @@ class Preview:
         dr = ImageDraw.Draw(im)
         if markers:
             cols = [(255, 70, 70), (70, 255, 90), (90, 170, 255), (255, 220, 40), (255, 90, 255), (40, 255, 255), (255, 150, 40)]
-            for i, (nm, p) in enumerate(markers.items()):
-                if p is None:
-                    continue
-                q_ = np.asarray(p) - eye
+            names = [k for k, v in markers.items() if v is not None]
+            P_ = np.array([markers[k] for k in names], float)
+            dd = nrm(P_ - eye)
+            dist = np.linalg.norm(P_ - eye, axis=1)
+            hit = self.c.distances(np.repeat(eye[None], len(P_), 0), dd, 1e9)
+            visible = hit > dist - 0.012
+            for i, nm in enumerate(names):
+                q_ = P_[i] - eye
                 z = q_ @ f
                 if z <= 0:
                     continue
                 px = (q_ @ r / z / (t * W / H) + 1) / 2 * W
                 py = (1 - q_ @ u / z / t) / 2 * H
                 cc = cols[i % len(cols)]
-                dr.ellipse([px - 4, py - 4, px + 4, py + 4], outline=cc, width=2)
-                dr.text((px + 6, py - 6), nm, fill=cc)
+                if visible[i]:
+                    dr.ellipse([px - 4, py - 4, px + 4, py + 4], outline=cc, width=2)
+                    if not nm.startswith('.'):
+                        dr.text((px + 6, py - 6), nm, fill=cc)
+                elif markers_hidden:
+                    dr.ellipse([px - 1.5, py - 1.5, px + 1.5, py + 1.5], fill=tuple(int(c_ * 0.5) for c_ in cc))
         if label:
             dr.text((6, 6), label, fill=(255, 200, 60))
         return im
@@ -1078,6 +1269,7 @@ def _common_notes(res):
         '(-X side, face pointing screen-right) and ends on +Z (stared at).',
         'Ears: %s' % '; '.join('%s %s' % kv for kv in res['ear_notes'].items()),
         'Head units: 1.0 = %.3f source units (raw STL units).' % res['H'],
+        'Mouth anchor (stomion): %s.' % res['mouth_note'],
     ]
 
 
