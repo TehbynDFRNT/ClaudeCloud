@@ -334,8 +334,8 @@ export default {
       mode: 'shell', volScale: 0.75, dur: 6.0,
       cam: [[0, [3.6, 5.0, 12.4], [0, 0, 0], 34], [6.0, [7.6, 10.4, 25.6], [0, 0, 0], 34]],
       shR: [[0, 7.0], [6.0, 7.45, 'linear']], frac: 1, shHeat: [[0, 0.62], [6.0, 0.57]],
-      knotK: 11, prolate: 0.12, deform: 0.06, equator: 0.8, clump: 0.85, sheetW: 2, knotGain: 40, tailGain: 9, tailL: 0.035,
-      wisp: 12, diffuse: 1, skin: 2, giant: true, giantGlow: 0.55, scar: 0.6, dwarfLum: 0.6, starGain: 0.6,
+      knotK: 16, prolate: 0.12, deform: 0.06, equator: 0.8, clump: 0.92, sheetW: 2, knotGain: 40, tailGain: 9, tailL: 0.035,
+      wisp: 4, diffuse: 1, skin: 0.45, giant: true, giantGlow: 0.55, scar: 0.6, dwarfLum: 0.6, starGain: 0.6,
       post: { bloomStrength: 0.09, lift: 0 },
     },
     // 3.33 s (+ dissolve tail to S29b): centred, still. A near-perfect limb-brightened ring, outer radius ~0.32 H.
