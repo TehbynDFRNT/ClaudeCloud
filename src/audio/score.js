@@ -1050,8 +1050,10 @@ export async function measureShaperLatency() {
     const ws = ctx.createWaveShaper(); ws.curve = new Float32Array([-1, 1]); ws.oversample = os;
     s.connect(ws).connect(ctx.destination); s.start(0);
     const o = (await ctx.startRendering()).getChannelData(0);
-    let mi = 0; for (let i = 0; i < o.length; i++) if (Math.abs(o[i]) > Math.abs(o[mi])) mi = i;
-    lat[os] = (mi - 1000) / SR;
+    // the up/down-sampling filters are linear-phase: the energy centroid of the impulse response is the delay
+    // (robust against float noise, unlike an argmax that can flip between two near-equal taps); whole samples
+    let e = 0, m = 0; for (let i = 0; i < o.length; i++) { const v = o[i] * o[i]; e += v; m += v * i; }
+    lat[os] = Math.round(m / e - 1000) / SR;
   }
   return lat;
 }
@@ -1129,7 +1131,7 @@ export async function renderSoundtrack({ base = '/', log = console.log } = {}) {
   for (const [k, v] of Object.entries(scaled)) { try { stemLufs[k] = +loudness(v[0], v[1]).toFixed(2); } catch { stemLufs[k] = null; } }
   const report = {
     durationSeconds: tl.duration, sampleRate: SR, length,
-    times: tl.T, tuningA4: tl.a4, gridCheck: tl.refined.report,
+    times: tl.T, tuningA4: tl.a4, gridCheck: tl.refined.report, shaperLatencySamples: { x2: Math.round(tl.lat['2x'] * SR), x4: Math.round(tl.lat['4x'] * SR) },
     orchestra: info.orchestra, synth: { ...info.synth, steps: info.synth.steps.length, autoLevel: lev.rows.map((r) => ({ bar: r.bar, target: +r.target.toFixed(1), raw: +(r.synthK - r.orchK).toFixed(1), appliedDb: +r.appliedDb.toFixed(1) })), pad: lev.pad },
     synthSteps: info.synth.steps,
     cannons: info.cannons, cannonSamples: Object.fromEntries(Object.entries(samples).map(([k, s]) => [k, { ...CANNON_SAMPLES[k], onsetMs: +(s.info.onset * 1000).toFixed(2), peakAtMs: +(s.info.peakAt * 1000).toFixed(1), peakDb: +db(s.info.peak).toFixed(1), boomDb: +db(s.info.boomRms).toFixed(1), matchGainDb: +db(s.info.norm).toFixed(1) }])),
