@@ -751,3 +751,319 @@ BAKE = dict(ao_maxd=0.25, thick_maxd=0.12, cav_scale=2.5, skin_rough=(0.9, 1.8))
 def sol_diadem(m, caster, an):
     """Placeholder until the diadem is measured (filled in below)."""
     return {}
+
+
+# ------------------------------------------------------------------------------------------------
+# output
+# ------------------------------------------------------------------------------------------------
+def r5(v):
+    return [round(float(x), 5) for x in np.asarray(v).ravel()]
+
+
+def write_outputs(res):
+    name, cfg = res['name'], res['cfg']
+    V = res['V'].astype('<f4')
+    Ni = np.round(res['N'] * 32767).clip(-32767, 32767).astype('<i2')
+    B = res['bake'].astype('u1')
+    I = res['F'].astype('<u4')
+    blobs, layout, off = [], {}, 0
+
+    def add(key, arr, meta):
+        nonlocal off
+        b = arr.tobytes()
+        layout[key] = dict(offset=off, byteLength=len(b), **meta)
+        blobs.append(b)
+        off += len(b)
+        pad = (-off) % 4
+        if pad:
+            blobs.append(b'\0' * pad)
+            off += pad
+    add('position', V, dict(type='float32', components=3, stride=12, normalized=False))
+    add('normal', Ni, dict(type='int16', components=3, stride=6, normalized=True))
+    add('bake', B, dict(type='uint8', components=4, stride=4, normalized=True,
+                        channels=['ao', 'cavity', 'thickness', 'skin']))
+    add('index', I, dict(type='uint32', components=1, count=int(I.size)))
+    OUT.mkdir(parents=True, exist_ok=True)
+    with open(OUT / (name + '.bin'), 'wb') as fh:
+        for b in blobs:
+            fh.write(b)
+    an = res['an']
+    H, Rm, O_rot, fr = res['H'], res['Rm'], res['O_rot'], res['fr']
+    C = np.array([[1, 0, 0], [0, 0, 1], [0, -1, 0]], float) if cfg['zup'] else np.eye(3)
+    M = np.eye(4)
+    M[:3, :3] = Rm @ C / H
+    M[:3, 3] = -O_rot / H
+    p = math.radians(fr['pitch'])
+    anchors = {k: r5(v) for k, v in an.items() if v is not None}
+    j = dict(
+        figure=name,
+        source=cfg['source'],
+        counts=dict(vertices=int(len(V)), triangles=int(len(I)), sourceTriangles=int(res['n_src'])),
+        layout=dict(file=name + '.bin', byteLength=off, littleEndian=True, interleaved=False, attributes={
+            k: v for k, v in layout.items() if k != 'index'}, index=layout['index']),
+        bounds=dict(min=r5(V.min(0)), max=r5(V.max(0))),
+        frame=dict(
+            units='1.0 = chin-to-crown head height (vertical); source units per head = %.4f' % H,
+            axes='+Y up = vertical turn axis; +Z = measured gaze (a camera on +Z at eye height is stared at); '
+                 '+X = Y x Z = the figure\'s own left. L/R in anchor names = the figure\'s own left/right.',
+            origin='head centre: halfway between chin and crown, on the turn axis through the neck between the ears',
+            sourceToHead=[r5(row) for row in M],
+            sourceUnitsPerHead=round(float(H), 5),
+            levelPitchDeg=round(float(fr['pitch']), 3),
+            castUpInHead=r5([0, math.cos(p), math.sin(p)]),
+            restoreCastPosture='rotate head-space geometry about +X by %.3f deg to restore the cast\'s own vertical '
+                               '(the gaze then rises %.2f deg above horizontal)' % (-fr['pitch'], fr['pitch']),
+            gazeYawFromFaceDeg=round(float(fr['yaw']), 3),
+            facialForward=r5(res['fw']),
+            profileSide='-X',
+            cropY=cfg['crop_y'],
+        ),
+        eyes={k: dict(centre=r5(e['centre']), radius=round(float(e['radius']), 5), gaze=r5(e['gaze']),
+                      **({'pupilDepth': round(float(e['pupilDepth']), 5)} if 'pupilDepth' in e else {}))
+              for k, e in res['eyes'].items()},
+        anchors=anchors,
+        torso=dict(forward=r5(res['torso']['forward']), left=r5(res['torso']['left'])),
+        bake=dict(
+            ao='channel 0: ambient visibility, 48 cosine-weighted rays per vertex, mean normalised free distance '
+               'up to %.2f head units (1 = open, 0 = enclosed)' % BAKE['ao_maxd'],
+            cavity='channel 1: signed multi-scale curvature, 0.5 = flat, < 0.5 crevice (curl undercuts, eye corners, '
+                   'lid creases, nostrils), > 0.5 ridge/edge; value = 0.5 + 0.5*tanh(c/%.1f), c in robust-sigma units' % BAKE['cav_scale'],
+            thickness='channel 2: inward free distance along -normal (7-ray 22 deg cone) / %.2f head units; low = thin '
+                      '(nose wings, ears, lids, curl tips, lips): use for subsurface translucency' % BAKE['thick_maxd'],
+            skin='channel 3: 1 = broad smooth carved skin (face, neck, chest), 0 = hair/beard/deep carving; '
+                 'use for polish/gloss and SSS strength',
+        ),
+        **res['extra'].get('json', {}),
+        notes=res['notes'],
+    )
+    with open(OUT / (name + '.json'), 'w') as fh:
+        json.dump(j, fh, indent=1)
+    log('  wrote %s.bin (%.2f MB) and %s.json' % (name, off / 1e6, name))
+    return j
+
+
+# ------------------------------------------------------------------------------------------------
+# previews (embree ray casting, black background)
+# ------------------------------------------------------------------------------------------------
+class Preview:
+    def __init__(self, V, F, N, bake=None):
+        self.V, self.F, self.N, self.bake = V, F, N, bake
+        self.c = Caster(V, F)
+
+    def render(self, eye, target, fov=20.0, W=480, H=640, key=(-0.6, 0.7, 0.5), rim=(0.8, 0.3, -0.7),
+               mode='marble', attr=None, markers=None, label=None, rim_col=(0.6, 0.75, 1.0)):
+        eye = np.asarray(eye, float)
+        f = nrm(np.asarray(target, float) - eye)
+        r = nrm(np.cross(f, [0, 1, 0]))
+        u = np.cross(r, f)
+        ys, xs = np.mgrid[0:H, 0:W]
+        t = math.tan(math.radians(fov) / 2)
+        sx = ((xs + 0.5) / W * 2 - 1) * t * W / H
+        sy = (1 - (ys + 0.5) / H * 2) * t
+        d = nrm(f + sx[..., None] * r + sy[..., None] * u).reshape(-1, 3)
+        loc, ir, it = self.c.first(np.broadcast_to(eye, d.shape), d)
+        img = np.zeros((W * H, 3))
+        bc = trimesh.triangles.points_to_barycentric(self.V[self.F[it]], loc)
+        n = nrm((self.N[self.F[it]] * bc[..., None]).sum(1))
+        # lights are given in camera space (x right, y up, z toward camera)
+        Lk = nrm(np.asarray(key)[0] * r + np.asarray(key)[1] * u - np.asarray(key)[2] * f)
+        Lr = nrm(np.asarray(rim)[0] * r + np.asarray(rim)[1] * u - np.asarray(rim)[2] * f)
+        if mode == 'attr':
+            a = (attr[self.F[it]] * bc).sum(1)
+            col = np.stack([a, a, a], 1)
+        else:
+            lam = np.clip(n @ Lk, 0, 1)
+            lit = lam > 0
+            so = loc[lit] + n[lit] * 1e-4
+            hit = self.c.ri.intersects_any(so, np.ascontiguousarray(np.broadcast_to(Lk, so.shape)))
+            sh = np.ones(len(loc))
+            sh[np.where(lit)[0][hit]] = 0.0
+            if self.bake is not None:
+                b = (self.bake[self.F[it]].astype(float) / 255 * bc[..., None]).sum(1)
+                ao, cav, thick = b[:, 0], b[:, 1], b[:, 2]
+            else:
+                ao = np.ones(len(loc)); cav = np.full(len(loc), 0.5); thick = np.ones(len(loc))
+            cavf = np.clip(0.55 + 0.9 * (cav - 0.5), 0.2, 1.15)
+            base = np.array([0.93, 0.91, 0.88])
+            V_ = -d[ir]
+            hv = nrm(Lk + V_)
+            spec = 0.12 * np.clip((n * hv).sum(1), 0, 1) ** 40 * sh
+            trans = (1 - thick) ** 2 * np.clip(-(n @ Lk) * 0.5 + 0.5, 0, 1) * 0.35   # light bleeding through thin parts
+            rimv = np.clip(n @ Lr, 0, 1) ** 2.5 * 0.9
+            key_c = (lam * sh * 1.35)[:, None] * base * cavf[:, None]
+            fill = (0.06 * (0.5 + 0.5 * n[:, 1]) * ao * cavf)[:, None] * base
+            col = key_c + fill + (trans[:, None] * np.array([1.0, 0.85, 0.7])) + rimv[:, None] * np.asarray(rim_col) * ao[:, None] + spec[:, None]
+        img[ir] = np.clip(col, 0, 1) ** (1 / 2.2)
+        im = Image.fromarray((img.reshape(H, W, 3) * 255).astype(np.uint8))
+        self.cam = (eye, f, r, u, t, W, H)
+        dr = ImageDraw.Draw(im)
+        if markers:
+            cols = [(255, 70, 70), (70, 255, 90), (90, 170, 255), (255, 220, 40), (255, 90, 255), (40, 255, 255), (255, 150, 40)]
+            for i, (nm, p) in enumerate(markers.items()):
+                if p is None:
+                    continue
+                q_ = np.asarray(p) - eye
+                z = q_ @ f
+                if z <= 0:
+                    continue
+                px = (q_ @ r / z / (t * W / H) + 1) / 2 * W
+                py = (1 - q_ @ u / z / t) / 2 * H
+                cc = cols[i % len(cols)]
+                dr.ellipse([px - 4, py - 4, px + 4, py + 4], outline=cc, width=2)
+                dr.text((px + 6, py - 6), nm, fill=cc)
+        if label:
+            dr.text((6, 6), label, fill=(255, 200, 60))
+        return im
+
+
+def ring_eye(yaw_deg, dist, y=0.0, side=-1):
+    """camera position on the turn ring: yaw 0 = on +Z (stared at), yaw 90 = profile, seen from `side` X."""
+    a = math.radians(yaw_deg)
+    return np.array([side * math.sin(a) * dist, y, math.cos(a) * dist])
+
+
+def grid(ims, cols):
+    w, h = ims[0].size
+    rows = (len(ims) + cols - 1) // cols
+    out = Image.new('RGB', (w * cols, h * rows))
+    for i, im in enumerate(ims):
+        out.paste(im, ((i % cols) * w, (i // cols) * h))
+    return out
+
+
+RIM = dict(david=(0.55, 0.72, 1.0), sol=(1.0, 0.78, 0.38), prometheus=(1.0, 0.45, 0.22))
+
+
+def previews(res):
+    name, an = res['name'], res['an']
+    PREV.mkdir(parents=True, exist_ok=True)
+    pv = Preview(res['V'], res['F'], res['N'], res['bake'])
+    rc = RIM[name]
+    mk = {k: v for k, v in an.items() if not k.startswith('eyeball')}
+    eyes_mid = 0.5 * (an['eyeL'] + an['eyeR'])
+    tgt = np.array([0, -0.12, 0.05])
+    ims = []
+    for yaw in (90, 45, 0):
+        ims.append(pv.render(ring_eye(yaw, 3.4, tgt[1]), tgt, fov=26, W=480, H=720, markers=mk, rim_col=rc,
+                             label='%s yaw %d (head space)' % (name, yaw)))
+    for yaw in (90, 45, 0):
+        ims.append(pv.render(ring_eye(yaw, 3.4, tgt[1]), tgt, fov=26, W=480, H=720, rim_col=rc, label='yaw %d' % yaw))
+    grid(ims, 3).save(PREV / ('%s-turn.png' % name))
+    # ECU of the eyes, straight down the lens
+    ecu = [pv.render(eyes_mid + np.array([0, 0, 1.6]), eyes_mid, fov=14, W=900, H=420, rim_col=rc,
+                     markers={k: an.get(k) for k in ('eyeL', 'eyeR', 'pupilL', 'pupilR', 'eyeballL', 'eyeballR') if an.get(k) is not None},
+                     label='%s ECU eyes, yaw 0 (markers)' % name),
+           pv.render(eyes_mid + np.array([0, 0, 1.6]), eyes_mid, fov=14, W=900, H=420, rim_col=rc, key=(-0.3, 0.6, 0.75),
+                     label='yaw 0: the stare')]
+    grid(ecu, 1).save(PREV / ('%s-eyes.png' % name))
+    # bakes
+    b = res['bake'].astype(float) / 255
+    e3 = ring_eye(30, 3.0, -0.1)
+    bk = [pv.render(e3, tgt, fov=28, W=400, H=560, mode='attr', attr=b[:, i], label=lab)
+          for i, lab in enumerate(('ao', 'cavity', 'thickness', 'skin'))]
+    # triangle density (edge length) map
+    el = np.zeros(len(res['V']))
+    E = res['F']
+    ln = np.linalg.norm(res['V'][E[:, [1, 2, 0]]] - res['V'][E], axis=2).mean(1)
+    cnt = np.zeros(len(res['V']))
+    for k in range(3):
+        np.add.at(el, E[:, k], ln)
+        np.add.at(cnt, E[:, k], 1)
+    el /= np.maximum(cnt, 1)
+    dens = 1 - np.clip((np.log(el) - np.log(np.percentile(el, 2))) / (np.log(np.percentile(el, 98)) - np.log(np.percentile(el, 2))), 0, 1)
+    bk.append(pv.render(e3, tgt, fov=28, W=400, H=560, mode='attr', attr=dens, label='triangle density'))
+    grid(bk, 5).save(PREV / ('%s-bakes.png' % name))
+    if res['extra'].get('preview'):
+        res['extra']['preview'](pv, res)
+
+
+# ------------------------------------------------------------------------------------------------
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('--figure', default='all', choices=['all'] + list(FIGURES))
+    ap.add_argument('--no-previews', action='store_true')
+    args = ap.parse_args()
+    names = list(FIGURES) if args.figure == 'all' else [args.figure]
+    summary = []
+    for name in names:
+        res = process(name, args)
+        res['notes'] = NOTES[name](res)
+        j = write_outputs(res)
+        if not args.no_previews:
+            previews(res)
+        summary.append((name, j['counts']['triangles'], j['counts']['vertices'], os.path.getsize(OUT / (name + '.bin'))))
+        log('  %s done in %.0fs' % (name, time.time() - (time.time() - res['t'])))
+    tot = 0
+    for name, t, v, sz in summary:
+        print('%-11s %8d tris %8d verts %7.2f MB' % (name, t, v, sz / 1e6))
+        tot += sz + os.path.getsize(OUT / (name + '.json'))
+    print('total media/scenes/statue: %.2f MB' % (tot / 1e6))
+
+
+# ------------------------------------------------------------------------------------------------
+# notes written into each json (measurements filled in at run time)
+# ------------------------------------------------------------------------------------------------
+def _common_notes(res):
+    fr = res['fr']
+    return [
+        'Gaze per eye measured relative to the facial symmetry plane (deg, +yaw = figure\'s left, +pitch = up): %s.'
+        % json.dumps({k: {kk: float(vv) for kk, vv in v.items()} for k, v in fr['gaze_meas'].items()}),
+        'Facial symmetry plane residual %.4f head units (mirror-ICP on the face).' % fr['sym_resid'],
+        'Crop: one horizontal plane at y = %.2f, capped (flat cap facing -Y); keep it out of frame or in shadow.'
+        % res['cfg']['crop_y'],
+        'Turn: yaw about +Y through the origin. The 90-degree turn starts with the camera on the figure\'s RIGHT '
+        '(-X side, face pointing screen-right) and ends on +Z (stared at).',
+        'Ears: %s' % '; '.join('%s %s' % kv for kv in res['ear_notes'].items()),
+        'Head units: 1.0 = %.3f source units (raw STL units).' % res['H'],
+    ]
+
+
+def _notes_david(res):
+    fr = res['fr']
+    return _common_notes(res) + [
+        'Carved heart-shaped pupils: each eye\'s gaze = eyeball sphere centre -> pupil pit centroid. Michelangelo\'s eyes '
+        'diverge (the left eye looks further to his left); +Z is the mean of the two, %.1f deg to the figure\'s left of the '
+        'facial symmetry axis, so at yaw 0 the face is seen slightly turned while the eyes look into the lens.' % fr['yaw'],
+        'The cast\'s gaze runs %.1f deg below horizontal; head space is levelled (head tipped back by that amount) so the '
+        'stare is horizontal. frame.restoreCastPosture undoes it (then place the camera below eye level).' % -fr['pitch'],
+        'Thin plaster mould-seam ridges (cheek, neck, nose bridge) softened with a masked Taubin smooth on broad skin only.',
+        'Profile side: the right (-X) side shows the broad chest frontally with the head in profile (the classic view '
+        'of the SMK photograph). The bust back is hollow (visible from behind and from the far +X side).',
+    ]
+
+
+def _notes_sol(res):
+    fr = res['fr']
+    return _common_notes(res) + [
+        'Blank (uncarved) eyes. Yaw = mean of the two eyeball caps (%.1f deg). The Hellenistic upturned gaze measured %.1f '
+        'deg above horizontal by visual judgement (renders at camera pitch 0..20 deg; the lid-aperture geometry is biased '
+        'by the overhanging upper lid). CHOICE: levelled, so the blank eyes meet the lens at eye height for the final '
+        'stare; the upward pathos remains in the face and the tilt of the head. frame.restoreCastPosture gives the '
+        'original upturn back.' % (fr['yaw'], fr['pitch']),
+        'Scanner orange-peel removed from broad, low-curvature skin (cheeks, brow, neck) by a masked Taubin smooth; '
+        'lids, lips, nostrils and curls are masked out and stay crisp.',
+        'The bust and nose tip are restorations (SMK). The bust back is hollow with a support post inside (only seen '
+        'from behind).',
+    ]
+
+
+def _notes_prometheus(res):
+    fr = res['fr']
+    return _common_notes(res) + [
+        'STAND-IN: the giant (Klytios?) from the Pergamon Altar Gigantomachy; no freely licensed scan of a marble '
+        'Prometheus exists. Same Hellenistic pathos face family as Laocoon and Adam\'s Prometheus.',
+        'Relief slab removed: cut at source z = 7 (relief ground) and x = 62 (its return), both capped. The big flat cap '
+        'at the back faces head-space +X/-Z: approach the profile ONLY from the -X side (the turn arc -X -> +Z never '
+        'sees it; from +X it is a flat wall). The arms are broken off at the shoulders (no hands).',
+        'Blank eyes. Yaw = mean of the two eyeball caps (%.1f deg); pitch %.1f deg chosen visually (renders at camera '
+        'pitch -15..+25); head space is levelled.' % (fr['yaw'], fr['pitch']),
+        'The chin is hidden in the beard: anchors.chin is an ESTIMATE (see frame); anchors.beardTip is the lowest point '
+        'of the beard. Head units therefore use an anatomical chin, not the beard.',
+    ]
+
+
+NOTES = dict(david=_notes_david, sol=_notes_sol, prometheus=_notes_prometheus)
+
+
+if __name__ == '__main__':
+    main()
