@@ -204,13 +204,32 @@ if (mode === 'costs') {
   const audio = path.join(ROOT, opt('audio', 'out/audio/mix.wav'));
   const files = [];
   const fp = freshFper();
+  // --placeholders statue: an INTERIM review cut; missing pieces of those scenes become a labelled card
+  // (cached in out/placeholders/, never written into dist/<cut>/), and the output is named *-interim.mp4
+  const holders = new Set((opt('placeholders', '') || '').split(',').filter(Boolean));
+  const holdDir = path.join(ROOT, 'out/placeholders', plan.id || 'film');
   for (const [a, b] of blocks()) for (const pc of pieceStates(a, b, fp)) {
+    if (pc.state !== 'final' && holders.has(pc.scene)) {
+      fs.mkdirSync(holdDir, { recursive: true });
+      const ph = path.join(holdDir, pc.name + '.mp4');
+      if (!fs.existsSync(ph)) {
+        const shot = shotsSorted.find((sh) => pc.from >= sh.start && pc.from < sh.end);
+        const font = '/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf';
+        const label = `${shot ? shot.id : pc.scene}  ·  marble figure`;
+        run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', `color=c=0x141414:s=${W}x${H}:r=${plan.fps}`,
+          '-vf', `drawtext=fontfile=${font}:text='${label}':fontcolor=0x8a8070:fontsize=${Math.round(W / 24)}:x=(w-text_w)/2:y=h*0.47,` +
+                 `drawtext=fontfile=${font}:text='rendering — placeholder':fontcolor=0x5a544c:fontsize=${Math.round(W / 34)}:x=(w-text_w)/2:y=h*0.52`,
+          '-frames:v', String(pc.to - pc.from), ...X264, '-an', '-movflags', '+faststart', '-f', 'mp4', ph]);
+      }
+      files.push(ph);
+      continue;
+    }
     if (pc.state === 'missing' || (pc.state === 'stale' && !argv.includes('--allow-stale'))) throw new Error(`${pc.name} (${pc.scene}) is ${pc.state}`);
-    files.push(pc.name + '.mp4');
+    files.push(path.join(CHUNKS, pc.name + '.mp4'));
   }
   const list = path.join(CHUNKS, 'concat.txt');
-  fs.writeFileSync(list, files.map((f) => `file '${path.join(CHUNKS, f)}'`).join('\n') + '\n');
-  const out = path.join(ROOT, opt('out', plan.id ? `dist/${plan.id}${PREVIEW ? '-preview' : ''}.mp4` : (PREVIEW ? 'dist/preview-cut.mp4' : 'dist/david-and-goliath.mp4')));
+  fs.writeFileSync(list, files.map((f) => `file '${f}'`).join('\n') + '\n');
+  const out = path.join(ROOT, opt('out', plan.id ? `dist/${plan.id}${PREVIEW ? '-preview' : ''}${holders.size ? '-interim' : ''}.mp4` : (PREVIEW ? 'dist/preview-cut.mp4' : 'dist/david-and-goliath.mp4')));
   const [num, den] = plan.fps.split('/').map(Number);
   run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'warning', '-f', 'concat', '-safe', '0', '-i', list, '-i', audio,
     '-map', '0:v:0', '-map', '1:a:0', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '512k', '-aac_coder', 'fast',   // keeps the climax's true peak under -1 dBTP after coding
