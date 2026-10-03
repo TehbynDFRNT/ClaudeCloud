@@ -467,8 +467,10 @@ vec3 vxDwarfSurface(vec3 ro, vec3 rd, vec2 h){
   float cr = sqrt(max(1.0 - uDwarfR / (uRin * 1.06), 0.0));
   float ring = exp(-pow((abs(n.y) - cr) / 0.035, 2.0));
   float caps = smoothstep(cr - 0.05, cr + 0.06, abs(n.y));
-  vec3 c = dwarfColor() * (0.28 + 0.72 * pow(mu, 0.55)) * (1.0 + 0.22 * g);
-  return (c + C_CURT * (caps * 0.5 + ring * 1.6) * (0.6 + 0.4 * mu)) * 9.0 * uDwarfSurf * uDwarfLum;
+  // strong limb darkening of a hot degenerate atmosphere; the limb shifts toward the cold blue
+  float ld = 0.12 + 0.88 * mu;
+  vec3 c = mix(C_CURT * 0.8, dwarfColor(), sqrt(mu)) * ld * (1.0 + 0.25 * g);
+  return (c + C_CURT * (caps * 0.6 + ring * 2.2) * (0.5 + 0.5 * mu)) * 9.0 * uDwarfSurf * uDwarfLum;
 }
 // point-source glow consistent with lib/dwarf.glsl.js (core suppressed once the sphere is resolved)
 vec3 vxDwarfGlow(vec3 ro, vec3 rd, float pixAngle){

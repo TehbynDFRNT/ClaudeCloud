@@ -180,13 +180,13 @@ const presets = {
   'F29.2': D({
     vol: 0.75,
     cam: [
-      [0, [0.225, 0.150, 0.225], [0, -0.004, 0], 28, -0.04],
-      [1, [0.200, 0.132, 0.204], [0, -0.004, 0], 28, -0.09],
+      [0, [0.215, 0.140, 0.215], [0, -0.006, 0], 40, -0.04],
+      [1, [0.192, 0.124, 0.196], [0, -0.006, 0], 40, -0.09],
     ],
     tau: [90, 1.0, 0],
     heat: [0.85, 0, 0.5, 0], lum: [1.0, 1.0],
     disk: { omega: 0.32, curtain: 0.5, maxSteps: 56, stepK: 0.4, sheet: 0.9, sheetHeat: 0.5, rimPuff: 0.8, tinK: 0.4, rb: 0.8, dwarfSurf: 0.35, irr: 1.5, tout: 1000 },
-    post: { exposure: 0.5 },
+    post: { exposure: 0.5, bloomStrength: 0.04 },
   }),
   // Frenzy 31.1: extreme speed - a plunge across the disk surface toward the dwarf.
   'F31.1': D({

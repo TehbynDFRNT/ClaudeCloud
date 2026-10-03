@@ -31,7 +31,9 @@ export const DESIGN = {
   // true-peak limiter; their ceilings sit under the master ceiling, so loudness at the strikes and the ignition comes
   // from density and not from peaks the master limiter would have to take back.
   cannonsDb: 0.0,
-  cannonLimiter: { ceilDb: -3.0, lookMs: 2.0, relMs: 90 },  // cannon stem (JS); per-cue levels: approach law
+  // cannon stem limiter (JS): ceiling ceilDb, raised toward nearDb for the strike cues as d -> 0 (the closest hits
+  // get the most headroom; the deeper duck keeps the master limiter out of it). Per-cue levels: approach law.
+  cannonLimiter: { ceilDb: -3.5, nearDb: -2.0, lookMs: 2.0, relMs: 90 },
   ignitionDb: -0.5,
   impactDriveDb: 6.0,              // ignition impact layers (sub, crack, saw stack, walls) into the stem saturator
   synthTrimDb: -24.0,            // source trim so the per-bar auto-level works around 0 dB
@@ -46,7 +48,7 @@ export const DESIGN = {
   cannon: { relFar: -20, relNear: 5, shape: 1.5, maxCorrDb: 14, passes: 3, tolDb: 0.75 },
   // orchestra + synth duck under the five strike cannons (d <= maxD; depth grows toward d = 0): 5 ms attack,
   // 80 ms hold, then a 120 ms exponential release (within 1 dB after ~0.35 s), following the boom that masks it.
-  duck: { maxD: 0.12, depthDb: [4, 8], attack: 0.005, hold: 0.08, tau: 0.12 },
+  duck: { maxD: 0.12, depthDb: [4, 10], attack: 0.005, hold: 0.08, tau: 0.12 },
   // the ladder (bars 32-38) is the cannons' section: orchestra + synth sit a static 3.5 dB lower there (ramped
   // over the 2 s before the bar-32 downbeat), so the strikes have headroom under the ceiling. The internal dynamics
   // (tremolo swells, strikes) are untouched.
@@ -1012,11 +1014,13 @@ function truePeakSeries(L, R) {
   return pk;
 }
 // look-ahead true-peak limiter (offline): centred min + centred average guarantees g <= required gain
+// ceilDb: a number, or a Float32Array of per-sample linear ceilings
 function limit(L, R, ceilDb, lookMs = 1.5, relMs = 80) {
-  const n = L.length, ceil = undb(ceilDb), r = Math.round(lookMs * SR / 1000);
+  const n = L.length, r = Math.round(lookMs * SR / 1000);
+  const C = typeof ceilDb === 'number' ? null : ceilDb, c0 = C ? 1 : undb(ceilDb);
   const pk = truePeakSeries(L, R);
   const req = new Float32Array(n);
-  for (let i = 0; i < n; i++) req[i] = pk[i] > ceil ? ceil / pk[i] : 1;
+  for (let i = 0; i < n; i++) { const ceil = C ? C[i] : c0; req[i] = pk[i] > ceil ? ceil / pk[i] : 1; }
   // sliding minimum over [i-r, i+r] (monotonic deque)
   const h = new Float32Array(n), dq = new Int32Array(n); let head = 0, tail = 0;
   for (let i = 0; i < n + r; i++) {
@@ -1183,6 +1187,20 @@ function cannonLevels(tl, kO, gO, canStem, gC, table, prev = {}) {
   return { gains: out, rows, maxErr: Math.max(...rows.map((x) => Math.abs(x.errDb))) };
 }
 
+// Per-sample linear ceiling of the cannon-stem limiter: ceilDb, raised toward nearDb around the strike cues.
+function cannonCeiling(n, cannons) {
+  const CL = DESIGN.cannonLimiter, maxD = DESIGN.duck.maxD, c = new Float32Array(n).fill(undb(CL.ceilDb));
+  for (const k of cannons) {
+    if (k.distance > maxD) continue;
+    const up = (CL.nearDb - CL.ceilDb) * (1 - k.distance / maxD);
+    for (let i = Math.max(0, Math.round((k.t - 0.02) * SR)); i < Math.min(n, Math.round((k.t + 1.2) * SR)); i++) {
+      const x = i / SR - k.t, w = smooth(-0.02, -0.005, x) * (1 - smooth(0.8, 1.2, x));
+      c[i] = Math.max(c[i], undb(CL.ceilDb + up * w));
+    }
+  }
+  return c;
+}
+
 // Duck envelope (linear gain) for the orchestra/synth under the strike cannons.
 function duckGain(n, cannons) {
   const P = DESIGN.duck, gdb = new Float32Array(n);
@@ -1299,7 +1317,7 @@ export async function renderSoundtrack({ base = '/', log = console.log } = {}) {
   for (let pass = 0; pass < DESIGN.cannon.passes; pass++) {
     await render('cannons', (ctx) => buildCannons(ctx, tl, samples, cg));
     const CL = DESIGN.cannonLimiter;
-    cLim = limit(stems.cannons[0], stems.cannons[1], CL.ceilDb, CL.lookMs, CL.relMs);
+    cLim = limit(stems.cannons[0], stems.cannons[1], cannonCeiling(length, info.cannons), CL.lookMs, CL.relMs);
     stems.cannons = [cLim.L, cLim.R];
     cl = cannonLevels(tl, kO, gO, stems.cannons, gC, info.cannons, cg);
     cannonPasses.push(+cl.maxErr.toFixed(2));
