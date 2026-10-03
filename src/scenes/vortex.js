@@ -242,9 +242,10 @@ function camAt(P, local, dur) {
   const [amp, speed] = P.drift;
   if (amp) {
     const d = drift(local, amp, speed, 3);
-    const tgt = v3.add(v3.add(cam.pos, v3.mul(cam.fwd, 1)), v3.mul(d, 0.5));
-    const fov = 2 * Math.atan(cam.tanH) * 180 / Math.PI;
-    cam = camera(v3.add(cam.pos, d), tgt, fov, 0);
+    const R = cam.raw;   // rebuild from the unframed camera (see engine/math.js framing)
+    const tgt = v3.add(v3.add(R.pos, v3.mul(R.fwd, 1)), v3.mul(d, 0.5));
+    const fov = 2 * Math.atan(R.tanH) * 180 / Math.PI;
+    cam = camera(v3.add(R.pos, d), tgt, fov, 0);
   }
   return cam;
 }

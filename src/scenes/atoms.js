@@ -740,11 +740,12 @@ export default {
     this.B = new SpriteBatch(E.G, E.W, E.H);
   },
   camera(P, t) {
-    const base = camFromKeys(P.cam, t);
+    const cam0 = camFromKeys(P.cam, t);
+    const base = cam0.raw;   // rebuild from the unframed camera (see engine/math.js framing)
     let pos = base.pos;
     // strike push: the rig lurches in with the implosion
     if (P.crush && P.crush.push) pos = add(pos, mul(base.fwd, P.crush.push * clamp(crushState(P, t).k, 0, 1.3)));
-    if (!P.shake && pos === base.pos) return base;
+    if (!P.shake && pos === base.pos) return cam0;
     // micro-vibration of the macro rig: smooth high-frequency shake
     const [amp, w] = P.shake || [0, 0];
     const o = (k) => amp * (Math.sin(t * w * (1 + 0.37 * k) + k * 1.7) * 0.6 + Math.sin(t * w * (2.13 + 0.21 * k) + k * 4.1) * 0.4);

@@ -51,9 +51,10 @@ const at = (P, S, x) => (P.timeU ? x * S.dur : x);
 // camera from keys + deterministic macro vibration (Oppenheimer jitter)
 function camAt(P, S) {
   const t = lt(S);
-  const c = camFromKeys(P.cam, kt(P, S));
+  const c0 = camFromKeys(P.cam, kt(P, S));
   const v = P.vibrate || 0;
-  if (!v) return c;
+  if (!v) return c0;
+  const c = c0.raw;   // rebuild from the unframed camera (see engine/math.js framing)
   const f = (a, b) => Math.sin(t * a + b) * 0.6 + Math.sin(t * a * 2.37 + b * 1.9) * 0.4;
   const off = [f(23.0, 0.3) * v, f(19.0, 1.7) * v, f(17.0, 2.9) * v * 0.5];
   const pos = [c.pos[0] + off[0], c.pos[1] + off[1], c.pos[2] + off[2]];

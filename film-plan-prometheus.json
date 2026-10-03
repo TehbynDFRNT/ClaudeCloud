@@ -1,7 +1,7 @@
 {
- "id": "david-916",
- "cut": "david",
- "title": "David & Goliath — a nova in two voices",
+ "id": "prometheus-916",
+ "cut": "prometheus",
+ "title": "Prometheus — the stolen fire",
  "fps": "24/1",
  "frames": 3986,
  "width": 1080,
@@ -27,7 +27,7 @@
    "id": "S02-goliath",
    "start": 182,
    "scene": "redgiant",
-   "purpose": "Introduce GOLIATH: overwhelming mass and heat",
+   "purpose": "Introduce ZEUS: the fire of the gods, overwhelming mass and heat",
    "action": "Pull back to reveal the boiling red giant, convection cells the size of suns, prominences at the limb; slow rotation",
    "framing": "Three-quarter disk, off-centre left, fills 80% of frame height",
    "end": 394
@@ -36,7 +36,7 @@
    "id": "S03-david",
    "start": 394,
    "scene": "whitedwarf",
-   "purpose": "Introduce DAVID: tiny, cold, dense",
+   "purpose": "Introduce PROMETHEUS: tiny, cold, dense; the thief",
    "action": "A single piercing blue-white point in black; slow push reveals an Earth-sized sphere, smooth and ferocious, faint blue magnetic filaments",
    "framing": "Starts as a point at frame centre-right; ends medium close",
    "end": 535
@@ -63,7 +63,7 @@
    "id": "S06-first-pull",
    "start": 747,
    "scene": "binary",
-   "purpose": "Attraction becomes force",
+   "purpose": "Prometheus reaches for the fire",
    "action": "Close on the giant's L1 tip: the surface lifts into a tongue of plasma stretching toward the off-screen dwarf whose light rakes it blue-white",
    "framing": "Low angle along the stretching tongue",
    "end": 817
@@ -72,7 +72,7 @@
    "id": "S07-stream",
    "start": 817,
    "scene": "binary",
-   "purpose": "Vast sheets of incandescent matter rip from the giant",
+   "purpose": "The theft: fire torn from the god",
    "action": "A river of fire pours through L1 and arcs across space toward the dwarf; camera tracks alongside the stream",
    "framing": "Medium-wide, stream crossing frame left to right",
    "end": 979
@@ -99,7 +99,7 @@
    "id": "S10-prometheus",
    "start": 1238,
    "scene": "studies",
-   "purpose": "Prometheus's stolen fire (restrained glimpse)",
+   "purpose": "The stolen fire, carried away in a fennel stalk",
    "action": "Red-chalk study: a hand carrying a flame in a fennel stalk; a faint arc links a large circle to a small one",
    "framing": "Close on the drawing, the flame catching warm light",
    "end": 1322
@@ -108,7 +108,7 @@
    "id": "S11-giant-bleeds",
    "start": 1322,
    "scene": "binary",
-   "purpose": "Goliath bleeds",
+   "purpose": "The god is robbed",
    "action": "The giant's torn L1 tip pouring matter into space",
    "framing": "Medium close on the tip, stream leaving frame right",
    "end": 1381
@@ -117,7 +117,7 @@
    "id": "S12-engulf",
    "start": 1381,
    "scene": "vortex",
-   "purpose": "Gravitational terror: the vortex engulfs the dwarf",
+   "purpose": "The stolen fire overwhelms the thief",
    "action": "Camera sinks into the disk plane; crimson and gold spirals rush past on both sides; the dwarf blazes at the centre, swallowed",
    "framing": "Wide-angle inside the vortex, dwarf centre frame",
    "end": 1515
@@ -189,7 +189,7 @@
    "id": "S14g-filaments",
    "start": 1799,
    "scene": "plasma",
-   "purpose": "Cold blue magnetism tightening",
+   "purpose": "Prometheus bound: the blue chains tighten",
    "action": "Blue filaments twisting and tightening around a hot core",
    "framing": "Macro",
    "end": 1836
@@ -279,11 +279,11 @@
    "id": "F29.1",
    "start": 2022,
    "scene": "studies",
-   "purpose": "Frenzy of perspectives",
+   "purpose": "The eagle (red-chalk wing study)",
    "action": "Beat-cut 1/4 of bar 29; see the scene preset",
    "framing": "Varied",
    "end": 2041,
-   "preset": "F29.1-sling"
+   "preset": "F29.1-eagle"
   },
   {
    "id": "F29.2",
@@ -334,10 +334,11 @@
    "id": "F30.3",
    "start": 2135,
    "scene": "studies",
-   "purpose": "Frenzy of perspectives",
+   "purpose": "The chains (shackle study)",
    "action": "Beat-cut 3/4 of bar 30; see the scene preset",
    "framing": "Varied",
-   "end": 2154
+   "end": 2154,
+   "preset": "F30.3-chains"
   },
   {
    "id": "F30.4",
@@ -433,7 +434,7 @@
    "id": "S17-strike1",
    "start": 2317,
    "scene": "binary",
-   "purpose": "Strike 1: the whole system shudders",
+   "purpose": "Thunderbolt 1: Zeus strikes",
    "action": "Hard cut on the strike: wide system, disk flares, stream whips",
    "framing": "Wide",
    "end": 2391,
@@ -493,7 +494,7 @@
    "id": "S21-strike5",
    "start": 2610,
    "scene": "whitedwarf",
-   "purpose": "Strike 5 and the final tremolo: inevitability",
+   "purpose": "The last thunderbolt; the fire is drawn into a single point",
    "action": "Extreme close on the surface; light bends; the glow climbs, then the whole image is drawn inward to a single point and swallowed; nothing is left but black at the cut",
    "framing": "Extreme close, converging",
    "end": 2725,
@@ -508,7 +509,7 @@
    "id": "S22-dark",
    "start": 2725,
    "scene": "void",
-   "purpose": "Ignition: thermonuclear runaway, felt not seen",
+   "purpose": "The fire released, felt not seen",
    "action": "Black. No flash: the picture is gone and the pressure wave and the roar carry the climax. At most a dying afterimage of the point",
    "framing": "Black (frame opens to full 9:16 unseen)",
    "end": 2779,
@@ -568,7 +569,7 @@
    "id": "S27-devastation",
    "start": 3134,
    "scene": "redgiant",
-   "purpose": "Devastation",
+   "purpose": "The god scarred",
    "action": "Goliath scarred: facing hemisphere stripped and burning, embers drifting, envelope torn",
    "framing": "Medium, slow lateral drift",
    "end": 3277
@@ -577,7 +578,7 @@
    "id": "S28-survival",
    "start": 3277,
    "scene": "whitedwarf",
-   "purpose": "Survival",
+   "purpose": "The Titan endures; the theft begins again",
    "action": "The tiny core endures, still blazing; the shell recedes; a thin thread of matter begins to flow again",
    "framing": "Medium close, steady",
    "end": 3425
@@ -604,7 +605,7 @@
    "id": "S31-newstar",
    "start": 3650,
    "scene": "earthsky",
-   "purpose": "Seen from Earth: a new star",
+   "purpose": "The gift reaches humankind: a new star in their sky",
    "action": "The Milky Way arches up from a dark, unlit horizon (no light pollution: the galactic core, dust lanes, airglow); stillness; then, silently, a new star appears where there was none. The film ends on it",
    "framing": "Locked-off night sky, 9:16, horizon low, galactic core rising vertically",
    "end": 3986
@@ -1357,7 +1358,7 @@
    "id": "name-giant",
    "start": 222,
    "end": 343,
-   "content": "GOLIATH\na red giant",
+   "content": "ZEUS\na red giant",
    "style": "name",
    "maxCps": 12,
    "minFrames": 60
@@ -1366,7 +1367,7 @@
    "id": "name-dwarf",
    "start": 424,
    "end": 529,
-   "content": "DAVID\na white dwarf",
+   "content": "PROMETHEUS\na white dwarf",
    "style": "name",
    "maxCps": 12,
    "minFrames": 60
@@ -1375,7 +1376,7 @@
    "id": "end-title",
    "start": 3529,
    "end": 3612,
-   "content": "DAVID & GOLIATH",
+   "content": "PROMETHEUS",
    "style": "title",
    "y": 0.8,
    "fadeIn": 24,

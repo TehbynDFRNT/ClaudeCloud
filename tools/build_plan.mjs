@@ -1,8 +1,11 @@
 #!/usr/bin/env node
-// Builds film-plan.json (the single timeline contract) from the storyboard below and the
-// signal-derived bar grid (analysis/grid.json). Shot boundaries are written in musical
-// positions; frames are derived here once. Re-run after changing the storyboard or grid:
-//   node tools/build_plan.mjs && python3 tools/validate_plan.py film-plan.json
+// Builds the timeline contracts from the storyboard below and the signal-derived bar grid
+// (analysis/grid.json). Shot boundaries are written in musical positions; frames are derived here once.
+// Two cuts share one picture and one score and differ only in what the story calls things:
+//   film-plan.json             DAVID & GOLIATH  (id david-916)
+//   film-plan-prometheus.json  PROMETHEUS       (id prometheus-916)
+// Both are 9:16 (1080x1920). Re-run after changing the storyboard or grid:
+//   node tools/build_plan.mjs && python3 tools/validate_plan.py film-plan.json && python3 tools/validate_plan.py film-plan-prometheus.json
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,7 +13,6 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const grid = JSON.parse(fs.readFileSync(path.join(ROOT, 'analysis/grid.json'), 'utf8'));
 const FPS = 24;
-const FRAMES = 3756;                            // 156.5 s
 
 // ---- audio placements (frames) -------------------------------------------------------------
 // Recording: The United States Air Force Band, Vivaldi 'Winter' I (supplied by the director; public domain).
@@ -23,7 +25,14 @@ const B_START = IGNITION + 264;                // 11 s of electronic pressure wa
 const BAR56_SRC = 166.65;                      // bar-56 downbeat onset (dominant C-major chord)
 const B = { id: 'winter-b', timelineStart: B_START, timelineEnd: 3646, sourceInSeconds: +(BAR56_SRC - 1 / FPS).toFixed(4) };
 const DECAY_END = 3646;                        // fermata has decayed below -65 dB (source ~193.4 s)
-const CREDITS = 3650;
+// The dark: at ignition the picture is swallowed whole; the pressure wave hits in blackness.
+const DARK = 54;                               // 2.25 s of black before the eruption is seen
+// Coda: the same event seen from Earth. The Milky Way over a dark-sky horizon; a new star appears.
+const CODA = 3650;
+const CODA_STAR = CODA + 132;                  // the new star begins to appear (5.5 s in) ...
+const CODA_STAR_FULL = CODA + 168;             // ... and has fully arrived (7 s in)
+const CODA_LINE1 = CODA + 192, CODA_LINE2 = CODA + 228;
+const FRAMES = CODA + 336;                     // 14 s coda; the film ends on the line
 
 function srcToFrame(s) {
   for (const p of [A, B]) {
@@ -80,20 +89,56 @@ const SB = [
   { id: 'S18-strike2', start: strike(34), scene: 'vortex', purpose: 'Strike 2: closer', action: 'Inner disk white-hot around the engulfed dwarf', framing: 'Medium', sync: 'strike-34' },
   { id: 'S19-strike3', start: strike(35), scene: 'whitedwarf', purpose: 'Strike 3: the surface convulses', action: 'Dwarf surface layer glowing, blue filaments snapping', framing: 'Close', sync: 'strike-35' },
   { id: 'S20-strike4', start: strike(36), scene: 'atoms', purpose: 'Strike 4: the nuclei are crushed', action: 'Nuclei crushed together; fusion sparks multiplying', framing: 'Macro', sync: 'strike-36' },
-  { id: 'S21-strike5', start: strike(37), scene: 'whitedwarf', purpose: 'Strike 5 and the final tremolo: inevitability', action: 'Extreme close on the surface; light bends; brightness climbs toward white; the image draws inward to a point', framing: 'Extreme close, converging', sync: 'strike-37' },
-  // ACT III — IGNITION (music cut; electronic pressure wave and Doppler roar)
-  { id: 'S22-ignition', start: IGNITION, scene: 'nova', purpose: 'Ignition: thermonuclear runaway', action: 'White-out; frame opens to full height; a white-hot spherical eruption fills the frame from the dwarf', framing: 'Close, centred', sync: 'ignition' },
-  { id: 'S23-eruption', start: IGNITION + 44, scene: 'nova', purpose: 'The eruption overwhelms the system', action: 'Wide: the white sphere swallows the disk and races toward the giant, whose facing hemisphere flares white-gold', framing: 'Wide system' },
-  { id: 'S24-shockfront', start: IGNITION + 136, scene: 'nova', purpose: 'The pressure wave passes us', action: 'The shock front sweeps through camera; refraction, debris streaks; peak of the Doppler roar', framing: 'Inside the wave' },
-  { id: 'S25-shell', start: IGNITION + 196, scene: 'nova', purpose: 'Fracture', action: 'The decelerating shell fractures into golden filaments as the roar descends', framing: 'Medium-wide, slowing' },
+  { id: 'S21-strike5', start: strike(37), scene: 'whitedwarf', purpose: 'Strike 5 and the final tremolo: inevitability', action: 'Extreme close on the surface; light bends; the glow climbs, then the whole image is drawn inward to a single point and swallowed; nothing is left but black at the cut', framing: 'Extreme close, converging', sync: 'strike-37' },
+  // ACT III — IGNITION (music cut; the screen goes dark and the pressure wave hits in blackness)
+  { id: 'S22-dark', start: IGNITION, scene: 'void', purpose: 'Ignition: thermonuclear runaway, felt not seen', action: 'Black. No flash: the picture is gone and the pressure wave and the roar carry the climax. At most a dying afterimage of the point', framing: 'Black (frame opens to full 9:16 unseen)', sync: 'ignition' },
+  { id: 'S22-ignition', start: IGNITION + DARK, scene: 'nova', purpose: 'The eruption emerges from the dark', action: 'Out of black a white-gold point swells into a seething spherical eruption, the surrounding space still black; never a full-frame white-out', framing: 'Close, centred' },
+  { id: 'S23-eruption', start: IGNITION + DARK + 50, scene: 'nova', purpose: 'The eruption overwhelms the system', action: 'Wide: the incandescent sphere swallows the disk and races toward the giant, whose facing hemisphere flares gold', framing: 'Wide system' },
+  { id: 'S24-shockfront', start: IGNITION + DARK + 106, scene: 'nova', purpose: 'The pressure wave passes us', action: 'The shock front sweeps through camera; refraction, debris streaks; peak of the Doppler roar', framing: 'Inside the wave' },
+  { id: 'S25-shell', start: IGNITION + DARK + 160, scene: 'nova', purpose: 'Fracture', action: 'The decelerating shell fractures into golden filaments as the roar descends', framing: 'Medium-wide, slowing' },
   // ACT IV — AFTERMATH (bars 56-63)
   { id: 'S26-expansion', start: srcToFrame(BAR56_SRC), scene: 'nova', purpose: 'Expansion', action: 'The fractured golden shell, immense, expanding; Rayleigh-Taylor fingers and knots; the pair small inside', framing: 'Wide, slow pull back' },
   { id: 'S27-devastation', start: at(58), scene: 'redgiant', purpose: 'Devastation', action: 'Goliath scarred: facing hemisphere stripped and burning, embers drifting, envelope torn', framing: 'Medium, slow lateral drift' },
   { id: 'S28-survival', start: at(60), scene: 'whitedwarf', purpose: 'Survival', action: 'The tiny core endures, still blazing; the shell recedes; a thin thread of matter begins to flow again', framing: 'Medium close, steady' },
   { id: 'S29a-ring', start: at(62), scene: 'nova', purpose: 'Cosmic order', action: 'Final wide: the system inside a perfect ring of the shell', framing: 'Wide, centred, still' },
   { id: 'S29b-drawing', start: at(63), scene: 'studies', purpose: 'Understanding endures', action: 'Dissolve to an ink drawing of the same rings with the tiny centre point; mirror script: il sole nõ si move', framing: 'Flat lay, centred' },
-  { id: 'S30-credits', start: CREDITS, scene: 'studies', purpose: 'Credits', action: 'Black; brief credit lines', framing: 'Black' },
+  // CODA — the same event, seen from Earth
+  { id: 'S31-newstar', start: CODA, scene: 'earthsky', purpose: 'Seen from Earth: a new star', action: 'The Milky Way arches up from a dark, unlit horizon (no light pollution: the galactic core, dust lanes, airglow); stillness; then, silently, a new star appears where there was none. The film ends on it', framing: 'Locked-off night sky, 9:16, horizon low, galactic core rising vertically' },
 ];
+
+// ---- the two cuts ---------------------------------------------------------------------------
+// Same picture and score; the story names change, and two frenzy studies are drawn for each myth.
+const CUTS = {
+  david: {
+    file: 'film-plan.json', id: 'david-916', title: 'David & Goliath — a nova in two voices',
+    names: [['GOLIATH', 'a red giant'], ['DAVID', 'a white dwarf']], endTitle: 'DAVID & GOLIATH',
+    presets: { 'F29.1': 'F29.1-sling' },
+    purposes: {},
+  },
+  prometheus: {
+    file: 'film-plan-prometheus.json', id: 'prometheus-916', title: 'Prometheus — the stolen fire',
+    names: [['ZEUS', 'a red giant'], ['PROMETHEUS', 'a white dwarf']], endTitle: 'PROMETHEUS',
+    presets: { 'F29.1': 'F29.1-eagle', 'F30.3': 'F30.3-chains' },
+    purposes: {
+      'S02-goliath': 'Introduce ZEUS: the fire of the gods, overwhelming mass and heat',
+      'S03-david': 'Introduce PROMETHEUS: tiny, cold, dense; the thief',
+      'S06-first-pull': 'Prometheus reaches for the fire',
+      'S07-stream': 'The theft: fire torn from the god',
+      'S10-prometheus': 'The stolen fire, carried away in a fennel stalk',
+      'S11-giant-bleeds': 'The god is robbed',
+      'S12-engulf': 'The stolen fire overwhelms the thief',
+      'S14g-filaments': 'Prometheus bound: the blue chains tighten',
+      'F29.1': 'The eagle (red-chalk wing study)',
+      'F30.3': 'The chains (shackle study)',
+      'S17-strike1': 'Thunderbolt 1: Zeus strikes',
+      'S21-strike5': 'The last thunderbolt; the fire is drawn into a single point',
+      'S22-dark': 'The fire released, felt not seen',
+      'S27-devastation': 'The god scarred',
+      'S28-survival': 'The Titan endures; the theft begins again',
+      'S31-newstar': 'The gift reaches humankind: a new star in their sky',
+    },
+  },
+};
 
 function frenzy() {
   const out = [];
@@ -149,57 +194,70 @@ const cannons = cannonBars.map(([bar, d]) => ({ id: `cannon-${bar}`, kind: 'cann
 cues.push(...cannons);
 
 // ---- effects --------------------------------------------------------------------------------
+// No white flashes anywhere: hits punch the exposure DOWN (dips), and ignition is darkness.
 const effects = [
   { type: 'fade', start: 0, end: 72, from: 1, to: 0 },
-  { type: 'letterbox', frame: IGNITION, from: 0.128, to: 0.0, frames: 8 },
-  { type: 'flash', frame: IGNITION, amount: 30, decay: 9 },
-  { type: 'shake', start: IGNITION, end: IGNITION + 200, amp: 9, env: 'decay' },
-  { type: 'fade', start: DECAY_END - 34, end: CREDITS, from: 0, to: 1 },
-  { type: 'fade', start: CREDITS, end: FRAMES, from: 1, to: 1 },
+  { type: 'letterbox', frame: IGNITION, from: 0.128, to: 0.0, frames: 1 },             // opens unseen, in the dark
+  { type: 'shake', start: IGNITION + DARK, end: IGNITION + DARK + 160, amp: 9, env: 'decay' },
+  { type: 'fade', start: DECAY_END - 34, end: CODA, from: 0, to: 1 },
+  { type: 'fade', start: CODA, end: CODA + 60, from: 1, to: 0 },                         // the night fades up
+  { type: 'fade', start: FRAMES - 36, end: FRAMES, from: 0, to: 1 },                     // and the film goes out
 ];
-[[33, 0.5], [34, 0.8], [35, 1.1], [36, 1.5], [37, 2.2]].forEach(([bar, a], i) => {
-  effects.push({ type: 'flash', frame: strike(bar), amount: a, decay: 4 + i });
+[[33, 0.35], [34, 0.45], [35, 0.55], [36, 0.65], [37, 0.75]].forEach(([bar, a], i) => {
+  effects.push({ type: 'dip', frame: strike(bar), amount: a, attack: 1, decay: 4 + i });
   effects.push({ type: 'shake', start: strike(bar), end: strike(bar) + 18, amp: 3 + 2 * i, env: 'decay' });
 });
 for (const c of cannons) if (c.distance < 0.75 && c.distance > 0.12) effects.push({ type: 'shake', start: c.frame, end: c.frame + 10, amp: 2.4 * (1 - c.distance), env: 'decay' });
 
-// ---- text -----------------------------------------------------------------------------------
-const text = [
-  { id: 'name-goliath', start: at(3) + 40, end: at(5) + 20, content: 'GOLIATH\na red giant', style: 'name', maxCps: 12, minFrames: 60 },
-  { id: 'name-david', start: at(6) + 30, end: at(8) - 6, content: 'DAVID\na white dwarf', style: 'name', x: 0.075, maxCps: 12, minFrames: 60 },
-  { id: 'end-title', start: at(63) + 24, end: DECAY_END - 34, content: 'DAVID & GOLIATH', style: 'title', y: 0.86, fadeIn: 24, fadeOut: 20, minFrames: 48 },
-  { id: 'credit', start: CREDITS + 10, end: FRAMES - 8, content: 'MUSIC\nAntonio Vivaldi, L’inverno, I. Allegro non molto · The United States Air Force Band\nCannon fire from Tchaikovsky’s 1812 Overture · The United States Army Band (2005)', style: 'credit', fadeIn: 16, fadeOut: 16, minFrames: 72 },
-];
+cues.push({ id: 'dark-end', kind: 'edit-cut', frame: IGNITION + DARK, status: 'verified', confidence: 'authored', evidence: 'End of the dark hold: the eruption is first seen' });
+cues.push({ id: 'coda', kind: 'edit-cut', frame: CODA, status: 'verified', confidence: 'authored', evidence: 'Coda: the night sky seen from Earth fades up from black' });
+cues.push({ id: 'coda-star', kind: 'edit-cut', frame: CODA_STAR, status: 'verified', confidence: 'authored', evidence: `The new star begins to appear; fully arrived at frame ${CODA_STAR_FULL}` });
 
 // ---- transitions ----------------------------------------------------------------------------
 const overlays = [
   { id: 'x-ring-to-drawing', type: 'dissolve', from: 'S29a-ring', to: 'S29b-drawing', start: at(63) - 18, end: at(63) + 30, purpose: 'Match dissolve: real rings become ink rings' },
 ];
 
-const plan = {
-  title: 'David & Goliath — a nova in two voices',
-  fps: `${FPS}/1`, frames: FRAMES, width: 1920, height: 1080, backend: 'webgl2-canvas (headless Chromium, SwiftShader)',
-  timingMode: 'original-score',
-  format: { letterbox: 0.128, note: '2.39:1 scope until ignition, then full 16:9 (IMAX-style expansion)' },
-  defaultPost: {},
-  shots, overlays,
-  audio: [
-    { id: 'winter-a', path: 'media/source/winter-usaf-band.ogg', timelineStart: A.timelineStart, timelineEnd: A.timelineEnd, sourceInSeconds: A.sourceInSeconds, playbackRate: 1, fadeOutMs: 8, note: 'bars 1-38 (recording lead-in 1.70 s), cut at ignition' },
-    { id: 'winter-b', path: 'media/source/winter-usaf-band.ogg', timelineStart: B.timelineStart, timelineEnd: B.timelineEnd, sourceInSeconds: B.sourceInSeconds, playbackRate: 1, fadeInMs: 12, note: 'bars 56-63 aftermath (eight bars incl. fermata)' },
-    { id: 'score-synth', generated: true, timelineStart: 0, timelineEnd: B.timelineEnd, sourceInSeconds: 0, playbackRate: 1, note: '80s synth pulse, pressure wave, Doppler roar (src/audio/score.js); cannon samples processed for distance' },
-  ],
-  cues, effects, text,
-  assets: [
-    { id: 'winter', path: 'media/source/winter-usaf-band.ogg', role: 'music', origin: 'Supplied by the director (NOVA-02-Music.zip, winter-original.ogg); same performance as archive.org item TheFourSeasonsWinter (USAFB_Winter.ogg, decoded correlation 0.986) and Wikimedia Commons "Vivaldi Winter mvt 1 Allegro non molto - The USAF Concert.ogg"', rights: 'Public domain: performance by The United States Air Force Band (work of the U.S. federal government); composition public domain', sha256: 'fd3e3200c1342e4da55222d6004ffb74ae3ac851c516acf3160d7c79041c206e' },
-    ...[1, 2, 3, 4, 5, 6].map((k) => ({ id: `cannon-${k}`, path: `media/sfx/cannon-${k}.wav`, role: 'sfx', origin: 'Supplied by the director (NOVA-02-Music.zip); 1.65 s excerpts of media/source/1812-us-army-band-2005.ogg, source times in media/sfx/cannon-provenance.json', rights: 'Public domain: Tchaikovsky 1812 Overture performed by The United States Army Band (2005), work of the U.S. federal government' })),
-    { id: 'cannon-source', path: 'media/source/1812-us-army-band-2005.ogg', role: 'sfx-source', origin: 'Supplied by the director (NOVA-02-Music.zip)', rights: 'Public domain (U.S. Army Band performance; composition public domain)', sha256: 'abdc5a4b0054fd3d535503d738757fd72d88fc5af9c5807a42b64c6aa75f02c5' },
-    { id: 'font-cinzel', path: 'src/fonts/Cinzel-normal.woff2', role: 'font', origin: 'Google Fonts', rights: 'SIL OFL 1.1 (src/fonts/OFL-Cinzel.txt)' },
-    { id: 'font-cormorant', path: 'src/fonts/CormorantGaramond-italic.woff2', role: 'font', origin: 'Google Fonts', rights: 'SIL OFL 1.1 (src/fonts/OFL-CormorantGaramond.txt)' },
-    { id: 'font-imfell', path: 'src/fonts/IMFellEnglish-italic.woff2', role: 'font', origin: 'Google Fonts', rights: 'SIL OFL 1.1 (src/fonts/OFL-IMFellEnglish.txt)' },
-  ],
-  checks: { audioRequired: true, videoCodec: 'h264', pixelFormat: 'yuv420p' },
-};
-
-fs.writeFileSync(path.join(ROOT, 'film-plan.json'), JSON.stringify(plan, null, 1) + '\n');
-console.log(`wrote film-plan.json: ${shots.length} shots, ${cues.length} cues, ${FRAMES} frames (${(FRAMES / FPS).toFixed(2)} s)`);
+// ---- write one plan per cut -----------------------------------------------------------------
+for (const [cut, C] of Object.entries(CUTS)) {
+  const text = [
+    { id: 'name-giant', start: at(3) + 40, end: at(5) + 20, content: C.names[0].join('\n'), style: 'name', maxCps: 12, minFrames: 60 },
+    { id: 'name-dwarf', start: at(6) + 30, end: at(8) - 6, content: C.names[1].join('\n'), style: 'name', maxCps: 12, minFrames: 60 },
+    { id: 'end-title', start: at(63) + 24, end: DECAY_END - 34, content: C.endTitle, style: 'title', y: 0.80, fadeIn: 24, fadeOut: 20, minFrames: 48 },
+    // the closing line, in two breaths, over the dark ground below the horizon
+    { id: 'coda-line-1', start: CODA_LINE1, end: FRAMES - 2, content: 'The birth of a new star;', style: 'line', font: 'cormorant', size: 44, y: 0.815, fadeIn: 30, fadeOut: 34, minFrames: 60 },
+    { id: 'coda-line-2', start: CODA_LINE2, end: FRAMES - 2, content: 'the Nova.', style: 'line', font: 'cinzel', size: 50, y: 0.875, fadeIn: 30, fadeOut: 34, minFrames: 60 },
+  ];
+  const cutShots = shots.map((s) => {
+    const o = { ...s };
+    if (C.presets[s.id]) o.preset = C.presets[s.id];
+    if (C.purposes[s.id]) o.purpose = C.purposes[s.id];
+    return o;
+  });
+  const plan = {
+    id: C.id, cut, title: C.title,
+    fps: `${FPS}/1`, frames: FRAMES, width: 1080, height: 1920, backend: 'webgl2-canvas (headless Chromium, SwiftShader)',
+    timingMode: 'original-score',
+    format: { letterbox: 0.128, note: '9:16. A 3:4 window (bars top and bottom) until ignition; the frame opens to the full 9:16 in the dark' },
+    defaultPost: {},
+    shots: cutShots, overlays,
+    audio: [
+      { id: 'winter-a', path: 'media/source/winter-usaf-band.ogg', timelineStart: A.timelineStart, timelineEnd: A.timelineEnd, sourceInSeconds: A.sourceInSeconds, playbackRate: 1, fadeOutMs: 8, note: 'bars 1-38 (recording lead-in 1.70 s), cut at ignition' },
+      { id: 'winter-b', path: 'media/source/winter-usaf-band.ogg', timelineStart: B.timelineStart, timelineEnd: B.timelineEnd, sourceInSeconds: B.sourceInSeconds, playbackRate: 1, fadeInMs: 12, note: 'bars 56-63 aftermath (eight bars incl. fermata)' },
+      { id: 'score-synth', generated: true, timelineStart: 0, timelineEnd: FRAMES, sourceInSeconds: 0, playbackRate: 1, note: '80s synth pulse, the climax in the dark (pressure wave, Doppler roar), the night of the coda (src/audio/score.js); cannon samples processed for distance' },
+    ],
+    cues, effects, text,
+    assets: [
+      { id: 'winter', path: 'media/source/winter-usaf-band.ogg', role: 'music', origin: 'Supplied by the director (NOVA-02-Music.zip, winter-original.ogg); same performance as archive.org item TheFourSeasonsWinter (USAFB_Winter.ogg, decoded correlation 0.986) and Wikimedia Commons "Vivaldi Winter mvt 1 Allegro non molto - The USAF Concert.ogg"', rights: 'Public domain: performance by The United States Air Force Band (work of the U.S. federal government); composition public domain', sha256: 'fd3e3200c1342e4da55222d6004ffb74ae3ac851c516acf3160d7c79041c206e' },
+      ...[1, 2, 3, 4, 5, 6].map((k) => ({ id: `cannon-${k}`, path: `media/sfx/cannon-${k}.wav`, role: 'sfx', origin: 'Supplied by the director (NOVA-02-Music.zip); 1.65 s excerpts of media/source/1812-us-army-band-2005.ogg, source times in media/sfx/cannon-provenance.json', rights: 'Public domain: Tchaikovsky 1812 Overture performed by The United States Army Band (2005), work of the U.S. federal government' })),
+      { id: 'cannon-source', path: 'media/source/1812-us-army-band-2005.ogg', role: 'sfx-source', origin: 'Supplied by the director (NOVA-02-Music.zip)', rights: 'Public domain (U.S. Army Band performance; composition public domain)', sha256: 'abdc5a4b0054fd3d535503d738757fd72d88fc5af9c5807a42b64c6aa75f02c5' },
+      { id: 'font-cinzel', path: 'src/fonts/Cinzel-normal.woff2', role: 'font', origin: 'Google Fonts', rights: 'SIL OFL 1.1 (src/fonts/OFL-Cinzel.txt)' },
+      { id: 'font-cormorant', path: 'src/fonts/CormorantGaramond-italic.woff2', role: 'font', origin: 'Google Fonts', rights: 'SIL OFL 1.1 (src/fonts/OFL-CormorantGaramond.txt)' },
+      { id: 'font-imfell', path: 'src/fonts/IMFellEnglish-italic.woff2', role: 'font', origin: 'Google Fonts', rights: 'SIL OFL 1.1 (src/fonts/OFL-IMFellEnglish.txt)' },
+    ],
+    checks: { audioRequired: true, videoCodec: 'h264', pixelFormat: 'yuv420p' },
+  };
+  fs.writeFileSync(path.join(ROOT, C.file), JSON.stringify(plan, null, 1) + '\n');
+  console.log(`wrote ${C.file} (${cut}): ${cutShots.length} shots, ${cues.length} cues, ${FRAMES} frames (${(FRAMES / FPS).toFixed(2)} s)`);
+}
 for (const s of shots) console.log(`${s.id.padEnd(18)} ${String(s.start).padStart(5)}-${String(s.end).padEnd(5)} ${((s.end - s.start) / FPS).toFixed(2).padStart(6)}s  ${s.scene}`);

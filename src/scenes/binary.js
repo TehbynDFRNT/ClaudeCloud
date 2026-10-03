@@ -305,7 +305,8 @@ export default {
     if (P.drift) {
       const [amp, sp] = P.drift;
       const o = [Math.sin(t * sp * 0.71 + 1.3) * amp, Math.sin(t * sp * 0.53 + 0.4) * amp * 0.6, Math.sin(t * sp * 0.61 + 2.1) * amp];
-      cam = camera(v3.add(cam.pos, o), v3.add(v3.add(cam.pos, cam.fwd), v3.mul(o, 0.5)), 2 * Math.atan(cam.tanH) * 180 / Math.PI);
+      const R = cam.raw;   // rebuild from the unframed camera (see engine/math.js framing)
+      cam = camera(v3.add(R.pos, o), v3.add(v3.add(R.pos, R.fwd), v3.mul(o, 0.5)), 2 * Math.atan(R.tanH) * 180 / Math.PI);
     }
     // stream development
     let head = 99;

@@ -32,10 +32,20 @@ export const ease = {
   inSine: (t) => 1 - Math.cos((t * Math.PI) / 2),
 };
 
-// Build a camera. fov = vertical field of view in degrees. roll in radians.
-// Returns uniforms {uCamPos, uCamRot (mat3 column-major), uTanHalfFov} and a project() fn.
-export function camera(pos, target, fovDeg = 40, roll = 0, worldUp = [0, 1, 0]) {
-  let f = v3.norm(v3.sub(target, pos));
+// Per-shot reframing for a different output aspect (the 9:16 cut). The film sets it for the shot being
+// drawn (identity otherwise), and every camera() built while it is set is reframed exactly once:
+//   roll  extra camera roll, degrees (positive = counter-clockwise on screen)
+//   zoom  tan(fov/2) divisor (2 = twice as tight)
+//   pan   [x, y] point of the ORIGINAL 16:9 frame (frameUV units, y up) that becomes the new centre
+//   dolly world units along the view direction (positive = closer)
+// The unframed camera stays available as cam.raw; code that rebuilds a camera from an existing one
+// (handheld drift, shake) must start from cam.raw so the reframing is not applied twice.
+export const IDENTITY_FRAMING = Object.freeze({ roll: 0, zoom: 1, pan: [0, 0], dolly: 0 });
+let FRAMING = IDENTITY_FRAMING;
+export function setFraming(fr) { FRAMING = fr ? { ...IDENTITY_FRAMING, ...fr } : IDENTITY_FRAMING; }
+export function getFraming() { return FRAMING; }
+
+function basis(f, worldUp, roll) {
   let r = v3.norm(v3.cross(f, worldUp));
   if (!isFinite(r[0]) || v3.len(v3.cross(f, worldUp)) < 1e-6) r = [1, 0, 0];
   let u = v3.cross(r, f);
@@ -45,9 +55,35 @@ export function camera(pos, target, fovDeg = 40, roll = 0, worldUp = [0, 1, 0]) 
     const u2 = v3.add(v3.mul(u, c), v3.mul(r, -s));
     r = r2; u = u2;
   }
-  const tanH = Math.tan((fovDeg * Math.PI) / 360);
+  return [r, u];
+}
+
+// Build a camera. fov = vertical field of view in degrees. roll in radians.
+// Returns uniforms {uCamPos, uCamRot (mat3 column-major), uTanHalfFov} and a project() fn.
+export function camera(pos, target, fovDeg = 40, roll = 0, worldUp = [0, 1, 0]) {
+  const f0 = v3.norm(v3.sub(target, pos));
+  const [r0, u0] = basis(f0, worldUp, roll);
+  const tan0 = Math.tan((fovDeg * Math.PI) / 360);
+  const raw = { pos, fwd: f0, right: r0, up: u0, tanH: tan0, fov: fovDeg, roll, worldUp };
+  let f = f0, r = r0, u = u0, tanH = tan0;
+  const F = FRAMING;
+  if (F !== IDENTITY_FRAMING) {
+    if (F.dolly) pos = v3.add(pos, v3.mul(f0, F.dolly));
+    if (F.pan && (F.pan[0] || F.pan[1])) {
+      // aim at the original frame's point (pan.x, pan.y), keeping the original horizon orientation
+      f = v3.norm(v3.add(f0, v3.add(v3.mul(r0, F.pan[0] * tan0 * (16 / 9)), v3.mul(u0, F.pan[1] * tan0))));
+      r = v3.norm(v3.cross(f, u0)); u = v3.cross(r, f);
+    }
+    if (F.roll) {
+      const a = (F.roll * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a);
+      const r2 = v3.add(v3.mul(r, c), v3.mul(u, s));
+      const u2 = v3.add(v3.mul(u, c), v3.mul(r, -s));
+      r = r2; u = u2;
+    }
+    if (F.zoom && F.zoom !== 1) tanH /= F.zoom;
+  }
   return {
-    pos, fwd: f, right: r, up: u, tanH,
+    pos, fwd: f, right: r, up: u, tanH, raw,
     uniforms: { uCamPos: pos, uCamRot: [...r, ...u, ...f], uTanHalfFov: tanH },
     // project world point -> full-frame pixel coords (x right, y down) + depth; null if behind
     project(p, W, H) {

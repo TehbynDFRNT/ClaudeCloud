@@ -8,5 +8,7 @@ import vortex from './vortex.js';
 import atoms from './atoms.js';
 import plasma from './plasma.js';
 import nova from './nova.js';
+import voidScene from './void.js';
+import earthsky from './earthsky.js';
 
-export const scenes = Object.fromEntries([redgiant, whitedwarf, binary, studies, vortex, atoms, plasma, nova].map((s) => [s.id, s]));
+export const scenes = Object.fromEntries([redgiant, whitedwarf, binary, studies, vortex, atoms, plasma, nova, voidScene, earthsky].map((s) => [s.id, s]));

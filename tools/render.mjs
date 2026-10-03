@@ -9,6 +9,8 @@
 //   node tools/render.mjs film    [--from 0] [--to N] [--out out/frames] [--q 0.95] [--force] [--adopt]
 //     (keeps frames whose content fingerprint matches out/frames/manifest.json; re-renders only stale ones)
 //   node tools/render.mjs bench   <sceneId> [--params '{}'] [--t 2]
+// Every mode takes --plan <file> (default film-plan.json: the David cut; film-plan-prometheus.json is the
+// other cut). Sizes follow the plan's aspect: --w sets the width, --h defaults to w * plan.height / plan.width.
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -23,8 +25,10 @@ const positional = argv[1] && !argv[1].startsWith('--') ? argv[1] : null;
 const opt = (k, d) => { const i = argv.indexOf('--' + k); return i >= 0 ? argv[i + 1] : d; };
 const flag = (k) => argv.includes('--' + k);
 
-const W = +opt('w', mode === 'film' ? 1920 : 960);
-const H = +opt('h', Math.round(W * 9 / 16));
+const PLAN = opt('plan', 'film-plan.json');
+const planDims = JSON.parse(fs.readFileSync(path.join(ROOT, PLAN), 'utf8'));
+const W = +opt('w', mode === 'film' ? planDims.width : Math.round(planDims.width / 2));
+const H = +opt('h', Math.round(W * planDims.height / planDims.width));
 const CHROME = process.env.CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.woff2': 'font/woff2', '.png': 'image/png', '.jpg': 'image/jpeg', '.flac': 'audio/flac', '.wav': 'audio/wav', '.css': 'text/css' };
 
@@ -47,11 +51,11 @@ async function open() {
     executablePath: CHROME,
     args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--disable-gpu-sandbox', '--js-flags=--max-old-space-size=4096'],
   });
-  const page = await browser.newPage({ viewport: { width: Math.min(W, 1920), height: Math.min(H, 1080) }, deviceScaleFactor: 1 });
+  const page = await browser.newPage({ viewport: { width: Math.min(W, 1920), height: Math.min(H, 1920) }, deviceScaleFactor: 1 });
   const errors = [];
   page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') { errors.push(m.text()); console.error('[page]', m.text()); } });
   page.on('pageerror', (e) => { errors.push(String(e)); console.error('[pageerror]', e); });
-  const url = `http://127.0.0.1:${srv.address().port}/src/index.html?w=${W}&h=${H}${flag('warm') ? '&warm' : ''}`;
+  const url = `http://127.0.0.1:${srv.address().port}/src/index.html?w=${W}&h=${H}&plan=${encodeURIComponent(PLAN)}${flag('warm') ? '&warm' : ''}`;
   await page.goto(url);
   await page.waitForFunction(() => window.__ready || window.__error, null, { timeout: 600000 });
   const err = await page.evaluate(() => window.__error);
@@ -146,7 +150,7 @@ async function main() {
       const dir = path.join(ROOT, out || 'out/frames');
       fs.mkdirSync(dir, { recursive: true });
       const q = +opt('q', 0.95);
-      const planJson = JSON.parse(fs.readFileSync(path.join(ROOT, 'film-plan.json'), 'utf8'));
+      const planJson = JSON.parse(fs.readFileSync(path.join(ROOT, PLAN), 'utf8'));
       const fp = makeFingerprinter(planJson);
       const manPath = path.join(dir, 'manifest.json');
       const manifest = fs.existsSync(manPath) ? JSON.parse(fs.readFileSync(manPath, 'utf8')) : {};

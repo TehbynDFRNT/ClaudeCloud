@@ -12,7 +12,7 @@ async function boot() {
   await Promise.all(fonts.map((f) => document.fonts.load(f)));
   await document.fonts.ready;
   const [plan, grid] = await Promise.all([
-    fetch('../film-plan.json').then((r) => r.json()),
+    fetch('../' + (q.get('plan') || 'film-plan.json')).then((r) => r.json()),   // ?plan=film-plan-prometheus.json for another cut
     fetch('../analysis/grid.json').then((r) => r.json()).catch(() => null),
   ]);
   const film = new Film({ canvas, W, H, plan, grid, scenes });

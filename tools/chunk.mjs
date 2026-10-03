@@ -11,6 +11,9 @@
 // Nothing final is ever discarded: frames and blocks carry content fingerprints (tools/fingerprint.mjs);
 // only blocks whose code/shot/effects changed are re-rendered. --push commits each finished block
 // immediately so work survives a container reset.
+// --plan <file> picks the cut (default film-plan.json). A plan with an `id` keeps its blocks in
+// dist/<id>/ (dist/<id>-preview/ for --preview); a block whose fingerprint already exists in another
+// cut's folder is copied instead of rendered, so frames the cuts share are rendered once.
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -22,11 +25,13 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const argv = process.argv.slice(2);
 const mode = argv[0];
 const opt = (k, d) => { const i = argv.indexOf('--' + k); return i >= 0 ? argv[i + 1] : d; };
-const plan = JSON.parse(fs.readFileSync(path.join(ROOT, 'film-plan.json'), 'utf8'));
+const PLAN = opt('plan', 'film-plan.json');
+const plan = JSON.parse(fs.readFileSync(path.join(ROOT, PLAN), 'utf8'));
 const pad = (n) => String(n).padStart(5, '0');
-const PREVIEW = argv.includes('--preview');          // 960x540 work-in-progress cut, kept apart from final blocks
-const W = PREVIEW ? 960 : 1920, H = PREVIEW ? 540 : 1080;
-const CHUNKS = path.join(ROOT, PREVIEW ? 'dist/preview' : 'dist/chunks');
+const PREVIEW = argv.includes('--preview');          // half-size work-in-progress cut, kept apart from final blocks
+const W = PREVIEW ? plan.width / 2 : plan.width, H = PREVIEW ? plan.height / 2 : plan.height;
+const CUT_DIR = plan.id ? `dist/${plan.id}${PREVIEW ? '-preview' : ''}` : (PREVIEW ? 'dist/preview' : 'dist/chunks');
+const CHUNKS = path.join(ROOT, CUT_DIR);
 const BLOCK = 240;                                   // fixed 10 s blocks aligned to frame 0
 const fpOf = makeFingerprinter(plan);
 const blockFp = (a, b) => { const h = crypto.createHash('sha1'); for (let f = a; f < b; f++) h.update(fpOf(f, W, H) + ','); return h.digest('hex').slice(0, 16); };
@@ -51,7 +56,7 @@ if (mode === 'costs') {
   // one representative frame per shot at full size, timed in the real renderer
   const frames = plan.shots.map((s) => Math.round((s.start + s.end - 1) / 2));
   const out = path.join(ROOT, 'out/costs');
-  const r = spawnSync('node', ['tools/render.mjs', 'stills', '--frames', frames.join(','), '--w', '1920', '--out', path.relative(ROOT, out)], { cwd: ROOT, encoding: 'utf8' });
+  const r = spawnSync('node', ['tools/render.mjs', 'stills', '--plan', PLAN, '--frames', frames.join(','), '--w', String(plan.width), '--h', String(plan.height), '--out', path.relative(ROOT, out)], { cwd: ROOT, encoding: 'utf8' });
   const costs = {};
   for (const line of (r.stdout || '').split('\n')) {
     const m = /^f(\d+) (\S+) \(\S+\) (\d+)ms/.exec(line);
@@ -87,13 +92,37 @@ if (mode === 'costs') {
 } else if (mode === 'render') {
   const from = +opt('from', 0), to = +opt('to', plan.frames);
   if (from % BLOCK || (to % BLOCK && to !== plan.frames)) throw new Error(`--from/--to must be multiples of ${BLOCK} (or the film end)`);
-  const frames = path.join(ROOT, opt('frames', PREVIEW ? 'out/frames-preview' : 'out/frames'));
+  const frames = path.join(ROOT, opt('frames', plan.id ? `out/frames-${plan.id}${PREVIEW ? '-preview' : ''}` : (PREVIEW ? 'out/frames-preview' : 'out/frames')));
   fs.mkdirSync(CHUNKS, { recursive: true });
+  const push = (name) => {
+    if (!argv.includes('--push')) return;
+    run('git', ['add', path.relative(ROOT, path.join(CHUNKS, name + '.mp4')), path.relative(ROOT, path.join(CHUNKS, name + '.json'))]);
+    run('git', ['commit', '-q', '-m', `Render block ${path.relative(ROOT, CHUNKS)}/${name}`]);
+    for (let k = 0, d = 2; ; k++, d *= 2) {
+      const r = spawnSync('git', ['push', '-q', '-u', 'origin', 'HEAD'], { stdio: 'inherit', cwd: ROOT });
+      if (r.status === 0) break;
+      if (k >= 4) throw new Error('git push failed');
+      spawnSync('sleep', [String(d)]);
+    }
+  };
   for (const [a, b] of blocks().filter(([a]) => a >= from && a < to)) {
     const name = blockName(a, b), state = blockState(a, b);
     if (state === 'final') { console.log(`${name}: final, kept`); continue; }
+    // the same picture already rendered for another cut (same fingerprint) -> copy it
+    const want = freshFp(a, b);
+    const twin = fs.existsSync(path.join(ROOT, 'dist')) && fs.readdirSync(path.join(ROOT, 'dist'), { withFileTypes: true })
+      .filter((d) => d.isDirectory() && path.join(ROOT, 'dist', d.name) !== CHUNKS)
+      .map((d) => path.join(ROOT, 'dist', d.name))
+      .find((dir) => { const m = path.join(dir, name + '.json'); return fs.existsSync(m) && fs.existsSync(path.join(dir, name + '.mp4')) && JSON.parse(fs.readFileSync(m, 'utf8')).fp === want; });
+    if (twin) {
+      fs.copyFileSync(path.join(twin, name + '.mp4'), path.join(CHUNKS, name + '.mp4'));
+      fs.copyFileSync(path.join(twin, name + '.json'), path.join(CHUNKS, name + '.json'));
+      console.log(`${name}: identical block in ${path.relative(ROOT, twin)} -> copied`);
+      push(name);
+      continue;
+    }
     console.log(`${name}: ${state} -> rendering`);
-    run('node', ['tools/render.mjs', 'film', '--from', String(a), '--to', String(b), '--w', String(W), '--out', path.relative(ROOT, frames)]);
+    run('node', ['tools/render.mjs', 'film', '--plan', PLAN, '--from', String(a), '--to', String(b), '--w', String(W), '--h', String(H), '--out', path.relative(ROOT, frames)]);
     for (let f = a; f < b; f++) if (!fs.existsSync(path.join(frames, `${pad(f)}.jpg`))) throw new Error(`missing frame ${f}`);
     const out = path.join(CHUNKS, name + '.mp4');
     run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'warning', '-framerate', plan.fps, '-start_number', String(a),
@@ -111,16 +140,7 @@ if (mode === 'costs') {
     fs.writeFileSync(path.join(CHUNKS, name + '.json'), JSON.stringify({ from: a, to: b, fp: rendered, crf: opt('crf', '17'), frames: n }) + '\n');
     if (rendered !== freshFp(a, b)) { console.warn(`${name}: sources changed during render; block left stale`); continue; }
     console.log(`wrote ${path.relative(ROOT, out)} (${n} frames, ${(fs.statSync(out).size / 1e6).toFixed(1)} MB)`);
-    if (argv.includes('--push')) {
-      run('git', ['add', path.relative(ROOT, path.join(CHUNKS, name + '.mp4')), path.relative(ROOT, path.join(CHUNKS, name + '.json'))]);
-      run('git', ['commit', '-q', '-m', `Render block ${name}`]);
-      for (let k = 0, d = 2; ; k++, d *= 2) {
-        const r = spawnSync('git', ['push', '-q', '-u', 'origin', 'HEAD'], { stdio: 'inherit', cwd: ROOT });
-        if (r.status === 0) break;
-        if (k >= 4) throw new Error('git push failed');
-        spawnSync('sleep', [String(d)]);
-      }
-    }
+    push(name);
   }
 } else if (mode === 'assemble') {
   const audio = path.join(ROOT, opt('audio', 'out/audio/mix.wav'));
@@ -132,7 +152,7 @@ if (mode === 'costs') {
   }
   const list = path.join(CHUNKS, 'concat.txt');
   fs.writeFileSync(list, files.map((f) => `file '${path.join(CHUNKS, f)}'`).join('\n') + '\n');
-  const out = path.join(ROOT, opt('out', PREVIEW ? 'dist/preview-cut.mp4' : 'dist/david-and-goliath.mp4'));
+  const out = path.join(ROOT, opt('out', plan.id ? `dist/${plan.id}${PREVIEW ? '-preview' : ''}.mp4` : (PREVIEW ? 'dist/preview-cut.mp4' : 'dist/david-and-goliath.mp4')));
   const [num, den] = plan.fps.split('/').map(Number);
   run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'warning', '-f', 'concat', '-safe', '0', '-i', list, '-i', audio,
     '-map', '0:v:0', '-map', '1:a:0', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '320k', '-ar', '48000', '-ac', '2',
@@ -140,8 +160,13 @@ if (mode === 'costs') {
     '-metadata', `title=${plan.title}`,
     '-metadata', 'comment=Music: Vivaldi, L\'inverno I, The United States Air Force Band. Cannon: Tchaikovsky 1812 Overture, The United States Army Band. Picture and sound design rendered in code.',
     out]);
+  // the soundtrack must be there and audible: a silent or missing audio stream fails the assembly
+  const vd = spawnSync('ffmpeg', ['-hide_banner', '-nostats', '-i', out, '-map', '0:a:0', '-af', 'volumedetect', '-f', 'null', '-'], { encoding: 'utf8' });
+  const mean = /mean_volume: (-?[\d.]+) dB/.exec(vd.stderr || '');
+  if (!mean || +mean[1] < -40) throw new Error(`${path.relative(ROOT, out)}: soundtrack missing or silent (${mean ? mean[1] + ' dB' : 'no audio stream'})`);
+  console.log(`soundtrack ok: mean ${mean[1]} dB`);
   console.log(`wrote ${path.relative(ROOT, out)} (${(fs.statSync(out).size / 1e6).toFixed(1)} MB)`);
-  if (!PREVIEW) run('python3', [path.join(ROOT, 'tools/verify_video.py'), out, '--plan', path.join(ROOT, 'film-plan.json'), '--out', out.replace(/\.mp4$/, '.verify.json')], { cwd: path.join(ROOT, 'tools') });
+  if (!PREVIEW) run('python3', [path.join(ROOT, 'tools/verify_video.py'), out, '--plan', path.join(ROOT, PLAN), '--out', out.replace(/\.mp4$/, '.verify.json')], { cwd: path.join(ROOT, 'tools') });
 } else {
   console.error('modes: costs | plan | render | assemble');
   process.exit(1);

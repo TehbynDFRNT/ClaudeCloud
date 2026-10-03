@@ -8,9 +8,35 @@ import { drawTitles } from './titles.js';
 import * as math from './math.js';
 import * as rng from './rng.js';
 
+// Portrait (9:16) output: a scene preset may carry `portrait: { framing, ...param overrides }`; in a portrait
+// render those overrides are merged over the preset and `framing` reframes every camera the shot builds
+// (engine/math.js setFraming). Landscape renders ignore `portrait` entirely, so the 16:9 cut is unchanged.
+const FRAMING_KEYS = ['roll', 'zoom', 'pan', 'dolly'];
+function framingAt(fr, u) {
+  if (!fr) return null;
+  if (!Array.isArray(fr)) return fr;
+  // keyed: [[u, {roll, zoom, pan, dolly}, easing?], ...] in shot-normalised time
+  const ks = fr;
+  if (u <= ks[0][0]) return ks[0][1];
+  for (let i = 1; i < ks.length; i++) {
+    if (u <= ks[i][0]) {
+      const [u0, a] = ks[i - 1], [u1, b, ez] = ks[i];
+      const t = (math.ease[ez || 'inOutSine'] || math.ease.inOutSine)((u - u0) / Math.max(1e-9, u1 - u0));
+      const out = {};
+      for (const k of FRAMING_KEYS) {
+        const va = a[k] ?? math.IDENTITY_FRAMING[k], vb = b[k] ?? math.IDENTITY_FRAMING[k];
+        out[k] = Array.isArray(va) ? va.map((x, j) => math.lerp(x, vb[j], t)) : math.lerp(va, vb, t);
+      }
+      return out;
+    }
+  }
+  return ks[ks.length - 1][1];
+}
+
 export class Film {
   constructor({ canvas, W, H, plan, grid, scenes }) {
     this.W = W; this.H = H;
+    this.portrait = H > W;
     this.plan = plan;
     this.fps = evalFps(plan.fps);
     this.scenes = scenes;
@@ -36,6 +62,8 @@ export class Film {
     const film = this;
     const E = {
       G: this.G, W: this.W, H: this.H, fps: this.fps, plan: this.plan, music: this.music, math, rng,
+      // portrait output, and the pixel scale for strokes/type: 1.0 at 1080 px on the frame's SHORT side
+      portrait: this.portrait, k: Math.min(this.W, this.H) / 1080,
       program: (src, name) => film.G.program(src, name),
       camera: (pos, target, fov, roll, up) => math.camera(pos, target, fov, roll, up),
       // frame-shaped render target at a fraction of output size
@@ -72,9 +100,12 @@ export class Film {
     // params: scene preset for this shot id (lives in the scene module) overridden by plan params
     const sc = this.scenes[shot.scene];
     const preset = (sc && sc.presets && (sc.presets[shot.preset || shot.id] || sc.presets.default)) || {};
+    const pp = this.portrait ? { ...(preset.portrait || {}), ...((shot.portrait) || {}) } : null;
+    const params = { ...preset, ...(pp || {}), ...(shot.params || {}) };
+    const framing = pp ? framingAt(pp.framing, local / dur) : null;
     return {
-      f, t: f / fps, local, dur, u: local / dur, fps, W: this.W, H: this.H,
-      shot, params: { ...preset, ...(shot.params || {}) }, seed: shot.seed ?? (rng.hash1(shot.start, 7) * 1000),
+      f, t: f / fps, local, dur, u: local / dur, fps, W: this.W, H: this.H, portrait: this.portrait,
+      shot, params, framing, seed: shot.seed ?? (rng.hash1(shot.start, 7) * 1000),
     };
   }
 
@@ -93,7 +124,7 @@ export class Film {
 
   // global effects from plan.effects
   effects(f) {
-    const out = { letterbox: this.plan.format?.letterbox ?? POST_DEFAULTS.letterbox, flash: 0, fade: 0, shake: [0, 0, 0] };
+    const out = { letterbox: this.plan.format?.letterbox ?? POST_DEFAULTS.letterbox, flash: 0, dip: 0, fade: 0, shake: [0, 0, 0] };
     for (const e of this.plan.effects || []) {
       if (e.type === 'letterbox' && f >= e.frame) {
         const u = math.clamp((f - e.frame) / Math.max(1, e.frames || 1));
@@ -101,6 +132,10 @@ export class Film {
       } else if (e.type === 'flash' && f >= e.frame) {
         const k = f - e.frame;
         if (k < (e.decay || 6) * 6) out.flash += e.amount * Math.exp(-k / (e.decay || 6));
+      } else if (e.type === 'dip' && f >= e.frame) {
+        // a dark pulse: exposure punched down on a hit (fast attack, exponential recovery)
+        const k = f - e.frame, at = e.attack ?? 1, dc = e.decay || 6;
+        if (k < at + dc * 6) out.dip = Math.max(out.dip, e.amount * (k < at ? (k + 1) / (at + 1) : Math.exp(-(k - at) / dc)));
       } else if (e.type === 'fade' && f >= e.start && f < e.end) {
         const u = (f - e.start) / (e.end - e.start);
         out.fade = Math.max(out.fade, math.lerp(e.from, e.to, math.ease.inOutSine(u)));
@@ -122,7 +157,8 @@ export class Film {
     const scale = shot.renderScale ?? sc.scale ?? 1;
     const target = this.E.target(targetName, scale);
     this.E.S = S;
-    sc.render(this.E, S, target);
+    math.setFraming(S.framing);
+    try { sc.render(this.E, S, target); } finally { math.setFraming(null); }
     return { S, sc, target };
   }
 
@@ -139,7 +175,8 @@ export class Film {
       this.octx.setTransform(1, 0, 0, 1, 0, 0);
       this.octx.clearRect(0, 0, this.W, this.H);
       this.setClock(S0);
-      overlayMode = sc0.overlay(this.E, S0, this.octx) || null;
+      math.setFraming(S0.framing);
+      try { overlayMode = sc0.overlay(this.E, S0, this.octx) || null; } finally { math.setFraming(null); }
       this.overlayTex = this.G.canvasTexture(this.overlayTex, this.overlay);
     }
     const A = this.renderShot(shot, f, 'sceneA');
@@ -160,6 +197,7 @@ export class Film {
     if (A.sc.post) Object.assign(p, A.sc.post(this.E, A.S) || {});
     p.letterbox = fx.letterbox;
     p.flash += fx.flash;
+    if (fx.dip) p.exposure *= 1 - Math.min(1, fx.dip);
     p.fade = Math.max(p.fade, fx.fade);
     if (fx.fadeColor) p.fadeColor = fx.fadeColor;
     p.shake = [p.shake[0] + fx.shake[0], p.shake[1] + fx.shake[1], p.shake[2] + fx.shake[2]];
