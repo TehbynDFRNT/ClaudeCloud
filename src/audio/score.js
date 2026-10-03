@@ -31,7 +31,7 @@ export const DESIGN = {
   // true-peak limiter; their ceilings sit under the master ceiling, so loudness at the strikes and the ignition comes
   // from density and not from peaks the master limiter would have to take back.
   cannonsDb: 0.0,
-  cannonLimiter: { ceilDb: -4.0, lookMs: 2.0, relMs: 90 },  // cannon stem (JS); per-cue levels: approach law
+  cannonLimiter: { ceilDb: -3.0, lookMs: 2.0, relMs: 90 },  // cannon stem (JS); per-cue levels: approach law
   ignitionDb: -0.5,
   impactDriveDb: 6.0,              // ignition impact layers (sub, crack, saw stack, walls) into the stem saturator
   synthTrimDb: -24.0,            // source trim so the per-bar auto-level works around 0 dB
@@ -45,12 +45,12 @@ export const DESIGN = {
   // whatever the music does underneath. Measured on a first render of the stem, corrected and re-rendered.
   cannon: { relFar: -20, relNear: 5, shape: 1.5, maxCorrDb: 14, passes: 3, tolDb: 0.75 },
   // orchestra + synth duck under the five strike cannons (d <= maxD; depth grows toward d = 0): 5 ms attack,
-  // 80 ms hold, then a 120 ms exponential release (within 1 dB after ~0.3 s), following the boom that masks it.
-  duck: { maxD: 0.12, depthDb: [3, 6], attack: 0.005, hold: 0.08, tau: 0.12 },
-  // the ladder (bars 32-38) is the cannons' section: orchestra + synth sit a static 2.5 dB lower there (ramped
+  // 80 ms hold, then a 120 ms exponential release (within 1 dB after ~0.35 s), following the boom that masks it.
+  duck: { maxD: 0.12, depthDb: [4, 8], attack: 0.005, hold: 0.08, tau: 0.12 },
+  // the ladder (bars 32-38) is the cannons' section: orchestra + synth sit a static 3.5 dB lower there (ramped
   // over the 2 s before the bar-32 downbeat), so the strikes have headroom under the ceiling. The internal dynamics
   // (tremolo swells, strikes) are untouched.
-  ladderRide: { db: -2.5, fromBar: 32, rampS: 2.0 },
+  ladderRide: { db: -3.5, fromBar: 32, rampS: 2.0 },
   // synth sections (bars from the director's notes); offsets = K-weighted level relative to the orchestra
   synth: {
     sections: [
@@ -699,6 +699,12 @@ export function buildCannons(ctx, tl, samples, gains = {}) {
         curveEnv(ag.gain, start, on + gate + 0.015, (x) => { const tau = x - on; return tau < gate ? 1 : Math.max(0, 1 - (tau - gate) / 0.012); }, 4000);
         alive(ag);
         chain(src, BQ(ctx, 'highpass', 400, 0.7), BQ(ctx, 'peaking', 2500, 0.8, 6), ag, G(ctx, (1 - d) * L.gain * S.info.norm), dist);
+        // parallel saturated copy of the (notched, darkened) boom, band-limited to 90-400 Hz: its harmonics make
+        // the boom read as loud without adding peak (no oversampling: zero latency against the dry boom; the band
+        // feeding the shaper is low, so aliasing stays far below it)
+        const hs = ctx.createWaveShaper(); hs.curve = tanhCurve(5.0);
+        alive(hs);
+        chain(env, G(ctx, 3 * L.gain * S.info.norm), hs, BQ(ctx, 'highpass', 90, 0.7), BQ(ctx, 'lowpass', 400, 0.7), G(ctx, 0.5 * (1 - d) * L.gain), dist);
       }
       src.start(start); src.stop(start + len + 0.01);
     }

@@ -448,10 +448,12 @@ vec4 waveMarch(vec3 ro, vec3 rd, float jit){
     float w1 = n3(q * 6.5 + vec3(0.0, uFbEvo * 0.35, uFbSeed));
     float w2 = n3(q * 17.0 + vec3(uFbEvo * 0.5, 0.0, 0.0));
     float w3 = abs(e) < 0.06 ? n3(q * 43.0 + vec3(0.0, 0.0, uFbEvo * 0.8)) : 0.0;
-    float ee = e + 0.04 * (w1 + 0.5 * w2) + 0.008 * w3;
+    // finest octave right at the front (the camera meets it at close range)
+    float w4 = abs(e) < 0.025 ? n3(q * 113.0 + vec3(uFbEvo * 1.1, 0.0, 0.0)) : 0.0;
+    float ee = e + 0.04 * (w1 + 0.5 * w2) + 0.008 * w3 + 0.003 * w4;
     float body = smoothstep(-0.004, 0.004, ee);
     float layer = exp(-max(ee, 0.0) / 0.022);
-    float vein = 1.0 - abs(w2 + 0.5 * w3);
+    float vein = 1.0 - abs(w2 + 0.5 * w3 + 0.25 * w4);
     layer *= 0.3 + 1.4 * smoothstep(0.25, 0.85, 0.5 + 0.5 * w1 + 0.35 * (hot - 0.45) + 0.25 * w2);
     float clump = max(0.0, 0.05 + 1.1 * hot * hot + 0.3 * vein * vein + 0.6 * w1 + 0.05 * w3);
     float gas = (0.012 + 0.3 * pow(smoothstep(0.55, 1.3, clump), 2.0)) * smoothstep(0.42, 0.85, x);
@@ -459,15 +461,15 @@ vec4 waveMarch(vec3 ro, vec3 rd, float jit){
     // debris filaments: bright radial threads (direction-space cells), segmented and advected outward; they are
     // what streaks past the camera once we are inside
     float deb = 0.0;
-    if (uWvDebris > 0.0 && x > 0.6 && x < 1.2){
+    if (uWvDebris > 0.0 && x > 0.6 && x < 1.08){
       vec4 c = n4(n * 46.0 + vec3(3.0, 1.0, uFbSeed));
       float seg = n3(vec3(n * 7.0) + vec3(0.0, 0.0, x * 4.0 - uWvAdv));
-      deb = smoothstep(0.17, 0.0, c.g * 1.1) * smoothstep(0.5, 0.66, c.r) * smoothstep(-0.05, 0.35, seg) * smoothstep(0.6, 0.75, x) * smoothstep(1.2, 1.05, x);
+      deb = smoothstep(0.17, 0.0, c.g * 1.1) * smoothstep(0.5, 0.66, c.r) * smoothstep(-0.05, 0.35, seg) * smoothstep(0.6, 0.75, x) * smoothstep(1.08, 1.0, x);
       deb *= smoothstep(0.06, 0.3, 1.0 - abs(dot(n, rd)));   // end-on filaments near the vanishing point read as noise
     }
     float mu = abs(dot(n, rd));
     // front: white billow tops, ember lanes (strong contrast so the wall reads as turbulent matter, not a glow)
-    float hFront = 0.24 + 0.3 * smoothstep(0.0, 0.03, ee) - 0.3 * smoothstep(0.04, 0.13, ee) + 0.55 * (hot - 0.45) + 0.12 * pow(mu, 1.5) + 0.15 * pow(vein, 3.0);
+    float hFront = 0.22 + 0.3 * smoothstep(0.0, 0.03, ee) - 0.3 * smoothstep(0.04, 0.13, ee) + 0.55 * (hot - 0.45) + 0.12 * pow(mu, 1.5) + 0.22 * pow(vein, 5.0) + 0.04 * w3;
     // seen from inside (ray travelling outward) the layer shows its cooler, dense inner face
     hFront = mix(hFront, 0.22 + 0.3 * (hot - 0.45) + 0.12 * pow(vein, 3.0) + 0.05 * w1, smoothstep(-0.1, 0.35, dot(rd, n)));
     // hot gas behind the front: crimson body with gold clumps

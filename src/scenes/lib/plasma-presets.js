@@ -146,7 +146,7 @@ const F312 = {
   ],
   vibrate: 0.01,
   boil: {
-    cell: 4.5, evo: [23.0, 5.0], drift: [0, 0, 0.0, 0.0], warp: 1.2, relief: 0.015,
+    cell: 4.5, evo: [23.0, 3.6], drift: [0, 0, 0.0, 0.0], warp: 1.2, relief: 0.015,
     heat: 0.38, heatGain: 1.0, lane: 0.24, meso: 0.5, gain: 0.3,
     plume: 0, tmax: 6, fog: 0.0, haze: [0.01, 0.002, 0.001], detail: 1.1, granule: 1.2, outflow: 1.0, flowSpin: 2.0,
     soft: 0.01, sigma: 80, skin: 0.03, flowRate: 1.2,

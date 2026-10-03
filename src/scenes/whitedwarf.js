@@ -206,7 +206,7 @@ export default {
       rig: 'orbit', dist: [[0, 1100], [1, 7.6, 'inOutSine']], az: [[0, -9], [1, 5]], el: [[0, 9], [1, 6]],
       fov: [[0, 30], [1, 28]], screen: [[0, [0.25, 0.05]], [1, [0.25, 0.08]]], drift: 0.4,
       spin: [0.2, 0.05], magTilt: 24, magAz: 35, surf: [[0, 1.9], [0.5, 1.7], [1, 1.0]], fil: 1.5, filL: [1.25, 2.1], filW: 0.0045, shimmer: 0.015,
-      ocean: 0, haze: 0.0, hazePx: [[0, 0], [0.5, 1.0], [1, 3.2]], hazeF: 4.0, crimson: 0.5, atmo: [[0, 1.0], [1, 0.8]], stars: 0.75, dust: 2.5,
+      ocean: 0, haze: 0.0, hazePx: [[0, 0], [0.5, 1.0], [1, 3.2]], hazeF: 4.0, crimson: 0.5, atmo: [[0, 1.0], [1, 0.55]], stars: 0.75, dust: 2.5,
       post: { exposure: [[0, 1.15], [1, 1.0]], bloomStrength: [[0, 0.2], [1, 0.22]], bloomThreshold: 1.1, streakStrength: [[0, 0.28], [0.5, 0.10], [1, 0.04]], vignette: 0.6 },
     },
     // Compression: the hydrogen ocean piles up. Skimming the horizon; smooth swirling layer, convection not yet set in.
