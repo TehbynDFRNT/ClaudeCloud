@@ -68,7 +68,6 @@ FIGURES = {
         face_dir=(-0.42, -0.91, 0.0),
         hints=dict(nose=[32.14, 23.81, 107.45], eyeR=[26.76, 44.85, 126.93], eyeL=[52.05, 22.82, 128.58],
                    chin=[42.68, 38.88, 79.96]),
-        nose_window=(95, 120),          # cast-Y window for the nose search (his forelock curls project further)
         pupils=True,                    # carved (heart-shaped) pupils: gaze measured from them
         gaze_pitch=None,                # None = measured
         preclip=[],
@@ -88,7 +87,6 @@ FIGURES = {
         face_dir=(-0.92, -0.38, 0.0),
         hints=dict(nose=[2.18, 18.27, 85.35], eyeR=[6.5, 29.98, 95.58], eyeL=[14.83, 16.09, 95.32],
                    chin=[9.37, 22.88, 69.86]),
-        nose_window=None,
         pupils=False,
         gaze_pitch=6.0,                 # blank eyes: upturn judged visually (see notes)
         preclip=[],
@@ -109,7 +107,6 @@ FIGURES = {
         face_dir=(0.90, 0.14, 0.42),
         hints=dict(nose=[53.32, 98.43, 30.49], eyeR=[46.7, 103.93, 31.27], eyeL=[51.02, 102.46, 22.1],
                    mouth=[50.99, 93.82, 29.31], beard=[42.47, 76.97, 26.23]),
-        nose_window=None,
         pupils=False,
         gaze_pitch=6.0,
         # relief ground slab (z < 7) and its return on the +X edge (x > 62): keep z >= 7 and x <= 62 (raw = cast)
@@ -324,9 +321,9 @@ def build_frame(name, cfg, m):
     fd = nrm(to_cast(cfg['face_dir'], zup))
     fd_h = nrm(fd - (fd @ up) * up)
     # nose tip (cast): most forward point near the hint
-    near = np.linalg.norm(V - hint['nose'], axis=1) < 0.1 * np.ptp(V[:, 1])
-    nose = V[np.argmax(np.where(near, V @ fd_h, -1e18))]
     Hest = (V[:, 1].max() - hint[('chin' if 'chin' in hint else 'beard')][1])
+    near = np.linalg.norm(V - hint['nose'], axis=1) < 0.05 * Hest
+    nose = V[np.argmax(np.where(near, V @ fd_h, -1e18))]
     # facial symmetry plane from face points around the nose
     c0 = nose - fd_h * 0.12 * Hest
     face = (np.linalg.norm(V - c0, axis=1) < 0.30 * Hest) & ((N @ fd_h) > 0.0) & (((V - c0) @ fd_h) > -0.05 * Hest)
