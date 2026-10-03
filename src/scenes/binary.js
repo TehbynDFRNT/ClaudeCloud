@@ -351,7 +351,7 @@ export default {
       uStreamHead: head, uStreamCut: cut, uStreamFade: fade,
       uStreamAmt: ev(P.streamAmt, u, 1), uStreamW: ev(P.streamW, u, 1), uStreamGlow: ev(P.streamGlow, u, 1),
       uRip: ev(P.rip, u, 0.6), uFlowT: t * ev(P.flowRate, 0, 1.6) + (S.seed % 17), uDetail: ev(P.detail, u, 0),
-      uWhip: whip, uWhipK: whipK, uWD: [XW, 0, 0], uRake: ev(P.rake, u, 0.0), uStepK: ev(P.stepK, u, 1), uDiskCore: ev(P.diskCore, u, 14),
+      uWhip: whip, uWhipK: whipK, uWD: [XW, 0, 0], uRake: ev(P.rake, u, 0.0), uStepK: ev(P.stepK, u, 1), uDiskCore: ev(P.diskCore, u, 24),
       uDiskIn: 0.03, uDiskOut: diskOut, uDiskAmt: diskAmt, uDiskH: ev(P.diskH, u, 0.034), uDiskT: t + 4.0,
       uDiskGlow: ev(P.diskGlow, u, 1.0), uRingAmt: ev(P.ringAmt, u, 0), uRCirc: R_CIRC, uFlare: flare, uHot: hot,
       uClump: [clumpS, clumpAmt], uCool: ev(P.cool, u, 1),

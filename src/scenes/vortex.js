@@ -130,6 +130,7 @@ const presets = {
     ],
     tau: [3, 1.0, 0],
     lum: [0.5, 0.5],
+    flare: [-0.4, 1e9, 0],          // the young disk's inner region is not yet heated: the impact owns the frame
     disk: {
       omega: 0.26, hot: 1.0, hotPhi: -2.873, streamDir: [0.965, 0, 0.261], streamW: 0.024, rb: 1.35,
       arms: 0.35, rin: 0.12, sheet: 0.6, sheetMask: -0.1, curtain: 1.5, maxSteps: 52, irr: 3, tout: 1250, sheetHeat: 0.6, tinK: 0.1, edgeFade: 0.12,

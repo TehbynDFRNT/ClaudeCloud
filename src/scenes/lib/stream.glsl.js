@@ -63,7 +63,7 @@ vec3 heatEmission(float T){
 // disk source function: optically thick, the inner disk blazes white / ice blue, the rim glows crimson
 // (moderate radiance so the ice-blue inner disk keeps its colour through the tonemap; only the innermost
 // boundary layer and the dwarf itself burn to white)
-vec3 diskEmission(float T){ return heatColor(T) * pow(min(T, 20000.0) / 2600.0, 0.7) * 0.55; }
+vec3 diskEmission(float T){ return heatColor(T) * pow(min(T, 9000.0) / 2600.0, 0.7) * 0.6; }
 
 vec4 fieldAt(vec2 xz){
   vec2 uv = (xz - uFieldBox.xy) * uFieldBox.zw;
