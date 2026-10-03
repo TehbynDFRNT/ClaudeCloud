@@ -154,7 +154,7 @@ const presets = {
   },
   // Ride with a clump along its ballistic arc; gold dashed trajectory and ticks draw ahead of it.
   'S08-parabola': {
-    chase: { tau: [[0, 1.0], [1, 1.30, 'linear']], back: 0.16, up: 0.23, side: 0.03, lead: 0.2, toDwarf: 0.3, look: 0.55, fov: 48 },
+    chase: { tau: [[0, 1.0], [1, 1.30, 'linear']], back: 0.24, up: 0.27, side: 0.04, lead: 0.2, toDwarf: 0.3, look: 0.42, fov: 48 },
     clump: { tau: [[0, 1.0], [1, 1.30, 'linear']], amt: 1.0 },
     headTau: [[0, 1.014], [1, 1.314, 'linear']],
     streamAmt: 1.0, streamGlow: 0.75, rip: 0.6, flowRate: 1.8, rake: 0.4, ringAmt: 0.0, starGain: 0.5,
