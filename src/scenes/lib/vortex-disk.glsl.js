@@ -88,7 +88,7 @@ vec3 hotDown(){ return vec3(-sin(uHotPhi), 0.0, -cos(uHotPhi)); }
 // conservative-ish distance to any gas (0 inside the bounding shell)
 float gasGap(vec3 p, float r){
   float H = diskH(r);
-  float g = max(abs(p.y) - 4.2 * H, max(r - min(uRb, uRout * 1.3), uRin * 0.62 - r));
+  float g = max(abs(p.y) - 4.2 * H, max(r - min(uRb, uRout * 1.3), uRin * 0.78 - r));
   if (uHot > 0.0){
     // splash plume above/below the rim, swept downstream
     vec3 d = p - hotPos() - hotDown() * 0.12;
@@ -350,6 +350,8 @@ vec3 vxMarch(vec3 ro, vec3 rd, float tMax, float jit, float pixAngle, float tD, 
     dt = max(dt, budget * mix(0.15, 1.0, smoothstep(uRin * 1.6, 0.4, r)));
     // optical-depth limit: no step may swallow more than ~1.5 e-folds of the gas just sampled
     dt = min(dt, max(1.5 / max(rhoPrev, 1e-3), 0.0012));
+    // approaching the opaque inner wall from the hole: resolve its face (else it stipples under jitter)
+    if (r < uRin * 1.4) dt = min(dt, max(uRin * 0.035, lodStep));
     if (uHot > 0.0){
       float dh = length(p - hotPos() - hotDown() * 0.1);
       // near the impact the step budget is waived: the hot trail is the subject
