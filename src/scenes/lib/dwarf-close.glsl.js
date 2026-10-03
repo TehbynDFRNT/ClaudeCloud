@@ -412,7 +412,7 @@ vec3 wdSurface(vec3 n, float mu, float t){
   float cap = smoothstep(0.80, 0.97, abs(cm));
   // smooth degenerate photosphere: clear limb darkening, deeper ice-blue toward the limb
   float limb = 0.12 + 0.88 * pow(mu, 1.15);
-  vec3 c = mix(vec3(0.20, 0.42, 1.0), vec3(0.70, 0.85, 1.0), pow(mu, 0.6));
+  vec3 c = mix(vec3(0.20, 0.42, 1.0), vec3(0.64, 0.81, 1.0), pow(mu, 0.6));
   // very low-contrast sculpting: magnetic banding, brighter polar caps, broad mottling
   float band = sin(cm * 15.0 + big * 2.5) * 0.5 + 0.5;
   float b = 1.0 + 0.12 * big + 0.04 * mid + 0.35 * cap + 0.10 * (band - 0.5);
@@ -680,7 +680,8 @@ vec3 wdThread(vec3 ro, vec3 rd, float tMax, float pixA, float t){
   // the head: a taper of separating beads running ahead
   float ahead = sBest - uThread;
   float body = smoothstep(0.03, -0.02, ahead);
-  float beads = smoothstep(0.55, 0.9, sin(ahead * 260.0 - t * 3.0) * 0.5 + 0.5) * exp(-max(ahead, 0.0) / 0.025) * step(-0.02, ahead);
+  float bph = ahead * 220.0 - t * 3.0 + 2.5 * n3(vec3(ahead * 40.0, 3.0, 8.0));                  // irregular spacing
+  float beads = smoothstep(0.82, 0.97, sin(bph) * 0.5 + 0.5) * exp(-max(ahead, 0.0) / 0.022) * step(-0.02, ahead);
   float bodyCl = clumps + 0.18;                                    // a faint continuous stream between the clumps
   vec3 cC = mix(vec3(0.85, 0.07, 0.018), vec3(1.0, 0.45, 0.11), smoothstep(0.25, 0.95, sBest));
   vec3 cG = vec3(1.0, 0.55, 0.16);

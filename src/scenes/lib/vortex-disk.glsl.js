@@ -405,7 +405,18 @@ float vmJit(vec2 px){
 }
 // Accretion curtains: plasma lifted off the inner disk edge, sliding along dipole field lines (r = L sin^2 theta)
 // onto the dwarf's magnetic poles. Two broad curtains (oblique rotator), field-aligned threads, poleward knots.
-vec3 vxCurtain(vec3 ro, vec3 rd, float tMax, float jit){
+// The thin shell profile in L is pre-integrated per segment (L is ~linear along a short segment), so the shell
+// is resolved exactly with few samples and needs no jitter (no salt); the slow factors are taken at midpoints.
+float vmShAvg(float x0, float x1, float w){
+  float d = x1 - x0;
+  float a0 = min(abs(x0), w) / w, a1 = min(abs(x1), w) / w;
+  if (abs(d) < 0.02 * w){ float a = min(abs(0.5 * (x0 + x1)) / w, 1.0); return 1.0 - a * a * (3.0 - 2.0 * a); }
+  float c0 = sign(x0) * w * a0 * (1.0 - a0 * a0 + 0.5 * a0 * a0 * a0);
+  float c1 = sign(x1) * w * a1 * (1.0 - a1 * a1 + 0.5 * a1 * a1 * a1);
+  return (c1 - c0) / d;
+}
+float vmL(vec3 p){ float r2 = dot(p, p); return r2 * sqrt(r2) / max(dot(p.xz, p.xz), 1e-7); }
+vec3 vxCurtain(vec3 ro, vec3 rd, float tMax, float jitUnused){
   float Rm = uRin * 1.65;
   vec2 h = sphereHit(ro, rd, uDwarfPos, Rm);
   if (h.x > h.y || h.y < 0.0) return vec3(0.0);
@@ -415,29 +426,35 @@ vec3 vxCurtain(vec3 ro, vec3 rd, float tMax, float jit){
   float dt = (t1 - t0) / float(N);
   vec3 acc = vec3(0.0);
   float spin = uCurtainSpin * uTau;
+  float Lc = uRin * 1.06, W = uRin * 0.42;
+  vec3 pa = ro + rd * t0 - uDwarfPos;
+  float La = vmL(pa);
   for (int i = 0; i < N; i++){
-    vec3 p = ro + rd * (t0 + (float(i) + jit) * dt) - uDwarfPos;
-    float r = length(p);
-    if (r < uDwarfR) continue;
-    float s2 = dot(p.xz, p.xz) / (r * r);
-    float L = r / max(s2, 1e-3);
-    float x = (L - uRin * 1.06) / (uRin * 0.24);
-    float m = exp(-x * x);
-    if (m < 0.02) continue;
-    float c = abs(p.y) / r;                       // 0 in the disk plane, 1 at the pole
-    float hemi = p.y >= 0.0 ? 1.0 : -1.0;
-    float phi = atan(-p.z, p.x) - spin;
-    float bun = pow(0.5 + 0.5 * cos(phi - uCurtainPhi - (hemi > 0.0 ? 0.0 : PI)), 2.0);
-    // field-aligned threads: constant along a field line (functions of phi and L only)
-    float th = n3(vec3(cos(phi) * 9.0, sin(phi) * 9.0, L / uRin * 4.0 + hemi * 7.0));
-    float thr = smoothstep(-0.12, 0.42, th);
-    // knots sliding poleward along the lines
-    float fl = 0.6 + 0.4 * n3(vec3(cos(phi) * 6.0 + 3.0, sin(phi) * 6.0, c * 6.0 - uTau * 3.5));
-    float g = min(pow(uRin / r, 1.2), 6.0);
-    float lift = smoothstep(0.06, 0.4, c);           // lifts off above the disk surface
-    acc += m * (0.04 + 0.96 * bun) * thr * fl * g * lift * dt;
+    vec3 pb = pa + rd * dt;
+    float Lb = vmL(pb);
+    float m = vmShAvg(La - Lc, Lb - Lc, W);
+    if (m > 0.004){
+      vec3 p = 0.5 * (pa + pb);
+      float r = length(p);
+      if (r > uDwarfR){
+        float L = vmL(p);
+        float c = abs(p.y) / r;                       // 0 in the disk plane, 1 at the pole
+        float hemi = p.y >= 0.0 ? 1.0 : -1.0;
+        float phi = atan(-p.z, p.x) - spin;
+        float bun = pow(0.5 + 0.5 * cos(phi - uCurtainPhi - (hemi > 0.0 ? 0.0 : PI)), 2.0);
+        // field-aligned threads: constant along a field line (functions of phi and L only)
+        float th = n3(vec3(cos(phi) * 9.0, sin(phi) * 9.0, L / uRin * 4.0 + hemi * 7.0));
+        float thr = smoothstep(-0.12, 0.42, th);
+        // knots sliding poleward along the lines
+        float fl = 0.6 + 0.4 * n3(vec3(cos(phi) * 6.0 + 3.0, sin(phi) * 6.0, c * 6.0 - uTau * 3.5));
+        float g = min(pow(uRin / r, 1.2), 6.0);
+        float lift = smoothstep(0.06, 0.4, c);           // lifts off above the disk surface
+        acc += m * (0.04 + 0.96 * bun) * thr * fl * g * lift * dt;
+      }
+    }
+    pa = pb; La = Lb;
   }
-  return acc * C_CURT * uCurtain * 40.0 / max(uRin, 1e-3);
+  return acc * C_CURT * uCurtain * 30.0 / max(uRin, 1e-3);
 }
 
 // resolved dwarf: limb darkened, faint granulation, blue accretion footprints where the curtains land

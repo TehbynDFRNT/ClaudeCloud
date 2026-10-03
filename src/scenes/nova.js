@@ -303,15 +303,15 @@ export default {
     // 2.5 s: the pressure wave passes through the camera: a wall of light approaches, envelops (refraction,
     // debris streaking past), then glowing hot gas all around. Peak of the Doppler roar.
     'S24-shockfront': {
-      mode: 'wave', volScale: 0.4, dur: 2.5,
+      mode: 'wave', volScale: 0.55, dur: 2.5,
       cam: [[0, [0.05, 0.02, -1.0], [0, 0, 0], 58, 0], [1.05, [0.03, 0.01, -1.0], [0, 0, 0.2], 60, 0.03], [2.5, [0.0, 0.0, -0.98], [0.02, 0.02, 0.2], 62, 0.06]],
       wvR: [[0, 0.5], [1.05, 0.985, 'inQuad'], [2.5, 1.26, 'outQuad']],
-      fbTurb: 0.12, fbEvo: [[0, 4.0], [2.5, 6.5, 'linear']], wvDens: 34, wvHeat: [[0, 0.88], [1.0, 0.9], [1.3, 1.0], [2.5, 1.0]],
-      debris: [[0, 0.6], [1.0, 1.0], [2.5, 0.6]], adv: [[0, 0], [2.5, 9.0, 'linear']],
-      refract: [[0.6, 0], [1.02, 1.0], [1.5, 0.35], [2.5, 0.12]],
-      starGain: 1,
-      postKeys: { zoomBlur: [[0.6, 0.0], [1.05, 0.07], [1.6, 0.025], [2.5, 0.015]], exposure: [[0, 1.0], [0.95, 0.85], [1.12, 0.62], [1.4, 1.05], [2.5, 1.0]] },
-      post: { bloomStrength: 0.12, halation: 0.04, saturation: 1.1, contrast: 1.06 },
+      fbTurb: 0.12, fbEvo: [[0, 4.0], [1.05, 5.2], [2.5, 10.5, 'linear']], wvDens: 34, wvHeat: [[0, 0.86], [1.0, 0.9], [1.3, 1.0], [2.5, 1.1]],
+      debris: [[0, 0.6], [1.0, 1.0], [2.5, 0.8]], adv: [[0, 0], [1.05, 2.0], [2.5, 22.0, 'linear']],
+      refract: [[0.7, 0], [1.0, 1.0], [1.5, 0.35], [2.5, 0.12]],
+      starGain: [[0, 0.6], [0.95, 0.5], [1.15, 0.0]],
+      postKeys: { zoomBlur: [[0.6, 0.0], [0.98, 0.012], [1.1, 0.05], [1.6, 0.03], [2.5, 0.02]], exposure: [[0, 1.0], [0.95, 0.85], [1.12, 0.62], [1.4, 1.05], [2.5, 1.0]] },
+      post: { bloomStrength: 0.12, halation: 0.04, saturation: 1.1, contrast: 1.06, lift: 0 },
     },
     // 2.88 s: limb of the decelerating shell; the gold sheet tears into filaments, knots condense, fingers grow.
     'S25-shell': {

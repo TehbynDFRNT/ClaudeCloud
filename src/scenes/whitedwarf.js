@@ -206,7 +206,7 @@ export default {
       rig: 'orbit', dist: [[0, 1100], [1, 7.6, 'inOutSine']], az: [[0, -9], [1, 5]], el: [[0, 9], [1, 6]],
       fov: [[0, 30], [1, 28]], screen: [[0, [0.25, 0.05]], [1, [0.25, 0.08]]], drift: 0.4,
       spin: [0.2, 0.05], magTilt: 24, magAz: 35, surf: [[0, 1.9], [0.5, 1.7], [1, 1.0]], fil: 1.5, filL: [1.25, 2.1], filW: 0.0045, shimmer: 0.015,
-      ocean: 0, haze: 0.0, hazePx: [[0, 0], [0.5, 1.0], [1, 3.2]], hazeF: 4.0, crimson: 0.5, atmo: [[0, 1.0], [1, 1.5]], stars: 0.75, dust: 2.5,
+      ocean: 0, haze: 0.0, hazePx: [[0, 0], [0.5, 1.0], [1, 3.2]], hazeF: 4.0, crimson: 0.5, atmo: [[0, 1.0], [1, 0.8]], stars: 0.75, dust: 2.5,
       post: { exposure: [[0, 1.15], [1, 1.0]], bloomStrength: [[0, 0.2], [1, 0.22]], bloomThreshold: 1.1, streakStrength: [[0, 0.28], [0.5, 0.10], [1, 0.04]], vignette: 0.6 },
     },
     // Compression: the hydrogen ocean piles up. Skimming the horizon; smooth swirling layer, convection not yet set in.
@@ -270,7 +270,7 @@ export default {
     // and arches more and more; in the last 12 frames the camera pitches down into a point of white.
     'S21-strike5': {
       rig: 'surface', lat: [[0, 18], [1, 18.4]], lon: [[0, -8], [1, -7.2]], alt: [[0, 0.076], ['e-12f', 0.064], [1, 0.016, 'inQuad']],
-      heading: [[0, 92], [1, 99]], pitch: [[0, -28], ['e-12f', -28.5], [1, -75, 'inQuad']], fov: [[0, 44], ['e-12f', 41], [1, 28, 'inQuad']], roll: [[0, 5], ['e-12f', 11], [1, 22]],
+      heading: [[0, 92], [1, 99]], pitch: [[0, -28], [0.45, -27.5], ['e-12f', -25.5], [1, -75, 'inQuad']], fov: [[0, 44], ['e-12f', 41], [1, 28, 'inQuad']], roll: [[0, 5], ['e-12f', 11], [1, 22]],
       spin: [0.2, 0.0], magLocal: [-6, 0], surf: [[0, 1.7], [0.6, 1.9], ['e-12f', 1.9], [1, 2.6, 'inQuad']],
       fil: [[0, 3.0], [1, 5.0]], filL: [1.03, 1.10], filW: 0.0025, filN: 10, filSpan: 22, filAt: 31, filK: 2,
       shimmer: 0.03, tremolo: [[0, 0.02], [1, 0.08, 'inQuad']],

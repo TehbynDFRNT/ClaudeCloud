@@ -456,31 +456,34 @@ vec4 waveMarch(vec3 ro, vec3 rd, float jit){
     float clump = max(0.0, 0.05 + 1.1 * hot * hot + 0.3 * vein * vein + 0.6 * w1 + 0.05 * w3);
     float gas = (0.012 + 0.3 * pow(smoothstep(0.55, 1.3, clump), 2.0)) * smoothstep(0.42, 0.85, x);
     float rho = body * (5.0 * layer + gas);
-    // debris filaments: thin radial streaks (direction-space cells), segmented and advected outward
+    // debris filaments: bright radial threads (direction-space cells), segmented and advected outward; they are
+    // what streaks past the camera once we are inside
     float deb = 0.0;
-    if (uWvDebris > 0.0 && x > 0.7 && x < 1.15){
+    if (uWvDebris > 0.0 && x > 0.6 && x < 1.2){
       vec4 c = n4(n * 46.0 + vec3(3.0, 1.0, uFbSeed));
-      float seg = n3(vec3(n * 7.0) + vec3(0.0, 0.0, x * 5.0 - uWvAdv));
-      deb = smoothstep(0.1, 0.0, c.g * 1.1) * smoothstep(0.6, 0.72, c.r) * smoothstep(0.1, 0.5, seg + 0.1) * smoothstep(0.7, 0.85, x) * smoothstep(1.15, 1.02, x);
+      float seg = n3(vec3(n * 7.0) + vec3(0.0, 0.0, x * 4.0 - uWvAdv));
+      deb = smoothstep(0.17, 0.0, c.g * 1.1) * smoothstep(0.5, 0.66, c.r) * smoothstep(-0.05, 0.35, seg) * smoothstep(0.6, 0.75, x) * smoothstep(1.2, 1.05, x);
       deb *= smoothstep(0.06, 0.3, 1.0 - abs(dot(n, rd)));   // end-on filaments near the vanishing point read as noise
     }
     float mu = abs(dot(n, rd));
-    float hFront = 0.31 + 0.3 * smoothstep(0.0, 0.03, ee) - 0.34 * smoothstep(0.04, 0.13, ee) + 0.3 * (hot - 0.45) + 0.14 * pow(mu, 1.5) + 0.13 * pow(vein, 3.0);
+    // front: white billow tops, ember lanes (strong contrast so the wall reads as turbulent matter, not a glow)
+    float hFront = 0.24 + 0.3 * smoothstep(0.0, 0.03, ee) - 0.3 * smoothstep(0.04, 0.13, ee) + 0.55 * (hot - 0.45) + 0.12 * pow(mu, 1.5) + 0.15 * pow(vein, 3.0);
     // seen from inside (ray travelling outward) the layer shows its cooler, dense inner face
     hFront = mix(hFront, 0.22 + 0.3 * (hot - 0.45) + 0.12 * pow(vein, 3.0) + 0.05 * w1, smoothstep(-0.1, 0.35, dot(rd, n)));
-    float hGas = 0.16 + 0.24 * smoothstep(0.3, 1.5, clump) + 0.05 * w2;
+    // hot gas behind the front: crimson body with gold clumps
+    float hGas = 0.16 + 0.22 * smoothstep(0.3, 1.5, clump) + 0.16 * smoothstep(1.1, 1.7, clump) + 0.05 * w2;
     float h = uWvHeat * mix(hGas, hFront, smoothstep(0.15, 0.6, layer));
     vec3 em = novaEmit(h);
-    // cold-blue radiative precursor just ahead of the front
-    float pre = exp(-pow((ee + 0.03) / 0.03, 2.0)) * (1.0 - body) * (0.5 + 0.5 * w1);
+    // thin, faint cold-blue radiative precursor just ahead of the front
+    float pre = exp(-pow((ee + 0.018) / 0.014, 2.0)) * (1.0 - body) * (0.5 + 0.5 * w1);
     float dt = clamp(min(0.35 * abs(ee - 0.003) * R + 0.002 * R, max(t * 0.09, 0.004 * R)), 0.002 * R, 0.09 * R) * (0.7 + 0.6 * fract(jit + float(i) * 0.618034));
     if (x < 0.4) dt = max(dt, (0.42 - x) * R * 0.9);     // empty hot interior: only the analytic core glow
     float a = 1.0 - exp(-rho * uWvDens * dt / R);
     // thin, very hot inner plasma around the surviving dwarf
     float core = exp(-x * x / 0.06) * body;
-    col += T * (a * em + (C_ICE * 3.0 * pre + novaEmit(0.7) * 9.0 * deb * uWvDebris + novaEmit(0.62) * 0.22 * core) * dt / R);
+    col += T * (a * em + (C_ICE * 1.0 * pre + novaEmit(0.72) * 14.0 * deb * uWvDebris + novaEmit(0.62) * 0.22 * core) * dt / R);
     T *= 1.0 - a;
-    T *= exp(-deb * uWvDebris * dt / R * 6.0);
+    T *= exp(-deb * uWvDebris * dt / R * 4.0);
     if (T < 0.02) break;
     t += dt;
   }
