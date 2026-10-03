@@ -117,7 +117,7 @@ export function sling() {
   const s = vel[1] / vel[0], k = 3.3;
   const parY = (x) => Pr[1] + s * (x - Pr[0]) + k * (x - Pr[0]) ** 2;
   const apex = [Pr[0] - s / (2 * k), parY(Pr[0] - s / (2 * k))];
-  const pw = 0.047, stR = 0.022, forkL = 0.056, bow = 0.008;          // pouch half-length, the stone, fork, cord bow
+  const pw = 0.046, stR = 0.022, forkL = 0.044, bow = 0.008;          // pouch half-length, the stone, fork, cord bow
 
   // ---- the fist (as S10's, in ink), the cords leaving its top toward the pouch; the forearm runs down-right
   D.at(-14);
@@ -138,28 +138,31 @@ export function sling() {
   const slingAt = (th, o) => {
     const P0 = at(th), v = tan(th), r = [Math.cos(th), Math.sin(th)];
     const St = add(P0, r, 0.012);                                    // the stone's centre
-    const E1 = add(St, v, pw), E2 = add(St, v, -pw);                 // the pouch tips, beside the stone
-    const fk = R + 0.012 - forkL, Fk = add(add(C, r, fk), v, -0.003); // the fork, a short way short of the pouch
+    const Pc = add(St, r, -0.004);                                   // the pouch's centre line: the stone rides outward in it
+    const E1 = add(Pc, v, pw), E2 = add(Pc, v, -pw);                 // the pouch tips, beside the stone
+    const fk = R + 0.012 - forkL, Fk = add(add(C, r, fk), v, -0.002); // the fork, a short way short of the pouch
     const cord = [];
-    for (let i = 0; i <= 80; i++) { const f = i / 80; cord.push(add(add(C, r, f * fk), v, -bow * Math.sin(Math.PI * f) - 0.003 * f)); }
+    for (let i = 0; i <= 80; i++) { const f = i / 80; cord.push(add(add(C, r, f * fk), v, -bow * Math.sin(Math.PI * f) - 0.002 * f)); }
     for (const run of clipOut(resample(cord, 1.5 * PX), [F.sil])) D.stroke(run, { w: o.cw, d: o.d, speed: o.speed, taper: [6, 2], wet: o.wet });
-    // the two strings, sagging very slightly outward as they spread to the tips
+    // the two strings leave the fork together and splay out to the tips (concave, as taut strings round a load)
     for (const E of [E1, E2]) {
-      const sg = E === E1 ? 1 : -1, pts = [];
-      for (let i = 0; i <= 24; i++) { const u = i / 24; pts.push(add(lerp2(Fk, E, u), v, sg * 0.004 * Math.sin(Math.PI * u))); }
+      const pts = [];
+      for (let i = 0; i <= 24; i++) {
+        const u = i / 24, a = add(lerp2(Fk, E, u), r, 0), d = [E[0] - Fk[0], E[1] - Fk[1]];
+        const n = nrm([-d[1], d[0]]), sgn = Math.sign(n[0] * r[0] + n[1] * r[1]);   // bend toward the pouch
+        pts.push(add(a, n, sgn * 0.0045 * Math.sin(Math.PI * u)));
+      }
       D.stroke(pts, { w: o.sw, d: o.d * 0.95, speed: o.speed * 0.6, taper: [2, 3], gap: 0, wet: o.wet });
     }
-    // flaps: tip to tip, bellied b along r (pointed at the tips, full at the middle)
-    const flap = (b, n = 48) => { const pts = []; for (let i = 0; i <= n; i++) { const u = i / n; pts.push(add(lerp2(E1, E2, u), r, b * Math.sin(Math.PI * u) ** 0.85)); } return pts; };
-    const outer = flap(stR + 0.011), inner = flap(-(stR + 0.008)), lip = flap(-stR * 0.3);
-    const front = poly([...lip, ...inner.slice().reverse()]);         // the near flap, folded over the stone
+    // the leaf: tip to tip, the far flap round the outside of the stone, the near flap across its inner side
+    const flap = (b, e, n = 56) => { const pts = []; for (let i = 0; i <= n; i++) { const u = i / n; pts.push(add(lerp2(E1, E2, u), r, b * Math.sin(Math.PI * u) ** e)); } return pts; };
+    const outer = flap(stR + 0.012, 0.7), inner = flap(-(stR - 0.002), 0.9);
     D.stroke(outer, { w: o.pw, d: o.d * 1.02, speed: o.speed * 0.5, taper: [3, 3], gap: 0, wet: o.wet });
     D.stroke(inner, { w: o.pw * 0.9, d: o.d, speed: o.speed * 0.5, taper: [3, 3], gap: 0, wet: o.wet });
-    // the stone, its inner edge hidden under the near flap; the flap's lip drawn across it
+    const front = poly([...inner, ...flap(-(stR + 0.03), 1).reverse()]);   // everything on the near side of that flap
     const ring = arcPts(St[0], St[1], stR, th - Math.PI * 0.4, th - Math.PI * 0.4 + TAU * 1.02, { step: 1.5 * PX, wob: 0.4 * PX, seed: 5 + o.seed });
-    for (const run of clipOut(ring, [front])) D.stroke(run, { w: o.pw * 0.9, d: o.d, speed: o.speed * 0.4, taper: [3, 3], gap: 0, wet: o.wet });
-    D.stroke(lip, { w: o.pw * 0.8, d: o.d * 0.95, speed: o.speed * 0.5, taper: [5, 5], wet: o.wet });
-    return { P0, v, r, E1, E2, St, outer, inner, lip, front, Fk };
+    for (const run of clipOut(ring, [front])) D.stroke(run, { w: o.pw * 0.85, d: o.d, speed: o.speed * 0.4, taper: [3, 3], gap: 0, wet: o.wet });
+    return { P0, v, r, E1, E2, St, Pc, outer, inner, front, Fk };
   };
   // ghosts: the sling a tenth and a fifth of a turn earlier, fading back
   for (let g = 1; g <= 2; g++) slingAt(thR - g * 0.63, { cw: 1.5, sw: 1.0, pw: 1.3, d: 0.4 - g * 0.07, speed: 1.4, wet: false, seed: 40 + 3 * g });
@@ -175,25 +178,30 @@ export function sling() {
   D.text('b', Pr[0] - 0.062, Pr[1] - 0.042, { size: 22, d: 0.7 });
   D.fitTo(g0, -13, -0.45);
 
-  // ---- the sling itself, laid in just before the cut: two heavy cords, the pouch, the stone hatched dark
+  // ---- the sling itself, laid in just before the cut: the cord, the strings, the pouch, the stone hatched dark
   D.at(-0.42);
   const s0 = D.mark();
-  const L = slingAt(thR, { cw: 3.6, pw: 3.3, d: 0.93, speed: 1.3, wet: true, seed: 60 });
+  const L = slingAt(thR, { cw: 2.8, sw: 1.7, pw: 2.8, d: 0.93, speed: 1.3, wet: true, seed: 60 });
   const inStone = (x, y) => { const dx = (x - L.St[0]) / stR, dy = (y - L.St[1]) / stR; return dx * dx + dy * dy; };
   const sbb = [L.St[0] - stR, L.St[1] - stR, L.St[0] + stR, L.St[1] + stR];
-  // the stone: dark, lit from the upper left; the pouch's belly in shadow behind it
-  hatch(D, (x, y) => (inStone(x, y) > 0.86 ? 0 : 0.45 + 0.6 * ((x - L.St[0]) * 0.6 + (y - L.St[1]) * 0.8) / stR), sbb, { angle: 0.95, sp: 2.6, w: 1.2, d: 0.82, speed: 3, minLen: 2, thr: [0.2, 0.9], wet: true });
-  hatch(D, (x, y) => (inStone(x, y) > 0.86 ? 0 : 0.2 + 0.7 * ((x - L.St[0]) * 0.6 + (y - L.St[1]) * 0.8) / stR), sbb, { angle: -0.6, sp: 2.9, w: 1.1, d: 0.75, speed: 3, minLen: 2, thr: [0.2, 0.9], wet: true });
-  const pouchPoly = poly([...L.lens(bul), ...L.lens(-0.012).reverse()]);
+  const pouchPoly = poly([...L.outer, ...L.inner.slice().reverse()]);
+  const rr = (x, y) => (x - L.Pc[0]) * L.r[0] + (y - L.Pc[1]) * L.r[1];   // across the pouch (outward +)
+  const vv = (x, y) => (x - L.Pc[0]) * L.v[0] + (y - L.Pc[1]) * L.v[1];   // along the pouch
+  // the stone: dark, a small light on its upper left
+  const lit = (x, y) => ((x - L.St[0]) * 0.6 + (y - L.St[1]) * 0.8) / stR;
+  hatch(D, (x, y) => (inStone(x, y) <= 0.84 ? 0.62 + 0.5 * lit(x, y) : 0), sbb, { angle: 0.95, sp: 2.2, w: 1.25, d: 0.88, speed: 3, minLen: 2, thr: [0.2, 0.9], wet: true });
+  hatch(D, (x, y) => (inStone(x, y) <= 0.84 ? 0.4 + 0.6 * lit(x, y) : 0), sbb, { angle: -0.6, sp: 2.5, w: 1.15, d: 0.82, speed: 3, minLen: 2, thr: [0.2, 0.9], wet: true });
+  // the leather, lighter than the stone: the far flap's inside shadowed round the stone, the near flap pale
   hatch(D, (x, y) => {
     if (!inP(pouchPoly, x, y) || inStone(x, y) < 1.15) return 0;
-    const dx = x - L.P0[0], dy = y - L.P0[1];
-    return 0.35 + 0.5 * sm(-0.01, 0.04, -(dx * L.r[0] + dy * L.r[1])) + 0.3 * sm(0, pw, dx * L.v[0] + dy * L.v[1]);
-  }, pouchPoly.bb, { angle: 0.95, sp: 2.7, w: 1.15, d: 0.76, speed: 3, minLen: 2, thr: [0.22, 0.9], wet: true });
-  // leather creases across the pouch
-  for (const u of [0.2, 0.8]) {
-    const a = add(lerp2(L.E1, L.E2, u), L.r, -0.012), b = add(lerp2(L.E1, L.E2, u), L.r, bul * 0.92 * Math.sin(Math.PI * u));
-    D.stroke(linePts(a[0], a[1], b[0], b[1]), { w: 1.3, d: 0.7, speed: 0.6, taper: [3, 3] });
+    const q = rr(x, y);
+    return q > 0 ? 0.42 + 0.3 * sm(0.004, stR + 0.01, q) : 0.3 + 0.25 * sm(0, pw, Math.abs(vv(x, y)));
+  }, pouchPoly.bb, { angle: -0.35, sp: 3.0, w: 1.0, d: 0.68, speed: 3, minLen: 2, thr: [0.22, 0.9], wet: true });
+  // the leather gathered toward the tips: creases from each tip curving round the stone
+  for (const sg of [1, -1]) for (const b of [0.6, -0.55]) {
+    const pts = [];
+    for (let i = 0; i <= 16; i++) { const u = i / 16; pts.push(add(add(L.Pc, L.v, sg * pw * (0.92 - 0.5 * u)), L.r, b * (stR + 0.006) * Math.sin(Math.PI * (0.04 + 0.25 * u)) ** 0.7 * 1.1)); }
+    D.stroke(pts, { w: 1.05, d: 0.7, speed: 0.6, taper: [2, 5] });
   }
   D.fitTo(s0, -0.42, -0.04);
 

@@ -441,33 +441,78 @@ def snap_mouth(Ph, f, hint_y, span=0.03):
     return prof[i][1]
 
 
-def importance(V, an, fw):
-    """Per-vertex decimation weight (pymeshlab quality): budget toward eyes, lids, lips, nose."""
+def region_weights(V, an, fw):
+    """Smooth membership weights for the decimation budget regions (head space)."""
     eyes = np.minimum(np.linalg.norm(V - an['eyeballL'], axis=1), np.linalg.norm(V - an['eyeballR'], axis=1))
     w_eye = 1 - smoothstep(0.075, 0.13, eyes)
-    w_lip = 1 - smoothstep(0.05, 0.09, np.linalg.norm(V - an['mouth'], axis=1))
-    w_nose = 1 - smoothstep(0.04, 0.08, np.linalg.norm(V - an['noseTip'], axis=1))
+    w_lip = 1 - smoothstep(0.06, 0.10, np.linalg.norm(V - an['mouth'], axis=1))
+    w_nose = 1 - smoothstep(0.05, 0.09, np.linalg.norm(V - an['noseTip'], axis=1))
     pc = (an['eyeballL'] + an['eyeballR']) / 2 * 0.6 + an['mouth'] * 0.4
     dpc = V - pc
-    w_face = (1 - smoothstep(0.22, 0.34, np.linalg.norm(dpc, axis=1))) * smoothstep(-0.12, 0.0, dpc @ fw)
+    w_face = (1 - smoothstep(0.24, 0.34, np.linalg.norm(dpc, axis=1))) * smoothstep(-0.14, -0.02, dpc @ fw)
     w_head = smoothstep(an['chin'][1] - 0.15, an['chin'][1] + 0.02, V[:, 1])
-    w_neck = smoothstep(-0.85, -0.55, V[:, 1])
-    w = 0.25 + 0.5 * w_neck + 1.6 * w_head + 4.0 * w_face + 3.0 * np.maximum(w_eye, np.maximum(w_lip, w_nose))
-    return w
+    return dict(core=np.maximum(w_eye, np.maximum(w_lip, w_nose)), face=w_face, head=w_head)
 
 
-def decimate(V, F, q, target):
+REGION_NAMES = ('body', 'head', 'face', 'core')     # 0 neck/chest/caps, 1 hair/ears/skull, 2 face skin, 3 eyes/lids/lips/nose
+
+
+def region_labels(V, F, an, fw):
+    w = region_weights(V, an, fw)
+    lv = np.zeros(len(V), int)
+    lv[w['head'] >= 0.5] = 1
+    lv[w['face'] >= 0.5] = 2
+    lv[w['core'] >= 0.5] = 3
+    return lv[F].max(1)                          # a face takes the most important label of its vertices
+
+
+def region_budget(counts, target, face_keep=0.92, body_share=0.14):
+    c0, c1, c2, c3 = counts
+    r3 = c3
+    r2 = int(c2 * face_keep)
+    B = target - r3 - r2
+    if B < 0.25 * (c0 + c1):                     # not enough room: thin the face skin first
+        r2 = max(int(0.5 * c2), r2 + B - int(0.25 * (c0 + c1)))
+        B = target - r3 - r2
+    r0 = min(c0, int(body_share * B))
+    r1 = B - r0
+    if r1 > c1:
+        spill = r1 - c1
+        r1 = c1
+        r2 = min(c2, r2 + spill)
+    return [r0, r1, r2, r3]
+
+
+def decimate_regions(V, F, labels, target):
+    """Split into regions, decimate each to its budget with its border frozen (preserveboundary makes
+    border vertices non-writable in vcg), then weld the untouched borders back together: no cracks."""
     import pymeshlab
-    ms = pymeshlab.MeshSet()
-    ms.add_mesh(pymeshlab.Mesh(vertex_matrix=V, face_matrix=F, v_scalar_array=q))
-    ms.meshing_decimation_quadric_edge_collapse(targetfacenum=int(target), qualityweight=True, preservenormal=True,
-                                                optimalplacement=True, planarquadric=True, qualitythr=0.4, autoclean=True)
-    mm = ms.current_mesh()
-    m = trimesh.Trimesh(mm.vertex_matrix().astype(float), mm.face_matrix().astype(np.int64), process=True)
+    counts = [int((labels == L).sum()) for L in range(4)]
+    budget = region_budget(counts, target)
+    parts, final = [], []
+    for L in range(4):
+        sub = trimesh.Trimesh(V, F[labels == L], process=False)
+        sub.remove_unreferenced_vertices()
+        if len(sub.faces) == 0:
+            final.append(0)
+            continue
+        if budget[L] < len(sub.faces) * 0.995:
+            ms = pymeshlab.MeshSet()
+            ms.add_mesh(pymeshlab.Mesh(vertex_matrix=np.asarray(sub.vertices), face_matrix=np.asarray(sub.faces)))
+            ms.meshing_decimation_quadric_edge_collapse(targetfacenum=int(budget[L]), preserveboundary=True,
+                                                        boundaryweight=1.0, preservenormal=True, optimalplacement=True,
+                                                        planarquadric=True, qualitythr=0.4, autoclean=False)
+            mm = ms.current_mesh()
+            sub = trimesh.Trimesh(mm.vertex_matrix().astype(float), mm.face_matrix().astype(np.int64), process=False)
+        log('  region %-4s %7d -> %7d tris' % (REGION_NAMES[L], counts[L], len(sub.faces)))
+        parts.append(sub)
+        final.append(len(sub.faces))
+    m = trimesh.util.concatenate(parts)
+    m.merge_vertices(digits_vertex=9)
     m.update_faces(m.nondegenerate_faces())
     m.update_faces(m.unique_faces())
     m.remove_unreferenced_vertices()
-    return m
+    return m, dict(zip(REGION_NAMES, counts)), dict(zip(REGION_NAMES, final))
 
 
 def curvature_fields(V, F, N, A, H_edge):
@@ -594,7 +639,7 @@ def body_anchors(m, caster, an, cfg):
         rel = V - neck_top
         lt = rel @ left_t
         ft = rel @ fwd_t
-        sel = (sgn * lt > 0.34) & (sgn * lt < 0.42) & (np.abs(ft) < 0.18)
+        sel = (sgn * lt > 0.34) & (sgn * lt < 0.42) & (np.abs(ft) < 0.18) & (V[:, 1] < an['chin'][1] - 0.05)
         if sel.any():
             out[lab] = V[np.argmax(np.where(sel, V[:, 1], -1e9))]
     ys = [out[k][1] for k in out]
@@ -626,7 +671,7 @@ def ear_anchors(caster, an, cfg):
 # ------------------------------------------------------------------------------------------------
 # per-figure pipeline
 # ------------------------------------------------------------------------------------------------
-def smooth_skin(V, F, N, A, mode, H_edge):
+def smooth_skin(V, F, N, A, mode, H_edge, crop_y):
     """Selective Taubin smoothing of broad, low-curvature skin only (scanner orange-peel, thin plaster
     mould-seam ridges). Carving (lids, lips, nostrils, curls) has high medium-scale curvature and is
     masked out, so it stays crisp."""
@@ -636,6 +681,7 @@ def smooth_skin(V, F, N, A, mode, H_edge):
     t0, t1 = mode['t']
     w = 1 - smoothstep(t0, t1, cm)
     w = scalar_smooth(w, A, 4) * mode.get('strength', 1.0)
+    w *= smoothstep(crop_y + 0.02, crop_y + 0.06, V[:, 1])   # leave the cut rim and its cap alone
     V2 = taubin(V, A, mode['iters'], W=w)
     moved = np.linalg.norm(V2 - V, axis=1)
     log('  smoothing: mask mean %.2f, moved mean %.5f max %.5f (head units)' % (w.mean(), moved.mean(), moved.max()))
@@ -666,8 +712,11 @@ def process(name, args):
     for lab in 'LR':
         e = fr['eyes'][lab]
         an['eyeball' + lab] = th(e['centre'])
-        an['eye' + lab] = th(e['apex'])
         g = e.get('gaze_pupil', e['gaze_cap'])
+        # eye anchor: the point of the eyeball facing the lens (along the eye's own gaze for carved pupils,
+        # along +Z for blank eyes) - the visible centre of the eye when stared at
+        look = nrm(Rm @ g) if 'gaze_pupil' in e else np.array([0, 0, 1.0])
+        an['eye' + lab] = th(e['centre']) + look * e['radius'] / H
         eyes_json[lab] = dict(centre=th(e['centre']), radius=e['radius'] / H, gaze=nrm(Rm @ g))
         if 'pupil' in e:
             an['pupil' + lab] = th(e['pupil'])
@@ -691,18 +740,24 @@ def process(name, args):
     edge = float(np.median(mh.edges_unique_length))
     for key, on in cfg['smooth'].items():
         if on:
-            V, _ = smooth_skin(V, F, N, A, SMOOTH_MODES[key], edge)
+            V, _ = smooth_skin(V, F, N, A, SMOOTH_MODES[key], edge, cfg['crop_y'])
             N = vnormals(V, F)
     mh = trimesh.Trimesh(V, F, process=False)
     # curvature fields on the dense surface (transferred to the decimated mesh below)
     cav_full, rough_full = curvature_fields(V, F, N, A, edge)
+    _lab = region_labels(V, F, an, fw)
+    _lv = np.zeros(len(V), int)
+    np.maximum.at(_lv, F.ravel(), np.repeat(_lab, 3))
+    log('  roughness percentiles 10/50/90  face-core %s  face %s  head/hair %s  body %s' % tuple(
+        str(np.percentile(rough_full[_lv == L], [10, 50, 90]).round(2)) if (_lv == L).any() else '-' for L in (3, 2, 1, 0)))
     # ---- decimation (budget toward the face)
-    q = importance(V, an, fw)
+    labels = region_labels(V, F, an, fw)
     if len(F) > cfg['target_faces'] * 1.02:
-        md = decimate(V, F, q, cfg['target_faces'])
+        md, reg_counts, reg_final = decimate_regions(V, F, labels, cfg['target_faces'])
         log('  decimated %d -> %d tris' % (len(F), len(md.faces)))
     else:
         md = mh
+        reg_counts = reg_final = dict(zip(REGION_NAMES, [int((labels == L).sum()) for L in range(4)]))
         log('  no decimation needed (%d tris)' % len(F))
     md = keep_largest(md)
     Vd = np.asarray(md.vertices, float)
@@ -741,7 +796,7 @@ def process(name, args):
         extra = sol_diadem(mh, caster_full, an)
     res = dict(name=name, cfg=cfg, V=Vd, F=Fd, N=Nd, bake=bake, an=an, eyes=eyes_json, fr=fr, ht=ht, H=H, O_rot=O_rot,
                Rm=Rm, fw=fw, ear_notes=ear_notes, torso=torso, neck_top=neck_top, extra=extra, n_src=n_src,
-               edge_src=edge, q_stats=None, t=time.time() - t_start)
+               edge_src=edge, regions=dict(source=reg_counts, final=reg_final), t=time.time() - t_start)
     return res
 
 
@@ -941,13 +996,14 @@ def previews(res):
     rc = RIM[name]
     mk = {k: v for k, v in an.items() if not k.startswith('eyeball')}
     eyes_mid = 0.5 * (an['eyeL'] + an['eyeR'])
-    tgt = np.array([0, -0.12, 0.05])
+    tgt = np.array([0, -0.2, 0.05])
     ims = []
     for yaw in (90, 45, 0):
-        ims.append(pv.render(ring_eye(yaw, 3.4, tgt[1]), tgt, fov=26, W=480, H=720, markers=mk, rim_col=rc,
+        ims.append(pv.render(ring_eye(yaw, 4.6, tgt[1]), tgt, fov=26, W=480, H=720, markers=mk, rim_col=rc,
                              label='%s yaw %d (head space)' % (name, yaw)))
     for yaw in (90, 45, 0):
-        ims.append(pv.render(ring_eye(yaw, 3.4, tgt[1]), tgt, fov=26, W=480, H=720, rim_col=rc, label='yaw %d' % yaw))
+        ims.append(pv.render(ring_eye(yaw, 2.6, -0.05), np.array([0, -0.05, 0.1]), fov=26, W=480, H=720, rim_col=rc,
+                             label='yaw %d' % yaw))
     grid(ims, 3).save(PREV / ('%s-turn.png' % name))
     # ECU of the eyes, straight down the lens
     ecu = [pv.render(eyes_mid + np.array([0, 0, 1.6]), eyes_mid, fov=14, W=900, H=420, rim_col=rc,
