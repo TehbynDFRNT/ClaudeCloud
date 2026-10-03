@@ -41,7 +41,7 @@ void main(){
   vec3 col = vxMarch(ro, rd, tMax, jit, jitT, pixAngle, tD, trans, transD);
   if (uCurtain > 0.0) col += vxCurtain(ro, rd, tMax, fract(jit + 0.37)) * transD;
   if (hitD) col += vxDwarfSurface(ro, rd, hd) * trans;
-  col += vxDwarfGlow(ro, rd, pixAngle) * transD;
+  col += vxDwarfGlow(ro, rd, 2.0 * uTanHalfFov / uFull.y, pixAngle) * transD;
   fragColor = vec4(col, hitD ? 0.0 : trans);
 }`);
 
@@ -151,13 +151,14 @@ const presets = {
   'F27.4': D({
     vol: 0.6,
     cam: [
-      [0, [0.56, 0.085, -0.10], [0.42, 0.0, 0.55], 70, 0.08],
-      [0.9, [0.55, 0.075, 0.02], [0.40, 0.0, 0.62], 72, 0.12],
+      [0, [0.57, 0.09, -0.14], [0.42, 0.0, 0.55], 70, 0.08],
+      [0.9, [0.55, 0.075, 0.06], [0.38, 0.0, 0.70], 72, 0.13, 'inQuad'],
     ],
-    tau: [80, 3.5, 0],
+    tau: [78.0, 3.5, 0],
     heat: [1.12, 0, 0.5, 0],
-    disk: { omega: 0.32, arms: 0.9, armFloor: 0.1, sheet: 0.9, sheetHeat: 0.75, sheetMask: -0.15, shutter: 0.05, maxSteps: 46 },
-    post: { bloomStrength: 0.1, streakStrength: 0.03, blur: [6, 0] },
+    disk: { omega: 0.32, arms: 1.0, armFloor: 0.04, armHeat: 0.5, armSpeed: 0.6, sheet: 0.9, sheetHeat: 0.75, sheetMask: -0.15,
+      shutter: 0.05, maxSteps: 46 },
+    post: { bloomStrength: 0.1, streakStrength: 0.02, blur: [6, 0] },
   }),
   // Frenzy 29.2: the white-hot inner edge, close: dwarf large, curtains arcing to its poles, rim wall blazing.
   'F29.2': D({

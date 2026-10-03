@@ -223,7 +223,7 @@ export default {
     // Strike 3 (cut on the strike): the surface layer convulses, blue filaments snap at local = 0
     'S19-strike3': {
       rig: 'orbit', dist: [[0, 2.05], [1, 1.85]], az: [[0, 12], [1, 16]], el: [[0, 4], [1, 6]], fov: 40, screen: [[0, [-0.62, -0.78]], [1, [-0.6, -0.74]]], roll: 24,
-      spin: [0.2, 0.05], magTilt: 75, magAz: 200, surf: 1.6, fil: 2.8, filL: [1.08, 1.7], filW: 0.0028, shimmer: 0.02, snapAt: 0,
+      spin: [0.2, 0.05], magTilt: 75, magAz: 200, surf: 1.6, fil: 4.0, filL: [1.08, 1.7], filW: 0.003, shimmer: 0.02, snapAt: 0,
       ocean: 0.9, oceanH: 0.010, heat: 0.35, oceanGain: 1.2, turbF: 24, turbV: 1.4, cells: 0.3,
       conv: { dir: [0.25, 0.55, 0.8], at: 0.05, amp: 0.7 },
       haze: 0.003, hazeF: 10, crimson: 0.2, atmo: 1.2, stars: 0.8,
@@ -278,7 +278,9 @@ export default {
     const { P, t } = this._p(S);
     const cam = rig(P, t);
     const spin = P.spin || [0, 0.05];
-    const spinA = spin[0] + spin[1] * S.t;
+    // shot-relative clock: framing (magnetic geometry) and the look stay stable if the plan is re-timed
+    const tl = clamp(S.local, -1, S.dur + 1) + (P.tOff || 0);
+    const spinA = spin[0] + spin[1] * tl;
     // magnetic axis precesses with the star's rotation about +Y
     const mf = magFrame(kv(P.magTilt, t, 25), kv(P.magAz, t, 0) + spinA / D2R);
     const conv = P.conv;
@@ -289,7 +291,7 @@ export default {
     const point = P.rig === 'surface' ? 0 : smoothstep(9, 1.6, rpx);
     const snapAt = P.snapAt;
     const U = {
-      ...cam.uniforms,
+      ...cam.uniforms, uTime: tl,
       uDwarfPos: [0, 0, 0], uDwarfR: 1, uDwarfLum: 0.9,
       uSurfGain: kv(P.surf, t, 6), uSpin: spinA, uMagAxis: mf.ax, uMagRef: mf.ref,
       uFil: kv(P.fil, t, 1), uFilL: kv(P.filL, t, [1.2, 2.4]), uFilW: kv(P.filW, t, 0.004),

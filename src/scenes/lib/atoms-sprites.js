@@ -64,27 +64,28 @@ void shadeSprite(int id, float type, vec4 a, vec2 d, float dd, inout vec3 col, i
     float mx = max(cc.r, max(cc.g, cc.b)) + 1e-6;
     vec3 tint = cc / mx;
     float heat = e.z;
-    vec3 sat1 = pow(tint, vec3(1.35));                     // saturated body colour
-    vec3 hotC = mix(tint, vec3(1.0, 0.95, 0.88), sat(0.3 + 0.3 * heat));
-    vec3 edgeC = pow(tint, vec3(3.2)) * 0.09;
-    float coreG = 1.7 + 2.2 * heat;
-    vec3 meanC = sat1 * 0.4 + hotC * (0.25 * coreG);       // mean radiance of the sharp profile
+    vec3 sat1 = pow(tint, vec3(1.4));                      // saturated body colour
+    vec3 hotC = mix(tint, vec3(1.0, 0.95, 0.88), sat(0.35 + 0.3 * heat));
+    vec3 edgeC = pow(tint, vec3(2.8)) * 0.2;
+    float coreG = 2.0 + 2.6 * heat;
+    float coreP = mix(9.0, 4.0, sat(heat * 0.4));          // hotter = the white core swells
+    vec3 meanC = sat1 * 0.42 + hotC * (coreG * 2.0 / (coreP + 2.0));   // mean radiance of the sharp profile
     vec3 em;
     if (m < 0.97){
       float wrap = sat(0.5 + 0.5 * dot(sp, e.xy));
-      float body = smoothstep(-0.05, 0.95, nz);
-      vec3 base = mix(edgeC, sat1 * 0.62, body);
-      float core = pow(nz, 3.2 + 1.5 * sat(heat * 0.5));
-      float gm = 1.0, fil = 0.0, qs = 0.0;
+      float body = smoothstep(0.0, 0.85, nz);
+      float core = pow(nz, coreP);
+      float gm = 1.0, fil = 0.0, qs = 0.0, gn = 0.6;
       if (kind < 0.5){
         float s = b.w, ta = uTime;
         vec3 P = vec3(sp, nz);
-        float g1 = n3(P * 2.3 + vec3(s * 7.13, s * 3.71, ta * 2.7));
-        float g2 = n3(P.yzx * 4.8 + vec3(ta * 3.3, s * 1.37, -ta * 2.3));
-        float g3 = n3(vec3(sp * 10.0, s * 5.3 + ta * 8.0));
-        float gr = 0.55 * g1 + 0.3 * g2 + 0.15 * g3;
-        gm = 0.45 + 1.05 * smoothstep(-0.4, 0.45, gr);
-        fil = pow(1.0 - abs(g2), 9.0) * nz;
+        float g1 = n3(P * 3.1 + vec3(s * 7.13, s * 3.71, ta * 2.7));
+        float g2 = n3(P.yzx * 6.4 + vec3(ta * 3.3, s * 1.37, -ta * 2.3));
+        float g3 = n3(vec3(sp * 14.0, s * 5.3 + ta * 8.0));
+        float gr = 0.5 * g1 + 0.32 * g2 + 0.18 * g3;
+        gn = smoothstep(-0.4, 0.45, gr);
+        gm = 0.75 + 0.5 * gn;
+        fil = pow(1.0 - abs(g2), 12.0) * nz;
         for (int k = 0; k < 3; k++){                      // quark cores: orbiting + per-frame jitter
           float ph = s * 2.39 + float(k) * 2.0944 + ta * (4.0 + 3.0 * fract(s * 0.618));
           vec3 qp = vec3(cos(ph), sin(ph) * cos(s * 1.9), sin(ph) * sin(s * 1.9)) * 0.36;
@@ -99,8 +100,11 @@ void shadeSprite(int id, float type, vec4 a, vec2 d, float dd, inout vec3 col, i
       }
       float lit = 0.7 + 0.6 * wrap;
       float rim = smoothstep(0.72, 0.97, rr) * (1.0 - 0.6 * smoothstep(0.96, 1.0, rr)) * wrap;
+      // granulation: cool lanes sink toward the deep limb colour, hot cells are saturated body colour
+      vec3 bodyC = mix(pow(tint, vec3(2.3)) * 0.3, sat1 * 0.72, gn);
+      vec3 base = mix(edgeC, bodyC, body);
       vec3 se = base * gm * lit
-              + hotC * (core * coreG * (0.6 + 0.4 * gm) + qs * (0.55 + 0.6 * heat) * nz * nz + fil * 0.35)
+              + hotC * (core * coreG * (0.6 + 0.4 * gm) + qs * (0.5 + 0.6 * heat) * nz * nz + fil * 0.55)
               + mix(sat1, hotC, 0.3) * rim * 0.34;
       em = mix(se, meanC, m);
     } else em = meanC;
@@ -108,6 +112,7 @@ void shadeSprite(int id, float type, vec4 a, vec2 d, float dd, inout vec3 col, i
     col += T * mx * em * (norm * edge);
     float op = c.a * mix(0.86 + 0.14 * nz, 0.9, m);
     T *= 1.0 - op * edge * norm;
+    if (skW > 0.0 && edge < 1.0) T *= 1.0 - c.a * 0.62 * (1.0 - edge);   // skirt continues under the AA edge
   } else if (type < 1.5){
     // ---- streak / trail: head at a.xy, tail at a.xy + e.xy.  e.w = 1: seamless ends (abutting segments
     // of a path sum to a uniform line instead of beading at the joints)

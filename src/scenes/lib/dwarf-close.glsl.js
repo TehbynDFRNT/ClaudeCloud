@@ -149,9 +149,9 @@ float filDeform(float id, float c, float t, float snapT){
   if (snapT >= 0.0){
     // whip: a decaying wave runs from the break (apex) toward the footpoints; strands recoil outward
     float ac = abs(c);
-    float env = exp(-snapT * 1.6);
-    d += 0.22 * env * sin(ac * 11.0 - snapT * 17.0 + id) * smoothstep(0.0, 0.25, ac);
-    d += 0.35 * (1.0 - exp(-snapT * 2.5)) * smoothstep(0.55, 0.05, ac);
+    float env = exp(-snapT * 0.9);
+    d += 0.22 * env * sin(ac * 11.0 - snapT * 11.0 + id) * smoothstep(0.0, 0.25, ac);
+    d += 0.35 * (1.0 - exp(-snapT * 1.6)) * smoothstep(0.55, 0.05, ac);
   }
   return d;
 }
@@ -180,6 +180,7 @@ vec3 wdFilaments(vec3 ro, vec3 rd, float tMax, float pixA, float t){
     vec3 T = normalize(3.0 * s * c * sg * e + (2.0 * c * c - s * s) * m);
     float sinA = max(length(cross(rd, T)), 0.12);
     float wpx = pixA * tp * 0.55;
+    float edgeOn = smoothstep(0.03, 0.18, abs(dn));                     // loops seen edge-on collapse to lines: fade them
     for (int k = 0; k < 2; k++){
       float id = fj * 2.0 + (sg > 0.0 ? 0.0 : 1.0) + float(k) * 17.0;
       float hk = hash11(id * 3.17 + 5.0);
@@ -202,13 +203,13 @@ vec3 wdFilaments(vec3 ro, vec3 rd, float tMax, float pixA, float t){
       float foot = (1.0 + 2.0 * exp(-(r - 1.0) * 14.0)) * mix(1.0, 0.25, smoothstep(0.1, 1.0, hgt));
       float br = uFil * (0.25 + 0.95 * hk * hk) * bead * seg * foot / max(sinA, 0.4);
       if (snapT >= 0.0){
-        float gap = 0.62 * (1.0 - exp(-snapT * 3.2));
+        float gap = 0.62 * (1.0 - exp(-snapT * 1.7));
         float keep = smoothstep(gap, gap + 0.06, ac);
-        float flash = 1.0 + 6.0 * exp(-snapT * 7.0) * smoothstep(gap + 0.25, gap, ac);
-        br *= keep * flash * mix(1.0, 0.35, 1.0 - exp(-snapT * 0.7));
+        float flash = 1.0 + 5.0 * exp(-snapT * 3.5) * smoothstep(gap + 0.25, gap, ac);   // torn ends glow hot
+        br *= keep * flash * mix(1.0, 0.3, 1.0 - exp(-snapT * 0.45));
       }
       vec3 fc = mix(wdIce(), vec3(0.85, 0.93, 1.0), sat(core * br * 0.08));
-      acc += fc * v * br;
+      acc += fc * v * br * edgeOn;
     }
   }
   return acc;

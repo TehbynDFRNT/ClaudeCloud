@@ -254,18 +254,20 @@ vec3 vxDwarfSurface(vec3 ro, vec3 rd, vec2 h){
   return (c + C_ICE * (caps * 0.8 + ring * 2.5)) * 420.0 * uDwarfSurf * uDwarfLum;
 }
 // point-source glow consistent with lib/dwarf.glsl.js (core suppressed once the sphere is resolved)
-vec3 vxDwarfGlow(vec3 ro, vec3 rd, float pixAngle){
+vec3 vxDwarfGlow(vec3 ro, vec3 rd, float pixAngle, float pixRender){
   vec3 d = uDwarfPos - ro;
   float t = dot(d, rd);
   if (t <= 0.0) return vec3(0.0);
   float dist = length(d);
+  float front = smoothstep(0.0, 0.5, t / dist);
   float ang = length(cross(rd, d / dist));
-  float angR = max(uDwarfR / dist, pixAngle * 0.8);
+  float angR0 = max(uDwarfR / dist, pixAngle * 0.8);
+  float angR = max(angR0, pixRender * 0.75);                 // never thinner than a render pixel (no flicker)
   float resolved = smoothstep(1.2, 3.0, uDwarfR / dist / pixAngle);
-  float core = exp(-pow(ang / angR, 2.0)) * 220.0 * (1.0 - resolved);
+  float core = exp(-pow(ang / angR, 2.0)) * 220.0 * (angR0 * angR0) / (angR * angR) * (1.0 - resolved);
   float halo = 1.0 / (1.0 + pow(ang / max(pixAngle * 6.0, angR * 1.6), 2.0)) * 2.2;
   float wide = 1.0 / (1.0 + pow(ang / max(pixAngle * 60.0, angR * 12.0), 2.0)) * 0.12;
-  return dwarfColor() * (core + halo + wide) * uDwarfLum;
+  return dwarfColor() * (core + halo + wide) * uDwarfLum * front;
 }
 
 // ---------------- main volume march ----------------

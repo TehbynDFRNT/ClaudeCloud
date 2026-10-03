@@ -130,14 +130,17 @@ float streamSample(vec3 p, vec4 f, out vec3 j){
   T *= 1.0 + 0.2 * bulb;   // shocked head
   T *= 1.0 + 0.6 * knot;
   // raking light from the dwarf: scattered by all gas, on the side facing it (envelope sampled toward the dwarf)
-  vec3 l = normalize(uWD - p);
-  vec3 p2 = p + l * w * 1.2;
-  vec4 f2 = fieldAt(p2.xz);
-  float w2 = streamW(f2.y);
-  float e22 = (f2.x * f2.x) / (w2 * w2) + p2.y * p2.y / (w2 * w2 * 0.64);
-  float lit = exp(-6.0 * exp(-e22 * 0.6));
-  float rD2 = dot(p - uWD, p - uWD);
-  vec3 rake = vec3(0.55, 0.75, 1.0) * uRake * lit / (0.02 + rD2 * 6.0);
+  vec3 rake = vec3(0.0);
+  if (uRake > 0.01){
+    vec3 l = normalize(uWD - p);
+    vec3 p2 = p + l * w * 1.2;
+    vec4 f2 = fieldAt(p2.xz);
+    float w2 = streamW(f2.y);
+    float e22 = (f2.x * f2.x) / (w2 * w2) + p2.y * p2.y / (w2 * w2 * 0.64);
+    float lit = exp(-6.0 * exp(-e22 * 0.6));
+    float rD2 = dot(p - uWD, p - uWD);
+    rake = vec3(0.55, 0.75, 1.0) * uRake * lit / (0.02 + rD2 * 6.0);
+  }
   j = (heatEmission(T) * uStreamGlow * hot + rake * (hot + cool) * 0.5) * 24.0;
   return (hot * 0.3 + cool * 1.7) * 26.0;
 }
@@ -203,7 +206,7 @@ float volBound(vec3 p, vec4 f, out float scale){
   float r = length(q.xz);
   float ro = max(uDiskOut * 1.1, (uRingAmt > 0.0 ? uRCirc + 0.1 : 0.0));
   float bD = (uDiskAmt + uRingAmt > 0.0 || uHot.z > 0.0) ? max(r - ro, abs(q.y) - diskH(ro) * 3.2) : 1e3;
-  scale = bS < bD ? w * (0.42 - 0.12 * uDetail) : diskH(max(r, 0.02));
+  scale = bS < bD ? w * (0.62 - 0.2 * uDetail) : diskH(max(r, 0.02));
   return min(bS, bD);
 }
 

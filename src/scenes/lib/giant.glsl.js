@@ -10,41 +10,17 @@
 //
 // Public API (stable; binary and nova call these):
 //   vec3  giantColor(float T), giantEmission(float T)
-//   float giantRadius(vec3 n)                           n = object-space unit vector (unspun)
+//   float giantRadius(vec3 n)                           n = object-space unit vector (unspun), incl. relief
 //   float giantTemperature(vec3 ns, float mu, float t)  ns = pattern-space unit vector
-//   vec4  giantShade(vec3 ro, vec3 rd, float t, out float dist)   rgb radiance, a = coverage
-// Building blocks for multi-pass scenes: giantTrace, giantVolume, giantSurface, giantVolumeSteps.
-// Uniforms: all below. uGiantAtmo is optional (0 = default atmosphere).
+//   float giantTrace(vec3 o, vec3 rd)                   photosphere distance (o = ray origin - uGiantPos), -1 = miss
+//   vec4  giantShade(vec3 ro, vec3 rd, float t, out float dist)   one-call look: rgb radiance, a = coverage
+// Building blocks for multi-pass scenes (see scenes/redgiant.js): giantVolume + giantVolumeSteps (structured gas:
+// molecular veils, mass-loss plumes, aftermath streamers/soot), giantHaze (analytic limb haze), giantSurface,
+// gLoops (prominence loops, full resolution). Optional uniforms (0 = off/default): uGiantAtmo, hero loops/plumes,
+// uGiantHeroOnly.
 // Evolution: bounded periodic motion uses `t`; in-place "boiling" (cells born and dying) uses uLocal so the pattern
 // never drifts in scale over the film. Detail is filtered by the pixel footprint (no shimmer at system scale).
 import { mulberry32 } from '../../engine/rng.js';
-
-// ---- prominence loops: deterministic table shared by GLSL and JS (scenes can aim cameras at them) ------------
-// pattern space: c = footpoint-centre direction, a = tangent axis through both footpoints,
-// span = half footpoint separation (rad), height (R), width (R), phase.
-export const GIANT_LOOPS = (() => {
-  const rnd = mulberry32(90210);
-  const out = [];
-  const N = 14;
-  for (let i = 0; i < N; i++) {
-    const y = 1 - (2 * (i + 0.5)) / N;
-    const r = Math.sqrt(1 - y * y);
-    const ph = i * 2.399963 + rnd() * 0.7;
-    const c = [Math.cos(ph) * r, y, Math.sin(ph) * r];
-    const tmp = Math.abs(c[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
-    let t1 = [c[1] * tmp[2] - c[2] * tmp[1], c[2] * tmp[0] - c[0] * tmp[2], c[0] * tmp[1] - c[1] * tmp[0]];
-    const l = Math.hypot(...t1); t1 = t1.map((v) => v / l);
-    const t2 = [c[1] * t1[2] - c[2] * t1[1], c[2] * t1[0] - c[0] * t1[2], c[0] * t1[1] - c[1] * t1[0]];
-    const an = rnd() * Math.PI;
-    const a = t1.map((v, k) => v * Math.cos(an) + t2[k] * Math.sin(an));
-    const big = rnd() < 0.35;
-    const span = big ? 0.12 + rnd() * 0.10 : 0.05 + rnd() * 0.07;
-    const height = big ? 0.13 + rnd() * 0.12 : 0.05 + rnd() * 0.07;
-    const width = (big ? 0.010 : 0.006) + rnd() * 0.005;
-    out.push({ c, a, span, height, width, phase: rnd() });
-  }
-  return out;
-})();
 
 // mass-loss plumes: c = footpoint direction (pattern space), l = lean direction (tangent),
 // height = e-folding height (R), width = base half-width (R), lean = curvature, phase.
@@ -70,7 +46,6 @@ export const GIANT_PLUMES = (() => {
 
 const fx = (x) => (Math.round(x * 1e5) / 1e5).toFixed(5);
 const v3s = (v) => `vec3(${fx(v[0])},${fx(v[1])},${fx(v[2])})`;
-const NL = GIANT_LOOPS.length;
 const NP = GIANT_PLUMES.length;
 const PLUME_GLSL = `
 const int G_NPLUME = ${NP};
@@ -78,13 +53,6 @@ const vec3 G_PL_C[${NP}] = vec3[](${GIANT_PLUMES.map((l) => v3s(l.c)).join(',')}
 const vec3 G_PL_L[${NP}] = vec3[](${GIANT_PLUMES.map((l) => v3s(l.l)).join(',')});
 const vec4 G_PL_P[${NP}] = vec4[](${GIANT_PLUMES.map((l) => `vec4(${fx(l.height)},${fx(l.width)},${fx(l.lean)},${fx(l.phase)})`).join(',')});
 `;
-const LOOP_GLSL = `
-const int G_NLOOP = ${NL};
-const vec3 G_LOOP_C[${NL}] = vec3[](${GIANT_LOOPS.map((l) => v3s(l.c)).join(',')});
-const vec3 G_LOOP_A[${NL}] = vec3[](${GIANT_LOOPS.map((l) => v3s(l.a)).join(',')});
-const vec4 G_LOOP_P[${NL}] = vec4[](${GIANT_LOOPS.map((l) => `vec4(${fx(l.span)},${fx(l.height)},${fx(l.width)},${fx(l.phase)})`).join(',')});
-`;
-
 export const GIANT = `
 uniform vec3 uGiantPos;
 uniform float uGiantR;
@@ -106,7 +74,7 @@ uniform vec3 uHeroPlC[4];     // optional hero plumes in OBJECT space (zero = un
 uniform vec3 uHeroPlL[4];     //   lean direction,
 uniform vec4 uHeroPlP[4];     //   (e-folding height R, base half-width R, lean, phase)
 uniform float uGiantHeroOnly; // optional: 1 = draw only the hero loops/plumes (close-ups), 0 = full tables
-${LOOP_GLSL}${PLUME_GLSL}
+${PLUME_GLSL}
 // palette ramp (linear) keyed by display temperature; saturated crimson -> ember -> gold -> white-gold
 vec3 giantColor(float T){
   vec3 c0 = vec3(0.30, 0.012, 0.006);  // 1400 K abyssal crimson
@@ -409,12 +377,7 @@ void gLoopOne(vec3 ros, vec3 rds, vec3 c, vec3 ax, vec4 P, int n, float tMax, fl
 // ros/rds: ray in pattern space; spin: object->pattern rotation
 vec4 gLoops(vec3 ros, vec3 rds, mat3 spin, float tMax, float t, out float opac){
   vec3 acc = vec3(0.0); float tau = 0.0, dep = 0.0, best = 0.0;
-  if (uGiantHeroOnly < 0.5) for (int k = 0; k < G_NLOOP; k++){
-    vec4 P = G_LOOP_P[k];
-    vec3 a0 = acc; float t0 = tau;
-    gLoopOne(ros, rds, G_LOOP_C[k], G_LOOP_A[k], P, P.y > 0.12 ? 2 : 1, tMax, t, acc, tau, dep, best);
-    acc = a0 + (acc - a0) * 0.32; tau = t0 + (tau - t0) * 0.4;
-  }
+  // only curated hero loops are drawn: small unresolved table loops read as glitches at every scale
   for (int k = 0; k < 2; k++){
     if (dot(uHeroC[k], uHeroC[k]) < 0.5) continue;
     vec3 c = spin * normalize(uHeroC[k]);
@@ -523,7 +486,7 @@ vec4 giantHaze(vec3 o, vec3 rd, float tHit){
     atmo *= 1.0 - 0.85 * uScar * smoothstep(-0.1, 0.45, dot(nr, uScarDir));
   }
   // dense photospheric haze: optically thick edge-on, cool source function -> soft crimson limb
-  float tau0 = gChapman(o, rd, tHit, 0.016) * 7.5 * atmo;   // ~0.15 at disk centre, opaque edge-on
+  float tau0 = gChapman(o, rd, tHit, 0.028) * 5.0 * atmo;   // ~0.13 at disk centre, opaque edge-on, soft rim
   float tr = exp(-tau0);
   vec3 col = giantEmission(2080.0) * 0.55 * (1.0 - tr);
   // extended warm atmosphere: optically thin glow that rims the star

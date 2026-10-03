@@ -201,6 +201,10 @@ vec3 shellCrossing(vec3 oc, vec3 rd, vec3 warp, float ts, float obl, float sc, f
   float head2 = min(shellCross(p, xh2 * sc, 0.009 * sc), 1.7725 * 0.02 * sc) * kn2 * kn2 * 0.8 / (obl * obl);
   vec3 heads = (mix(uCHead0, uCHead1, pk) * head * amp * mix(0.02, 1.0, fr * fr) * 13.0 + uCHead2 * head2 * fr * 4.0) * clump * eq * uKnotGain;
   float smod = max(0.0, 0.6 + 0.3 * net + 0.7 * (A.r - 0.5) + 0.4 * (pat - 0.5) + 0.3 * (B.g - 0.4));
+  // during the fracture the sheet contracts onto the fine cell-border network (filaments between the knots)
+  float netF = (1.0 - smoothstep(0.0, 0.08 + 0.2 * pat, B.a + 0.08 * (C.r - 0.5))) * smoothstep(0.2, 0.6, pat + 0.6 * (A.r - 0.5) + 0.3 * (C.b - 0.5));
+  float fm = fr * (1.0 - fr) * 4.0;
+  smod *= mix(1.0, 0.1 + 1.6 * netF, fm);
   // fracturing: holes open in the sheet as the fracture grows, leaving the filaments
   float sheet = shellCross(p, (0.965 + 0.025 * (A.r - 0.5)) * sc, uSheetWid * sc) * smod * mix(smoothstep(0.75 * fr - 0.05, 0.75 * fr + 0.2, smod), 0.8, fr * fr);
   float walls = shellCross(p, (0.96 + 0.04 * (pat - 0.5)) * sc, 0.03 * sc) * net * eq;

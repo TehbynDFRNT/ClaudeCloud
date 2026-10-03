@@ -59,7 +59,6 @@ void main(){
   v.rgb += v.a * hz.rgb; v.a *= hz.a;
   vec3 g = v.rgb;
   if (hit) g += v.a * giantSurface(o, rd, th, uTime);
-  g += giantFringe(o, rd, th, uTime) * v.a;
   vec3 col = g * uGiantGlow + (hit ? vec3(0.0) : bg * v.a);
   // prominence loops at full resolution (fine threads), over the atmosphere
   if (uPlumes > 0.0){
@@ -147,7 +146,7 @@ export default {
         { c: [-0.80, 0.55, -0.2], l: [-0.5, 0.8, 0], height: 0.12, width: 0.03, lean: 1.2, phase: 0.4 },
         { c: [-0.85, -0.45, -0.25], l: [0.3, -1, 0], height: 0.09, width: 0.025, lean: 0.8, phase: 0.75 },
       ],
-      spin: [1.1, 0.012], boil: 1.3, plumes: 0.9, relief: 0.004, limbDark: 0.62, glow: 1.0, starGain: 0.6,
+      spin: [2.6, 0.012], boil: 1.3, plumes: 0.9, relief: 0.004, limbDark: 0.62, glow: 1.3, starGain: 0.6,
     },
     'F28.2': {
       cam: [

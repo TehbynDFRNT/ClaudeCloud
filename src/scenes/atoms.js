@@ -107,7 +107,9 @@ const mul = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
 const len = (a) => Math.hypot(a[0], a[1], a[2]);
 const norm = (a) => { const l = len(a) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
-const kv = (v, t, d) => (v === undefined ? d : typeof v === 'number' ? v : keys(v, t));
+const kv = (v, t, d) => (v === undefined || v === null ? d : typeof v === 'number' ? v : keys(v, t));
+// colour param: plain [r,g,b] or keyed [[t,[r,g,b]], ...]
+const kc = (v, t, d) => (!v ? d : Array.isArray(v[0]) ? keys(v, t) : v);
 const H1 = (n, s) => hash1(n | 0, s | 0);
 const unitDir = (n, s) => {
   const u = H1(n, s) * 2 - 1, a = H1(n, s + 1) * TAU, r = Math.sqrt(1 - u * u);
@@ -125,11 +127,28 @@ const EMBER = [1.0, 0.24, 0.05];
 const ICE = [0.36, 0.62, 1.0];
 const CRIMSON = [0.42, 0.018, 0.012];
 
-// heat brightens and whitens mostly the core (in the shader); the body keeps its colour
+// heat brightens and whitens mostly the core (in the shader); the body keeps its colour until it is
+// white-hot, when the emission is big enough to clip and the colour comes back only through bloom
 function nucleonCol(isP, heat) {
-  return mix3(isP ? GOLD : PALE, WHITE, clamp(heat * 0.15));
+  return mix3(isP ? GOLD : PALE, WHITE, clamp(heat * 0.14));
 }
-function nucleonInt(isP, heat) { return (isP ? 0.7 : 0.5) * (1 + heat * 0.8); }
+function nucleonInt(isP, heat) { const h = Math.max(0, heat); return (isP ? 0.7 : 0.5) * (1 + 0.6 * h + 0.3 * h * h); }
+
+// strike crush: under-damped step response of the lattice spacing from `from` to `to`, starting at
+// crush.t, first peak (deepest squeeze) at crush.tp seconds, damping zeta. Returns scale, progress k
+// (overshoots past 1) and dk/dt (drives zoom blur and the camera push).
+function crushState(P, t) {
+  const Cr = P.crush;
+  if (!Cr) return { sc: 1, k: 0, v: 0 };
+  const tc = t - Cr.t;
+  if (tc < 0) return { sc: Cr.from ?? 1, k: 0, v: 0 };
+  const z = Cr.zeta ?? 0.5, q = Math.sqrt(1 - z * z);
+  const wd = Math.PI / (Cr.tp ?? 0.36), wn = wd / q;
+  const ex = Math.exp(-z * wn * tc);
+  const k = 1 - ex * (Math.cos(wd * tc) + (z / q) * Math.sin(wd * tc));
+  const v = ex * (wn / q) * Math.sin(wd * tc);
+  return { sc: lerp(Cr.from ?? 1, Cr.to, k), k, v };
+}
 
 // One nucleus: per-nucleon spheres when resolvable and roughly in focus, else a single lumpy sphere.
 // o: {rot, scale, heat, jit, t, f, seed, gain, alpha}
@@ -141,7 +160,7 @@ function addNucleus(B, c, A, Z, o) {
   const Rw = N.radius * sc;
   const Rpx = Rw * q[3];
   if (!B.onScreen(q[0], q[1], Rpx + q[4] + 2)) return;
-  const heat = o.heat ?? 0, gain = o.gain ?? 1, alpha = o.alpha ?? 0.78;
+  const heat = o.heat ?? 0, gain = o.gain ?? 1, alpha = o.alpha ?? 0.94;
   const seed = o.seed ?? 0;
   if (A > 1 && (q[4] > 1.5 * Rpx || Rpx < 6 * B.k)) {
     const fp = Z / A;
@@ -177,8 +196,8 @@ function addNucleus(B, c, A, Z, o) {
           jit * (Math.sin(tt * w * 1.13 + H1(s, 5) * TAU) * 0.9 + (H1(f * 977 + s, 12) - 0.5) * 0.5),
           jit * (Math.sin(tt * w * 0.91 + H1(s, 6) * TAU) * 0.9 + (H1(f * 977 + s, 13) - 0.5) * 0.5),
         ]);
-        const k = gI === 0 ? 0.62 : 0.38 / ng;
-        B.sphere(pg, sc * (o.rn ?? 0.88), nucleonCol(isP, heat), nucleonInt(isP, heat) * gain * k * 1.15, alpha * (gI === 0 ? 0.8 : 0.12), A > 1 ? c : null, heat, (s % 89) + H1(s, 9) * 3, gI === 0 ? 0 : 2);
+        const k = gI === 0 ? 0.7 : 0.3 / ng;
+        B.sphere(pg, sc * (o.rn ?? 0.88), nucleonCol(isP, heat), nucleonInt(isP, heat) * gain * k * 1.15, gI === 0 ? alpha : 0.08, A > 1 ? c : null, heat, (s % 89) + H1(s, 9) * 3, gI === 0 ? 0 : 2);
       }
       continue;
     }
@@ -230,7 +249,7 @@ function fieldNuclei(B, P, t, f, F) {
     const pp = add(p, mul(dr, t * (0.6 + 0.8 * H1(i, 64))));
     const A = H1(i, 65) < (F.pFrac ?? 0.3) ? 1 : (H1(i, 66) < 0.5 ? 12 : 16);
     const Z = A === 1 ? 1 : A / 2;
-    addNucleus(B, pp, A, Z, { rot: axisAngle(unitDir(i, 67), t * 0.6 + i), heat: kv(F.heat, t, 0.1), jit: 0.05, t, f, seed: i + 500, gain: F.gain ?? 0.6, alpha: 0.5 });
+    addNucleus(B, pp, A, Z, { rot: axisAngle(unitDir(i, 67), t * 0.6 + i), heat: kv(F.heat, t, 0.1), jit: 0.05, t, f, seed: i + 500, gain: F.gain ?? 0.6, alpha: 0.85 });
   }
 }
 
@@ -330,7 +349,7 @@ GEN.lattice = function (B, P, t, S, fx) {
         }
         heat += 1.1 * hi; jj += 0.2 * hi;
         const rot = axisAngle(unitDir(id, 6), H1(id, 7) * TAU + t * (0.2 + 0.4 * H1(id, 8)));
-        addNucleus(B, p, isO ? 16 : 12, isO ? 8 : 6, { rot, scale: 1, heat, jit: jj, t, f, seed: id % 10007, gain: (L.gain ?? 1) * (j === 0 ? 1 : L.lowerGain ?? 0.45), alpha: 0.8 });
+        addNucleus(B, p, isO ? 16 : 12, isO ? 8 : 6, { rot, scale: 1, heat, jit: jj, t, f, seed: id % 10007, gain: (L.gain ?? 1) * (j === 0 ? 1 : L.lowerGain ?? 0.45), alpha: 0.95 });
       }
     }
   }
@@ -385,7 +404,7 @@ GEN.gas = function (B, P, t, S, fx) {
     const p = add(C, mul(p0, sc));
     const isP = H1(i, 94) > (G.nFrac ?? 0);
     const A = isP ? 1 : (H1(i, 95) < 0.5 ? 4 : 12);
-    addNucleus(B, p, A, isP ? 1 : A / 2, { rot: axisAngle(unitDir(i, 96), t * 2 + i), heat: heat * (0.7 + 0.6 * H1(i, 97)), jit: jit * (A === 1 ? 1 : 0.4), t, f, seed: i + 100, gain: G.gain ?? 1, alpha: 0.7, ghosts: G.ghosts ?? 0 });
+    addNucleus(B, p, A, isP ? 1 : A / 2, { rot: axisAngle(unitDir(i, 96), t * 2 + i), heat: heat * (0.7 + 0.6 * H1(i, 97)), jit: jit * (A === 1 ? 1 : 0.4), t, f, seed: i + 100, gain: G.gain ?? 1, alpha: 0.94, ghosts: G.ghosts ?? 0 });
   }
   // pressure waves rolling through the gas
   for (const w of P.waves || []) ring(fx, w.c, t - w.t, w);
@@ -429,7 +448,7 @@ GEN.collide = function (B, P, t, S, fx) {
     const p = add(mix3(b.p0, b.p1, e), b.drift ? mul(b.drift, t) : [0, 0, 0]);
     const heat = kv(b.heat, t, 0.2);
     const rot = axisAngle(norm(b.axis || [0.3, 1, 0.2]), (b.spin ?? 0.8) * t + bi);
-    addNucleus(B, p, b.A, b.Z, { rot, heat, jit: kv(b.jit, t, 0.08), t, f, seed: bi * 13 + 1, gain: b.gain ?? 1, alpha: 0.55, scale: b.scale ?? 1 });
+    addNucleus(B, p, b.A, b.Z, { rot, heat, jit: kv(b.jit, t, 0.08), t, f, seed: bi * 13 + 1, gain: b.gain ?? 1, alpha: 0.94, scale: b.scale ?? 1 });
     if (b.trail && u > 0 && u < 1) {
       const pb = add(mix3(b.p0, b.p1, Math.max(0, e - b.trail)), b.drift ? mul(b.drift, t) : [0, 0, 0]);
       B.streak(p, pb, b.A === 1 ? 0.5 : 1.2, mix3(b.A === 1 ? GOLD : WHITE, WHITE, 0.3), b.trailInt ?? 3, 1.5, bi);
@@ -485,7 +504,7 @@ GEN.cno = function (B, P, t, S, fx) {
     if (tau >= -0.05) { heat += 2.6 * Math.exp(-Math.max(0, tau) / 0.22) * smooth(-0.05, 0.0, tau); jit += 0.25 * Math.exp(-Math.max(0, tau) / 0.15); }
     // pulse arriving at this station warms it before it reacts
     const rot = axisAngle(norm([0.2 + 0.1 * s, 1, 0.3]), t * 0.9 + s * 1.7);
-    addNucleus(B, stations[s], A, Z, { rot, heat, jit, t, f, seed: s * 17 + 3, gain: P.gain ?? 1, alpha: 0.55 });
+    addNucleus(B, stations[s], A, Z, { rot, heat, jit, t, f, seed: s * 17 + 3, gain: P.gain ?? 1, alpha: 0.94 });
     const outward = norm(sub(stations[s], C));
     if (CNO_CAPTURE[s]) {
       // incoming proton, arriving exactly at the reaction
@@ -521,7 +540,7 @@ GEN.cno = function (B, P, t, S, fx) {
         // ejected outward in the ring plane and upward, never into the lens
         const d = norm(add(sub(outward, mul(cam0(B), dot3(outward, cam0(B)) * 1.2)), [0, 0.6, 0]));
         const p = add(stations[s], mul(d, 3 + 22 * (1 - Math.exp(-tau * 2.5))));
-        addNucleus(B, p, 4, 2, { rot: axisAngle([0, 1, 0], t * 4), heat: 1.2 * Math.exp(-tau / 0.4) + 0.3, jit: 0.08, t, f, seed: 333, alpha: 0.7 });
+        addNucleus(B, p, 4, 2, { rot: axisAngle([0, 1, 0], t * 4), heat: 1.2 * Math.exp(-tau / 0.4) + 0.3, jit: 0.08, t, f, seed: 333, alpha: 0.94 });
         B.streak(p, add(stations[s], mul(d, 3)), 0.35, mix3(GOLD, WHITE, 0.5), 2.0, 1.5, 77);
       }
     }
