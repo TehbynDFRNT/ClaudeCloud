@@ -287,7 +287,7 @@ export default {
       fbR: [[0, 0.03], [0.95, 0.45, 'outQuad'], [1.83, 1.2, 'inQuad']],
       fbTurb: 0.26, fbDens: 26, fbHeat: [[0, 1.1], [1.0, 1.0], [1.83, 0.96]], fbShell: 0, fbEvo: [[0, 0], [1.83, 2.2, 'linear']], fbBlue: 0.3,
       starGain: 1,
-      post: { bloomStrength: 0.14, halation: 0.04, streakStrength: 0.06, saturation: 1.1, contrast: 1.08 },
+      post: { bloomStrength: 0.14, halation: 0.04, streakStrength: 0.06, saturation: 1.12, contrast: 1.1, lift: 0 },
     },
     // 3.83 s: system wide. The sphere swallows the disk, severs the stream and slams into the giant.
     'S23-eruption': {
@@ -307,7 +307,7 @@ export default {
       cam: [[0, [0.05, 0.02, -1.0], [0, 0, 0], 58, 0], [1.05, [0.03, 0.01, -1.0], [0, 0, 0.2], 60, 0.03], [2.5, [0.0, 0.0, -0.98], [0.02, 0.02, 0.2], 62, 0.06]],
       wvR: [[0, 0.5], [1.05, 0.985, 'inQuad'], [2.5, 1.26, 'outQuad']],
       fbTurb: 0.12, fbEvo: [[0, 4.0], [1.05, 5.2], [2.5, 10.5, 'linear']], wvDens: 34, wvHeat: [[0, 0.86], [1.0, 0.9], [1.3, 1.0], [2.5, 1.1]],
-      debris: [[0, 0.6], [1.0, 1.0], [2.5, 0.8]], adv: [[0, 0], [1.05, 2.0], [2.5, 22.0, 'linear']],
+      debris: [[0, 0.2], [0.85, 0.45], [1.05, 1.0], [2.5, 0.8]], adv: [[0, 0], [1.05, 2.0], [2.5, 22.0, 'linear']],
       refract: [[0.7, 0], [1.0, 1.0], [1.5, 0.35], [2.5, 0.12]],
       starGain: [[0, 0.6], [0.95, 0.5], [1.15, 0.0]],
       postKeys: { zoomBlur: [[0.6, 0.0], [0.98, 0.012], [1.1, 0.05], [1.6, 0.03], [2.5, 0.02]], exposure: [[0, 1.0], [0.95, 0.85], [1.12, 0.62], [1.4, 1.05], [2.5, 1.0]] },

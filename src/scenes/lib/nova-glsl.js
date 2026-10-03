@@ -119,7 +119,8 @@ vec4 fireballMarch(vec3 ro, vec3 rd, float tMin, float tMax, float jit){
     // and the outer veils barely absorb at all (no sooty edges in front of the bright interior)
     float rhoE = (rhoB + rhoC + ph * 12.0) * msk;
     float rhoA = (rhoB * mix(1.0, 0.3, uFbShell) + rhoC * mix(1.0, 0.04, uFbShell) + ph * 12.0) * msk;
-    float hb = 0.30 + 0.3 * smoothstep(0.0, 0.03, ee) + 0.32 * (hot - 0.45) + 0.15 * pow(mu, 1.5) + 0.13 * pow(vein, 3.0);
+    // opaque ball: white upwelling tops, inter-billow lanes sinking to deep gold / ember
+    float hb = 0.27 + 0.3 * smoothstep(0.0, 0.03, ee) + 0.44 * (hot - 0.45) + 0.15 * pow(mu, 1.5) + 0.13 * pow(vein, 3.0);
     // swept-up shell: heat follows density and depth -> gold where dense and deep, crimson-ember skirts where thin
     float hs = 0.18 + 0.4 * smoothstep(0.6, 2.0, dl) + 0.06 * smoothstep(0.03, 0.3, ee) + 0.05 * (hot - 0.45) + 0.05 * pow(vein, 3.0);
     hb = mix(hb, hs, uFbShell);
