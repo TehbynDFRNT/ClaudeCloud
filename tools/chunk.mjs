@@ -24,12 +24,14 @@ const mode = argv[0];
 const opt = (k, d) => { const i = argv.indexOf('--' + k); return i >= 0 ? argv[i + 1] : d; };
 const plan = JSON.parse(fs.readFileSync(path.join(ROOT, 'film-plan.json'), 'utf8'));
 const pad = (n) => String(n).padStart(5, '0');
-const CHUNKS = path.join(ROOT, 'dist/chunks');
+const PREVIEW = argv.includes('--preview');          // 960x540 work-in-progress cut, kept apart from final blocks
+const W = PREVIEW ? 960 : 1920, H = PREVIEW ? 540 : 1080;
+const CHUNKS = path.join(ROOT, PREVIEW ? 'dist/preview' : 'dist/chunks');
 const BLOCK = 240;                                   // fixed 10 s blocks aligned to frame 0
 const fpOf = makeFingerprinter(plan);
-const blockFp = (a, b) => { const h = crypto.createHash('sha1'); for (let f = a; f < b; f++) h.update(fpOf(f) + ','); return h.digest('hex').slice(0, 16); };
+const blockFp = (a, b) => { const h = crypto.createHash('sha1'); for (let f = a; f < b; f++) h.update(fpOf(f, W, H) + ','); return h.digest('hex').slice(0, 16); };
 const blocks = () => { const out = []; for (let a = 0; a < plan.frames; a += BLOCK) out.push([a, Math.min(plan.frames, a + BLOCK)]); return out; };
-const freshFp = (a, b) => { const fresh = makeFingerprinter(plan); const h = crypto.createHash('sha1'); for (let f = a; f < b; f++) h.update(fresh(f) + ','); return h.digest('hex').slice(0, 16); };
+const freshFp = (a, b) => { const fresh = makeFingerprinter(plan); const h = crypto.createHash('sha1'); for (let f = a; f < b; f++) h.update(fresh(f, W, H) + ','); return h.digest('hex').slice(0, 16); };
 const blockName = (a, b) => `chunk_${pad(a)}_${pad(b)}`;
 function blockState(a, b) {
   const mp4 = path.join(CHUNKS, blockName(a, b) + '.mp4'), meta = path.join(CHUNKS, blockName(a, b) + '.json');
@@ -37,7 +39,7 @@ function blockState(a, b) {
   return JSON.parse(fs.readFileSync(meta, 'utf8')).fp === freshFp(a, b) ? 'final' : 'stale';
 }
 // final video settings, shared by every chunk so they can be stream-copied together
-const X264 = ['-c:v', 'libx264', '-preset', 'slow', '-crf', opt('crf', '17'), '-tune', 'grain', '-pix_fmt', 'yuv420p',
+const X264 = ['-c:v', 'libx264', '-preset', 'slow', '-crf', opt('crf', argv.includes('--preview') ? '22' : '17'), '-tune', 'grain', '-pix_fmt', 'yuv420p',
   '-profile:v', 'high', '-level', '4.1', '-x264-params', 'keyint=48:min-keyint=24:scenecut=40', '-r', plan.fps];
 
 function run(cmd, args, opts = {}) {
@@ -85,13 +87,13 @@ if (mode === 'costs') {
 } else if (mode === 'render') {
   const from = +opt('from', 0), to = +opt('to', plan.frames);
   if (from % BLOCK || (to % BLOCK && to !== plan.frames)) throw new Error(`--from/--to must be multiples of ${BLOCK} (or the film end)`);
-  const frames = path.join(ROOT, opt('frames', 'out/frames'));
+  const frames = path.join(ROOT, opt('frames', PREVIEW ? 'out/frames-preview' : 'out/frames'));
   fs.mkdirSync(CHUNKS, { recursive: true });
   for (const [a, b] of blocks().filter(([a]) => a >= from && a < to)) {
     const name = blockName(a, b), state = blockState(a, b);
     if (state === 'final') { console.log(`${name}: final, kept`); continue; }
     console.log(`${name}: ${state} -> rendering`);
-    run('node', ['tools/render.mjs', 'film', '--from', String(a), '--to', String(b), '--w', '1920', '--out', path.relative(ROOT, frames)]);
+    run('node', ['tools/render.mjs', 'film', '--from', String(a), '--to', String(b), '--w', String(W), '--out', path.relative(ROOT, frames)]);
     for (let f = a; f < b; f++) if (!fs.existsSync(path.join(frames, `${pad(f)}.jpg`))) throw new Error(`missing frame ${f}`);
     const out = path.join(CHUNKS, name + '.mp4');
     run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'warning', '-framerate', plan.fps, '-start_number', String(a),
@@ -110,7 +112,7 @@ if (mode === 'costs') {
     if (rendered !== freshFp(a, b)) { console.warn(`${name}: sources changed during render; block left stale`); continue; }
     console.log(`wrote ${path.relative(ROOT, out)} (${n} frames, ${(fs.statSync(out).size / 1e6).toFixed(1)} MB)`);
     if (argv.includes('--push')) {
-      run('git', ['add', `dist/chunks/${name}.mp4`, `dist/chunks/${name}.json`]);
+      run('git', ['add', path.relative(ROOT, path.join(CHUNKS, name + '.mp4')), path.relative(ROOT, path.join(CHUNKS, name + '.json'))]);
       run('git', ['commit', '-q', '-m', `Render block ${name}`]);
       for (let k = 0, d = 2; ; k++, d *= 2) {
         const r = spawnSync('git', ['push', '-q', '-u', 'origin', 'HEAD'], { stdio: 'inherit', cwd: ROOT });
@@ -130,7 +132,7 @@ if (mode === 'costs') {
   }
   const list = path.join(CHUNKS, 'concat.txt');
   fs.writeFileSync(list, files.map((f) => `file '${path.join(CHUNKS, f)}'`).join('\n') + '\n');
-  const out = path.join(ROOT, opt('out', 'dist/david-and-goliath.mp4'));
+  const out = path.join(ROOT, opt('out', PREVIEW ? 'dist/preview-cut.mp4' : 'dist/david-and-goliath.mp4'));
   const [num, den] = plan.fps.split('/').map(Number);
   run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'warning', '-f', 'concat', '-safe', '0', '-i', list, '-i', audio,
     '-map', '0:v:0', '-map', '1:a:0', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '320k', '-ar', '48000', '-ac', '2',
