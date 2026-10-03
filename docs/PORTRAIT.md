@@ -9,6 +9,10 @@ The film is now delivered **vertical, 1080×1920 (9:16)**, in **two cuts** that 
 
 The cuts differ only in their name cards, end title, shot descriptions and two frenzy studies. In the David cut, F29.1 uses the preset `F29.1-sling`. In the Prometheus cut, F29.1 uses `F29.1-eagle` and F30.3 uses `F30.3-chains`. Everything else renders identical frames in both cuts.
 
+**The photography is approved: the director called the current look "absolutely fantastic and beautiful".** This round changes framing, sequence and narrative only. Don't restyle a shot's look (colour, exposure, texture, lighting, motion design) beyond what reframing for 9:16 or a note below strictly requires. Before/after frames of any shot should read as the same photography, recomposed.
+
+A third cut, SOL INVICTUS, and marble-statue inserts are being added by the lead (see the plan once updated); they don't change any existing department's shots beyond trimming their length.
+
 The director's notes that drive this version:
 
 - **9:16.**

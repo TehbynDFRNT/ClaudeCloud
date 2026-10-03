@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 // Builds the timeline contracts from the storyboard below and the signal-derived bar grid
 // (analysis/grid.json). Shot boundaries are written in musical positions; frames are derived here once.
-// Two cuts share one picture and one score and differ only in what the story calls things:
-//   film-plan.json             DAVID & GOLIATH  (id david-916)
-//   film-plan-prometheus.json  PROMETHEUS       (id prometheus-916)
-// Both are 9:16 (1080x1920). Re-run after changing the storyboard or grid:
-//   node tools/build_plan.mjs && python3 tools/validate_plan.py film-plan.json && python3 tools/validate_plan.py film-plan-prometheus.json
+// Three cuts share one cosmic picture and one score; they differ in what the story calls things, two
+// frenzy studies and the marble figure of the statue inserts:
+//   film-plan.json             DAVID & GOLIATH  (id david-916)       Michelangelo's David
+//   film-plan-sol.json         SOL INVICTUS     (id sol-916)         the unconquered sun
+//   film-plan-prometheus.json  PROMETHEUS       (id prometheus-916)  the fire-bringer
+// All are 9:16 (1080x1920). Re-run after changing the storyboard or grid:
+//   node tools/build_plan.mjs && for p in film-plan*.json; do python3 tools/validate_plan.py $p; done
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,6 +15,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const grid = JSON.parse(fs.readFileSync(path.join(ROOT, 'analysis/grid.json'), 'utf8'));
 const FPS = 24;
+const OUT_DIR = process.env.PLAN_OUT || '.';     // PLAN_OUT=out/plan-test to dry-run without touching the live plans
 
 // ---- audio placements (frames) -------------------------------------------------------------
 // Recording: The United States Air Force Band, Vivaldi 'Winter' I (supplied by the director; public domain).
@@ -106,17 +109,37 @@ const SB = [
   { id: 'S31-newstar', start: CODA, scene: 'earthsky', purpose: 'Seen from Earth: a new star', action: 'The Milky Way arches up from a dark, unlit horizon (no light pollution: the galactic core, dust lanes, airglow); stillness; then, silently, a new star appears where there was none. The film ends on it', framing: 'Locked-off night sky, 9:16, horizon low, galactic core rising vertically' },
 ];
 
-// ---- the two cuts ---------------------------------------------------------------------------
-// Same picture and score; the story names change, and two frenzy studies are drawn for each myth.
+// ---- the three cuts -------------------------------------------------------------------------
+// Same cosmic picture and score; the story names change, two frenzy studies are drawn for each myth,
+// and each cut has its own marble figure for the statue inserts (M01-M16).
 const CUTS = {
   david: {
-    file: 'film-plan.json', id: 'david-916', title: 'David & Goliath — a nova in two voices',
+    file: 'film-plan.json', id: 'david-916', title: 'David & Goliath — a nova in two voices', figure: 'david',
     names: [['GOLIATH', 'a red giant'], ['DAVID', 'a white dwarf']], endTitle: 'DAVID & GOLIATH',
     presets: { 'F29.1': 'F29.1-sling' },
     purposes: {},
   },
+  sol: {
+    file: 'film-plan-sol.json', id: 'sol-916', title: 'Sol Invictus — the unconquered sun', figure: 'sol',
+    names: [['HIEMS', 'a red giant'], ['SOL INVICTUS', 'a white dwarf']], endTitle: 'SOL INVICTUS',
+    presets: { 'F29.1': 'F29.1-sol', 'F30.3': 'F30.3-solstice' },
+    purposes: {
+      'S02-goliath': 'Introduce HIEMS: Winter, the old light swollen and dying',
+      'S03-david': 'Introduce SOL INVICTUS: the unconquered sun, tiny, cold, dense',
+      'S07-stream': "Winter's fire torn away",
+      'S12-engulf': 'The longest night closes over the sun',
+      'F29.1': 'Sol Invictus (a radiate head on a Roman coin)',
+      'F30.3': 'Bruma (the winter solstice: the sun at its lowest)',
+      'S21-strike5': 'The light drawn into a single point',
+      'S22-dark': 'The solstice: the darkest moment, felt not seen',
+      'S22-ignition': 'The unconquered sun is reborn',
+      'S27-devastation': 'Winter broken',
+      'S28-survival': 'The sun endures',
+      'S31-newstar': 'Dies Natalis Solis Invicti: the birth of a new star',
+    },
+  },
   prometheus: {
-    file: 'film-plan-prometheus.json', id: 'prometheus-916', title: 'Prometheus — the stolen fire',
+    file: 'film-plan-prometheus.json', id: 'prometheus-916', title: 'Prometheus — the stolen fire', figure: 'prometheus',
     names: [['ZEUS', 'a red giant'], ['PROMETHEUS', 'a white dwarf']], endTitle: 'PROMETHEUS',
     presets: { 'F29.1': 'F29.1-eagle', 'F30.3': 'F30.3-chains' },
     purposes: {
@@ -173,6 +196,52 @@ const shots = SB.map((s, i) => {
 });
 for (const s of shots) if (s.end <= s.start) throw new Error(`empty shot ${s.id} ${s.start}-${s.end}`);
 
+// ---- the marble figure ----------------------------------------------------------------------
+// Inserts of a single marble statue on black, cut into the film (mostly ~1 s). Across the WHOLE film the
+// figure turns exactly 90 degrees: in profile at its first appearance, looking straight into the lens at
+// the end (M16, under the end title). Each insert is a different cinematic angle on the same statue;
+// the turn is a function of film frame, so every glimpse shows the gaze a little further round.
+// An insert cuts into the shot it lands on; that shot keeps its own clock (`span`), so its motion is
+// never compressed, and resumes (`·2`) if the insert falls mid-shot.
+const GAZE_FRAME = CODA - 60;                  // the turn completes here, inside the final stare
+const INSERTS = [
+  ['M01', at(8) - 27, at(8), 'First sight: the figure in profile, looking away; perpendicular to us'],
+  ['M02', at(12) - 18, at(12), 'The profile again, closer: lips and jaw in hard light'],
+  ['M03', at(16) - 18, at(16), 'Head and neck against the void, the aura behind'],
+  ['M04', at(19) - 18, at(19), 'The carved eye, beginning to come round'],
+  ['M05', at(22) - 27, at(22), 'Small in the black: head and shoulders, light from above'],
+  ['M06', at(27) - 18, at(27), 'Brow and eye from below'],
+  ['M07', at(28, 6), at(29), 'Frenzy beat: the eye'],
+  ['M08', at(30, 6), at(31), 'Frenzy beat: the lips'],
+  ['M09', at(31, 6), at(31, 7), 'Frenzy flash: the gaze'],
+  ['M10', strike(33) - 36, strike(33), 'The held breath: a slow push on the three-quarter face'],
+  ['M11', strike(35) - 18, strike(35), 'Between strikes: the face, hard light'],
+  ['M12', strike(37) - 18, strike(37), 'Both eyes now, almost upon us'],
+  ['M13', IGNITION + DARK + 106 - 24, IGNITION + DARK + 106, 'Amid the eruption: the face, still, in its aura'],
+  ['M14', srcToFrame(BAR56_SRC) + 72, srcToFrame(BAR56_SRC) + 96, 'Expansion: the face nearly turned to us'],
+  ['M15', at(60) - 24, at(60), 'Devastation gives way: the gaze a breath from direct'],
+  ['M16', at(63) + 55, CODA, 'The gaze: directly into the lens, staring into you'],
+];
+const TURN = [INSERTS[0][1], GAZE_FRAME, 90, 0];   // [from frame, to frame, from deg, to deg]
+{
+  const out = [];
+  for (const s of shots) {
+    const cuts = INSERTS.filter(([, a, b]) => a < s.end && b > s.start);
+    if (!cuts.length) { out.push(s); continue; }
+    let cursor = s.start, part = 0;
+    for (const [id, a, b, purpose] of cuts) {
+      if (a > cursor) out.push({ ...s, id: part ? `${s.id}·${part + 1}` : s.id, preset: s.preset || s.id, start: cursor, end: a, span: [s.start, s.end] });
+      if (a > cursor) part++;
+      if (!out.some((o) => o.id === id)) out.push({ id, start: a, end: b, scene: 'statue', purpose, action: 'Marble figure on black, slowly turning its gaze toward us (see INSERTS)', framing: 'See the statue preset', params: { turn: TURN } });
+      cursor = Math.max(cursor, b);
+    }
+    if (cursor < s.end) out.push({ ...s, id: part ? `${s.id}·${part + 1}` : s.id, preset: s.preset || s.id, start: cursor, end: s.end, span: [s.start, s.end] });
+  }
+  for (const o of out) if (o.span && o.span[0] === o.start && o.span[1] === o.end) delete o.span;
+  shots.splice(0, shots.length, ...out.sort((x, y) => x.start - y.start));
+  for (let i = 1; i < shots.length; i++) if (shots[i].start !== shots[i - 1].end) throw new Error(`gap/overlap at ${shots[i].id}`);
+}
+
 // ---- cues -----------------------------------------------------------------------------------
 const cues = [];
 for (const bar of [33, 34, 35, 36, 37]) cues.push({
@@ -199,7 +268,7 @@ const effects = [
   { type: 'fade', start: 0, end: 72, from: 1, to: 0 },
   { type: 'letterbox', frame: IGNITION, from: 0.128, to: 0.0, frames: 1 },             // opens unseen, in the dark
   { type: 'shake', start: IGNITION + DARK, end: IGNITION + DARK + 160, amp: 9, env: 'decay' },
-  { type: 'fade', start: DECAY_END - 34, end: CODA, from: 0, to: 1 },
+  { type: 'fade', start: CODA - 24, end: CODA, from: 0, to: 1 },                         // the stare goes to black
   { type: 'fade', start: CODA, end: CODA + 60, from: 1, to: 0 },                         // the night fades up
   { type: 'fade', start: FRAMES - 36, end: FRAMES, from: 0, to: 1 },                     // and the film goes out
 ];
@@ -222,8 +291,9 @@ const overlays = [
 for (const [cut, C] of Object.entries(CUTS)) {
   const text = [
     { id: 'name-giant', start: at(3) + 40, end: at(5) + 20, content: C.names[0].join('\n'), style: 'name', maxCps: 12, minFrames: 60 },
-    { id: 'name-dwarf', start: at(6) + 30, end: at(8) - 6, content: C.names[1].join('\n'), style: 'name', maxCps: 12, minFrames: 60 },
-    { id: 'end-title', start: at(63) + 24, end: DECAY_END - 34, content: C.endTitle, style: 'title', y: 0.80, fadeIn: 24, fadeOut: 20, minFrames: 48 },
+    { id: 'name-dwarf', start: at(6) + 30, end: at(8) - 33, content: C.names[1].join('\n'), style: 'name', maxCps: 12, minFrames: 60 },
+    // the end title sits under the figure's direct stare
+    { id: 'end-title', start: at(63) + 70, end: CODA - 26, content: C.endTitle, style: 'title', y: 0.84, fadeIn: 24, fadeOut: 20, minFrames: 48 },
     // the closing line, in two breaths, over the dark ground below the horizon
     { id: 'coda-line-1', start: CODA_LINE1, end: FRAMES - 2, content: 'The birth of a new star;', style: 'line', font: 'cormorant', size: 44, y: 0.815, fadeIn: 30, fadeOut: 34, minFrames: 60 },
     { id: 'coda-line-2', start: CODA_LINE2, end: FRAMES - 2, content: 'the Nova.', style: 'line', font: 'cinzel', size: 50, y: 0.875, fadeIn: 30, fadeOut: 34, minFrames: 60 },
@@ -232,6 +302,7 @@ for (const [cut, C] of Object.entries(CUTS)) {
     const o = { ...s };
     if (C.presets[s.id]) o.preset = C.presets[s.id];
     if (C.purposes[s.id]) o.purpose = C.purposes[s.id];
+    if (o.scene === 'statue') o.params = { ...o.params, figure: C.figure };
     return o;
   });
   const plan = {
@@ -257,7 +328,8 @@ for (const [cut, C] of Object.entries(CUTS)) {
     ],
     checks: { audioRequired: true, videoCodec: 'h264', pixelFormat: 'yuv420p' },
   };
-  fs.writeFileSync(path.join(ROOT, C.file), JSON.stringify(plan, null, 1) + '\n');
+  fs.mkdirSync(path.join(ROOT, OUT_DIR), { recursive: true });
+  fs.writeFileSync(path.join(ROOT, OUT_DIR, C.file), JSON.stringify(plan, null, 1) + '\n');
   console.log(`wrote ${C.file} (${cut}): ${cutShots.length} shots, ${cues.length} cues, ${FRAMES} frames (${(FRAMES / FPS).toFixed(2)} s)`);
 }
 for (const s of shots) console.log(`${s.id.padEnd(18)} ${String(s.start).padStart(5)}-${String(s.end).padEnd(5)} ${((s.end - s.start) / FPS).toFixed(2).padStart(6)}s  ${s.scene}`);

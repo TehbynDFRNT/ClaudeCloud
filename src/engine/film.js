@@ -95,8 +95,11 @@ export class Film {
 
   state(shot, f) {
     const fps = this.fps;
-    const local = (f - shot.start) / fps;
-    const dur = (shot.end - shot.start) / fps;
+    // `span` keeps a shot's own clock when an insert cuts into it: the shot plays as if it ran over
+    // span[0]..span[1] and only the frames inside [start, end) are shown (motion is never compressed)
+    const a = shot.span ? shot.span[0] : shot.start, b = shot.span ? shot.span[1] : shot.end;
+    const local = (f - a) / fps;
+    const dur = (b - a) / fps;
     // params: scene preset for this shot id (lives in the scene module) overridden by plan params
     const sc = this.scenes[shot.scene];
     const preset = (sc && sc.presets && (sc.presets[shot.preset || shot.id] || sc.presets.default)) || {};
@@ -105,7 +108,7 @@ export class Film {
     const framing = pp ? framingAt(pp.framing, local / dur) : null;
     return {
       f, t: f / fps, local, dur, u: local / dur, fps, W: this.W, H: this.H, portrait: this.portrait,
-      shot, params, framing, seed: shot.seed ?? (rng.hash1(shot.start, 7) * 1000),
+      shot, params, framing, seed: shot.seed ?? (rng.hash1(a, 7) * 1000),
     };
   }
 
