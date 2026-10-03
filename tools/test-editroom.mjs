@@ -48,7 +48,7 @@ try {
     for (let i = 0; i < 100 && (v.readyState < 2 || v.seeking); i++) await new Promise((r) => setTimeout(r, 30));
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     const c = document.createElement('canvas'); c.width = 8; c.height = 8; const x = c.getContext('2d');
-    x.drawImage(v, v.videoWidth / 2 - 4, v.videoHeight / 2 - 4, 8, 8, 0, 0, 8, 8);
+    x.drawImage(v, v.videoWidth * 0.5 - 4, v.videoHeight * (350 / 540) - 4, 8, 8, 0, 0, 8, 8);  // centre of the brightness-coded square
     const d = x.getImageData(4, 4, 1, 1).data;
     const Y = d[0] * 219 / 255 + 16;              // undo limited-range expansion
     return { code: ((Math.round((Y - 24) / 8) % 24) + 24) % 24, tc: document.getElementById('tc').textContent, sub: document.getElementById('tcsub').textContent };
