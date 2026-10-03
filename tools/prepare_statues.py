@@ -647,14 +647,17 @@ def hull_centroid(P2):
     return np.array([((x + np.roll(x, -1)) * a).sum() / (6 * A), ((z + np.roll(z, -1)) * a).sum() / (6 * A)])
 
 
+SHOULDER_BAND = (0.40, 0.46)   # lateral distance from the turn axis along torso.left (head units)
+
+
 def body_anchors(m, caster, an, cfg, rough16):
-    """Shoulders, neck axis and neck base on the dense head-space surface.
+    """Shoulders, neck axis and neck base on the dense head-space surface (approximate, for framing).
     Torso axes: principal axis of the cross-section just above the cut.
-    Shoulders: rays cast straight down from just under the jaw over a band 0.30-0.46 to either side of the
-    neck along the torso's lateral axis; the highest hit is the top of the shoulder (hair or beard lying on it
-    count as the shoulder's silhouette).
-    Neck axis: line through the convex-hull centroids of thin horizontal slabs of SMOOTH (skin) vertices under the
-    jaw within 0.3 of the axis (hair and beard are rough and excluded); neckBase = that axis at shoulder height."""
+    Shoulders: top of the shoulder slope at a fixed lateral distance: highest SMOOTH (carved skin, not hair/beard)
+    vertex outside the head ball (0.55 around the head centre) in a band SHOULDER_BAND to either side of the turn
+    axis along the torso's lateral axis. (The casts are cut well inside the real acromion.)
+    Neck: convex-hull centroids of thin horizontal slabs of smooth vertices within 0.30 of the turn axis, under the
+    jaw (neckTop) and at the mean shoulder height (neckBase); neckAxisUp joins them."""
     V = np.asarray(m.vertices)
     up = np.array([0, 1.0, 0])
     y_s = cfg['crop_y'] + 0.06
@@ -667,34 +670,41 @@ def body_anchors(m, caster, an, cfg, rough16):
     if fwd_t @ np.asarray(cfg['torso_dir'], float) < 0:
         fwd_t = -fwd_t
     left_t = np.cross(up, fwd_t)
-    # neck axis
-    cen, cur = [], np.zeros(2)
-    smooth = rough16 < 1.0
-    for y in np.linspace(an['chin'][1] - 0.08, an['chin'][1] - 0.24, 9):
-        k = smooth & (np.abs(V[:, 1] - y) < 0.008) & (np.hypot(V[:, 0] - cur[0], V[:, 2] - cur[1]) < 0.30)
+    smooth = rough16 < 0.9
+    head_c = np.array([0.0, -0.05, 0.05])
+    outside = np.linalg.norm(V - head_c, axis=1) > 0.55
+    lt, ft = V @ left_t, V @ fwd_t
+    out = {}
+    for lab, sgn in (('shoulderL', 1), ('shoulderR', -1)):
+        sel = (smooth & outside & (sgn * lt > SHOULDER_BAND[0]) & (sgn * lt < SHOULDER_BAND[1]) & (np.abs(ft) < 0.25)
+               & (V[:, 1] > cfg['crop_y'] + 0.03) & (V[:, 1] < an['chin'][1] + 0.12))
+        if sel.any():
+            out[lab] = V[np.argmax(np.where(sel, V[:, 1], -1e9))]
+
+    def slab_centre(y):
+        k = smooth & (np.abs(V[:, 1] - y) < 0.01) & (np.hypot(V[:, 0], V[:, 2]) < 0.30)
         if k.sum() < 30:
-            continue
+            return None
         cxz = hull_centroid(V[k][:, [0, 2]])
-        cen.append([cxz[0], y, cxz[1]])
-        cur = cxz
+        return np.array([cxz[0], y, cxz[1]])
+    ys = [out[k][1] for k in ('shoulderL', 'shoulderR') if k in out]
+    y_nb = float(np.mean(ys)) if ys else an['chin'][1] - 0.25
+    y_nb = min(y_nb, an['chin'][1] - 0.12)
+    cen = [c_ for c_ in (slab_centre(y) for y in np.linspace(an['chin'][1] - 0.06, an['chin'][1] - 0.30, 7)) if c_ is not None]
     cen = np.array(cen)
     A_ = np.c_[cen[:, 1], np.ones(len(cen))]
     kx = np.linalg.lstsq(A_, cen[:, 0], rcond=None)[0]
     kz = np.linalg.lstsq(A_, cen[:, 2], rcond=None)[0]
-    axis_at = lambda y: np.array([kx[0] * y + kx[1], y, kz[0] * y + kz[1]])
-    out = {}
-    y0 = an['chin'][1] - 0.08
-    nt = axis_at(y0)
-    for lab, sgn in (('shoulderL', 1), ('shoulderR', -1)):
-        O = np.array([nt + left_t * sgn * s_ + fwd_t * f_ for s_ in np.linspace(0.30, 0.46, 9) for f_ in np.linspace(-0.15, 0.15, 7)])
-        O[:, 1] = y0
-        loc, ir, it = caster.first(O, np.tile([0, -1.0, 0], (len(O), 1)))
-        if len(loc):
-            out[lab] = loc[np.argmax(loc[:, 1])]
-    ys = [out[k][1] for k in ('shoulderL', 'shoulderR') if k in out]
-    y_nb = float(np.mean(ys)) if ys else an['chin'][1] - 0.25
-    out['neckBase'] = axis_at(y_nb)
-    out['_neckAxis'] = nrm(np.array([kx[0], 1.0, kz[0]]))
+    axis = nrm(np.array([kx[0], 1.0, kz[0]]))
+    if axis[1] < math.cos(math.radians(40)):         # unreliable (hidden throat): fall back to the slab centroid
+        nb = slab_centre(y_nb)
+        out['_neckAxisNote'] = 'fit unreliable (tilt > 40 deg), vertical used'
+        axis = up
+    else:
+        nb = np.array([kx[0] * y_nb + kx[1], y_nb, kz[0] * y_nb + kz[1]])
+    out['neckBase'] = nb
+    out['_neckAxis'] = axis
+    nt = cen[0]
     out['_torso'] = dict(forward=fwd_t, left=left_t)
     out['_neckTop'] = nt
     return out
@@ -872,6 +882,7 @@ def process(name, args):
     torso = body.pop('_torso')
     neck_top = body.pop('_neckTop')
     torso['neckAxis'] = body.pop('_neckAxis')
+    torso['neckAxisNote'] = body.pop('_neckAxisNote', 'line fitted through 7 smooth-skin slab centroids under the jaw')
     an.update(body)
     extra = {}
     if name == 'sol':
@@ -1062,12 +1073,14 @@ def write_outputs(res):
               for k, e in res['eyes'].items()},
         anchors=anchors,
         torso=dict(forward=r5(res['torso']['forward']), left=r5(res['torso']['left']),
-                   neckAxisUp=r5(res['torso']['neckAxis']),
-                   note='forward/left: horizontal directions the chest faces / its own left (from the cross-section above '
-                        'the cut); neckAxisUp: neck direction fitted through smooth-skin cross-section centroids under '
-                        'the jaw. shoulderL/R: highest surface hit by rays cast down from under the jaw, 0.30-0.46 to '
-                        'either side of the neck along torso.left; neckBase is the neck axis at the mean '
-                        'shoulder line (approximate, +-0.05; on the bearded giant the throat is hidden).'),
+                   neckAxisUp=r5(res['torso']['neckAxis']), neckAxisFit=res['torso']['neckAxisNote'],
+                   note='forward/left: horizontal directions the chest faces / its own left (principal axis of the '
+                        'cross-section above the cut); neckAxisUp: line through the neck\'s smooth-skin cross-section '
+                        'centroids under the jaw (see neckAxisFit). shoulderL/R: top of the shoulder slope 0.40-0.46 to '
+                        'either side of the turn axis along torso.left (highest smooth-skin vertex there, outside the '
+                        'head, below chin + 0.12; the casts are cut well inside the real acromion). neckBase: the neck '
+                        'axis at the mean shoulder height, at most chin - 0.12 (approximate, +-0.05; on the bearded giant '
+                        'the throat is hidden by the beard).'),
         bake=dict(
             ao='channel 0: ambient visibility, 48 cosine-weighted rays per vertex, mean normalised free distance '
                'up to %.2f head units (1 = open, 0 = enclosed)' % BAKE['ao_maxd'],
@@ -1302,14 +1315,26 @@ def _notes_sol(res):
     ]
 
 
+def cap_visibility(cuts):
+    """turn yaws (camera on the arc yaw 90 = -X profile .. 0 = +Z, at eye level) from which each cap faces the camera"""
+    out = []
+    for c in cuts[1:]:
+        n = np.array(c['normal'])
+        vis = [y for y in range(0, 91) if n @ np.array([-math.sin(math.radians(y)), 0, math.cos(math.radians(y))]) > 0]
+        rng = ('yaw %d-%d' % (min(vis), max(vis))) if vis else 'never'
+        out.append('%s cap (outward normal %s) faces the camera on the turn arc: %s' % (c['what'], c['normal'], rng))
+    return out
+
+
 def _notes_prometheus(res):
     fr = res['fr']
-    return _common_notes(res) + [
+    return _common_notes(res) + cap_visibility(res['cuts']) + [
         'STAND-IN: the giant (Klytios?) from the Pergamon Altar Gigantomachy; no freely licensed scan of a marble '
         'Prometheus exists. Same Hellenistic pathos face family as Laocoon and Adam\'s Prometheus.',
-        'Relief slab removed: cut at source z = 7 (relief ground) and x = 62 (its return), both capped. The big flat cap '
-        'at the back faces head-space +X/-Z: approach the profile ONLY from the -X side (the turn arc -X -> +Z never '
-        'sees it; from +X it is a flat wall). The arms are broken off at the shoulders (no hands).',
+        'Relief slab removed: cut at source z = 7 (relief ground, a big flat cap behind the head and back) and x = 62 '
+        '(its return, which cuts through the figure\'s left shoulder: a slanted flat face beside the beard, lower right '
+        'of frame at yaw 0). Approach the profile ONLY from the -X side (see the cap visibility notes and frame.cuts); '
+        'keep the shoulder cap out of frame or in shadow in the last, frontal inserts. The arms are broken off (no hands).',
         'Blank eyes. Yaw = mean of the two eyeball caps (%.1f deg); pitch %.1f deg chosen visually (renders at camera '
         'pitch -15..+25); head space is levelled.' % (fr['yaw'], fr['pitch']),
         'The chin is hidden in the beard: anchors.chin is an ESTIMATE (see frame); anchors.beardTip is the lowest point '

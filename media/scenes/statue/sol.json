@@ -116,7 +116,23 @@
    0.99398
   ],
   "profileSide": "-X",
-  "cropY": -0.92
+  "cropY": -0.92,
+  "cuts": [
+   {
+    "what": "bottom crop",
+    "normal": [
+     0.0,
+     -1.0,
+     0.0
+    ],
+    "point": [
+     0.0,
+     -0.92,
+     0.0
+    ]
+   }
+  ],
+  "cutsNote": "capped plane cuts: normal = outward normal of the flat cap (head space), point = a point on the plane. A cap is seen only from cameras on its outward side."
  },
  "eyes": {
   "L": {
@@ -168,9 +184,9 @@
    0.31728
   ],
   "eyeL": [
-   0.11948,
-   -0.04927,
-   0.39471
+   0.13163,
+   -0.07834,
+   0.38801
   ],
   "eyeballR": [
    -0.13998,
@@ -178,14 +194,14 @@
    0.31839
   ],
   "eyeR": [
-   -0.13998,
-   -0.04894,
-   0.38912
+   -0.15108,
+   -0.07472,
+   0.38331
   ],
   "mouth": [
-   -0.01071,
-   -0.34685,
-   0.37739
+   -0.00865,
+   -0.34746,
+   0.3777
   ],
   "earL": [
    0.46035,
@@ -198,32 +214,32 @@
    0.0
   ],
   "shoulderL": [
-   0.53441,
-   -0.55001,
-   -0.07868
+   0.43581,
+   -0.38729,
+   -0.00049
   ],
   "shoulderR": [
-   -0.2549,
-   -0.55,
-   -0.29763
+   -0.28663,
+   -0.38004,
+   -0.35117
   ],
   "neckBase": [
-   0.14499,
-   -0.55001,
-   -0.17982
+   0.05977,
+   -0.62,
+   -0.08196
   ],
   "diademRing": [
    [
-    0.0114,
-    0.16642,
-    0.01612
+    0.0115,
+    0.16386,
+    0.01734
    ],
    [
-    0.11286,
-    0.73365,
-    -0.67009
+    0.118,
+    0.72537,
+    -0.67818
    ],
-   0.38221
+   0.38276
   ],
   "rayHoles": [
    [
@@ -247,9 +263,9 @@
     0.28854
    ],
    [
-    0.19135,
-    0.37763,
-    0.27512
+    0.19182,
+    0.38066,
+    0.27115
    ],
    [
     0.29616,
@@ -257,9 +273,9 @@
     0.24813
    ],
    [
-    0.37432,
-    0.20885,
-    0.10526
+    0.37326,
+    0.20848,
+    0.11443
    ]
   ],
   "rayHoleNormals": [
@@ -284,9 +300,9 @@
     0.57566
    ],
    [
-    0.24593,
-    0.65469,
-    0.71477
+    0.23431,
+    0.64803,
+    0.72468
    ],
    [
     0.75517,
@@ -294,23 +310,23 @@
     0.37073
    ],
    [
-    0.92274,
-    0.13101,
-    0.36248
+    0.98049,
+    0.01956,
+    0.19559
    ]
   ],
   "rayHoleAzimuthDeg": [
-   -110.56,
-   -76.77,
-   -39.48,
-   -7.42,
-   22.58,
-   41.53,
-   69.56
+   -110.75,
+   -77.02,
+   -39.79,
+   -7.81,
+   22.17,
+   41.1,
+   68.11
   ],
   "crownSocket": [
-   0.04163,
-   0.4627,
+   0.04403,
+   0.4626,
    -0.04209
   ]
  },
@@ -326,11 +342,12 @@
    0.57133
   ],
   "neckAxisUp": [
-   0.02108,
-   0.96532,
-   -0.26023
+   -0.16257,
+   0.96235,
+   0.21784
   ],
-  "note": "forward/left: horizontal directions the chest faces / its own left (from the cross-section above the cut); neckAxisUp: neck direction fitted through neck cross-sections under the jaw. shoulderL/R are the highest points 0.34-0.42 to either side of the neck along torso.left (where the cast is cut narrower, the extreme of what exists); neckBase is the neck axis at the shoulder line."
+  "neckAxisFit": "line fitted through 7 smooth-skin slab centroids under the jaw",
+  "note": "forward/left: horizontal directions the chest faces / its own left (from the cross-section above the cut); neckAxisUp: line through the neck's smooth-skin cross-section centroids under the jaw (see neckAxisFit). shoulderL/R: highest smooth-skin vertex outside the head (0.55 from its centre), 0.28-0.50 to either side of the turn axis along torso.left and below chin + 0.12; neckBase: the neck axis at the mean shoulder height (at most chin - 0.12) (approximate, +-0.05; on the bearded giant the throat is hidden by the beard, so it sits slightly back)."
  },
  "bake": {
   "ao": "channel 0: ambient visibility, 48 cosine-weighted rays per vertex, mean normalised free distance up to 0.25 head units (1 = open, 0 = enclosed)",
@@ -339,8 +356,8 @@
   "skin": "channel 3: 1 = broad smooth carved skin (face, neck, chest), 0 = hair/beard/deep carving; use for polish/gloss and SSS strength"
  },
  "diadem": {
-  "ring": "anchors.diademRing = [centre, unit normal (up/back), radius]: circle fitted through the 7 ray-hole mouths (radial residual max 0.0110, out-of-plane max 0.0208 head units). The fillet runs high over the brow and drops toward the nape.",
-  "holes": "anchors.rayHoles: mouths of the drilled attachment holes along the lower edge of the fillet, ordered from the figure's right (-) to left (+); rayHoleNormals = local surface normal of the band at each hole (the drill axis, roughly); rayHoleAzimuthDeg measured on the ring from the front (+Z), + = figure's left. Depths (head units): 0.0131, 0.0124, 0.0148, 0.0024, 0.0037, 0.0059, 0.0107. None at the back (the cast is unfinished there).",
+  "ring": "anchors.diademRing = [centre, unit normal (up/back), radius]: circle fitted through the 7 ray-hole mouths (radial residual max 0.0109, out-of-plane max 0.0197 head units). The fillet runs high over the brow and drops toward the nape.",
+  "holes": "anchors.rayHoles: mouths of the drilled attachment holes along the lower edge of the fillet, ordered from the figure's right (-) to left (+); rayHoleNormals = local surface normal of the band at each hole (the drill axis, roughly); rayHoleAzimuthDeg measured on the ring from the front (+Z), + = figure's left. Depths (head units): 0.0131, 0.0124, 0.0148, 0.0024, 0.0014, 0.0059, 0.0132. None at the back (the cast is unfinished there).",
   "socket": "anchors.crownSocket: mouth of the larger rectangular socket on top of the skull (depth 0.035), centre of the original radiate crown / nimbus fixing."
  },
  "notes": [
@@ -350,6 +367,7 @@
   "Turn: yaw about +Y through the origin. The 90-degree turn starts with the camera on the figure's RIGHT (-X side, face pointing screen-right) and ends on +Z (stared at).",
   "Ears: earL ESTIMATED: ear hidden by hair/beard; outer surface point beside the ear position estimated 0.318 behind the eyeball midpoint along the facial axis (ratio measured on david); earR ESTIMATED: ear hidden by hair/beard; outer surface point beside the ear position estimated 0.318 behind the eyeball midpoint along the facial axis (ratio measured on david)",
   "Head units: 1.0 = 63.025 source units (raw STL units).",
+  "Mouth anchor (stomion): closed lips: deepest point of the midline profile between the lips.",
   "Blank (uncarved) eyes. Yaw = mean of the two eyeball caps (1.9 deg). The Hellenistic upturned gaze measured 6.0 deg above horizontal by visual judgement (renders at camera pitch 0..20 deg; the lid-aperture geometry is biased by the overhanging upper lid). CHOICE: levelled, so the blank eyes meet the lens at eye height for the final stare; the upward pathos remains in the face and the tilt of the head. frame.restoreCastPosture gives the original upturn back.",
   "Scanner orange-peel removed from broad, low-curvature skin (cheeks, brow, neck) by a masked Taubin smooth; lids, lips, nostrils and curls are masked out and stay crisp.",
   "The bust and nose tip are restorations (SMK). The bust back is hollow with a support post inside (only seen from behind)."

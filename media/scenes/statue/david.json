@@ -116,7 +116,23 @@
    0.95649
   ],
   "profileSide": "-X",
-  "cropY": -0.85
+  "cropY": -0.85,
+  "cuts": [
+   {
+    "what": "bottom crop",
+    "normal": [
+     0.0,
+     -1.0,
+     0.0
+    ],
+    "point": [
+     0.0,
+     -0.85,
+     0.0
+    ]
+   }
+  ],
+  "cutsNote": "capped plane cuts: normal = outward normal of the flat cap (head space), point = a point on the plane. A cap is seen only from cameras on its outward side."
  },
  "eyes": {
   "L": {
@@ -170,9 +186,9 @@
    0.33739
   ],
   "eyeL": [
-   0.05753,
-   -0.04758,
-   0.42434
+   0.04408,
+   -0.05527,
+   0.42618
   ],
   "pupilL": [
    0.05753,
@@ -185,9 +201,9 @@
    0.27575
   ],
   "eyeR": [
-   -0.22544,
-   -0.07444,
-   0.36708
+   -0.24696,
+   -0.09203,
+   0.35706
   ],
   "pupilR": [
    -0.22544,
@@ -195,9 +211,9 @@
    0.36708
   ],
   "mouth": [
-   -0.08437,
-   -0.352,
-   0.42574
+   -0.09726,
+   -0.33205,
+   0.44695
   ],
   "earR": [
    -0.23976,
@@ -210,19 +226,19 @@
    0.06127
   ],
   "shoulderL": [
-   0.33594,
-   -0.6246,
-   0.36196
+   -0.06124,
+   -0.45509,
+   0.41833
   ],
   "shoulderR": [
-   0.14254,
-   -0.72551,
-   -0.32168
+   0.2282,
+   -0.38001,
+   -0.33649
   ],
   "neckBase": [
-   0.16712,
-   -0.6046,
-   0.02815
+   0.0176,
+   -0.62,
+   -0.0005
   ]
  },
  "torso": {
@@ -235,7 +251,14 @@
    -0.00519,
    0.0,
    0.99999
-  ]
+  ],
+  "neckAxisUp": [
+   -0.15819,
+   0.98718,
+   0.02113
+  ],
+  "neckAxisFit": "line fitted through 7 smooth-skin slab centroids under the jaw",
+  "note": "forward/left: horizontal directions the chest faces / its own left (from the cross-section above the cut); neckAxisUp: line through the neck's smooth-skin cross-section centroids under the jaw (see neckAxisFit). shoulderL/R: highest smooth-skin vertex outside the head (0.55 from its centre), 0.28-0.50 to either side of the turn axis along torso.left and below chin + 0.12; neckBase: the neck axis at the mean shoulder height (at most chin - 0.12) (approximate, +-0.05; on the bearded giant the throat is hidden by the beard, so it sits slightly back)."
  },
  "bake": {
   "ao": "channel 0: ambient visibility, 48 cosine-weighted rays per vertex, mean normalised free distance up to 0.25 head units (1 = open, 0 = enclosed)",
@@ -250,6 +273,7 @@
   "Turn: yaw about +Y through the origin. The 90-degree turn starts with the camera on the figure's RIGHT (-X side, face pointing screen-right) and ends on +Z (stared at).",
   "Ears: earR measured: most medial point of the right concha seen from the side; earL mirror image of earR across the facial symmetry plane (the left ear is buried in curls)",
   "Head units: 1.0 = 119.475 source units (raw STL units).",
+  "Mouth anchor (stomion): parted lips: centre of the opening at the depth of the lip fronts.",
   "Carved heart-shaped pupils: each eye's gaze = eyeball sphere centre -> pupil pit centroid. Michelangelo's eyes diverge (the left eye looks further to his left); +Z is the mean of the two, 14.8 deg to the figure's left of the facial symmetry axis, so at yaw 0 the face is seen slightly turned while the eyes look into the lens.",
   "The cast's gaze runs 8.3 deg below horizontal; head space is levelled (head tipped back by that amount) so the stare is horizontal. frame.restoreCastPosture undoes it (then place the camera below eye level).",
   "Thin plaster mould-seam ridges (cheek, neck, nose bridge) softened with a masked Taubin smooth on broad skin only.",

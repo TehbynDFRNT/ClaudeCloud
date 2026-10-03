@@ -116,7 +116,49 @@
    0.99451
   ],
   "profileSide": "-X",
-  "cropY": -0.95
+  "cropY": -0.95,
+  "cuts": [
+   {
+    "what": "bottom crop",
+    "normal": [
+     0.0,
+     -1.0,
+     0.0
+    ],
+    "point": [
+     0.0,
+     -0.95,
+     0.0
+    ]
+   },
+   {
+    "what": "relief ground slab (source z = 7)",
+    "normal": [
+     0.89427,
+     0.04678,
+     -0.44507
+    ],
+    "point": [
+     -0.10113,
+     -2.6175,
+     -1.2136
+    ]
+   },
+   {
+    "what": "slab return on the +X edge (source x = 62)",
+    "normal": [
+     0.44752,
+     -0.09348,
+     0.88937
+    ],
+    "point": [
+     0.76977,
+     -2.75754,
+     0.11877
+    ]
+   }
+  ],
+  "cutsNote": "capped plane cuts: normal = outward normal of the flat cap (head space), point = a point on the plane. A cap is seen only from cameras on its outward side."
  },
  "eyes": {
   "L": {
@@ -183,9 +225,9 @@
    0.40521
   ],
   "mouth": [
-   -0.01832,
-   -0.36774,
-   -0.50614
+   -0.02423,
+   -0.37874,
+   0.44906
   ],
   "beardTip": [
    -0.02031,
@@ -203,19 +245,19 @@
    0.0
   ],
   "shoulderL": [
-   0.29116,
-   -0.55004,
-   0.1199
+   0.06821,
+   -0.42792,
+   0.44396
   ],
   "shoulderR": [
-   -0.18427,
-   -0.55006,
-   -0.46799
+   -0.21505,
+   -0.38038,
+   -0.33464
   ],
   "neckBase": [
-   -0.00808,
-   -0.55006,
-   0.01578
+   -0.05667,
+   -0.62,
+   -0.01624
   ]
  },
  "torso": {
@@ -230,11 +272,12 @@
    0.86169
   ],
   "neckAxisUp": [
-   0.0069,
-   0.5266,
-   0.85009
+   0.0,
+   1.0,
+   0.0
   ],
-  "note": "forward/left: horizontal directions the chest faces / its own left (from the cross-section above the cut); neckAxisUp: neck direction fitted through neck cross-sections under the jaw. shoulderL/R are the highest points 0.34-0.42 to either side of the neck along torso.left (where the cast is cut narrower, the extreme of what exists); neckBase is the neck axis at the shoulder line."
+  "neckAxisFit": "fit unreliable (tilt > 40 deg), vertical used",
+  "note": "forward/left: horizontal directions the chest faces / its own left (from the cross-section above the cut); neckAxisUp: line through the neck's smooth-skin cross-section centroids under the jaw (see neckAxisFit). shoulderL/R: highest smooth-skin vertex outside the head (0.55 from its centre), 0.28-0.50 to either side of the turn axis along torso.left and below chin + 0.12; neckBase: the neck axis at the mean shoulder height (at most chin - 0.12) (approximate, +-0.05; on the bearded giant the throat is hidden by the beard, so it sits slightly back)."
  },
  "bake": {
   "ao": "channel 0: ambient visibility, 48 cosine-weighted rays per vertex, mean normalised free distance up to 0.25 head units (1 = open, 0 = enclosed)",
@@ -249,6 +292,7 @@
   "Turn: yaw about +Y through the origin. The 90-degree turn starts with the camera on the figure's RIGHT (-X side, face pointing screen-right) and ends on +Z (stared at).",
   "Ears: earL ESTIMATED: ear hidden by hair/beard; outer surface point beside the ear position estimated 0.318 behind the eyeball midpoint along the facial axis (ratio measured on david); earR ESTIMATED: ear hidden by hair/beard; outer surface point beside the ear position estimated 0.318 behind the eyeball midpoint along the facial axis (ratio measured on david)",
   "Head units: 1.0 = 39.047 source units (raw STL units).",
+  "Mouth anchor (stomion): parted lips: centre of the opening at the depth of the lip fronts.",
   "STAND-IN: the giant (Klytios?) from the Pergamon Altar Gigantomachy; no freely licensed scan of a marble Prometheus exists. Same Hellenistic pathos face family as Laocoon and Adam's Prometheus.",
   "Relief slab removed: cut at source z = 7 (relief ground) and x = 62 (its return), both capped. The big flat cap at the back faces head-space +X/-Z: approach the profile ONLY from the -X side (the turn arc -X -> +Z never sees it; from +X it is a flat wall). The arms are broken off at the shoulders (no hands).",
   "Blank eyes. Yaw = mean of the two eyeball caps (0.2 deg); pitch 6.0 deg chosen visually (renders at camera pitch -15..+25); head space is levelled.",
