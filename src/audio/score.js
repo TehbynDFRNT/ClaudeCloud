@@ -705,9 +705,11 @@ export function buildCannons(ctx, tl, samples, gains = {}) {
         // parallel saturated copy of the (notched, darkened) boom, band-limited to 90-400 Hz: its harmonics make
         // the boom read as loud without adding peak (no oversampling: zero latency against the dry boom; the band
         // feeding the shaper is low, so aliasing stays far below it)
-        const hs = ctx.createWaveShaper(); hs.curve = tanhCurve(5.0);
+        // input normalised to the sample's peak (WaveShaper clamps beyond +-1): a gentle tanh that only rounds the
+        // boom's peaks, so the layer keeps the boom's decay
+        const hs = ctx.createWaveShaper(); hs.curve = tanhCurve(2.5);
         alive(hs);
-        chain(env, G(ctx, 3 * L.gain * S.info.norm), hs, BQ(ctx, 'highpass', 90, 0.7), BQ(ctx, 'lowpass', 400, 0.7), G(ctx, 0.5 * (1 - d) * L.gain), dist);
+        chain(env, G(ctx, 0.9 / S.info.peak), hs, BQ(ctx, 'highpass', 90, 0.7), BQ(ctx, 'lowpass', 400, 0.7), G(ctx, 0.6 * (1 - d) * L.gain * S.info.norm * S.info.peak), dist);
       }
       src.start(start); src.stop(start + len + 0.01);
     }

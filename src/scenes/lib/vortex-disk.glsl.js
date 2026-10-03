@@ -51,6 +51,7 @@ uniform float uIrr;        // irradiation (scattered central light) strength
 uniform float uVoid;       // void threshold of the diffuse gas
 uniform float uVoidW;      // void edge softness (noise units)
 uniform float uPuff;       // vertical billow strength
+uniform float uCloud;      // upper atmosphere breaks into discrete cloudlets (buoyant flux tubes) with clear gaps
 uniform float uFloor, uSheet, uSheetHeat; // diffuse gas, luminous sheets, sheet heating
 uniform float uSheetW;     // sheet half-thickness in noise units (~0.13 = 1 sigma)
 uniform float uColdGas;    // temperature factor of the diffuse gas between sheets
@@ -186,6 +187,10 @@ vec4 vxField(vec3 p, vec3 rd, float tau, float seg, inout vec4 xs, inout vec2 xf
   float Heff = H * max(0.15, 1.0 + uPuff * (1.5 * puff + 0.6 * n)) * (1.0 + 0.3 * uArms * armP) * (1.0 + 0.6 * hinf);
   float zz = abs(p.y) / max(Heff, 1e-4);
   float vert = exp(-0.5 * zz * zz);
+  if (uCloud > 0.0){
+    float zc = max(zz - 0.8, 0.0);
+    vert *= smoothstep(-0.12, 0.12, n + 0.6 * puff + 0.3 - uCloud * 0.35 * zc) * (1.0 + uCloud * 0.6 * zc);
+  }
   float clump = exp(uTurb * (n * 3.6 - 0.5)) * smoothstep(uVoid - uVoidW, uVoid + uVoidW, n + 0.3 * puff);
   float patchy = smoothstep(uSheetMask - 0.18, uSheetMask + 0.18, puff * 1.4 + 0.5 * n);
   float zm = abs(p.y) / max(0.55 * Heff, 1e-4);

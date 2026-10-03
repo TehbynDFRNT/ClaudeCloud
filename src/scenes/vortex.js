@@ -77,7 +77,7 @@ const DISK = {
   curtain: 1.0, curtainSpin: 2.0, curtainPhi: 0.6, dwarfR: 0.014, dwarfSurf: 1.0, glowK: 1.0,
   hot: 0, hotPhi: 2.2, streamDir: [0.6, 0, 0.8], streamW: 0.02, shockK: 1.0, streamK: 1.0,
   rb: 1.25, lod: 0.004, stepK: 0.55, edgeFade: 0.3, grain3: 1.0, starGain: 0.3, irr: 4, armFloor: 0.12, armHeat: 0.35,
-  void: -0.37, voidW: 0.25, puff: 1.0, floor: 0.22, sheet: 1.0, sheetHeat: 0.45, coldGas: 0.42, sheetW: 0.04, maxSteps: 44, sheetMask: -1,
+  void: -0.37, voidW: 0.25, puff: 1.0, cloud: 0, floor: 0.22, sheet: 1.0, sheetHeat: 0.45, coldGas: 0.42, sheetW: 0.04, maxSteps: 44, sheetMask: -1,
   floorMid: 0.6, kr: 6.0, ky: 10.0,
 };
 
@@ -104,7 +104,8 @@ const presets = {
     ],
     tau: [10, 1.0, 0],
     clear: 0.07,
-    disk: { omega: 0.3, maxSteps: 52, sheet: 0.8, sheetHeat: 0.6, sheetMask: -0.05, arms: 0.7 },
+    disk: { omega: 0.3, maxSteps: 52, sheet: 0.8, sheetHeat: 0.6, sheetMask: -0.05, arms: 1.0, armFloor: 0.05,
+      void: 0.0, voidW: 0.1, turb: 0.9, floor: 0.12, coldGas: 0.36, irr: 2 },
     post: { zoomBlur: 0.012 },
   }),
   // Resistance: the stream slams the young disk's rim. Impact point from lib/binary.js streamPath()
@@ -268,7 +269,7 @@ export default {
       uArms: d.arms, uArmM: d.armM, uArmPitch: d.armPitch, uArmSpeed: d.armSpeed, uArmSharp: d.armSharp,
       uHot: d.hot, uHotPhi: d.hotPhi, uStreamDir: v3.norm(d.streamDir), uStreamW: d.streamW, uShockK: d.shockK, uStreamK: d.streamK,
       uSmear: F.smear, uRb: d.rb, uLod: d.lod, uStepK: d.stepK, uSeedV: P.seed ?? 1, uEdgeFade: d.edgeFade,
-      uGrain3: d.grain3, uIrr: d.irr, uArmFloor: d.armFloor, uArmHeat: d.armHeat, uVoid: d.void, uVoidW: d.voidW, uPuff: d.puff, uFloor: d.floor,
+      uGrain3: d.grain3, uIrr: d.irr, uArmFloor: d.armFloor, uArmHeat: d.armHeat, uVoid: d.void, uVoidW: d.voidW, uPuff: d.puff, uCloud: d.cloud, uFloor: d.floor,
       uSheet: d.sheet, uSheetHeat: d.sheetHeat, uColdGas: d.coldGas, uSheetW: d.sheetW, uMaxSteps: d.maxSteps,
       uSheetMask: d.sheetMask, uFloorMid: d.floorMid, uKr: d.kr, uKy: d.ky,
       uClear: [...cam.pos, P.clear || 0], uJitAmp: P.jitAmp ?? 1,
