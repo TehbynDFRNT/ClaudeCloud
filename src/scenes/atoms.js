@@ -22,7 +22,7 @@ import { packNucleus, axisAngle } from './lib/atoms-pack.js';
 const FS = frag(SPRITE_GLSL, `
 uniform vec4 uRingC[8];     // centre (world), radius (world)
 uniform vec4 uRingW[8];     // width, wavenumber, amplitude, -
-uniform vec4 uRingS[8];     // projected centre (px, y up)
+uniform vec4 uRingS[8];     // projected centre (px, y up), outer / inner screen radius bound (px)
 uniform int uNR;
 uniform int uRingMode;      // 0: rings lie in uRingPlane, 1: camera-facing plane through each centre
 uniform vec4 uRingPlane;    // n.xyz, d   (dot(n, p) = d)
@@ -43,6 +43,9 @@ float waveField(vec3 ro, vec3 rd, vec2 q, out vec2 disp, out float zr){
   float A = 0.0, best = 0.0;
   for (int i = 0; i < 8; i++){
     if (i >= uNR) break;
+    vec2 sd = q - uRingS[i].xy;
+    float sl = length(sd);
+    if (sl > uRingS[i].z || sl < uRingS[i].w) continue;   // screen-space bound of the ring band
     vec3 c = uRingC[i].xyz;
     float t = uRingMode == 0 ? tp : dot(c - ro, fwd) / dot(rd, fwd);
     if (t <= 0.0) continue;
@@ -55,8 +58,7 @@ float waveField(vec3 ro, vec3 rd, vec2 q, out vec2 disp, out float zr){
     float a = uRingW[i].z * env;
     if (uRingMode == 0) a *= smoothstep(0.02, 0.12, abs(dn)) * exp(-t * 0.008);
     A += a * cos(ph);
-    vec2 sd = q - uRingS[i].xy;
-    disp += sd / max(length(sd), 1.0) * a * sin(ph);
+    disp += sd / max(sl, 1.0) * a * sin(ph);
     if (a > best){ best = a; zr = t * dot(rd, fwd); }
   }
   disp *= uRefract;
@@ -161,10 +163,12 @@ function addNucleus(B, c, A, Z, o) {
   const Rpx = Rw * q[3];
   if (!B.onScreen(q[0], q[1], Rpx + q[4] + 2)) return;
   const heat = o.heat ?? 0, gain = o.gain ?? 1, alpha = o.alpha ?? 0.94;
+  const tn = o.tint;
+  const ncol = (isP, h) => { const c = nucleonCol(isP, h); return tn ? [c[0] * tn[0], c[1] * tn[1], c[2] * tn[2]] : c; };
   const seed = o.seed ?? 0;
-  if (A > 1 && (q[4] > 1.5 * Rpx || Rpx < 6 * B.k)) {
+  if (A > 1 && (q[4] > (o.discAt ?? 0.9) * Rpx || Rpx < 6 * B.k)) {
     const fp = Z / A;
-    const col = mix3(nucleonCol(false, heat), nucleonCol(true, heat), clamp(fp * 1.15));
+    const col = mix3(ncol(false, heat), ncol(true, heat), clamp(fp * 1.15));
     B.sphere(c, Rw * 0.84, col, lerp(nucleonInt(false, heat), nucleonInt(true, heat), fp) * gain * 0.95, alpha, null, heat, (seed % 97) + 0.5, 1, q);
     return;
   }
@@ -197,11 +201,11 @@ function addNucleus(B, c, A, Z, o) {
           jit * (Math.sin(tt * w * 0.91 + H1(s, 6) * TAU) * 0.9 + (H1(f * 977 + s, 13) - 0.5) * 0.5),
         ]);
         const k = gI === 0 ? 0.7 : 0.3 / ng;
-        B.sphere(pg, sc * (o.rn ?? 0.88), nucleonCol(isP, heat), nucleonInt(isP, heat) * gain * k * 1.15, gI === 0 ? alpha : 0.08, A > 1 ? c : null, heat, (s % 89) + H1(s, 9) * 3, gI === 0 ? 0 : 2);
+        B.sphere(pg, sc * (o.rn ?? 0.88), ncol(isP, heat), nucleonInt(isP, heat) * gain * k * 1.15, gI === 0 ? alpha : 0.08, A > 1 ? c : null, heat, (s % 89) + H1(s, 9) * 3, gI === 0 ? 0 : 2);
       }
       continue;
     }
-    B.sphere(p, sc * (o.rn ?? 0.88), nucleonCol(isP, heat), nucleonInt(isP, heat) * gain, alpha, A > 1 ? c : null, heat, (s % 89) + H1(s, 9) * 3, 0);
+    B.sphere(p, sc * (o.rn ?? 0.88), ncol(isP, heat), nucleonInt(isP, heat) * gain, alpha, A > 1 ? c : null, heat, (s % 89) + H1(s, 9) * 3, 0);
   }
 }
 
@@ -220,8 +224,9 @@ function sparks(B, c, t0, t, o) {
     if (tau > life) continue;
     let d = unitDir(id, 22);
     if (o.up) { const k = d[0] * o.up[0] + d[1] * o.up[1] + d[2] * o.up[2]; if (k < 0) d = sub(d, mul(o.up, 2 * k)); }
-    if (o.flat) d = norm([d[0], d[1] * o.flat, d[2]]);
+    if (o.flat) d = norm([d[0], d[1] * o.flat, d[2] * (o.zsq ?? 1)]);
     if (o.bias) d = norm(add(d, o.bias));
+    if (o.flatView) { const v = B.cam.fwd, k = dot3(d, v); d = norm(sub(d, mul(v, k * o.flatView))); }
     const sp = o.speed * (0.3 + 1.0 * Math.pow(H1(id, 23), 0.7));
     const dist = (x) => (sp * (1 - Math.exp(-drag * x))) / drag;
     const head = add(c, mul(d, dist(tau)));
@@ -289,6 +294,7 @@ GEN.lattice = function (B, P, t, S, fx) {
         const scN = Math.max(0.3, sc);
         gi = Math.round((C[0] + (Math.cos(ang) * rad) / scN) / a0);
         gk = Math.round((C[2] + (sa * rad * (Sp.zs ?? 1)) / scN) / a0);
+        if (Sp.k) gk = Math.max(Sp.k[0], Math.min(Sp.k[1], gk));       // keep events inside the focal band
       } else {
         gi = Math.round(lerp(E.i[0], E.i[1], H1(i, 71))); gk = Math.round(lerp(E.k2[0], E.k2[1], Math.pow(H1(i, 72), E.zPow ?? 1)));
       }
@@ -315,10 +321,10 @@ GEN.lattice = function (B, P, t, S, fx) {
         let g = smooth(near, near + 7, q[2]);
         // fade as it defocuses: a near proton must not become a big soft coin that pulls the eye
         const rp = 0.75 * q[3];
-        g *= clamp(1.75 - 2.2 * (q[4] / (rp + q[4])), 0.1, 1);
+        g *= clamp(1.45 - 3.0 * (q[4] / (rp + q[4])), 0.06, 1);
         const tail = [p[0] + (R.drift || 0) * R.trail, y + R.trail, p[2]];
         B.streak(p, tail, 0.2, mix3(GOLD, WHITE, 0.2), (R.trailInt ?? 3.0) * g, 1.3, i);
-        B.sphere(p, 0.75, mix3(GOLD, WHITE, 0.25), (R.inten ?? 2.4) * g, 0.9, null, 0.8, (i % 50) + 0.3, 0, q);
+        B.sphere(p, 0.75, mix3(GOLD, WHITE, 0.1), (R.inten ?? 2.4) * g, 0.9, null, 0.3, (i % 50) + 0.3, 0, q);
         B.glow(p, 0.5, GOLD, 0.5 * g, 3.0);
       } else if (t < th + 0.9) {
         impacts.push({ i, p: [pTop[0], yS, pTop[2]], tau: t - th });
@@ -349,7 +355,7 @@ GEN.lattice = function (B, P, t, S, fx) {
         }
         heat += 1.3 * hi; jj += 0.2 * hi;
         const rot = axisAngle(unitDir(id, 6), H1(id, 7) * TAU + t * (0.2 + 0.4 * H1(id, 8)));
-        addNucleus(B, p, isO ? 16 : 12, isO ? 8 : 6, { rot, scale: 1, heat: j === 0 ? heat : heat * 0.6, jit: jj, t, f, seed: id % 10007, gain: (L.gain ?? 1) * (j === 0 ? 1 : L.lowerGain ?? 0.45), alpha: 0.95 });
+        addNucleus(B, p, isO ? 16 : 12, isO ? 8 : 6, { rot, scale: 1, discAt: L.discAt ?? 0.9, heat: j === 0 ? heat : heat * 0.6, jit: jj, t, f, seed: id % 10007, gain: (L.gain ?? 1) * (j === 0 ? 1 : L.lowerGain ?? 0.45), alpha: 0.95, tint: j === 0 ? null : (L.lowerTint || [1.0, 0.32, 0.16]) });
       }
     }
   }
@@ -360,11 +366,14 @@ GEN.lattice = function (B, P, t, S, fx) {
     const p = add(add(C, mul(sub(p0, C), sc)), [0, 0.5, 0]);
     const fl = E.flash * ev.s * Math.exp(-ev.tau / E.flashDecay) * smooth(0, 0.02, ev.tau);
     if (fl > 0.05) B.glow(add(p, [0, E.glowLift ?? 1.5, 0]), E.flashR, mix3(GOLD, WHITE, 0.4), fl, E.reach ?? 3.5, E.zBias ?? 0);
-    sparks(B, add(p, [0, E.sparkLift ?? 1.8, 0]), 0, ev.tau, { n: E.sparks, speed: E.sparkSpeed, life: E.sparkLife, trail: E.trail ?? 0.09, r: E.sparkR ?? 0.045, inten: E.sparkInt, up: [0, 1, 0], flat: E.flat ?? 0.45, seed: ev.i + 7000, drag: 2.0 });
+    sparks(B, add(p, [0, E.sparkLift ?? 1.8, 0]), 0, ev.tau, { n: E.sparks, speed: E.sparkSpeed, life: E.sparkLife, trail: E.trail ?? 0.09, r: E.sparkR ?? 0.045, inten: E.sparkInt, up: [0, 1, 0], flat: E.flat ?? 0.45, zsq: E.zsq, seed: ev.i + 7000, drag: 2.0 });
     ring(fx, [p[0], yS, p[2]], ev.tau, { speed: E.ringSpeed ?? 24, amp: 0.55 * ev.s, decay: 0.3, lambda: 1.8, w: 1.0 });
   }
   for (const im of impacts) {
-    const fl = (R.flash ?? 40) * Math.exp(-im.tau / 0.07) * smooth(0, 0.015, im.tau);
+    // near (defocused) impacts flash softer, so they do not bloom into big white blobs at the frame edge
+    const qi = B.proj(im.p);
+    const dfo = qi ? clamp(1.5 - 2.0 * (qi[4] / (0.6 * qi[3] + qi[4])), 0.15, 1) : 0;
+    const fl = (R.flash ?? 40) * dfo * Math.exp(-im.tau / 0.07) * smooth(0, 0.015, im.tau);
     if (fl > 0.05) B.glow(add(im.p, [0, 0.4, 0]), 0.6, mix3(GOLD, WHITE, 0.5), fl, 4.0, 2);
     sparks(B, add(im.p, [0, 0.3, 0]), 0, im.tau, { n: R.sparks ?? 8, speed: 16, life: 0.35, trail: 0.05, r: 0.08, inten: 28, up: [0, 1, 0], seed: im.i + 3000, drag: 3 });
     ring(fx, im.p, im.tau, { speed: R.ringSpeed ?? 20, amp: R.ringAmp ?? 0.5, decay: 0.32, lambda: 1.5, w: 0.8 });
@@ -401,15 +410,16 @@ GEN.gas = function (B, P, t, S, fx) {
       const sp = G.spacing, dz = G.disorder ?? 0.1;
       p0 = [(ix - (L[0] - 1) / 2 + 0.5 * (iy & 1) + 0.5 * (iz & 1)) * sp + (H1(i, 91) - 0.5) * dz * sp,
         (iy - (L[1] - 1) / 2 + 0.33 * (iz & 1)) * sp * 0.866 + (H1(i, 92) - 0.5) * dz * sp,
-        (iz - (L[2] - 1) / 2) * sp * 0.816 + (H1(i, 93) - 0.5) * dz * sp];
+        (iz - (L[2] - 1) / 2) * sp * 0.816 * (G.zs ?? 1) + (H1(i, 93) - 0.5) * dz * sp];
     } else {
       p0 = [lerp(-G.size[0], G.size[0], H1(i, 91)), lerp(-G.size[1], G.size[1], H1(i, 92)), lerp(-G.size[2], G.size[2], H1(i, 93))];
     }
     const p = add(C, mul(p0, sc));
     const isP = H1(i, 94) > (G.nFrac ?? 0);
     const A = isP ? 1 : (H1(i, 95) < 0.5 ? 4 : 12);
-    const lg = Math.pow(G.layerFall ?? 1, iz);           // deeper layers dimmer: black survives between the front protons
-    addNucleus(B, p, A, isP ? 1 : A / 2, { rot: axisAngle(unitDir(i, 96), t * 2 + i), heat: heat * (0.7 + 0.6 * H1(i, 97)), jit: jit * (A === 1 ? 1 : 0.4), t, f, seed: i + 100, gain: (G.gain ?? 1) * lg, alpha: 0.95, ghosts: G.ghosts ?? 0 });
+    // deeper layers dimmer and redder: black survives between the front protons until the pressure rises
+    const lg = Math.pow(kv(G.layerFall, t, 1), iz);
+    addNucleus(B, p, A, isP ? 1 : A / 2, { rot: axisAngle(unitDir(i, 96), t * 2 + i), heat: heat * (0.7 + 0.6 * H1(i, 97)), jit: jit * (A === 1 ? 1 : 0.4), t, f, seed: i + 100, gain: (G.gain ?? 1) * lg, alpha: 0.95, ghosts: G.ghosts ?? 0, tint: iz > 0 ? G.deepTint : null });
   }
   // pressure waves rolling through the gas
   for (const w of P.waves || []) ring(fx, w.c, t - w.t, w);
@@ -423,14 +433,18 @@ function doHit(B, fx, h, t, S) {
   if (tau < 0) return;
   const fl = h.flash * Math.exp(-tau / (h.decay ?? 0.12)) * smooth(0, 0.02, tau);
   if (fl > 0.05) B.glow(h.p, h.r ?? 1.2, h.col || mix3(GOLD, WHITE, 0.45), fl, h.reach ?? 4.0, h.zBias ?? 2);
-  if (h.sparks) sparks(B, h.p, h.t, t, { n: h.sparks, speed: h.sparkSpeed ?? 24, life: h.sparkLife ?? 0.6, trail: h.trail ?? 0.07, r: h.sparkR ?? 0.1, inten: h.sparkInt ?? 40, seed: h.seed ?? 1, drag: h.drag ?? 2.2, bias: h.bias, flat: h.flat });
+  if (h.sparks) sparks(B, h.p, h.t, t, { n: h.sparks, speed: h.sparkSpeed ?? 24, life: h.sparkLife ?? 0.6, trail: h.trail ?? 0.07, r: h.sparkR ?? 0.1, inten: h.sparkInt ?? 40, seed: h.seed ?? 1, drag: h.drag ?? 2.2, bias: h.bias, flat: h.flat, flatView: h.flatView });
   if (h.ring) ring(fx, h.p, tau, h.ring);
   if (h.shatter) {
     // the colliding nuclei fly apart as individual nucleons with trails
     const Sh = h.shatter;
     for (let i = 0; i < Sh.A; i++) {
       const id = (h.seed ?? 1) * 97 + i;
-      const d = unitDir(id, 41);
+      let d = unitDir(id, 41);
+      if (Sh.flatView) {                                  // spray across the frame, not into the lens
+        const v = B.cam.fwd, k = dot3(d, v);
+        d = norm(sub(d, mul(v, k * Sh.flatView)));
+      }
       const sp = Sh.speed * (0.4 + 0.8 * H1(id, 42));
       const drag = 1.6;
       const dist = (x) => (sp * (1 - Math.exp(-drag * x))) / drag;
@@ -540,7 +554,7 @@ GEN.cno = function (B, P, t, S, fx) {
     let heat = 0.25 + 0.08 * Math.sin(t * 9 + s);
     let jit = 0.05;
     // captures flare white-hot; the beta+ stations stay cooler and flash cold blue instead
-    if (tau >= -0.05) { heat += (cap ? 2.6 : 0.7) * Math.exp(-Math.max(0, tau) / 0.22) * smooth(-0.05, 0.0, tau); jit += 0.25 * Math.exp(-Math.max(0, tau) / 0.15); }
+    if (tau >= -0.05) { heat += (cap ? 2.6 : 0.35) * Math.exp(-Math.max(0, tau) / 0.22) * smooth(-0.05, 0.0, tau); jit += 0.25 * Math.exp(-Math.max(0, tau) / 0.15); }
     const rot = axisAngle(norm([0.2 + 0.1 * s, 1, 0.3]), t * 0.9 + s * 1.7);
     addNucleus(B, stations[s], A, Z, { rot, heat, jit, t, f, seed: s * 17 + 3, gain: P.gain ?? 1, alpha: 0.95 });
     const outward = norm(sub(stations[s], C));
@@ -551,7 +565,8 @@ GEN.cno = function (B, P, t, S, fx) {
       if (t >= ta && t < RT[s]) {
         const u = (t - ta) / (RT[s] - ta);
         const tang = norm(sub(stations[(s + 5) % 6], stations[s]));
-        const dir = norm(add(add(mul(outward, P.inOut ?? 0.95), mul(tang, P.inTan ?? 0.3)), [0, P.inUp ?? 0.85, 0]));
+        const dir = s === 0 && P.inDir ? norm(P.inDir)
+          : norm(add(add(mul(outward, P.inOut ?? 0.95), mul(tang, P.inTan ?? 0.3)), [0, P.inUp ?? 0.85, 0]));
         const startP = add(stations[s], mul(dir, P.inDist ?? 26));
         const p = mix3(startP, stations[s], u * u * 0.15 + u * 0.85);
         const pt = mix3(startP, stations[s], Math.max(0, u - 0.3));
@@ -563,7 +578,7 @@ GEN.cno = function (B, P, t, S, fx) {
     if (tau >= 0 && tau < 1.0) {
       const big = s === 0 ? 1 : 0.45;
       const fl = (s === 0 ? P.flash ?? 60 : (P.flash ?? 60) * (cap ? 0.35 : 0.3)) * Math.exp(-tau / (s === 0 ? 0.12 : 0.08)) * smooth(0, 0.02, tau);
-      if (fl > 0.05) B.glow(stations[s], 0.55 + 0.45 * big, cap ? mix3(GOLD, WHITE, 0.4) : mix3(ICE, WHITE, 0.08), fl, 3.5, 3);
+      if (fl > 0.05) B.glow(stations[s], 0.55 + 0.45 * big, cap ? mix3(GOLD, WHITE, 0.4) : ICE, fl, 3.5, 3, cap ? 0 : 0.75);
       ring(fx, stations[s], tau, { speed: 22, amp: 0.5 * big + 0.15, decay: 0.3, lambda: 1.6, w: 0.7 });
       sparks(B, stations[s], 0, tau, { n: s === 0 ? 26 : 8, speed: 20, life: 0.55, trail: 0.06, r: 0.08, inten: 30, seed: s + 40, drag: 2.5, col: cap ? null : mix3(ICE, WHITE, 0.15), cool: [0.05, 0.15, 0.7] });
       if (!cap) {
@@ -594,14 +609,14 @@ const presets = {
   'S13-atoms': {
     refDur: 2.958,
     mode: 'lattice',
-    lattice: { a: 10.5, i: [-7, 7], k: [-2, 8], layers: 2, lowerGain: 0.14, oFrac: 0.4, disorder: 0.05, center: [0, 0, 20], top: 2.6, gain: 0.8 },
+    lattice: { a: 10.5, i: [-7, 7], k: [-2, 8], layers: 2, lowerGain: 0.14, discAt: 0.55, oFrac: 0.4, disorder: 0.05, center: [0, 0, 20], top: 2.6, gain: 0.8 },
     cam: [[0, [-4, 21, -3], [-0.5, 0, 20], 42, 0.03], [2.958, [1.5, 17.5, 1.5], [1.0, 0, 20], 40, -0.01, 'inOutSine']],
     dof: { focus: [[0, 30.5], [2.958, 25.5]], K: 85, max: 140 },
     fog: [36, 20],
     compress: [[0, 1.0], [2.958, 0.78, 'inOutSine']],
     heat: [[0, 0.1], [2.958, 0.95, 'inQuad']],
     jitter: [[0, 0.05], [2.958, 0.17, 'inQuad']],
-    rain: { rate: 46, speed: 26, height: 10.5, trail: 8, trailInt: 5.5, inten: 2.4, near: 17, x: [-26, 26], z: [4, 50], zPow: 1.0, t0: -2.0, drift: 0.03, flash: 26, sparks: 9, ringAmp: 0.6, ringSpeed: 24 },
+    rain: { rate: 46, speed: 26, height: 10.5, trail: 8, trailInt: 5.0, inten: 1.5, near: 17, x: [-26, 26], z: [13, 52], zPow: 1.0, t0: -2.0, drift: 0.03, flash: 26, sparks: 9, ringAmp: 0.6, ringSpeed: 24 },
     haze: [[0, 0.04], [2.958, 0.12, 'inQuad']], hazeCol: [0.5, 0.02, 0.008],
     ringCol: [1.0, 0.55, 0.22], refract: 6,
     shake: [0.04, 9],
@@ -611,11 +626,12 @@ const presets = {
   'S14f-cno': {
     refDur: 1.7,
     mode: 'cno',
-    ringR: 10, center: [0, 0, 0], tilt: 0.95, start: -Math.PI / 2, spin0: 0.0, spin: 0.08,
-    react: [0.36, 0.58, 0.8, 1.02, 1.24, 1.46], leg: 0.22, inT: 0.3, inDist: 24, inOut: 0.95, inTan: 0.3, inUp: 0.85,
+    ringR: 10, center: [0, 0, 0], tilt: 1.02, start: -Math.PI / 2, spin0: 0.0, spin: 0.08,
+    react: [0.36, 0.58, 0.8, 1.02, 1.24, 1.46], leg: 0.22, inT: 0.3, inDist: 30, inOut: 0.95, inTan: 0.3, inUp: 0.85,
+    inDir: [-0.3, 1.0, 0.3],      // hero strike on carbon: from above and outside, across the empty ring interior
     flash: 70, pathInt: 0.9,
-    cam: [[0, [0, 9.4, -63], [0, -0.4, -3.5], 26], [1.7, [0, 9.0, -60], [0, -0.4, -3.5], 26]],
-    dof: { focus: [[0, 56.5], [1.7, 53.5]], K: 40, max: 120 },
+    cam: [[0, [0, 9.6, -65], [0, -0.6, -3.5], 26], [1.7, [0, 9.2, -62], [0, -0.6, -3.5], 26]],
+    dof: { focus: [[0, 58.5], [1.7, 55.5]], K: 40, max: 120 },
     field: { n: 26, box: [[-80, 80], [-40, 30], [45, 170]], gain: 0.16, heat: 0.0, pFrac: 0.35, drift: [0, 0, -4] },
     ringCol: [0.4, 0.65, 1.0], refract: 4,
     post: { exposure: 1.0, bloomStrength: 0.1, bloomThreshold: 1.2, halation: 0.03, vignette: 0.55, contrast: 1.05, streakStrength: 0.05, lift: 0.04 },
@@ -625,13 +641,13 @@ const presets = {
   'F28.1': {
     refDur: 0.9,
     mode: 'gas',
-    gas: { lattice: [12, 7, 4], spacing: 2.6, disorder: 0.1, center: [0, 0, 14], gain: 0.85, nFrac: 0.06, ghosts: 2, layerFall: 0.5 },
+    gas: { lattice: [12, 7, 4], spacing: 2.6, zs: 1.7, disorder: 0.1, center: [0, 0, 16], gain: 1.1, nFrac: 0.06, ghosts: 2, layerFall: [[0, 0.1], [0.9, 0.26, 'inQuad']], deepTint: [1.0, 0.27, 0.09] },
     compress: [[0, 1.0], [0.9, 0.74, 'inQuad']],
     heat: [[0, 0.12], [0.9, 0.5, 'inQuad']],
     jitter: [[0, 0.1], [0.9, 0.24, 'inQuad']],
-    cam: [[0, [-0.6, 0.9, 1.6], [0.2, 0, 14], 40, 0.06], [0.9, [0.2, 0.5, 3.8], [0.3, 0, 14], 40, -0.02]],
-    dof: { focus: [[0, 9.3], [0.9, 7.9]], K: 170, max: 150 },
-    waves: [{ c: [0, 0, 11], t: 0.05, speed: 14, amp: 0.5, decay: 0.4, lambda: 1.2, w: 0.8 }],
+    cam: [[0, [-0.6, 0.9, 0.0], [0.2, 0, 16], 40, 0.06], [0.9, [0.2, 0.5, 1.8], [0.3, 0, 16], 40, -0.02]],
+    dof: { focus: [[0, 10.6], [0.9, 10.2]], K: 170, max: 150 },
+    waves: [{ c: [0, 0, 11.5], t: 0.05, speed: 14, amp: 0.5, decay: 0.4, lambda: 1.2, w: 0.8 }],
     ringCol: [1.0, 0.55, 0.2], refract: 7,
     shake: [0.03, 13],
     post: { exposure: 1.0, bloomStrength: 0.09, bloomThreshold: 1.3, halation: 0.04, vignette: 0.62, contrast: 1.07, lift: 0.03 },
@@ -645,7 +661,7 @@ const presets = {
       { A: 1, Z: 1, p0: [-26, 6, 5], p1: [0.4, 0, 0], t0: 0.0, t1: 0.32, off: 0.32, ease: 'lin', trail: 0.3, trailInt: 6 },
       { A: 13, Z: 7, p0: [0.4, 0, 0], p1: [0.4, 0, 0], t0: 0, t1: 1, on: 0.32, heat: [[0.32, 2.8], [0.9, 0.7, 'outQuad']], jit: [[0.32, 0.45], [0.9, 0.12]], spin: 1.6 },
     ],
-    hits: [{ t: 0.32, p: [0.4, 0, 0], flash: 90, r: 0.6, decay: 0.08, reach: 3.0, sparks: 56, sparkSpeed: 28, sparkLife: 0.6, seed: 3, ring: { speed: 24, amp: 0.9, decay: 0.32, lambda: 1.6, w: 0.9 } }],
+    hits: [{ t: 0.32, p: [0.4, 0, 0], flash: 90, r: 0.6, decay: 0.08, reach: 3.0, flatView: 0.7, sparks: 56, sparkSpeed: 28, sparkLife: 0.6, seed: 3, ring: { speed: 24, amp: 0.9, decay: 0.32, lambda: 1.6, w: 0.9 } }],
     field: { n: 34, box: [[-50, 50], [-24, 24], [22, 120]], gain: 0.22, heat: 0.15, pFrac: 0.4 },
     cam: [[0, [-2, 1.5, -24], [0.4, 0, 0], 30, 0.03], [0.9, [-1.2, 1.0, -19], [0.4, 0, 0], 30, -0.01]],
     dof: { focus: [[0, 24], [0.9, 19.5]], K: 60, max: 150 },
@@ -661,7 +677,7 @@ const presets = {
       { A: 16, Z: 8, p0: [-8.5, -0.8, 1.5], p1: [-0.8, 0, 0], t0: 0, t1: 0.14, off: 0.14, ease: 'in', heat: [[0, 0.7], [0.14, 2.0]], jit: 0.2, trail: 0.5, trailInt: 2.5 },
       { A: 12, Z: 6, p0: [8.5, 1.2, -1], p1: [0.8, 0, 0], t0: 0, t1: 0.14, off: 0.14, ease: 'in', heat: [[0, 0.7], [0.14, 2.0]], jit: 0.2, trail: 0.5, trailInt: 2.5 },
     ],
-    hits: [{ t: 0.14, p: [0, 0, 0], flash: 120, r: 0.65, decay: 0.07, reach: 3.0, sparks: 110, sparkSpeed: 40, sparkLife: 0.5, sparkInt: 30, seed: 11, ring: { speed: 30, amp: 1.2, decay: 0.3, lambda: 2.0, w: 1.2 }, shatter: { A: 28, Z: 14, speed: 30, heat: 2.4, trail: 2.4 } }],
+    hits: [{ t: 0.14, p: [0, 0, 0], flash: 100, r: 0.6, decay: 0.06, reach: 3.0, sparks: 110, sparkSpeed: 40, sparkLife: 0.5, sparkInt: 34, sparkR: 0.055, seed: 11, flatView: 0.8, ring: { speed: 30, amp: 0.7, decay: 0.3, lambda: 2.0, w: 1.2 }, shatter: { A: 18, Z: 9, speed: 34, heat: 1.1, trail: 2.2, flatView: 0.9, scale: 0.8 } }],
     field: { n: 30, box: [[-40, 40], [-22, 22], [16, 90]], gain: 0.32, heat: 0.5, pFrac: 0.4 },
     cam: [[0, [0, 1.0, -15.5], [0, 0, 0], 32, 0.05], [0.5, [0, 0.7, -12.5], [0, 0, 0], 32, -0.05]],
     dof: { focus: [[0, 15.5], [0.5, 12.5]], K: 55, max: 150 },
@@ -675,10 +691,10 @@ const presets = {
     refDur: 0.375,
     mode: 'collide',
     swarm: { n: 16, t: [0.0, 0.27], box: [[-24, 24], [-8, 8], [10, 38]], app: 0.08, dist: 6, flash: 60, sparks: 34 },
-    heatAdd: [[0, 0], [0.2, 0.3], [0.375, 3.6, 'inQuad']],
+    heatAdd: [[0, 0], [0.19, 0.3], [0.333, 3.4, 'inQuad']],
     field: { n: 46, box: [[-60, 60], [-26, 26], [12, 90]], gain: 0.38, heat: [[0, 0.4], [0.375, 1.0]], pFrac: 0.4 },
-    fill: [[0, 0], [0.25, 0], [0.375, 5.5, 'inCubic']], fillCol: [[0.25, [1.0, 0.22, 0.04]], [0.31, [1.0, 0.6, 0.2]], [0.375, [1.0, 0.95, 0.88]]],
-    fillAt: [0, 0, 22], fillR: [[0.25, 0.3], [0.375, 1.5]],
+    fill: [[0, 0], [0.235, 0], [0.333, 8.0, 'inCubic']], fillCol: [[0.235, [1.0, 0.22, 0.04]], [0.29, [1.0, 0.55, 0.16]], [0.333, [1.0, 0.95, 0.88]]],
+    fillAt: [0, 0, 22], fillR: [[0.235, 0.22], [0.29, 0.4], [0.333, 1.6, 'inQuad']],
     cam: [[0, [-8, 1.2, -13], [-3.5, 0, 22], 46, 0.17], [0.375, [5, 0.4, -11], [6.5, 0, 22], 46, 0.23, 'linear']],
     dof: { focus: [[0, 30], [0.375, 29]], K: 38, max: 120 },
     ringCol: [1.0, 0.8, 0.55], refract: 10,
@@ -691,15 +707,15 @@ const presets = {
   'S20-strike4': {
     refDur: 3.042,
     mode: 'lattice',
-    lattice: { a: 11, i: [-6, 6], k: [-3, 7], layers: 2, lowerGain: 0.1, oFrac: 0.45, disorder: 0.05, center: [0, 0, 11], top: 2.6, gain: 0.85 },
+    lattice: { a: 11, i: [-6, 6], k: [-3, 7], layers: 2, lowerGain: 0.1, discAt: 0.55, oFrac: 0.45, disorder: 0.05, center: [0, 0, 11], top: 2.6, gain: 0.85 },
     crush: { t: 0, from: 1.1, to: 0.66, tp: 0.36, zeta: 0.5, push: 2.4, zoom: 0.012, glow: 9, glowR: 0.9, ringSpeed: 30 },
     cam: [[0, [-2, 19, -6], [0, 0, 11], 40, 0.04], [3.042, [1.0, 15, -2], [0.5, 0, 11], 37, -0.03, 'inOutSine']],
     dof: { focus: [[0, 23.5], [3.042, 18.8]], K: 80, max: 150 },
     fog: [28, 18],
     heat: [[0, 0.2], [0.1, 0.3], [0.38, 0.85], [0.8, 0.55], [2.0, 0.95], [2.65, 1.7], [3.042, 4.8, 'inQuad']],
     jitter: [[0, 0.08], [0.15, 0.35], [0.7, 0.16], [3.042, 0.4, 'inQuad']],
-    events: { t0: 0.4, r0: 2.4, k: 1.15, life: 0.8, spread: { r0: 2, v: 9, zs: 1.0, near: 0.55, max: 26 }, flash: 60, flashR: 0.4, flashDecay: 0.07, reach: 3.0, zBias: 5, glowLift: 1.3, heatKick: 3.0,
-      sparks: 40, sparkSpeed: 28, sparkLife: 0.6, sparkInt: 70, sparkR: 0.06, trail: 0.12, ringSpeed: 26, flat: 0.3, sparkLift: 1.2 },
+    events: { t0: 0.4, r0: 2.4, k: 1.15, life: 0.8, spread: { r0: 2, v: 9, zs: 0.75, near: 0.25, max: 26, k: [1, 3] }, flash: 50, flashR: 0.35, flashDecay: 0.06, reach: 3.0, zBias: 5, glowLift: 1.3, heatKick: 1.9,
+      sparks: 32, sparkSpeed: 19, sparkLife: 0.6, sparkInt: 50, sparkR: 0.05, trail: 0.12, ringSpeed: 26, flat: 0.3, zsq: 0.4, sparkLift: 1.2 },
     haze: [[0, 0.04], [2.4, 0.07], [3.042, 0.22, 'inQuad']], hazeCol: [[0, [0.45, 0.02, 0.008]], [2.4, [0.5, 0.03, 0.01]], [3.042, [1.0, 0.22, 0.05]]],
     fill: [[0, 0], [2.74, 0], [3.042, 7.0, 'inCubic']], fillCol: [[2.74, [1.0, 0.22, 0.04]], [2.9, [1.0, 0.6, 0.2]], [3.042, [1.0, 0.95, 0.88]]],
     fillAt: [0, 1, 11], fillR: [[2.74, 0.25], [3.042, 1.6]],
@@ -757,8 +773,7 @@ export default {
       const r = fx.rings[i];
       rc.set([r.c[0], r.c[1], r.c[2], r.r], i * 4);
       rw.set([r.w, r.k, r.amp, 0], i * 4);
-      const q = B.proj(r.c);
-      rs.set(q ? [q[0], q[1], 0, 0] : [0, 0, 0, 0], i * 4);
+      rs.set(this.ringBound(B, r, fx), i * 4);
     }
     E.draw(this.prog, {
       ...cam.uniforms, ...B.uniforms(),
@@ -767,6 +782,30 @@ export default {
       uFill: kv(P.fill, t, 0), uFillCol: kc(P.fillCol, t, WHITE), uFillC: this.fillCenter(B, P, t),
       uHaze: kv(P.haze, t, 0), uHazeCol: kc(P.hazeCol, t, CRIMSON),
     }, target);
+  },
+  // screen-space annulus bounding a ring's visible band (centre px, outer px, inner px), from 16 projected
+  // points on its outer and inner edges (3 widths out), so the shader skips the ring almost everywhere
+  ringBound(B, r, fx) {
+    const q = B.proj(r.c);
+    if (!q) return [0, 0, 1e9, 0];
+    const cam = B.cam;
+    let u, v;
+    if (fx.ringMode === 0) { const n = fx.ringPlane; u = norm(Math.abs(n[1]) < 0.9 ? [n[2], 0, -n[0]] : [1, 0, 0]); v = norm([n[1] * u[2] - n[2] * u[1], n[2] * u[0] - n[0] * u[2], n[0] * u[1] - n[1] * u[0]]); }
+    else { u = cam.right; v = cam.up; }
+    const ro = r.r + 3 * r.w, ri = Math.max(0, r.r - 3 * r.w);
+    let mx = 0, mn = 1e9, bad = false;
+    for (let k = 0; k < 16; k++) {
+      const a = (k / 16) * TAU, ca = Math.cos(a), sa = Math.sin(a);
+      for (const [rad, outer] of [[ro, true], [ri, false]]) {
+        const p = add(r.c, add(mul(u, ca * rad), mul(v, sa * rad)));
+        const pp = B.proj(p);
+        if (!pp) { bad = true; continue; }
+        const d = Math.hypot(pp[0] - q[0], pp[1] - q[1]);
+        if (outer) mx = Math.max(mx, d); else mn = Math.min(mn, d);
+      }
+    }
+    if (bad) return [q[0], q[1], 1e9, 0];
+    return [q[0], q[1], mx * 1.15 + 4 + (fx.ringRefract || 0), ri > 0 ? Math.max(0, mn * 0.85 - 4) : 0];
   },
   fillCenter(B, P, t) {
     if (!P.fillAt) return [0, 0, 0];

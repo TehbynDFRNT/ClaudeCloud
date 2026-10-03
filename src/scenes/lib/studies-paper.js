@@ -158,6 +158,7 @@ uniform vec4 uFlame;          // flame xy, radius, strength
 uniform vec4 uFlameB;         // flame flicker
 uniform float uInk;           // overlay validity (0 = no ink)
 uniform float uLevel;         // global light level (dissolves from darkness)
+uniform float uCockle;        // cockle (large undulation) relief gain
 
 vec2 pagePos(){
   vec2 sp = vec2(gl_FragCoord.x * uFull.x / uRes.x, uFull.y - gl_FragCoord.y * uFull.y / uRes.y);
@@ -196,7 +197,7 @@ Paper paper(vec2 p){
   n1 *= uPaperSize * 1.28 * (255.0 / 256.0); n2 *= uPaperSize * 0.97;
   vec2 n2p = vec2(0.866 * n2.x - 0.5 * n2.y, 0.5 * n2.x + 0.866 * n2.y);
   vec2 gf = (n1 * 0.6 + n2p * 0.4) * 0.5;      // texel rows run with page y
-  P.grad = gc * 0.012 * uAge.w + gf * 0.00055 * uAge.w;
+  P.grad = gc * 0.012 * uAge.w * uCockle + gf * 0.00055 * uAge.w;
   P.h = bk.a;
   return P;
 }

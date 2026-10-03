@@ -5,10 +5,12 @@
 // (bar/eighth grid in source seconds, bassMidi per eighth, tuning). The only authored numbers are sound-design
 // constants (levels, filter shapes, envelopes) and the section structure in bars given by the director.
 //
-// Determinism: no Math.random / Date. All noise comes from seeded mulberry32 generators, so the output is a pure
-// function of (plan, grid, media). Each stem is rendered in its own OfflineAudioContext(2, 48000 * 156.5, 48000);
-// the mix/master stage (auto-levelling, bus compression, true-peak limiting, loudness) runs in plain JS on the
-// rendered buffers.
+// Determinism: no Math.random / Date. All noise and impulse responses come from seeded mulberry32 generators, every
+// measured quantity (shaper latency, grid check) is derived robustly, so the output is a function of (plan, grid,
+// media). Chrome's native Web Audio kernels still differ between runs at float-rounding level (SIMD paths): two
+// renders agree to about -104 dBFS peak / -125 dB RMS in the mix, not bit for bit.
+// Each stem is rendered in its own OfflineAudioContext(2, 48000 * 156.5, 48000); the mix/master stage
+// (auto-levelling, bus compression, true-peak limiting, loudness) runs in plain JS on the rendered buffers.
 import { Music, evalFps } from '../engine/music.js';
 import { mulberry32 } from '../engine/rng.js';
 
@@ -170,9 +172,9 @@ function drive(ctx, buf, params, t0) {
 }
 
 const G = (ctx, v = 1) => { const g = ctx.createGain(); g.gain.value = v; return g; };
-// Determinism guard: Chrome disables nodes whose inputs have all finished, and the moment a finished source is
-// cleaned up depends on main-thread timing; re-enabling then resets residual filter/convolver state (~1e-5 level
-// differences between runs). A silent ConstantSource that never stops keeps every chain it feeds permanently active.
+// Determinism guard: Chrome may disable a node once all its sources have finished (cleanup timing depends on the
+// main thread) and reset its filter/convolver state when it is re-enabled. A silent ConstantSource that never stops
+// keeps every chain it feeds permanently active, so that cannot vary between runs.
 function keepAlive(ctx) {
   const z = ctx.createConstantSource(); z.offset.value = 0; z.start(0);
   return (...nodes) => { for (const n of nodes) z.connect(n); return nodes[0]; };
@@ -280,16 +282,9 @@ export function onsetEnvelope(buf, s0, s1) {
   // frames are stamped at their centre: calibrated on the synth stem (known attack times) this reports sharp
   // attacks within ~1 ms of their true time (librosa's half-window shift would report them ~10 ms late)
   const t0 = (i0 + N / 2) / sr, dt = hop / sr;
-  // peaks: local maxima (+-40 ms) above the local mean (+-200 ms) + delta
+  // normalised to the 99th percentile, so thresholds are relative to the recording's clear onsets
   const sorted = Float32Array.from(env).sort(), norm = sorted[Math.floor(sorted.length * 0.99)] || 1;
-  const peaks = [];
-  for (let f = 10; f < frames - 10; f++) {
-    let isMax = true; for (let k = -10; k <= 10; k++) if (env[f + k] > env[f]) { isMax = false; break; }
-    if (!isMax) continue;
-    let m = 0, c = 0; for (let k = -50; k <= 50; k++) { const v = env[f + k]; if (v !== undefined) { m += v; c++; } }
-    if (env[f] > m / c + 0.05 * norm) peaks.push({ t: t0 + f * dt, v: env[f] / norm });
-  }
-  return { env, t0, dt, norm, peaks, at: (t) => { const f = Math.round((t - t0) / dt); return f >= 0 && f < frames ? env[f] / norm : 0; } };
+  return { env, t0, dt, norm, at: (t) => { const f = Math.round((t - t0) / dt); return f >= 0 && f < frames ? env[f] / norm : 0; } };
 }
 
 function median(a) { if (!a.length) return 0; const s = [...a].sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : 0.5 * (s[m - 1] + s[m]); }
@@ -299,8 +294,9 @@ function median(a) { if (!a.length) return 0; const s = [...a].sort((x, y) => x 
 //  * gross bar errors (a bar line misplaced by a third of an eighth or more, e.g. at a rubato hand-off) are re-fitted
 //    by template matching: 8 evenly spaced eighths ending on the next bar's downbeat, accepted only when the onset
 //    evidence is >= 1.5x that of the (best-lagged) grid eighths;
-//  * each metric section gets a constant lead/lag: the shift (+-60 ms) that maximises the onset envelope summed at
-//    its eighths (cross-correlation with the eighth train), so the synth's sharp attacks sit on the orchestra's.
+//  * each metric section gets a constant lead/lag (clamped to +-60 ms): the median offset between its eighths and
+//    the strongest onset flux within +-50 ms (clear onsets only), so the synth's sharp attacks sit on the
+//    orchestra's. The envelope is calibrated to report sharp attacks at their true time (see onsetEnvelope).
 // Rubato bars (the drone section) keep the raw grid.
 export function refineGrid(tl, winter) {
   const { grid, T } = tl;
@@ -769,9 +765,10 @@ export function buildIgnition(ctx, tl) {
   const C2 = hz(36), C1 = hz(24);
   const f0 = C2 * (1 + 0.5);                         // receding asymptote f0/(1+M) is exactly C2
   const r0 = t + 0.5, r1 = T.return56 + 2.5, rd = r1 - r0, rate = 200;
+  const rr = r0 + l4; // curves are evaluated on the audible clock (scheduled time + bus-clipper latency)
   const mPass0 = T.pass + 1.0, mPass1 = T.pass + 3.0; // settle the pitch onto C2
   const fCurve = (x) => {
-    const tt = r0 + x, s = dop(tt);
+    const tt = rr + x, s = dop(tt);
     const w = smooth(mPass0, mPass1, tt);
     return Math.exp(Math.log(f0 * s.k) * (1 - w) + Math.log(C2) * w);
   };
@@ -779,21 +776,21 @@ export function buildIgnition(ctx, tl) {
   const duck = (tt) => (tt < ret ? 1 : Math.exp(-(tt - ret) / 0.4)) * (1 - smooth(ret + 1.6, ret + 2.4, tt));
   const droneShape = (tt) => (0.34 + 0.13 * smooth(ret - 2.2, ret - 0.03, tt)) * duck(tt);
   const toneLevel = (x) => {
-    const tt = r0 + x, s = dop(tt), w = smooth(T.pass + 0.8, T.pass + 2.6, tt);
-    const roar = Math.pow(s.amp, 1.0) * Math.pow(s.k, 0.6) / Math.pow(1, 0.6);
-    return smooth(r0, r0 + 2.0, tt) * (roar * (1 - w) + droneShape(tt) * w);
+    const tt = rr + x, s = dop(tt), w = smooth(T.pass + 0.8, T.pass + 2.6, tt);
+    const roar = s.amp * Math.pow(s.k, 0.6);   // 1/r spreading x convective amplification on approach
+    return smooth(rr, rr + 2.0, tt) * (roar * (1 - w) + droneShape(tt) * w);
   };
   const noiseLevel = (x) => {
-    const tt = r0 + x, s = dop(tt);
-    return smooth(r0, r0 + 2.0, tt) * Math.pow(s.amp, 1.1) * Math.pow(s.k, 0.5) * (1 - smooth(T.pass + 1.2, T.pass + 4.2, tt));
+    const tt = rr + x, s = dop(tt);
+    return smooth(rr, rr + 2.0, tt) * Math.pow(s.amp, 1.1) * Math.pow(s.k, 0.5) * (1 - smooth(T.pass + 1.2, T.pass + 4.2, tt));
   };
   const cutCurve = (x) => {
-    const tt = r0 + x, s = dop(tt), w = smooth(T.pass + 0.8, T.pass + 2.6, tt);
+    const tt = rr + x, s = dop(tt), w = smooth(T.pass + 0.8, T.pass + 2.6, tt);
     const roarCut = 260 + 9000 * Math.pow(s.amp, 1.3) * Math.pow(s.k, 0.5);
     const droneCut = 420 + 520 * smooth(ret - 2.2, ret - 0.03, tt);
     return roarCut * (1 - w) + droneCut * w;
   };
-  const panCurve = (x) => { const tt = r0 + x, s = dop(tt); return 0.9 * s.pan * (1 - smooth(T.pass + 2.0, T.pass + 4.0, tt)); };
+  const panCurve = (x) => { const tt = rr + x, s = dop(tt); return 0.9 * s.pan * (1 - smooth(T.pass + 2.0, T.pass + 4.0, tt)); };
 
   const fBase = ctx.createConstantSource(); curveEnv(fBase.offset, r0, rd, fCurve, rate);
   const tone = alive(G(ctx, 1));
@@ -826,15 +823,15 @@ export function buildIgnition(ctx, tl) {
   rn.start(r0); rn.stop(r1 + 0.05); fBase.start(r0); fBase.stop(r1 + 0.05);
   // C1 sine under the drone
   const c1 = ctx.createOscillator(); c1.type = 'sine'; c1.frequency.value = C1;
-  const c1G = G(ctx, 0); curveEnv(c1G.gain, r0, rd, (x) => { const tt = r0 + x; return smooth(T.pass + 1.0, T.pass + 3.0, tt) * droneShape(tt) * 1.1; }, rate);
+  const c1G = G(ctx, 0); curveEnv(c1G.gain, r0, rd, (x) => { const tt = rr + x; return smooth(T.pass + 1.0, T.pass + 3.0, tt) * droneShape(tt) * 1.1; }, rate);
   alive(c1G); const c1Out = c1.connect(c1G); c1Out.connect(bus); send(c1Out, 0.1);
   c1.start(r0); c1.stop(r1 + 0.05);
 
   return {
-    ignition: t, pass: T.pass, return56: ret, f0, C2, C1,
+    ignition: T.ignition, pass: T.pass, return56: ret, f0, C2, C1, mach: 0.5, passWidthSeconds: 1.25,
     doppler: [-3, -2, -1, -0.5, 0, 0.5, 1, 2, 3, 4].map((dt) => {
       const tt = T.pass + dt, s = dop(tt);
-      return { t: +tt.toFixed(3), hzRaw: +(f0 * s.k).toFixed(2), hz: +fCurve(tt - r0).toFixed(2), level: +db(toneLevel(tt - r0)).toFixed(1), pan: +panCurve(tt - r0).toFixed(2) };
+      return { t: +tt.toFixed(3), hzRaw: +(f0 * s.k).toFixed(2), hz: +fCurve(tt - rr).toFixed(2), level: +db(toneLevel(tt - rr)).toFixed(1), pan: +panCurve(tt - rr).toFixed(2) };
     }),
   };
 }
@@ -1136,7 +1133,7 @@ export async function renderSoundtrack({ base = '/', log = console.log } = {}) {
     synthSteps: info.synth.steps,
     cannons: info.cannons, cannonSamples: Object.fromEntries(Object.entries(samples).map(([k, s]) => [k, { ...CANNON_SAMPLES[k], onsetMs: +(s.info.onset * 1000).toFixed(2), peakAtMs: +(s.info.peakAt * 1000).toFixed(1), peakDb: +db(s.info.peak).toFixed(1), boomDb: +db(s.info.boomRms).toFixed(1), matchGainDb: +db(s.info.norm).toFixed(1) }])),
     ignition: info.ignition,
-    master: { preLufs: +preL.toFixed(2), masterGainDb: +db(gM).toFixed(2), lufs: +L.toFixed(2), compMaxGrDb: +comp.maxGrDb.toFixed(2), compMeanGrDb: +comp.meanGrDb.toFixed(2), limiterMaxGrDb: +lim.maxGrDb.toFixed(2), limiterActivePct: +lim.activePct.toFixed(3), stemLufs, orchestraMakeupDb: DESIGN.orchestraMakeupDb },
+    master: { targetLufs: DESIGN.targetLufs, ceilingDbtp: DESIGN.ceilingDbtp, preLufs: +preL.toFixed(2), masterGainDb: +db(gM).toFixed(2), lufs: +L.toFixed(2), compMaxGrDb: +comp.maxGrDb.toFixed(2), compMeanGrDb: +comp.meanGrDb.toFixed(2), limiterMaxGrDb: +lim.maxGrDb.toFixed(2), limiterActivePct: +lim.activePct.toFixed(3), stemLufs, orchestraMakeupDb: DESIGN.orchestraMakeupDb },
     renderSeconds: (performance.now() - t00) / 1000,
   };
   return { mix: [lim.L, lim.R], stems: scaled, report };

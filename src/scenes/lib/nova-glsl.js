@@ -85,7 +85,7 @@ vec4 fireballMarch(vec3 ro, vec3 rd, float tMin, float tMax, float jit){
   vec3 col = vec3(0.0); float T = 1.0;
   if (t1 <= t0) return vec4(col, T);
   float t = t0 + jit * 0.01 * R;
-  int iters = uFbShell > 0.5 ? 40 : 48;
+  int iters = uFbShell > 0.5 ? 36 : 48;
   for (int i = 0; i < 48; i++){
     if (t > t1 || i >= iters) break;
     vec3 p = ro + rd * t;
@@ -97,7 +97,7 @@ vec4 fireballMarch(vec3 ro, vec3 rd, float tMin, float tMax, float jit){
     vec3 q = v / R;
     float w1 = n3(q * 6.5 + vec3(0.0, uFbEvo * 0.35, uFbSeed));
     float w2 = 0.0, w3 = 0.0;
-    if (e > -0.05 && e < mix(0.08, 0.35, uFbShell)){  // fine turbulence only near the front
+    if (e > -0.05 && e < mix(0.08, 0.16, uFbShell)){  // fine turbulence only near the front
       w2 = n3(q * 17.0 + vec3(uFbEvo * 0.5, 0.0, 0.0));
       if (abs(e) < 0.04) w3 = n3(q * 43.0 + vec3(0.0, 0.0, uFbEvo * 0.8));
     }
@@ -121,7 +121,7 @@ vec4 fireballMarch(vec3 ro, vec3 rd, float tMin, float tMax, float jit){
     float h = uFbHeat * mix(hb, 0.22 + 0.1 * veil, (1.0 - body));
     h = mix(h, uFbHeat * (0.47 + 0.2 * pow(mu, 1.2) + 0.22 * (hot - 0.45) + 0.1 * pow(vein, 3.0)), ph);
     float dt = R * clamp(min(0.35 * abs(ee - 0.003), uFbPh > 0.0 ? max(0.35 * abs(eph0), 0.004) : 1.0), 0.004, mix(0.05, 0.09, uFbShell)) * (0.7 + 0.6 * fract(jit + float(i) * 0.618034));
-    float a = 1.0 - exp(-rho * uFbDens * dt / R);
+    float a = 1.0 - exp(-rho * uFbDens * min(dt, t1 - t) / R);   // last step clamped to the segment (no double counting at splits)
     vec3 em = novaEmit(h);
     em += C_ICE * uFbBlue * 3.0 * cor * exp(min(ee + 0.06, 0.0) / 0.03) * step(ee, -0.03);
     col += T * a * em;

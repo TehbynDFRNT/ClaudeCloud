@@ -100,6 +100,15 @@ float giantRadius0(vec3 n){
   float c = max(0.0, dot(n, uBulgeDir));
   return uGiantR * (1.0 + uBulge * pow(c, 5.0) + uBulge * 0.15 * c);
 }
+// true outward normal of the tidal shape at object-space point p (radial when there is no bulge)
+vec3 gNormal0(vec3 p){
+  float r = length(p); vec3 n = p / r;
+  float c = dot(n, uBulgeDir);
+  if (uBulge <= 0.0 || c <= 0.0) return n;
+  vec3 g = uGiantR * uBulge * (5.0 * c * c * c * c + 0.15) * uBulgeDir;   // d giantRadius0 / d n
+  g -= n * dot(g, n);
+  return normalize(n - g / r);
+}
 // mid-granulation field (pattern space): x = dome height 0..1 (shared by tracer and shading), y = F2-F1
 vec2 gMid(vec3 ns, float bo){
   vec4 wq = n4(ns * 2.4 + 41.0);
@@ -134,22 +143,26 @@ vec4 gWorley(vec3 p, float t, out vec3 r1, out vec3 r2){
 
 // small + fine granulation, footprint filtered: x = height, y = temperature offset (K)
 vec2 gFine(vec3 ns, vec3 w, float fp, float bo){
-  float S = 0.0;
+  float S = 0.4;                                            // LOD fades each layer to its mean, not to zero
   float ls = gLod(20.0, fp);
   if (ls > 0.0){
     vec3 ps = ns * (20.0 + 0.25 * bo) + w * 1.8;
     vec2 cs = cells3(ps);
-    S = smoothstep(0.95, 0.1, cs.x) * ls;
+    S = mix(0.4, smoothstep(0.95, 0.1, cs.x), ls);
   }
+  float closeK = sat(uRelief * 125.0);
   float F = 0.0, a = 0.5, fr = 60.0;
-  vec3 q = ns * fr + w * 3.0 + ns * (0.6 * bo);
-  for (int i = 0; i < 4; i++){
+  vec3 q = ns * fr + w * 3.0;                                // static domain; time is added per octave below
+  vec3 drift = ns * (0.45 * bo) + vec3(0.0, 0.0, 0.2 * bo);  // same lattice rate for every octave (no shimmer)
+  int oct = closeK > 0.5 ? 6 : 4;                            // close-ups resolve finer boiling
+  for (int i = 0; i < 6; i++){
+    if (i >= oct) break;
     float l = gLod(fr, fp);
     if (l <= 0.0) break;
-    F += a * l * n3(q);
-    q = q * 2.03 + vec3(1.7, -3.1, 2.3); fr *= 2.03; a *= 0.55;
+    F += a * l * n3(q + drift);
+    q = q * 2.03 + vec3(1.7, -3.1, 2.3); fr *= 2.03; a *= 0.58;
   }
-  return vec2(0.30 * S + 0.06 * F, 150.0 * (S - 0.4) + 220.0 * F);
+  return vec2(0.30 * S + mix(0.06, 0.13, closeK) * F, 150.0 * (S - 0.4) + 220.0 * F);
 }
 
 // Full photosphere temperature with footprint filtering; optional relief gradient (pattern space).
@@ -177,14 +190,14 @@ float giantTemperatureLod(vec3 ns, float mu, float t, float fp, bool wantGrad, o
   float sub = gFbm2(ns * 4.3 + w * 1.1 + vec3(0.0, 0.0, 0.02 * tt) + 3.3);
   float G = amp * (0.42 + 0.58 * core) * (0.84 + 0.26 * sub) * mix(1.0 - deep, 1.0, lane);
   vec2 md = gMid(ns, bo);
-  float M = md.x * gLod(6.2, fp);
+  float M = mix(0.45, md.x, gLod(6.2, fp));                 // fades to its mean when unresolved
   vec2 fl = gFine(ns, w, fp, bo);
   float gran = (0.25 + 0.75 * sat(G * 1.4)) * (0.45 + 0.55 * smoothstep(0.25, 0.75, nq.g));   // patchy granulation
   // bright cells boil with granulation (cauliflower); dark lanes stay smooth and deep
   float T = 1640.0 + G * (1500.0 + 900.0 * (M - 0.45)) + (80.0 * (M - 0.45) + fl.y) * gran;
   // close-ups (relief set): the granulation boils everywhere, not only inside bright cells
   float closeK = sat(uRelief * 125.0);
-  T += closeK * (260.0 * (M - 0.45) + 1.3 * fl.y) * (0.55 + 0.45 * sat(G * 1.5));
+  T += closeK * (380.0 * (M - 0.45) + 2.4 * fl.y) * (0.55 + 0.45 * sat(G * 1.5));
   // cool starspot-like depressions: rare, broad
   float spot = smoothstep(0.66, 0.82, n3(ns * 1.9 + 40.0 + vec3(0.0, 0.0, tt * 0.004)) * 0.5 + 0.5);
   T *= 1.0 - 0.22 * spot;
@@ -249,16 +262,20 @@ float giantTrace(vec3 o, vec3 rd){
   float rOut = uGiantR * (1.0 + uBulge * 1.2 + (geo ? uRelief * 0.7 : 0.0));
   vec2 hs = sphereHit(o, rd, vec3(0.0), rOut);
   if (hs.y < 0.0) return -1.0;
+  // the surface never dips inside rIn: if the ray reaches that sphere the crossing lies before it
+  float rIn = uGiantR * (1.0 - (geo ? uRelief * 0.4 : 0.0));
+  vec2 hi = sphereHit(o, rd, vec3(0.0), rIn);
+  float tCap = hi.x > 0.0 && hi.y > 0.0 ? hi.x : 1e9;
   float th = max(hs.x, 0.0), prev = th;
   float k = uBulge > 0.0 ? 0.6 : 0.9;
   float minStep = uGiantR * (geo ? 0.0012 : 0.0004);
   for (int i = 0; i < 64; i++){
     vec3 p = o + rd * th; float r = length(p);
     float d = r - (geo ? giantRadius(p / r) : giantRadius0(p / r));
-    if (d < 0.0003 * uGiantR){
-      if (d < 0.0){ // overshoot: bisect back to the crossing
-        float a = prev, b = th;
-        for (int j = 0; j < 5; j++){
+    if (d < 0.0003 * uGiantR || th >= tCap){
+      if (d < 0.0 || th >= tCap){ // overshoot / reached the inner bound: bisect back to the crossing
+        float a = prev, b = min(th, tCap);
+        for (int j = 0; j < 6; j++){
           float m = 0.5 * (a + b); vec3 q = o + rd * m; float rq = length(q);
           if (rq - (geo ? giantRadius(q / rq) : giantRadius0(q / rq)) < 0.0) b = m; else a = m;
         }
@@ -267,30 +284,10 @@ float giantTrace(vec3 o, vec3 rd){
       return th;
     }
     prev = th;
-    th += max(d * k, minStep);
+    th = min(th + max(d * k, minStep), tCap);
     if (th > hs.y) return -1.0;
   }
-  return -1.0;
-}
-
-// cheap photosphere distance without relief (volume passes): analytic sphere unless tidally distorted
-float giantTraceCoarse(vec3 o, vec3 rd){
-  if (uBulge <= 0.0){
-    vec2 h = sphereHit(o, rd, vec3(0.0), uGiantR);
-    return h.y > 0.0 && h.x > 0.0 ? h.x : -1.0;
-  }
-  float rOut = uGiantR * (1.0 + uBulge * 1.2);
-  vec2 hs = sphereHit(o, rd, vec3(0.0), rOut);
-  if (hs.y < 0.0) return -1.0;
-  float th = max(hs.x, 0.0);
-  for (int i = 0; i < 40; i++){
-    vec3 p = o + rd * th; float r = length(p);
-    float d = r - giantRadius0(p / r);
-    if (d < 0.0005 * uGiantR) return th;
-    th += d * 0.6;
-    if (th > hs.y) return -1.0;
-  }
-  return -1.0;
+  return tCap < 1e8 ? tCap : -1.0;
 }
 
 // ---- prominence loops: analytic braided gaussian tubes along circular arcs ----------------------------------
@@ -397,13 +394,18 @@ void gPlumeOne(vec3 ros, vec3 rds, vec3 c, vec3 l, vec4 P, float tMax, float t, 
   float Hs = P.x * (0.7 + 0.45 * min(uPlumes, 2.0));
   float lean = P.z, ph = P.w * TAU;
   float rb = giantRadius0(c) / R;
-  float Lmax = Hs * 3.5;
+  float Lmax = Hs * 2.6;
   float kl = lean * 0.35 / Lmax;                               // bend: ~0.35*lean*Lmax sideways at the top
-  // bounding sphere around the plume
-  vec3 bc = R * (c * (rb + Lmax * 0.5) + l * (kl * Lmax * Lmax * 0.25));
-  float br = R * (Lmax * 0.6 + P.y * 12.5 + kl * Lmax * Lmax * 0.3);   // covers the flared top (|x| < 3w)
-  vec3 oc = ros - bc; float bb = dot(oc, rds); float hh = bb * bb - dot(oc, oc) + br * br;
-  if (hh < 0.0 || -bb + sqrt(hh) < 0.0) return;
+  float wTop = P.y * (1.0 + 0.9 * 2.6);
+  // cheap reject: distance from the ray to the straight chord base -> tip
+  vec3 pb = R * c * rb, pt = R * (c * (rb + Lmax) + l * (kl * Lmax * Lmax));
+  vec3 ax = pt - pb; float al = length(ax); ax /= al;
+  vec3 w0 = ros - pb;
+  float bq = dot(rds, ax), dq = dot(rds, w0), eq = dot(ax, w0);
+  float dn = max(1.0 - bq * bq, 1e-4);
+  float sc = clamp((eq - bq * dq) / dn, 0.0, al), tq = max(bq * sc - dq, 0.0);
+  float reach = 2.6 * wTop * R + 0.25 * kl * Lmax * Lmax * R;
+  if (length(ros + rds * tq - (pb + ax * sc)) > reach) return;
   // closest approach ray <-> curved axis A(s) = R (c (rb + s) + l kl s^2), linearised iterations
   float sp = Lmax * 0.3;
   vec3 A, T; float tp = 0.0;
@@ -425,14 +427,14 @@ void gPlumeOne(vec3 ros, vec3 rds, vec3 c, vec3 l, vec4 P, float tMax, float t, 
   float w = P.y * R * (1.0 + 0.9 * sN);                       // flares with height
   // across-coordinate (unsigned fallback when looking along the axis)
   float x = mix(length(v), dot(v, kx / max(sa, 1e-4)), smoothstep(0.08, 0.3, sa)) / w;
-  if (abs(x) > 3.0) return;
+  if (abs(x) > 2.6) return;
   // turbulent interior: puffs and wisps rising along the column
   float rise = t * 0.35 * uBoil;
   float n1 = n3(vec3(sN * 3.0 - rise, x * 0.9, ph * 3.0)) * 0.5 + 0.5;
   float n2 = n3(vec3(sN * 9.0 - rise * 2.6, x * 2.4 + n1 * 1.5, ph * 5.0 + 7.0)) * 0.5 + 0.5;
   float edge = x * x * (1.0 - 0.5 * (n2 - 0.5));
   float prof = exp(-edge * 1.3);
-  float along = exp(-sN) * smoothstep(0.0, 0.08, sN) * smoothstep(1.0, 0.7, sp / Lmax);
+  float along = exp(-sN) * smoothstep(0.0, 0.08, sN) * smoothstep(1.0, 0.6, sp / Lmax);
   float dens = prof * along * smoothstep(0.15, 0.75, n1) * (0.35 + 0.65 * n2);
   float path = min(1.0 / max(sa, 1e-3), 3.0);
   float e = dens * path * min(uPlumes, 2.0) * 3.5;
@@ -443,7 +445,8 @@ void gPlumeOne(vec3 ros, vec3 rds, vec3 c, vec3 l, vec4 P, float tMax, float t, 
 }
 vec4 gPlumes(vec3 ros, vec3 rds, mat3 spin, float tMax, float t, out float opac){
   vec3 acc = vec3(0.0); float tau = 0.0, dep = 0.0, best = 0.0;
-  if (uGiantHeroOnly < 0.5)
+  // table plumes are a limb feature: skipped for rays that end on the photosphere (heroes are always drawn)
+  if (uGiantHeroOnly < 0.5 && tMax > 1e8)
     for (int k = 0; k < G_NPLUME; k++) gPlumeOne(ros, rds, G_PL_C[k], G_PL_L[k], G_PL_P[k], tMax, t, acc, tau, dep, best);
   for (int k = 0; k < 4; k++){
     if (dot(uHeroPlC[k], uHeroPlC[k]) < 0.5) continue;
@@ -462,9 +465,12 @@ float gChapman(vec3 o, vec3 rd, float tHit, float H){
   float ro = length(o);
   float hCam = max(0.0, (ro - giantRadius0(o / ro)) / uGiantR);
   if (tHit > 0.0){
-    vec3 n = normalize(o + rd * tHit);
+    vec3 n = gNormal0(o + rd * tHit);
     // column above the hit point, minus the part above the camera (camera inside the layer)
-    return H / (sat(dot(n, -rd)) + sqrt(2.0 * H / PI)) * (1.0 - exp(-hCam / H));
+    float mu = sat(dot(n, -rd));
+    // grazing rays also cross the haze behind the tangent point (soft photosphere): at mu -> 0 the column
+    // equals the just-missing tangential column, so the limb is continuous
+    return H / (mu + sqrt(2.0 * H / PI)) * (1.0 + smoothstep(0.2, 0.0, mu)) * (1.0 - exp(-hCam / H));
   }
   float tc = dot(-o, rd);
   vec3 pc = o + rd * max(tc, 0.0);
@@ -488,7 +494,7 @@ vec4 giantHaze(vec3 o, vec3 rd, float tHit){
   // dense photospheric haze: optically thick edge-on, cool source function -> soft crimson limb
   float tau0 = gChapman(o, rd, tHit, 0.028) * 5.0 * atmo;   // ~0.13 at disk centre, opaque edge-on, soft rim
   float tr = exp(-tau0);
-  vec3 col = giantEmission(2080.0) * 0.55 * (1.0 - tr);
+  vec3 col = giantEmission(1950.0) * 0.40 * (1.0 - tr);    // source fn below the limb brightness: monotonic, soft limb
   // extended warm atmosphere: optically thin glow that rims the star
   float c1 = gChapman(o, rd, tHit, 0.07) * 0.30 * atmo;
   float c2 = gChapman(o, rd, tHit, 0.25) * 0.012 * atmo;
@@ -527,7 +533,7 @@ vec3 giantFringe(vec3 o, vec3 rd, float tHit, float t){
 
 // suggested number of volume samples for a ray (o relative to centre)
 int giantVolumeSteps(vec3 o, vec3 rd, bool hit){
-  float b = length(o - rd * max(dot(-o, rd), 0.0)) / uGiantR;   // closest approach in radii
+  float b = length(o + rd * max(dot(-o, rd), 0.0)) / uGiantR;   // closest approach in radii
   if (!hit && b > 1.5 * (1.0 + uBulge * 1.2)) return 0;         // misses the gas shell: loops/plumes only
   float n = hit ? mix(6.0, 22.0, smoothstep(0.5, 0.98, b)) : mix(24.0, 8.0, smoothstep(1.02, 1.5, b));
   return int(n);
@@ -571,8 +577,7 @@ vec4 giantVolume(vec3 o, vec3 rd, float ta, float tb, float t, float jit, int N,
     float h = max(0.0, (r - giantRadius0(n)) / R);
     if (h > 0.5) continue;
     vec3 ns = spin * n;
-    // base: dense photospheric haze + extended warm atmosphere
-    // (smooth exponential layers are analytic: giantHaze) — the march carries the structured gas only
+    // smooth exponential layers are analytic (giantHaze): the march carries the structured gas only
     vec3 em = vec3(0.0);
     float ab = 0.0;
     // molecular layers: patchy, absorbing veils (MOLsphere)
@@ -616,9 +621,11 @@ vec4 giantVolume(vec3 o, vec3 rd, float ta, float tb, float t, float jit, int N,
 vec3 giantSurface(vec3 o, vec3 rd, float th, float t){
   mat3 spin = rotY(uGiantSpin);
   vec3 p = o + rd * th; vec3 n = normalize(p);
-  float mu = sat(dot(n, -rd));
+  vec3 nt = gNormal0(p);                                    // true normal (tidal teardrop) for limb effects
+  float mu = sat(dot(nt, -rd));
   vec3 ns = spin * n;
-  float fp = th * gPixAngle() / uGiantR / pow(max(mu, 0.02), 0.6);   // partial allowance for radial foreshortening
+  // partial allowance for radial foreshortening (close-ups keep more of the fine boiling at grazing angles)
+  float fp = th * gPixAngle() / uGiantR / pow(max(mu, 0.02), mix(0.6, 0.35, sat(uRelief * 125.0)));
   vec3 gH;
   bool wantGrad = uRelief > 0.0;
   float T = giantTemperatureLod(ns, mu, t, fp, wantGrad, gH);
@@ -628,8 +635,8 @@ vec3 giantSurface(vec3 o, vec3 rd, float th, float t){
     // shading relief: slope of the granulation domes (reads as 3D boiling plasma). Facets are shaded relative
     // to the macroscopic surface, independent of the global limb darkening.
     vec3 g = transpose(spin) * gH;
-    g -= n * dot(g, n);
-    vec3 nb = normalize(n - g * uRelief * 6.0);
+    g -= nt * dot(g, nt);
+    vec3 nb = normalize(nt - g * uRelief * 6.0);
     float muL = sat(dot(nb, -rd));
     shade = (1.0 - 0.75 * (1.0 - sqrt(muL))) / (1.0 - 0.75 * (1.0 - sqrt(max(mu, 0.02))));
     shade = mix(1.0, shade, smoothstep(0.0, 0.004, uRelief));

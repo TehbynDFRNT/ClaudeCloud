@@ -197,9 +197,8 @@ vec3 vxField(vec3 p, vec3 rd, float tau, float seg, inout vec4 xs, inout vec2 xf
     float ph1 = dot(perp, sideV), ph2 = perp.y;
     float w = uStreamW * (1.0 + 0.6 * max(s, 0.0));
     float along = s * 3.0 + tau * 1.6;
-    float sn = n3(vec3(along, ph1 / w * 0.7, ph2 / w * 0.7)) * 0.6
-             + n3(vec3(along * 2.7 + 5.0, ph1 / w * 1.5, ph2 / w * 1.5)) * 0.3
-             + n3(vec3(along * 0.8 + 9.0, ph1 / w * 0.35, ph2 / w * 0.35)) * 0.4;
+    float sn = n3(vec3(along, ph1 / w * 0.7, ph2 / w * 0.7)) * 0.75
+             + n3(vec3(along * 2.7 + 5.0, ph1 / w * 1.5, ph2 / w * 1.5)) * 0.4;
     float tube = exp(-(ph1 * ph1 + ph2 * ph2) / (w * w * (1.0 + 0.6 * sn))) * smoothstep(-0.02, 0.03, s);
     float srho = uHot * 30.0 * tube * exp(2.2 * sn - 0.3);
     float Ts = 2900.0 + 900.0 * sn + 2500.0 * exp(-max(s, 0.0) * 14.0);
@@ -218,7 +217,7 @@ vec3 vxCurtain(vec3 ro, vec3 rd, float tMax, float jit){
   if (h.x > h.y || h.y < 0.0) return vec3(0.0);
   float t0 = max(h.x, 0.0), t1 = min(h.y, tMax);
   if (t1 <= t0) return vec3(0.0);
-  const int N = 34;
+  const int N = 26;
   float dt = (t1 - t0) / float(N);
   vec3 acc = vec3(0.0);
   for (int i = 0; i < N; i++){
@@ -310,18 +309,20 @@ vec3 vxMarch(vec3 ro, vec3 rd, float tMax, float jit, float jitT, float pixAngle
     float gap = gasGap(p, r);
     float lodStep = t * uLod + pixAngle * t;
     float budget = max(t1d - t, 0.0) / max(uMaxSteps - float(i), 1.0);
-    if (gap > 0.0){ t += max(gap * 0.85, max(lodStep, max(budget, 0.002))); hasPrev = false; continue; }
+    if (gap > 0.0){ t += max(gap * 0.85, max(lodStep, max(budget * mix(0.35, 1.0, smoothstep(0.15, 0.4, r)), 0.002))); hasPrev = false; continue; }
     float H = diskH(r);
     float dt = clamp(max(uStepK * H, lodStep), 0.0015, 0.12);
+    // the reach-the-exit budget is waived in the thin inner disk: resolving the opaque rim matters more there
+    dt = max(dt, budget * mix(0.35, 1.0, smoothstep(0.15, 0.4, r)));
     if (uHot > 0.0){
       vec3 dh = p - hotPos();
       float ss = dot(dh, -uStreamDir);
       float dl = length(dh + uStreamDir * ss);
       float ws0 = uStreamW * (1.0 + 0.6 * max(ss, 0.0));
-      float dtS = dl < 3.0 * ws0 && ss > -0.05 ? 0.35 * ws0 : 0.03;
-      dt = min(dt, min(dtS, mix(0.008, 0.022, smoothstep(0.12, 0.4, length(dh)))) + lodStep);
+      float dtS = dl < 2.6 * ws0 && ss > -0.05 ? 0.5 * ws0 : 0.035;
+      dt = min(dt, min(dtS, mix(0.013, 0.026, smoothstep(0.1, 0.35, length(dh)))) + lodStep);
+      dt = max(dt, budget);
     }
-    dt = max(dt, budget);
     if (!hasPrev){
       // entering gas: this sample only initialises the pre-integration state (every contributing segment is integrated)
       vxField(p, rd, tt, 0.0, xs, xf, false);
@@ -334,7 +335,7 @@ vec3 vxMarch(vec3 ro, vec3 rd, float tMax, float jit, float jitT, float pixAngle
     float a = 1.0 - exp(-f.x * seg);
     if (transD < 0.0 && t > tD) transD = trans;
     if (transC < 0.0 && t > hc.x) transC = trans;
-    col += trans * a * (vxEmit(f.y) + f.z * vec3(1.0, 0.72, 0.45));
+    col += trans * a * (vxEmit(f.y) + f.z * vec3(1.0, 0.62, 0.30));
     trans *= 1.0 - a;
     tPrev = t;
     t += dt;

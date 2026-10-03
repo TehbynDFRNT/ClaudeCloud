@@ -11,6 +11,7 @@ import * as DR from './lib/studies-drawings.js';
 
 const FS = frag(PAPER, `
 uniform vec4 uShadeY;   // lower page falling into shadow: y0, y1, amount
+uniform vec4 uGutter;   // the page curling down into the binding: x of the fold, curl width, depth, side (+1 right, -1 left, 0 none)
 void main(){
   vec2 p = pagePos();
   Paper P = paper(p);
@@ -42,8 +43,9 @@ void main(){
   if (chd > 0.004){
     // a finer, page-locked tooth sample: chalk catches the peaks first; only pressure fills the valleys
     float tHi = texture(uPaper, p * 2.31 + vec2(0.37, 0.71)).g;
-    float tN = sat((P.tooth * 0.45 + tHi * 0.55 - 0.2) / 0.26 + 0.12 * (P.fib - 0.25));
-    cover = smoothstep(0.04, 0.32, chd * 1.35 - (1.0 - tN) * 0.78);
+    // raw tooth ~0.25 +- 0.05 -> tN spread roughly evenly over 0..1, so the covered fraction ~ density
+    float tN = sat((P.tooth * 0.45 + tHi * 0.55 - 0.16) / 0.19 + 0.1 * (P.fib - 0.25));
+    cover = smoothstep(-0.09, 0.09, chd * 1.1 - 0.24 - (1.0 - tN));
   }
   vec3 chalk = mix(vec3(0.52, 0.17, 0.085), vec3(0.30, 0.062, 0.028), sat(chd * 1.25 - 0.25));
   alb = mix(alb, chalk, cover * 0.93);
@@ -53,6 +55,15 @@ void main(){
   vec2 gR = vec2(oxp.b - oxm.b, oym.b - oyp.b) * 0.5 / (1.7 * uFull.y / 1080.0);
   float sgn = mix(-1.0, 1.0, smoothstep(0.05, 0.3, ink));
   vec2 grad = P.grad + gR * sgn * 0.06;
+  // gutter: the sheet slopes down into the fold (turned from the light), a dark crease, the facing page rising
+  float gAO = 1.0;
+  if (uGutter.w != 0.0){
+    float d = (uGutter.x - p.x) * uGutter.w;                        // > 0 on this page
+    float sg = sat(1.0 - d / uGutter.y);
+    float slope = d > 0.0 ? -2.0 * uGutter.z * sg / uGutter.y : 2.6 * uGutter.z * sat(1.0 + d / (0.4 * uGutter.y)) / uGutter.y;
+    grad.x += slope * uGutter.w;
+    gAO = (1.0 - 0.55 * sg * sg * sg) * (1.0 - 0.6 * exp(-abs(d) / 0.004));
+  }
 
   // ---- light: raking key from the window side, pooled, plus a cold ambient
   vec3 N = normalize(vec3(-grad, 1.0));
@@ -61,7 +72,7 @@ void main(){
   vec2 dk = (p - uKey.xy) / uKey.z;
   float pool = exp(-pow(dot(dk, dk), uKey.w));
   pool *= 1.0 - uShadeY.z * smoothstep(uShadeY.x, uShadeY.y, p.y);
-  vec3 col = alb * (uKeyCol * diff * pool + uFillCol);
+  vec3 col = alb * (uKeyCol * diff * pool + uFillCol) * gAO;
   // wet ink gloss: the bead's flank facing the light
   float wet = o0.b * smoothstep(0.1, 0.4, ink);
   col += uKeyCol * pool * wet * max(0.0, -dot(gR, normalize(L.xy))) * 0.9;
@@ -105,18 +116,19 @@ const presets = {
     drawing: 'codex', design: 2.917,
     view: [[0, 0.0, 0.0, 1.0, -0.008], [2.917, 0.03, 0.006, 1.035, 0.004]],
     key: { pos: [-0.28, -0.2], r: 0.95, pow: 1.4, dir: [-0.8, -0.45, 0.42], col: [1.14, 0.93, 0.68] },
+    gutter: [0.862, 0.12, 0.034, 1], cockle: 2.4,   // a notebook: the sheet curls into the binding at the right
   },
   'S10-prometheus': {
     drawing: 'prometheus', design: 3.5,
     // the fist on the left third, the flame in the upper third (~90 px under the scope line); the push-in is
     // anchored on the flame, so the fist sinks toward the frame edge while the fire holds its place
-    view: [[0, 0.041, -0.116, 1.04, 0.006], [3.5, 0.028, -0.134, 1.10, -0.004]],
+    view: [[0, 0.016, -0.102, 0.96, 0.006], [3.5, 0.002, -0.123, 1.02, -0.004]],
     paperSeed: 3.7, age: [0.7, 0.3, 0.55, 1.0],
     key: { pos: [-0.22, -0.2], r: 0.95, pow: 1.4, dir: [-0.8, -0.45, 0.42], col: [1.08, 0.89, 0.66] },
     flameKeys: [[0.45, 0], [2.1, 1]], flameGain: 2.0,
   },
   'S14d-deluge': {
-    drawing: 'deluge', paperSeed: 7.3, design: 1.5,
+    drawing: 'deluge', paperSeed: 7.3, design: 1.5, wetTau: 0.45, wetGain: 0.5,
     view: [[0, 0.0, 0.0, 1.0, 0.07], [1.5, 0.0, 0.0, 1.13, -0.06, 'linear']],
     key: { pos: [-0.1, -0.1], r: 0.9, pow: 1.3, dir: [-0.7, -0.55, 0.45], col: [1.1, 0.9, 0.67] },
   },
@@ -137,7 +149,8 @@ const presets = {
   },
   'F31.4': {
     drawing: 'collapse', paperSeed: 19.5, design: 0.375,
-    view: [[0, 0.0, 0.0, 1.0, 0.0], [0.375, 0.0, 0.0, 1.55, -0.04, 'inQuad']],
+    // hold the scale (a slight pull-out) so the shrinking circles and the blot carry the compression
+    view: [[0, 0.0, 0.0, 1.06, 0.035], [0.375, 0.0, 0.0, 0.96, -0.045, 'linear']],
     key: { pos: [0.0, -0.05], r: 0.85, pow: 1.3, dir: [-0.8, -0.4, 0.42], col: [1.1, 0.9, 0.67] },
   },
   'S29b-drawing': {
@@ -148,6 +161,7 @@ const presets = {
     key: { pos: [0.0, -0.06], r: 0.66, pow: 1.25, dir: [-0.75, -0.5, 0.42], col: [1.15, 0.93, 0.68] },
     level: [[-0.75, 0.12], [0.6, 0.75], [1.4, 1.0]],
     shadeY: [0.28, 0.52, 0.92, 0],
+    gutter: [-1.0, 0.15, 0.04, -1], cockle: 2.4,    // the binding at the left edge of the sheet
     postEase: [0.0, 1.25],
   },
   'S30-credits': { black: true },
@@ -183,7 +197,7 @@ export default {
     const P = S.params;
     if (P.black) return;
     const D = this.drawing(P.drawing || 'blank');
-    renderDrawing(ctx, D, this.tLocal(S), this.view(P, this.vTime(S)), E.W, E.H, { gain: P.inkGain ?? 1 });
+    renderDrawing(ctx, D, this.tLocal(S), this.view(P, this.vTime(S)), E.W, E.H, { gain: P.inkGain ?? 1, wetTau: P.wetTau, wetGain: P.wetGain });
   },
   overlay(E, S, ctx) {
     this.paint(E, S, ctx);
@@ -220,7 +234,7 @@ export default {
   },
   render(E, S, target) {
     const P = S.params;
-    if (P.black) { E.draw(this.black, {}, target); return; }
+    if (P.black) { E.draw(this.black, {}, target, { scissor: [0, 0, target.w, target.h] }); return; }
     const key = { ...LOOK.key, ...(P.key || {}) };
     const age = P.age || LOOK.age;
     let fl = P.flame || [0, 0, 1, 0];
@@ -231,13 +245,16 @@ export default {
     const v = this.view(P, this.vTime(S));
     const ink = this.inkTexture(E, S);
     const bk = this.bake(E, P.paperSeed ?? 0.0, age);
+    // E.draw scissors frame targets to the letterbox band, leaving stale pixels from earlier shots outside
+    // it, which the bloom pyramid then reads: clear the whole target first so a frame never depends on history
+    E.draw(this.black, {}, target, { scissor: [0, 0, target.w, target.h] });
     E.draw(this.prog, {
       uOverlay: ink, uPaper: this.paperTex.tex, uPaperN: this.paperTex.nrm, uPaperSize: this.paperTex.size, uInk: ink ? 1 : 0, uBake: bk, uBakeRect: BAKE_RECT,
       uView: [v.cx, v.cy, v.zoom, v.rot],
       uKey: [key.pos[0], key.pos[1], key.r, key.pow], uKeyDir: key.dir, uKeyCol: key.col,
       uFillCol: P.fill || LOOK.fill, uAge: age,
       uFlame: fl, uFlameB: [flick, 0, 0, 0], uPaperSeed: P.paperSeed ?? 0.0, uLevel: level,
-      uShadeY: P.shadeY || [1, 2, 0, 0],
+      uShadeY: P.shadeY || [1, 2, 0, 0], uGutter: P.gutter || [0, 1, 0, 0], uCockle: P.cockle ?? 1,
     }, target);
   },
   post(E, S) {

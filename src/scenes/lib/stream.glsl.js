@@ -26,7 +26,8 @@ uniform float uFlare;        // strike flare of the inner disk (0..)
 uniform vec4 uHot;           // hot spot: x, z, strength, arc length along the rim (radians)
 uniform vec3 uBoxMin, uBoxMax;
 uniform float uPixAng;       // radians per volume-target pixel
-uniform vec2 uClump;         // bright knot riding the stream: arc length, strength
+uniform vec2 uClump;
+uniform vec2 uDiskBound;     // disk/ring bounding radius and half-height (0 = no disk), from JS         // bright knot riding the stream: arc length, strength
 
 // display temperature -> film palette (crimson -> ember -> gold -> white -> ice blue), linear
 vec3 heatColor(float T){
@@ -63,6 +64,7 @@ vec4 fieldAt(vec2 xz){
   f.x += sign(f.x) * length(o);
   return f;
 }
+float gRe = 9.0;          // envelope radius of the last stream sample (adaptive stepping)
 float streamW(float s){ return uStreamW * (0.0105 + 0.037 * exp(-max(s, 0.0) / 0.075)); }
 float streamWarpAmt(float s){ return 0.5 + 0.55 * uRip * exp(-max(s, 0.0) / 0.12); }
 
@@ -102,6 +104,7 @@ float streamSample(vec3 p, vec4 f, out vec3 j){
   float dw = d + w * warpAmt * (wn.r * 2.0 - 1.0) * 1.3;
   float yw = y + h * warpAmt * (wn.b * 2.0 - 1.0) * 1.3;
   float re = sqrt(dw * dw / (w * w) + yw * yw / (h * h));
+  gRe = re;
   if (re > 2.4) return 0.0;
   float cut = smoothstep(uStreamCut, uStreamCut - uStreamFade, s);
   if (cut <= 0.001 || hd < -0.09) return 0.0;
@@ -109,7 +112,7 @@ float streamSample(vec3 p, vec4 f, out vec3 j){
   float th = 2.2 * (wn.a - 0.35) + a * 0.06;
   vec2 cs = rot2(th) * vec2(dw / w, yw / h);
   vec3 q = vec3(a * 0.5, cs.x * 0.95, cs.y * 0.45 + a * 0.07);
-  float sh = ridged3(q, 3) * 1.15;
+  float sh = ridged3(q, 2) * 1.3 + uDetail * 0.12 * (1.0 - abs(n3(q * 4.1 + 3.0)));
   // head of a developing stream: ragged, fingered front (sheets run ahead, gaps lag)
   float fr = 0.03 + 0.05 * min(uStreamHead, 1.0);
   float hn = hd + 0.05 * (sh - 0.45) + 0.03 * (wn.g - 0.5) - 0.01 * re * re;
@@ -120,15 +123,15 @@ float streamSample(vec3 p, vec4 f, out vec3 j){
   // braided threads along the flow (coarse + fine)
   float fl = 1.0 - abs(n3(vec3(af, cs.x * 2.2, cs.y * 1.7) + 13.0));
   float fl2 = uDetail > 0.0 ? 1.0 - abs(n3(vec3(af * 1.7 + 5.0, cs.x * 5.5, cs.y * 4.5) + 37.0)) : 0.0;
-  fl = pow(fl, 6.0) + 0.6 * pow(fl2, 8.0) * uDetail;
-  float det = uDetail > 0.0 ? uDetail * pow(1.0 - abs(n3(q * vec3(2.2, 3.4, 3.0) + 29.0)), 4.0) : 0.0;
+  float f2 = fl * fl; fl = f2 * f2 * f2;
+  float g2 = fl2 * fl2; g2 *= g2; fl += 0.6 * g2 * g2 * uDetail;
   float clump = 0.45 + 0.85 * sat(n3(vec3(a * 0.16, 3.1, 7.7)) * 0.9 + 0.5);
   float env = exp(-re * re * 0.5) * smoothstep(2.4, 1.4, re);
-  float core = pow(sh, 2.4) * (1.0 + 0.8 * det);
+  float core = sh * sh * sqrt(sqrt(max(sh, 0.0))) * 0.9;
   float knot = uClump.y * exp(-pow((s - uClump.x) / 0.016, 2.0)) * exp(-re * re * 0.8);
   float hot = (env * ((0.03 + 1.5 * core) * m + 1.2 * fl * (0.25 + sh) * headT * cut) * clump + knot * 2.0) * uStreamAmt;
   // cool, dense gas between the sheets: absorbing veils
-  float cn = wn.g * 0.6 + 0.4 * (n3(vec3(a * 0.4, cs.x * 0.8, cs.y * 0.7) + 41.0) * 0.5 + 0.5);
+  float cn = wn.g * 0.75 + 0.25 * (1.0 - sh);
   float cool = env * smoothstep(0.42, 0.8, cn) * (1.0 - 0.7 * sat(sh)) * m * uStreamAmt * (0.4 + 0.6 * exp(-max(s, 0.0) / 0.25));
   // temperature: gas heats as it falls into the dwarf's potential; sheets and threads hotter in their cores
   float rD = length(p.xz - uWD.xz);
@@ -140,7 +143,7 @@ float streamSample(vec3 p, vec4 f, out vec3 j){
   T *= 1.0 + 0.6 * knot;
   // raking light from the dwarf: scattered by all gas, on the side facing it (envelope sampled toward the dwarf)
   vec3 rake = vec3(0.0);
-  if (uRake > 0.01){
+  if (uRake > 0.1){
     vec3 l = normalize(uWD - p);
     vec3 p2 = p + l * w * 1.2;
     vec4 f2 = fieldAt(p2.xz);
@@ -213,9 +216,8 @@ float volBound(vec3 p, vec4 f, out float scale){
   bS = max(bS, (min(f.y - uStreamHead, f.y - uStreamCut) - 0.1) * 0.8);
   vec3 q = p - uWD;
   float r = length(q.xz);
-  float ro = max(uDiskOut * 1.1, (uRingAmt > 0.0 ? uRCirc + 0.1 : 0.0));
-  float bD = (uDiskAmt + uRingAmt > 0.0 || uHot.z > 0.0) ? max(r - ro, abs(q.y) - diskH(ro) * 3.2) : 1e3;
-  scale = bS < bD ? w * (0.62 - 0.2 * uDetail) * (1.0 - 0.5 * bulb) : diskH(max(r, 0.02));
+  float bD = uDiskBound.x > 0.0 ? max(r - uDiskBound.x, abs(q.y) - uDiskBound.y) : 1e3;
+  scale = bS < bD ? w * (0.78 - 0.25 * uDetail) * (1.0 - 0.3 * bulb) : uDiskH * max(r, 0.02) + 0.001;
   return min(bS, bD);
 }
 
@@ -255,6 +257,8 @@ vec4 marchSystem(vec3 ro, vec3 rd, float tMax, float jit){
         J += e * dd * 26.0; K += dd * 26.0;
       }
     }
+    if (gRe > 1.5) dt *= 1.0 + 1.2 * sat((gRe - 1.5) / 0.9);
+    gRe = 9.0;
     if (K > 1e-4 || dot(J, J) > 1e-10){
       float tau = K * dt;
       float a = tau > 1e-4 ? (1.0 - exp(-tau)) / K : dt;

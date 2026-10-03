@@ -63,7 +63,7 @@ const DISK = {
   omega: 0.22, cycle: 2.4, rin: 0.075, rout: 1.0, h0: 0.075, flare: 1.18, rimPuff: 1.2,
   dens: 7.0, densExp: 1.8, tout: 1300, tinK: 0.6, turb: 0.55, arms: 0.55, armM: 2, armPitch: 0.36, armSpeed: 0.05,
   curtain: 1.0, curtainSpin: 2.0, dwarfR: 0.014, dwarfSurf: 1.0, hot: 0, hotPhi: 2.2, streamDir: [0.6, 0, 0.8],
-  streamW: 0.02, shutter: 0.0, rb: 1.25, lod: 0.004, stepK: 0.55, edgeFade: 0.3, grain3: 1.0, starGain: 0.3, irr: 18, armFloor: 0.12, armHeat: 0.35, void: -0.37, puff: 1.0, floor: 0.08, sheet: 1.0, sheetHeat: 0.45, coldGas: 0.55, sheetW: 0.04, maxSteps: 44, sheetMask: -1, floorMid: 0.6, kr: 6.0, ky: 10.0,
+  streamW: 0.02, shutter: 0.0, rb: 1.25, lod: 0.004, stepK: 0.55, edgeFade: 0.3, grain3: 1.0, starGain: 0.3, irr: 10, armFloor: 0.12, armHeat: 0.35, void: -0.37, puff: 1.0, floor: 0.08, sheet: 1.0, sheetHeat: 0.45, coldGas: 0.55, sheetW: 0.04, maxSteps: 44, sheetMask: -1, floorMid: 0.6, kr: 6.0, ky: 10.0,
 };
 
 const P0 = {
@@ -92,7 +92,7 @@ const presets = {
   // Resistance: the stream slams the young disk's rim. Impact point from lib/binary.js streamPath()
   // (first rim crossing at local (-0.96, 0.27), azimuth -2.87, velocity (0.965, 0.261)).
   'S09-hotspot': D({
-    vol: 0.6,
+    vol: 0.5,
     cam: [
       [0, [-1.22, 0.17, 1.06], [-0.62, -0.03, 0.10], 44],
       [1, [-1.08, 0.12, 0.92], [-0.55, -0.04, 0.04], 41, 0.03],
@@ -100,7 +100,7 @@ const presets = {
     tau: [3, 1.0, 0],
     disk: {
       omega: 0.26, hot: 1.0, hotPhi: -2.873, streamDir: [0.965, 0, 0.261], streamW: 0.026, rb: 2.6,
-      arms: 0.35, rin: 0.12, sheet: 0.6, sheetMask: -0.1, curtain: 3.0, maxSteps: 48, irr: 6, tout: 1450, sheetHeat: 0.8, edgeFade: 0.12,
+      arms: 0.35, rin: 0.12, sheet: 0.6, sheetMask: -0.1, curtain: 3.0, maxSteps: 44, irr: 6, tout: 1450, sheetHeat: 0.8, edgeFade: 0.12,
     },
     sparks: {
       origin: [-0.93, 0.02, 0.26], axis: [-0.25, 0.75, 0.62], spread: 0.85, speed: 0.42, life: 1.1, count: 190,
@@ -136,16 +136,16 @@ const presets = {
   }),
   // Strike 2: medium, closer and more compressed; the inner disk flares white-hot on the strike, then pulses/decays.
   'S18-strike2': D({
-    vol: 0.6,
+    vol: 0.5,
     cam: [
-      [0, [0.12, 0.30, 0.47], [0, -0.01, 0], 44, 0.0],
-      [1, [0.07, 0.25, 0.38], [0, -0.01, 0], 44, 0.04, 'outSine'],
+      [0, [0.15, 0.34, 0.57], [0, -0.01, 0], 44, 0.0],
+      [1, [0.09, 0.28, 0.46], [0, -0.01, 0], 44, 0.04, 'outSine'],
     ],
     tau: [60, 1.4, 0],
     heat: [1.12, 0.75, 0.45, 0.12], lum: [2.5, 1.8],
     disk: { omega: 0.34, h0: 0.05, dens: 9, tout: 1000, tinK: 0.9, arms: 0.6, sheet: 0.9, sheetHeat: 0.5, coldGas: 0.6, sheetMask: -0.2,
-      rimPuff: 0.6, curtain: 1.6, maxSteps: 46, shutter: 0.01 },
-    post: { exposure: 0.42, saturation: 1.1, bloomStrength: 0.1, streakStrength: 0.012 },
+      rimPuff: 0.6, curtain: 1.6, maxSteps: 46, shutter: 0.01, irr: 1.5 },
+    post: { exposure: 0.17, saturation: 1.3, bloomStrength: 0.1, streakStrength: 0.012 },
   }),
   // Frenzy 27.4: a spiral arm rushes toward the lens (camera low, looking upstream into the flow).
   'F27.4': D({
@@ -162,15 +162,15 @@ const presets = {
   }),
   // Frenzy 29.2: the white-hot inner edge, close: dwarf large, curtains arcing to its poles, rim wall blazing.
   'F29.2': D({
-    vol: 0.6,
+    vol: 0.5,
     cam: [
       [0, [0.115, 0.085, 0.115], [0, 0.0, 0], 50, -0.04],
       [1, [0.098, 0.075, 0.104], [0, 0.0, 0], 50, -0.10],
     ],
     tau: [90, 1.0, 0],
     heat: [1.15, 0, 0.5, 0], lum: [1.4, 1.4],
-    disk: { omega: 0.32, curtain: 0.6, shutter: 0.008, maxSteps: 50, stepK: 0.4, sheet: 0.9, sheetHeat: 0.5, rimPuff: 0.8, tinK: 1.1 },
-    post: { exposure: 0.022, bloomStrength: 0.1, streakStrength: 0.04 },
+    disk: { omega: 0.32, curtain: 0.6, shutter: 0.008, maxSteps: 50, stepK: 0.4, sheet: 0.9, sheetHeat: 0.5, rimPuff: 0.8, tinK: 0.9 },
+    post: { exposure: 0.03, bloomStrength: 0.1, streakStrength: 0.04 },
   }),
   // Frenzy 31.1: extreme speed - a plunge across the disk surface toward the dwarf.
   'F31.1': D({

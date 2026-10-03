@@ -76,8 +76,8 @@ Cell boilCoarse(vec2 xz){
   float core = exp(-F1 * F1 * 10.0);               // compact upflow core
   // mesoscale: the coarse Worley field (a.g) clusters hot granules; its borders hold cooler, dimmer ones
   float meso = 1.0 - smoothstep(0.1, 0.95, a.g * 1.1);
-  float hot = mix(1.0, 0.55 + 0.75 * meso, uMeso) * (0.92 + 0.16 * (b.g - 0.5));
-  float body = (0.30 + 0.30 * dome + 0.30 * core) * hot;
+  float hot = mix(1.0, 0.3 + 1.15 * meso, uMeso) * (0.9 + 0.2 * (b.g - 0.5));
+  float body = 0.27 + (0.30 * dome + 0.34 * core) * hot;
   C.heat = mix(uLane, body * uHeatGain + uHeat, plat);
   C.h = (0.40 * plat + 0.30 * dome - 0.45 + 0.25 * (b.g - 0.5)) * uRelief;
   for (int i = 0; i < 4; i++){
@@ -98,8 +98,11 @@ Cell boilCoarse(vec2 xz){
 //    (noise in the cell's polar frame: direction of grad F1 x radius F1 - time)
 //  * granulation + pixel-scale grit (hard thresholded Worley) so the focal plane carries real detail
 //  * downflow threads in the lanes (dim ember rivers with structure, never empty black)
-vec2 boilFlow(vec3 p, Cell C, float k){
+// fp = pixel footprint in cell-lattice units: octaves finer than ~3 px fade out (no far-field glitter)
+vec2 boilFlow(vec3 p, Cell C, float k, float fp){
   if (k < 0.02) return vec2(0.0);
+  float lg = 1.0 - smoothstep(0.12, 0.35, 8.4 * fp);   // grit / lane threads
+  float lf = 1.0 - smoothstep(0.15, 0.5, 3.4 * fp);    // outflow fibres
   float tf = uEvo * uFlowRate;
   const float e = 0.07;
   float fx = nz(vec3(C.q + vec2(e, 0.0), uEvo)).g * 1.1;
@@ -114,14 +117,15 @@ vec2 boilFlow(vec3 p, Cell C, float k){
   float gran = 1.0 - smoothstep(0.15, 0.6, n.g * 1.1);
   float vein = exp(-n.a * 0.8 * 12.0);
   vec4 m = nz(vec3(qf * 2.7 + (n.rb - 0.5) * 0.6 + 3.1, tf * 2.2 + 19.0));
-  float grit = 1.0 - smoothstep(0.12, 0.42, m.g * 1.1);
-  float rid = 1.0 - abs(m.r * 2.0 - 1.0); rid *= rid; rid *= rid; rid *= rid;   // ^8 lane threads
+  float grit = (1.0 - smoothstep(0.12, 0.42, m.g * 1.1)) * lg;
+  float rid = 1.0 - abs(m.r * 2.0 - 1.0); rid *= rid; rid *= rid; rid *= rid; rid *= rid;   // ^16 lane threads
+  rid = mix(0.06, rid, lg); fib = mix(0.03, fib, lf);
   float lane = 1.0 - C.plat;
-  float radial = smoothstep(0.06, 0.4, C.F1) * C.plat;
+  float radial = smoothstep(0.26, 0.58, C.F1) * C.plat;
   float heat = k * uDetail * (
-      C.plat * (0.06 * fibD + 0.035 * gran + 0.05 * grit * uGranule - 0.035 - 0.05 * vein)
+      C.plat * (0.045 * fibD + 0.035 * gran + 0.07 * grit * uGranule - 0.04 - 0.05 * vein)
     + radial * uOutflow * 0.13 * fib
-    + lane * (0.17 * rid + 0.07 * (n.r - 0.5)));
+    + lane * (0.12 * rid + 0.04 * (n.r - 0.5)));
   float dens = k * uDetail * (0.4 * fibD + 0.3 * gran + 0.3 * grit - 0.4 * vein);
   return vec2(heat, dens);
 }
@@ -130,12 +134,13 @@ float boilWisp(vec3 p, vec2 w){
   vec3 q = vec3(p.x * uCell + w.x * 0.35, (p.y - uRise) * uCell * 1.6, p.z * uCell + w.y * 0.35) * 1.15;
   vec4 n = nz(q + vec3(0.0, 0.0, uEvo * 0.35));
   float v = n.r * 0.6 + n.b * 0.4;
-  return smoothstep(0.50, 0.80, v) * (0.6 + 0.8 * n.g);
+  return smoothstep(0.46, 0.78, v) * (0.6 + 0.8 * n.g);
 }
 
 vec3 boilSky(vec3 rd){
   float e = max(rd.y, 0.0);
-  return uHaze * (exp(-e * 9.0) * 0.9 + 0.1 * exp(-e * 2.0));
+  // luminous band hugging the horizon, falling quickly to the abyss above
+  return uHaze * (exp(-e * 60.0) * 0.9 + 0.1 * exp(-e * 14.0));
 }
 
 // Emission/absorption march through the plasma body (soft cellular top surface) and the wisps above it.
@@ -152,38 +157,73 @@ vec3 boilMarch(vec3 ro, vec3 rd, out float depth){
   float tExit = rd.y < 0.0 ? min(uTMax, (ybot - ro.y) / rd.y) : uTMax;
   float dIn = 0.45 / uSigma;
   t += ign(gl_FragCoord.xy) * dIn;
+  // inside the body the ray penetrates only ~3/uSigma, far less than a cell: the surface sample and its
+  // fine structure are taken once on entry and reused, only the density (skin) is re-evaluated per step
+  bool inB = false;
+  Cell f; vec2 fi = vec2(0.0); float far = 0.0;
+  float prevDt = 0.0;
   for (int i = 0; i < 48; i++){
     if (t > tExit || T < 0.03) break;
     vec3 p = ro + rd * t;
-    Cell f = boilCoarse(p.xz);
+    if (!inB) f = boilCoarse(p.xz);
     float dy = p.y - f.h;
-    float fog = exp(-t * uFog);
     float dt;
     if (dy < uSoft){
+      if (!inB && prevDt > dIn){
+        // a long outside step overshot the skin: bisect back onto its top so the entry depth is continuous
+        // (otherwise grazing views show terraces that the DOF turns into stipple)
+        float ta = t - prevDt, tb = t;
+        for (int j = 0; j < 4; j++){
+          float tm = 0.5 * (ta + tb);
+          vec3 pm = ro + rd * tm;
+          Cell fm = boilCoarse(pm.xz);
+          if (pm.y - fm.h < uSoft){ tb = tm; f = fm; } else ta = tm;
+        }
+        t = tb; p = ro + rd * t; dy = p.y - f.h;
+      }
       float rho = smoothstep(uSoft, -uSoft, dy);
-      float far = smoothstep(uTMax * 0.3, uTMax * 0.95, t);
-      vec2 fi = boilFlow(p, f, 1.0 - far);
+      float fog = exp(-t * uFog);
+      if (!inB){
+        far = smoothstep(uTMax * 0.3, uTMax * 0.95, t);
+        float fp = t * 2.0 * uTanHalfFov / uRes.y * uCell / max(-rd.y, 0.1);   // worst (foreshortened) axis
+        fi = boilFlow(p, f, 1.0 - far, fp);
+        inB = true;
+      }
       float heat = f.heat + fi.x - (1.0 - rho) * uSkin;
       heat = mix(heat, uFarHeat.x + uFarHeat.y * f.heat, far * 0.7);
       float sig = uSigma * rho * max(0.15, 1.0 + fi.y);
-      dt = dIn * (1.0 + t * 0.12);
+      // each step descends ~1/4 of the skin, so grazing rays cross it in a few steps
+      dt = max(dIn * (1.0 + t * 0.12), uSoft * 0.5 / max(-rd.y, 0.05));
       float a = 1.0 - exp(-sig * dt);
       col += T * a * fog * heatEmit(heat);
       T *= 1.0 - a;
       if (T < 0.5 && depth >= uTMax) depth = t;
     } else {
-      dt = clamp((dy - uSoft) * 0.6, dIn * 0.5 * (1.0 + t * 0.3), 0.3 + t * 0.03);
+      float fog = exp(-t * uFog);
+      inB = false;
+      // distance to the current surface height along the ray (grazing rays no longer crawl through the
+      // wisp layer), capped so wisps are still sampled
+      dt = clamp((dy - uSoft) * 0.65 / max(-rd.y, 0.6 * abs(rd.y) + 0.04), dIn * 0.5 * (1.0 + t * 0.3), 0.3 + t * 0.03);
       if (uPlume > 0.0 && dy < uPlumeH * 4.0){
         float dens = uPlume * boilWisp(p, f.w) * exp(-dy / uPlumeH);
-        float hw = f.heat * 0.9 - dy / max(uPlumeH, 0.02) * 0.1 - 0.06;
+        // wisps carry their own (ember) heat: glowing veils over the lanes, dark veils over the hottest cores
+        float hw = mix(0.46, f.heat, 0.35) - dy / max(uPlumeH, 0.02) * 0.06;
         col += T * fog * heatEmit(hw) * dens * dt;
         T *= exp(-dens * dt * uAbsorb);
         if (T < 0.55 && depth >= uTMax) depth = t;
       }
     }
     t += dt;
+    prevDt = inB ? 0.0 : dt;
   }
   float tf = min(t, uTMax);
+  if (rd.y < 0.0 && T > 0.03 && t >= tExit && tExit >= uTMax){
+    // beyond the march range: the distant surface as broad hot and cool regions under the haze
+    float th = -ro.y / rd.y;
+    vec2 xz = ro.xz + rd.xz * th;
+    float v = nz(vec3(xz * uCell * 0.07, uEvo * 0.03 + 5.0)).r;
+    col += T * heatEmit(uFarHeat.x + uFarHeat.y * (0.25 + 0.5 * v)) * exp(-th * uFog);
+  }
   col += T * (rd.y > 0.0 ? boilSky(rd) : uHaze) * (1.0 - exp(-tf * uFog)) + (1.0 - T) * uHaze * (1.0 - exp(-depth * uFog)) * 0.5;
   return col * uGain;
 }
@@ -326,16 +366,20 @@ void main(){
   float cz = c.a, cc = cocOf(cz);
   vec3 acc = c.rgb; float tot = 1.0;
   if (uMaxCoc > 0.5){
-    // static per-pixel rotation (no frame-to-frame shimmer); tap footprint matched by the mip level
+    // static per-pixel rotation (no frame-to-frame shimmer). The gather radius follows this pixel's own CoC
+    // (with a floor so blurry foregrounds still bleed over sharp areas): slightly defocused regions get all
+    // taps inside their small disc instead of 2-3 accepted taps out of a disc sized for the maximum CoC.
+    // Tap footprint is matched by the mip level.
     float a0 = ignStatic(gl_FragCoord.xy) * TAU;
     int N = uTaps;
-    float lod = clamp(log2(max(1.0, uMaxCoc * 1.77 / sqrt(float(N)) * 0.7)), 0.0, 4.0);
+    float R = clamp(max(cc, uMaxCoc * 0.4), 1.0, uMaxCoc);
+    float lod = clamp(log2(max(1.0, R * 1.77 / sqrt(float(N)) * 1.1)), 0.0, 4.5);   // ~ tap spacing
     for (int i = 0; i < 48; i++){
       if (i >= N) break;
       float fi = float(i) + 0.5;
-      float r = sqrt(fi / float(N)) * uMaxCoc;
+      float r = sqrt(fi / float(N)) * R;
       float a = fi * 2.39996323 + a0;
-      vec4 s = textureLod(uSrc, uv + vec2(cos(a), sin(a)) * r / uRes, min(lod, log2(max(1.0, r * 0.5))));
+      vec4 s = textureLod(uSrc, uv + vec2(cos(a), sin(a)) * r / uRes, min(lod, log2(max(1.0, r * 0.8))));
       float sc = cocOf(s.a);
       if (s.a > cz) sc = min(sc, cc * 2.0);
       float m = smoothstep(r - 1.0, r + 1.0, sc);

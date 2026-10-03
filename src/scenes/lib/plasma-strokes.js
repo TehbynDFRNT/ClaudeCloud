@@ -32,6 +32,18 @@ function sphereVis(cam, p, c, r) {
   return smooth(r * 0.92, r * 1.04, dist);
 }
 
+// 1 when p lies between the camera and the disc of sphere (c, r): cool dense plasma there is seen in absorption
+function frontOf(cam, p, c, r) {
+  const d = [p[0] - cam.pos[0], p[1] - cam.pos[1], p[2] - cam.pos[2]];
+  const L = Math.hypot(d[0], d[1], d[2]);
+  const u = [d[0] / L, d[1] / L, d[2] / L];
+  const oc = [c[0] - cam.pos[0], c[1] - cam.pos[1], c[2] - cam.pos[2]];
+  const tc = oc[0] * u[0] + oc[1] * u[1] + oc[2] * u[2];
+  if (L >= tc) return 0;
+  const dx = oc[0] - u[0] * tc, dy = oc[1] - u[1] * tc, dz = oc[2] - u[2] * tc;
+  return smooth(r * 1.1, r * 0.85, Math.hypot(dx, dy, dz));
+}
+
 // half width (px) and intensity factor for a stroke of core width wc (px) at depth z: energy-conserving
 // widening by the circle of confusion, never thinner than ~1.6 px so strands stay antialiased
 function dofWidth(z, wc, D, k) {
@@ -44,7 +56,8 @@ function dofWidth(z, wc, D, k) {
 // FILAMENTS: a twisted magnetic flux rope draped around a hot core.
 // P.fil = { n, heroes, len, R0, wrap:[a,b], twist:[a,b], twistLin, twistCore, pinch:[a,b], spin, braid,
 //           coreW, width, gain, hdr, color, glow, tension, bBase, bCore, endFade, occlude,
-//           events:[{t, i, s, type:'snap'|'reconnect', j, recoil, gap, kink, va, sparks}] }
+//           heroW, heroB, restB, widthVar, absorb, sheath, pulse, pulseK, pulseV, beads, beadV, beadK, surge,
+//           events:[{t, i, s, type:'snap'|'reconnect', j, recoil, gap, kink, va, sparks, flash}] }
 function linePoint(F, i, s, t, u, Rc, out) {
   const h1 = hash1(i, 11), h2 = hash1(i, 23), h3 = hash1(i, 37);
   const r0 = F.R0 * Math.sqrt(0.08 + 0.92 * h1) * (i >= (F.n ?? 40) - (F.outer ?? 0) ? (F.outerMul ?? 2.6) : 1);
@@ -83,15 +96,26 @@ export function drawFilaments(L, cam, t, P, W, H, S) {
   const events = F.events || [];
   const tmp = [0, 0, 0, 0];
   const occl = F.occlude !== false;
-  const snaps = [];
+  const nHero = F.heroes ?? 4;
+  const pulseA = F.pulse ?? 0.3, pulseK = F.pulseK ?? 4.0, pulseV = F.pulseV ?? 1.75;
+  const beadA = F.beads ?? 0, beadV = F.beadV ?? 3, beadK = F.beadK ?? 2.2;
+  const flashes = [];
   for (let i = 0; i < n; i++) {
-    const bi = (0.12 + 0.88 * Math.pow(hash1(i, 51), 2.2)) * (i < (F.heroes ?? 4) ? 2.2 : 1);
-    const ph1 = TAU * hash1(i, 63), ph2 = TAU * hash1(i, 67), ph3 = TAU * hash1(i, 61);
+    const hero = i < nHero;
+    // strand character: a few thick white-hot heroes, the rest thinner and fainter, each with its own width
+    const wv = 1 + (F.widthVar ?? 0.35) * (hash1(i, 57) * 2 - 1);
+    const sw = (F.width ?? 1.4) * wv * (hero ? (F.heroW ?? 1) : (F.restW ?? 1));
+    const bi = (0.12 + 0.88 * Math.pow(hash1(i, 51), 2.2)) * (hero ? (F.heroB ?? 2.2) : (F.restB ?? 1));
+    const ab = (F.absorb ?? 0) * (hero ? 1.5 : 0.7) * Math.min(2.5, wv * (hero ? (F.heroW ?? 1) : 1));
+    const ph1 = TAU * hash1(i, 63), ph2 = TAU * hash1(i, 67), ph3 = TAU * hash1(i, 61), ph4 = TAU * hash1(i, 69);
     const ev = events.filter((e) => e.i === i && t >= e.t);
-    let run = [], glowRun = [];
+    let run = [], glowRun = [], sheathRun = [];
     const flush = () => {
-      if (run.length >= 2) { L.strip(glowRun); L.strip(run); }
-      run = []; glowRun = [];
+      if (run.length >= 2) {
+        if (sheathRun.length >= 2) L.strip(sheathRun, false);
+        L.strip(glowRun); L.strip(run);
+      }
+      run = []; glowRun = []; sheathRun = [];
     };
     for (let m = 0; m <= M; m++) {
       const s = -Ls + (2 * Ls * m) / M;
@@ -105,12 +129,14 @@ export function drawFilaments(L, cam, t, P, W, H, S) {
           if (Math.abs(ds) < gap) cut = true;
           // recoil: free ends whip outward and back; a kink runs away along the line (Alfven wave)
           const side = Math.sign(ds) || 1;
-          const rec = (e.recoil ?? 0.5) * Math.exp(-Math.abs(ds) / 0.6) * (1 - Math.exp(-dt / 0.08));
+          const rec = (e.recoil ?? 0.5) * Math.exp(-Math.abs(ds) / 0.6) * (1 - Math.exp(-dt / 0.08)) * (0.75 + 0.5 * Math.exp(-dt / 0.25));
           const kp = Math.abs(ds) - (e.va ?? 7) * dt;
           const kink = (e.kink ?? 0.25) * Math.exp(-(kp * kp) / 0.08) * Math.exp(-dt / 0.5);
           const ang = tmp[3] + 0.9 * side, rr = rec + kink;
           py += Math.cos(ang) * rr; pz += Math.sin(ang) * rr; px += side * rec * 0.6;
-          b *= 1 + 5 * Math.exp(-dt / 0.12) * Math.exp(-Math.abs(ds) / 0.5) + 3 * kink;
+          // the released energy: hot ends + a brightness surge racing away along both broken halves
+          const surge = (e.surge ?? F.surge ?? 4) * Math.exp(-(kp * kp) / 0.12) * Math.exp(-dt / 0.4);
+          b *= 1 + 5 * Math.exp(-dt / 0.12) * Math.exp(-Math.abs(ds) / 0.5) + 3 * kink + surge;
         } else if (e.type === 'reconnect') {
           const bw = 0.15 + dt * 2.5;
           const wgt = smooth(-bw, bw, ds);
@@ -118,7 +144,8 @@ export function drawFilaments(L, cam, t, P, W, H, S) {
             const q = linePoint(F, e.j, s, t, u, Rc, [0, 0, 0, 0]);
             px += (q[0] - px) * wgt; py += (q[1] - py) * wgt; pz += (q[2] - pz) * wgt;
           }
-          b *= 1 + 4 * Math.exp(-dt / 0.15) * Math.exp(-Math.abs(ds) / 0.4);
+          const kp = Math.abs(ds) - (e.va ?? 6) * dt;
+          b *= 1 + 5 * Math.exp(-dt / 0.15) * Math.exp(-Math.abs(ds) / 0.4) + (e.surge ?? 3) * Math.exp(-(kp * kp) / 0.12) * Math.exp(-dt / 0.4);
         }
       }
       if (cut) { flush(); continue; }
@@ -127,22 +154,31 @@ export function drawFilaments(L, cam, t, P, W, H, S) {
       if (!pr) { flush(); continue; }
       // brightness along the strand: field strength near the core, travelling pulses, beads, faded ends
       const g = Math.exp(-(s * s) / ((F.coreW ?? 1.2) * 1.8) ** 2);
-      const pulse = 0.7 + 0.3 * Math.sin(4.0 * s - 7.0 * t + ph3);
-      const bead = 0.35 + 0.65 * Math.pow(0.5 + 0.5 * Math.sin(1.3 * s + ph1 + t * 0.9) * Math.sin(2.3 * s + ph2 - t * 1.4), 1.5);
-      b *= ((F.bBase ?? 0.25) + (F.bCore ?? 0.95) * g) * pulse * bead * smooth(Ls, Ls * (F.endFade ?? 0.75), Math.abs(s));
-      if (occl && b > 0) b *= sphereVis(cam, wp, C, Rc);
-      const [hw, f] = dofWidth(pr.z, (F.width ?? 1.4) * k, D, k);
-      const e = b * bi * gain * f;
+      const pulse = 1 - pulseA + pulseA * Math.sin(pulseK * s - pulseK * pulseV * t + ph3);
+      const bead = 0.35 + 0.65 * Math.pow(0.5 + 0.5 * Math.sin(1.3 * s + ph1 + t * 0.9) * Math.sin(2.3 * s - ph2 - t * 1.4), 1.5);
+      // current beads streaming toward the core along every strand
+      const cb = beadA > 0 ? beadA * Math.pow(0.5 + 0.5 * Math.sin(beadK * (Math.abs(s) + beadV * t) + ph4), 14) : 0;
+      b *= ((F.bBase ?? 0.25) + (F.bCore ?? 0.95) * g) * (pulse * bead + cb) * smooth(Ls, Ls * (F.endFade ?? 0.75), Math.abs(s));
+      const vis = occl ? sphereVis(cam, wp, C, Rc) : 1;
+      const fr = F.frontDim ? frontOf(cam, wp, C, Rc) : 0;
+      b *= vis;
+      const [hw, f] = dofWidth(pr.z, sw * k, D, k);
+      const e = b * bi * gain * f * (1 - (F.frontDim ?? 0) * fr);
       const hot = clamp((e - 0.9) * 0.7);
       const c = [(col[0] + (white[0] - col[0]) * hot) * e * hdr, (col[1] + (white[1] - col[1]) * hot) * e * hdr, (col[2] + (white[2] - col[2]) * hot) * e * hdr];
-      run.push({ x: pr.x, y: pr.y, w: hw, c });
+      run.push({ x: pr.x, y: pr.y, w: hw, c, a: ab * vis * f * (1 + fr) });
       glowRun.push({ x: pr.x, y: pr.y, w: hw * 3.5 + 3 * k, c: [glowCol[0] * e * hdr * 0.06, glowCol[1] * e * hdr * 0.06, glowCol[2] * e * hdr * 0.06] });
+      if (hero && F.sheath) {
+        const sh = F.sheath * b * bi * gain * hdr * Math.pow(f, 0.3);
+        sheathRun.push({ x: pr.x, y: pr.y, w: hw * 6 + 26 * k, c: [glowCol[0] * sh * 0.012, glowCol[1] * sh * 0.012, glowCol[2] * sh * 0.012] });
+      }
     }
     flush();
-    for (const e of ev) if (e.type === 'snap' && t - e.t < 0.45) snaps.push({ e, i });
+    for (const e of ev) if ((e.sparks ?? (e.type === 'snap' ? 30 : 0)) > 0 && t - e.t < 0.5) flashes.push({ e, i });
   }
-  // reconnection outflow: bidirectional jets of sparks along the local field + a flash at the X-point
-  for (const { e, i } of snaps) {
+  // reconnection outflow: jets of sparks along the local field + a flash at the X-point
+  let flash = 0;
+  for (const { e, i } of flashes) {
     const dt = t - e.t;
     linePoint(F, i, e.s, e.t, u, Rc, tmp);
     const c0 = toW(tmp);
@@ -150,34 +186,41 @@ export function drawFilaments(L, cam, t, P, W, H, S) {
     const tang = norm([A[0] * (tq[0] - tmp[0]) + e1[0] * (tq[1] - tmp[1]) + e2[0] * (tq[2] - tmp[2]), A[1] * (tq[0] - tmp[0]) + e1[1] * (tq[1] - tmp[1]) + e2[1] * (tq[2] - tmp[2]), A[2] * (tq[0] - tmp[0]) + e1[2] * (tq[1] - tmp[1]) + e2[2] * (tq[2] - tmp[2])]);
     const b1 = norm(cross(tang, [0, 1, 0])), b2 = cross(tang, b1);
     const ns = e.sparks ?? 30;
+    const bias = 0.35 + 0.3 * hash1(i * 7 + 3, 77);        // unequal jets: one side carries more sparks
     for (let q = 0; q < ns; q++) {
-      const id = q + i * 97;
-      const hA = hash1(id, 71), hB = hash1(id, 83), hC = hash1(id, 89), hD = hash1(id, 91);
-      const sgn = q % 2 ? 1 : -1, cone = 0.15 + 0.6 * hB * hB, ang = TAU * hA;
-      const dir = norm([0, 1, 2].map((a) => tang[a] * sgn + (b1[a] * Math.cos(ang) + b2[a] * Math.sin(ang)) * cone));
-      const sp = 1.5 + 9 * hC * hC;
-      const life = 0.12 + 0.35 * hD;
+      const id = q + i * 97 + Math.round(e.t * 1000) * 13;
+      const hA = hash1(id, 71), hB = hash1(id, 83), hC = hash1(id, 89), hD = hash1(id, 91), hE = hash1(id, 95);
+      const sgn = hE < bias ? 1 : -1;
+      const cone = 0.25 + 1.1 * hB * hB, ang = TAU * hA;
+      const tw = 0.4 * (hash1(id, 97) - 0.5);               // per-spark skew: no exact +/- tangent pairs
+      const dir = norm([0, 1, 2].map((a) => tang[a] * sgn * (1 + tw) + (b1[a] * Math.cos(ang) + b2[a] * Math.sin(ang)) * cone));
+      const sp = (sgn > 0 ? 1.2 : 1.8) + (sgn > 0 ? 10 : 7) * hC * hC;
+      const life = 0.1 + 0.4 * hD;
       if (dt > life) continue;
-      const drag = 6;
+      const drag = 4 + 4 * hash1(id, 99);
       const dist = (x) => (sp * (1 - Math.exp(-drag * x))) / drag;
       const pts = [];
       for (let m = 0; m <= 3; m++) {
         const d = dist(Math.max(0, dt - 0.045 * (1 - m / 3)));
         const pr = cam.project([c0[0] + dir[0] * d, c0[1] + dir[1] * d - 0.3 * d * d, c0[2] + dir[2] * d], W, H);
         if (!pr) break;
-        const [hw, f] = dofWidth(pr.z, (1.0 + 1.2 * hash1(id, 93)) * k, D, k);
+        const [hw, f] = dofWidth(pr.z, (0.9 + 1.4 * hash1(id, 93)) * k, D, k);
         const fade = Math.pow(1 - dt / life, 1.5) * (0.2 + 0.8 * (m / 3) ** 2) * f;
         pts.push({ x: pr.x, y: pr.y, w: hw, c: [0.7 * fade * 30, 0.85 * fade * 30, 1.0 * fade * 30] });
       }
       if (pts.length === 4) L.strip(pts);
     }
     const pc = cam.project(c0, W, H);
+    const fa = e.flash ?? 1;
     if (pc) {
-      const f = Math.exp(-dt / 0.06);
-      L.disk(pc.x, pc.y, (24 + 50 * (1 - f)) * k, [0.8 * f * 40, 0.9 * f * 40, 1.0 * f * 40]);
-      L.disk(pc.x, pc.y, (90 + 80 * (1 - f)) * k, [0.15 * f * 2, 0.35 * f * 2, 1.0 * f * 2]);
+      const f = Math.exp(-dt / 0.06), f2 = Math.exp(-dt / 0.14);
+      L.disk(pc.x, pc.y, (24 + 50 * (1 - f)) * k, [0.8 * f * 40 * fa, 0.9 * f * 40 * fa, 1.0 * f * 40 * fa]);
+      L.disk(pc.x, pc.y, (110 + 120 * (1 - f2)) * k, [0.15 * f2 * 3 * fa, 0.35 * f2 * 3 * fa, 1.0 * f2 * 3 * fa]);
+      L.disk(pc.x, pc.y, (360 + 200 * (1 - f2)) * k, [0.1 * f2 * 0.5 * fa, 0.25 * f2 * 0.5 * fa, 0.8 * f2 * 0.5 * fa]);
     }
+    flash += (e.global ?? 0) * Math.exp(-dt / 0.07);
   }
+  return { flash };
 }
 
 // ---------------------------------------------------------------------------------------------

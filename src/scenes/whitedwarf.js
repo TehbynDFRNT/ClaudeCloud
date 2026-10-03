@@ -2,16 +2,18 @@
 // a thin atmosphere, dipole magnetic filaments, and the accreted hydrogen ocean that thickens toward ignition.
 // Dwarf-centric units: dwarf at the origin, radius 1. The giant lies far off along -X (uGiantDir).
 //
-// Preset params (numbers, arrays, or keyframe lists [[localSec, value, easing?], ...]):
+// Preset params: numbers, arrays, or keyframe lists [[time, value, easing?], ...] where time is timing-agnostic
+// (fraction of the shot, 'Nf'/'Ns' after the first frame, 'e-Nf'/'e-Ns' before the last; see resolveT).
+// The scene clock (uTime, star spin) is shot-relative so framing and look survive re-timing of the plan.
 //   rig: 'orbit'  -> dist (log-interpolated), az, el (deg), fov, screen [sx, sy] (where the dwarf sits), roll
 //   rig: 'surface'-> lat, lon, alt (R above surface), heading, pitch (deg), fov, roll
 //   spin, magTilt, magAz, surf, fil, filL, filW, shimmer, tremolo, snapAt, ocean, oceanH, heat, oceanGain,
 //   turbF, turbV, conv {dir, at, amp}, flare, flash, flashR, flashDir, columns, colL, haze, hazeF, crimson,
-//   scorch, shell, shellScale, thread, stars, atmo, dust, white, post {...}
+//   cells, scorch, shell, shellScale, thread, threadGain, stars, atmo, dust, white, tOff, post {...}
 import { frag, STARS } from '../engine/glsl.js';
 import { DWARF } from './lib/dwarf.glsl.js';
 import { DWARF_CLOSE } from './lib/dwarf-close.glsl.js';
-import { camera, keys, v3, clamp, smoothstep, ease } from '../engine/math.js';
+import { camera, keys, v3, clamp, smoothstep } from '../engine/math.js';
 import { drift } from './lib/util.js';
 
 // PASS 0: single full-res pass (no ocean). PASS 1: low-res body (surface + ocean + columns) with coverage alpha.

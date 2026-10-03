@@ -1,7 +1,7 @@
 // The drawings of the Renaissance studies, one builder per shot. Page units: frame height at zoom 1,
 // origin at the page centre, y down. Times are shot-local seconds (negative = drawn before the cut).
 // Geometry comes from lib/binary.js so the ink matches the fire.
-import { Drawing, PX, TAU, spline, arcPts, linePts, hatch, mapPts, resample, fnoise } from './studies-ink.js';
+import { Drawing, PX, TAU, arcPts, linePts, hatch, resample } from './studies-ink.js';
 import { lobeContour, streamPath, XG, XW, L1, R_LOBE_GIANT, R_CIRC, R_DISK } from './binary.js';
 
 // --- shared helpers -------------------------------------------------------------------------------
@@ -72,7 +72,7 @@ export function codex() {
   // mirror-script notes (written earlier)
   scriptBlock(D, ['la luna non à lume da sé', 'ma tanto quanto il sole', 'la vede tanto alumina', 'ogni grave tende al cientro'], -0.56, -0.33, { size: 19, lh: 25, d: 0.55 });
   scriptBlock(D, ['dove l’una sfera tocca', 'l’altra, quivi è il punto', 'che non à parte'], -0.6, 0.26, { size: 19, lh: 25, d: 0.5 });
-  scriptBlock(D, ['il sole nõ si move'], 0.86, 0.33, { size: 18, d: 0.5 });
+  scriptBlock(D, ['il sole nõ si move'], 0.74, 0.335, { size: 18, d: 0.5 });
   // letters on the figure
   D.text('a', gx[0] - 0.012, gx[1] - 0.014, { size: 20, d: 0.7 });
   D.text('b', wx[0] + 0.02, wx[1] - 0.016, { size: 20, d: 0.7 });
@@ -115,12 +115,6 @@ export function clipOut(pts, occ, pad = 0) {
   if (cur.length > 1) runs.push(cur);
   return runs.filter((r) => r.length > 2);
 }
-// piecewise-linear y(x) through points sorted by x
-function lerpY(pts, x) {
-  if (x <= pts[0][0]) return pts[0][1];
-  for (let i = 0; i < pts.length - 1; i++) if (x <= pts[i + 1][0]) { const u = (x - pts[i][0]) / (pts[i + 1][0] - pts[i][0]); return pts[i][1] + (pts[i + 1][1] - pts[i][1]) * u; }
-  return pts[pts.length - 1][1];
-}
 
 // --- S10: Prometheus lives in studies-prometheus.js -------------------------------------------------
 export { prometheus } from './studies-prometheus.js';
@@ -135,8 +129,9 @@ export function deluge() {
     const r = R0 * Math.exp(-b * s), a = th0 - s;
     return { p: [C[0] + Math.cos(a) * r, C[1] + Math.sin(a) * r], r, a };
   };
-  // clothoid curl: leaves along `dir`, curvature grows, winding counter-clockwise (page angle decreasing)
-  const curl = (p0, dir, len, k0, k1, n = 90) => {
+  // clothoid: leaves p0 along page angle `dir`, curvature growing k0 -> k1, winding counter-clockwise on
+  // screen (page angle decreasing); returns points and the end tangent
+  const curl = (p0, dir, len, k0, k1, n = 140) => {
     const pts = [p0.slice()];
     let x = p0[0], y = p0[1], th = dir;
     const dl = len / n;
@@ -148,54 +143,95 @@ export function deluge() {
     }
     return pts;
   };
-  const NS = 11;
-  for (let k = 0; k < NS; k++) {
-    const th0 = (k / NS) * TAU + D.r(-0.25, 0.25);
-    const R0 = D.r(0.4, 0.56), b = D.r(0.2, 0.26);
-    const sMax = Math.log(R0 / D.r(0.014, 0.03)) / b;
-    const nl = 3 + Math.floor(D.r(0, 3));
-    const t0 = -0.6 + D.r(0, 1.0), dur = D.r(0.9, 1.3);
-    const wid = D.r(0.07, 0.11), tw = D.r(0.25, 0.45), om = D.r(1.6, 2.6);
+  // a volute (Leonardo's water curl): a bundle of strands that leaves the outer edge of the flow and rolls up
+  // around one shared eye, nested like hair. Shear at the edge of a counter-clockwise vortex rolls its
+  // edge curls the other way (clockwise on screen, page angle increasing), so they break outward like
+  // waves while the vortex itself turns counter-clockwise. Smaller curls peel off and roll up in turn.
+  const volute = (p0, dir, R, t0, dur, depth) => {
+    const nl = depth === 0 ? 4 + Math.floor(D.r(0, 2)) : depth === 1 ? 3 : 2;
+    const phi0 = dir - Math.PI / 2;
+    const E = [p0[0] - R * Math.cos(phi0), p0[1] - R * Math.sin(phi0)];
+    const turns = D.r(1.05, 1.4), k = Math.log(D.r(4, 7)) / (turns * TAU);
+    let outer = null;
     for (let j = 0; j < nl; j++) {
-      const ph = (j / nl) * TAU;
+      const f = nl > 1 ? j / (nl - 1) : 0;                         // 0 = outermost strand
+      const Rj = R * (1 - 0.36 * f);
+      const ps = [E[0] + Rj * Math.cos(phi0), E[1] + Rj * Math.sin(phi0)];
+      const lead = R * D.r(0.7, 1.3) * (1 - 0.35 * f);
       const pts = [];
-      for (let s2 = 0; s2 <= sMax; s2 += 0.008) {
+      for (let u = 0; u < 1; u += 0.04) pts.push([ps[0] - Math.cos(dir) * lead * (1 - u), ps[1] - Math.sin(dir) * lead * (1 - u)]);
+      const span = turns * TAU * (1 - 0.14 * f), da = 0.9 * PX / Rj;
+      for (let a = 0; a <= span; a += da * Math.exp(k * a)) {
+        const r = Rj * Math.exp(-k * a), ph = phi0 + a;
+        pts.push([E[0] + r * Math.cos(ph), E[1] + r * Math.sin(ph)]);
+      }
+      const w = (depth === 0 ? 1.9 : depth === 1 ? 1.45 : 1.15) * D.r(0.8, 1.2) * (j === 0 ? 1.15 : 1);
+      D.stroke(resample(pts, 1.3 * PX), { w, d: (0.6 + 0.28 * (1 - f)) * D.r(0.85, 1.08), t0: t0 + j * 0.03, dur: dur * (1 - 0.12 * f), taper: [8, 34], press: 0.45, pfreq: 6, nib: 0.45, load: 0.3 });
+      if (j === 0) outer = pts;
+    }
+    if (depth >= 2) return;
+    const nc = depth === 0 ? 1 + Math.floor(D.r(0, 1.7)) : (D.rnd() < 0.4 ? 1 : 0);
+    const n0 = Math.floor(outer.length * 0.25);
+    for (let q = 0; q < nc; q++) {
+      const u = D.r(0.1, 0.35) + q * 0.22;
+      const i = Math.min(outer.length - 2, n0 + Math.floor(u * (outer.length - n0)));
+      const a = outer[i], b = outer[i + 1];
+      const tdir = Math.atan2(b[1] - a[1], b[0] - a[0]);
+      const odir = tdir - D.r(0.35, 0.8);                            // peel off the curl's outside
+      const pc = [a[0] + Math.sin(tdir) * R * 0.04, a[1] - Math.cos(tdir) * R * 0.04];
+      volute(pc, odir, R * D.r(0.36, 0.5), t0 + dur * (0.25 + u * 0.75) * 0.85, dur * 0.7, depth + 1);
+    }
+  };
+
+  // the main flow: braided arms spiralling in, with uneven spacing and pressure along their length
+  const NS = 6;
+  const arms = [];
+  for (let k = 0; k < NS; k++) {
+    const th0 = (k / NS) * TAU + D.r(-0.3, 0.3);
+    const R0 = D.r(0.42, 0.58), b = D.r(0.2, 0.26);
+    const sMax = Math.log(R0 / D.r(0.014, 0.03)) / b;
+    const nl = 4 + Math.floor(D.r(0, 3));
+    const t0 = -0.65 + D.r(0, 0.9), dur = D.r(0.95, 1.3);
+    const wid = D.r(0.08, 0.13), om = D.r(1.1, 2.0), ph0 = D.r(0, TAU);
+    arms.push({ th0, R0, b, sMax, t0, dur, wid });
+    for (let j = 0; j < nl; j++) {
+      const ph = (j / nl) * TAU + ph0;
+      const sEnd = sMax * (j === 0 ? 1 : D.r(0.55, 1.0));           // some lines leave the braid early
+      const pts = [];
+      for (let s2 = 0; s2 <= sEnd; s2 += 0.008) {
         const q = base(th0, R0, b, s2);
-        const off = q.r * wid * ((j / (nl - 1) - 0.5) * 0.9 + tw * Math.sin(om * s2 + ph) * 0.5) * (1 - 0.6 * s2 / sMax);
+        const spread = 1 + 0.55 * Math.sin(s2 * 0.9 + ph0 + j * 0.4);   // the braid swells and pinches
+        const off = q.r * wid * spread * ((j / (nl - 1) - 0.5) * 0.9 + 0.22 * Math.sin(om * s2 + ph)) * (1 - 0.6 * s2 / sMax);
         pts.push([q.p[0] + Math.cos(q.a) * off, q.p[1] + Math.sin(q.a) * off]);
       }
       D.stroke(resample(pts, 1.6 * PX), {
-        w: (j === 0 ? 2.2 : 1.5) * D.r(0.8, 1.15), d: (j === 0 ? 0.88 : 0.62) * D.r(0.85, 1.1), dur, t0: t0 + j * 0.035,
-        taper: [16, 50], press: 0.35, pfreq: 5, nib: 0.45, load: 0.35,
+        w: (j === 0 ? 2.3 : 1.45) * D.r(0.75, 1.2), d: (j === 0 ? 0.9 : 0.6) * D.r(0.8, 1.12), dur: dur * sEnd / sMax, t0: t0 + j * 0.03,
+        taper: [16, 50], press: 0.5, pfreq: 3.5, nib: 0.45, load: 0.35,
       });
     }
-    // curls peeling off the outer edge as the pen passes
-    const nc = 2 + Math.floor(D.r(0, 3));
-    for (let q = 0; q < nc; q++) {
-      const s0 = sMax * D.r(0.05, 0.55);
-      const B = base(th0, R0, b, s0);
-      const outer = B.r * wid * 0.5;
-      const p0 = [B.p[0] + Math.cos(B.a) * outer, B.p[1] + Math.sin(B.a) * outer];
-      const dir = B.a - Math.PI / 2 + D.r(0.2, 0.55);          // along the flow, angled outward
-      const len = B.r * D.r(0.5, 0.95);
-      const k0 = 1.0 / len, k1 = D.r(26, 42) / len;
-      const tl = t0 + dur * (s0 / sMax) * 0.85;
-      D.stroke(resample(curl(p0, dir, len, k0, k1), 1.3 * PX), { w: 1.6 * D.r(0.8, 1.2), d: 0.75 * D.r(0.8, 1.1), t0: tl, dur: D.r(0.22, 0.36), taper: [6, 26], press: 0.35, nib: 0.45 });
-      if (D.rnd() < 0.6) { // a second, inner line of the same curl
-        const p1 = [p0[0] - Math.cos(B.a) * outer * 0.25, p0[1] - Math.sin(B.a) * outer * 0.25];
-        D.stroke(resample(curl(p1, dir - 0.1, len * 0.8, k0 * 1.1, k1 * 1.1), 1.3 * PX), { w: 1.1, d: 0.55, t0: tl + 0.05, dur: 0.3, taper: [6, 26], press: 0.35 });
-      }
-    }
   }
+  // large volutes rolling off the outer braids as the pen passes, each breaking into smaller curls
+  arms.forEach((A, k) => {
+    const nv = 2;
+    for (let v = 0; v < nv; v++) {
+      const s0 = A.sMax * D.r(0.03, 0.22) + v * D.r(1.0, 1.6);
+      const B = base(A.th0, A.R0, A.b, s0);
+      const outer = B.r * A.wid * 0.55;
+      const p0 = [B.p[0] + Math.cos(B.a) * outer, B.p[1] + Math.sin(B.a) * outer];
+      const dir = B.a - Math.PI / 2 + D.r(0.12, 0.4);              // with the flow, angled outward
+      const R = Math.min(0.125, Math.max(0.06, B.r * D.r(0.2, 0.3)));
+      volute(p0, dir, R, A.t0 + A.dur * (s0 / A.sMax) * 0.8, D.r(0.32, 0.45), 0);
+    }
+  });
   // the eye of the vortex: a tight coil
   const coil = [];
   for (let i = 0; i <= 200; i++) { const u = i / 200, a = 1.3 - u * 3.4 * TAU, r = 0.05 * Math.pow(1 - u, 1.25) + 0.002; coil.push([C[0] + Math.cos(a) * r, C[1] + Math.sin(a) * r]); }
   D.stroke(resample(coil, 1.2 * PX), { w: 2.2, d: 0.92, t0: 0.35, dur: 0.95, taper: [10, 10], press: 0.3, nib: 0.4 });
-  // outer spray: broken arcs flung outward
-  for (let k = 0; k < 14; k++) {
-    const a0 = D.r(0, TAU), r = D.r(0.44, 0.62), len = D.r(0.2, 0.5);
+  // outer spray: a few broken arcs flung outward
+  for (let k = 0; k < 8; k++) {
+    const a0 = D.r(0, TAU), r = D.r(0.5, 0.66), len = D.r(0.15, 0.4);
     const pts = arcPts(C[0], C[1], r, a0, a0 - len, { wob: 0.012, seed: k + 90 });
-    D.stroke(resample(pts, 1.6 * PX), { w: 1.2 * D.r(0.7, 1.2), d: 0.5 * D.r(0.7, 1.2), t0: -0.3 + D.r(0, 0.6), dur: D.r(0.3, 0.6), taper: [10, 30], press: 0.3 });
+    D.stroke(resample(pts, 1.6 * PX), { w: 1.2 * D.r(0.7, 1.2), d: 0.45 * D.r(0.7, 1.2), t0: -0.3 + D.r(0, 0.6), dur: D.r(0.3, 0.6), taper: [10, 30], press: 0.3 });
   }
   // a note in the corner, written long before
   D.at(-20);
@@ -212,7 +248,7 @@ export function parabola() {
   sp.forEach((p, i) => { const d = Math.hypot(p.x - XW, p.z); if (d < dq) { dq = d; iq = i; } });
   const ang = Math.atan2(sp[iq].z, sp[iq].x - XW);
   const S = 0.1 / dq;                                   // pericentre distance -> 0.1 page units
-  const F0 = [-0.16, 0.0];
+  const F0 = [-0.05, 0.0];
   const ca = Math.cos(-ang), sa = Math.sin(-ang);
   const P = (x, z) => { const dx = x - XW, dz = z; return [F0[0] + (dx * ca - dz * sa) * S, F0[1] + (dx * sa + dz * ca) * S]; };
   const q = 0.1;                                        // focus-vertex distance
@@ -231,12 +267,13 @@ export function parabola() {
   dot(D, F0[0], F0[1], 3.0);
   circleStroke(D, F0[0], F0[1], 9 * PX, { w: 1.0, d: 0.6, speed: 0.3, wob: 0.5 * PX });
   D.text('f', F0[0] - 0.012, F0[1] - 0.02, { size: 20, d: 0.65 });
-  scriptBlock(D, ['la linia curva del grave', 'equidistante dal punto', 'e dalla linia'], 0.66, -0.24, { size: 20, lh: 27, d: 0.52 });
-  scriptBlock(D, ['il fiume che cade', 'intorno al picholo'], 0.6, 0.2, { size: 18, lh: 25, d: 0.45 });
+  scriptBlock(D, ['la linia curva del grave', 'equidistante dal punto', 'e dalla linia'], 0.62, -0.25, { size: 20, lh: 27, d: 0.52 });
+  scriptBlock(D, ['il fiume che cade', 'intorno al picholo'], -0.42, 0.24, { size: 18, lh: 25, d: 0.45 });
   D.fitTo(0, -12, -0.1);
   // during the cut: the pen sweeps the parabola, then the equal-distance construction
-  D.at(-0.15);
-  const pz = D.stroke(resample(par, 1.6 * PX), { w: 2.4, d: 0.9, dur: 0.6, taper: [8, 14], press: 0.25, nib: 0.45 });
+  // already past its vertex at the cut, so the first frame reads as a curve, not a stray mark
+  D.at(-0.42);
+  const pz = D.stroke(resample(par, 1.6 * PX), { w: 2.4, d: 0.9, dur: 0.72, taper: [8, 14], press: 0.25, nib: 0.45 });
   const ys = [-0.24, 0.17, 0.3];
   D.at(0.3);
   for (const y of ys) {

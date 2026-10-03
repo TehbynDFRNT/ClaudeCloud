@@ -49,9 +49,9 @@ const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
 
 export function prometheus() {
   const D = new Drawing(1010);
-  const CM = 0.0215;
+  const CM = 0.034;
   const O = [-0.30, 0.12];
-  const TH = 0.38;                          // canonical -> page: clockwise, the stalk leans right
+  const TH = 0.32;                          // canonical -> page: clockwise, the stalk leans right
   const c = Math.cos(TH), s = Math.sin(TH);
   const T = (x, y) => [O[0] + (x * c - y * s) * CM, O[1] + (x * s + y * c) * CM];
   const Ti = (X, Y) => { const dx = (X - O[0]) / CM, dy = (Y - O[1]) / CM; return [dx * c + dy * s, -dx * s + dy * c]; };
@@ -78,22 +78,22 @@ export function prometheus() {
   const FC = FD.map(fingerCtrl);
   const fingerC = FC.map((k) => poly(sp(k, true)));
   // thumb: grows out of the thenar (upper left), crosses the index and the middle finger, tip on the right
-  const thTop = [[-4.05, -1.85], [-3.15, -2.7], [-2.05, -3.12], [-1.0, -3.0], [0.0, -2.48], [0.9, -1.84], [1.58, -1.28]];
+  const thTop = [[-3.5, -1.5], [-2.8, -2.3], [-1.9, -2.78], [-1.0, -2.86], [0.0, -2.46], [0.9, -1.84], [1.58, -1.28]];
   const thTip = [[1.98, -0.86], [2.04, -0.38], [1.7, -0.06]];
   const thBot = [[1.02, -0.04], [0.22, -0.3], [-0.6, -0.72], [-1.45, -0.98], [-2.25, -0.78]];
-  const thumbC = poly(sp([...thTop, ...thTip, ...thBot, [-3.0, -0.95]], true));
+  const thumbC = poly(sp([...thTop, ...thTip, ...thBot, [-2.9, -0.95]], true));
   const nail = [[0.5, -1.62], [0.95, -1.98], [1.5, -1.62], [1.82, -1.08], [1.6, -0.74], [1.05, -0.98], [0.6, -1.26]];
   const nailC = poly(sp(nail, true));
   // thenar: the thumb's fleshy base, the fist's left silhouette, in front of the tucked fingertips
-  const thenarOut = [[-4.05, -1.85], [-4.4, -0.55], [-4.45, 1.05], [-4.12, 2.75], [-3.5, 4.2], [-2.62, 5.2]];
-  const thenarIn = [[-2.25, -0.78], [-1.62, 0.3], [-1.3, 1.6], [-1.05, 2.9], [-0.82, 4.0], [-0.6, 4.85]];
-  const thenarC = poly(sp([...thenarOut, [-1.7, 5.45], ...thenarIn.slice().reverse(), [-3.0, -0.95]], true));
+  const thenarOut = [[-3.5, -1.5], [-3.85, -0.4], [-3.95, 1.1], [-3.7, 2.75], [-3.15, 4.15], [-2.4, 5.15]];
+  const thenarIn = [[-2.25, -0.78], [-1.7, 0.3], [-1.38, 1.6], [-1.12, 2.9], [-0.88, 4.0], [-0.66, 4.85]];
+  const thenarC = poly(sp([...thenarOut, [-1.6, 5.45], ...thenarIn.slice().reverse(), [-2.9, -0.95]], true));
   // hypothenar / heel of the hand below the little finger, the wrist break, the forearm down-left
   const hypo = [[1.02, 4.34], [1.5, 4.66], [1.72, 5.25]];
   const armR = [[1.72, 5.25], [1.25, 6.55], [0.05, 9.0], [-1.95, 12.5], [-4.2, 16.4]];
-  const armL = [[-2.62, 5.2], [-3.38, 6.3], [-4.6, 8.6], [-6.4, 12.0], [-8.2, 15.4]];
+  const armL = [[-2.4, 5.15], [-3.2, 6.3], [-4.4, 8.6], [-6.2, 12.0], [-8.0, 15.4]];
   const rStalk = (y) => 0.95 + 0.006 * (y + 17);
-  const yTop = -14.5, yBot = 22;
+  const yTop = -8.3, yBot = 22;
 
   // page polygons for occlusion (hatching masks are evaluated in page space)
   const toPage = (P) => poly(P.map(([x, y]) => T(x, y)));
@@ -143,7 +143,7 @@ export function prometheus() {
   // cross-contour strokes over a horizontal cylinder (a finger segment): short arcs from top to bottom,
   // drawn where its shade exceeds a per-stroke threshold
   const crossContour = (f, shade, occ, o = {}) => {
-    const step = o.step ?? 0.17;
+    const step = o.step ?? 0.12;
     for (let x = f.xL + 0.15; x < f.xR - 0.15; x += step * D.r(0.8, 1.2)) {
       const th = D.r(o.thr?.[0] ?? 0.35, o.thr?.[1] ?? 0.8);
       const pts = [];
@@ -170,7 +170,7 @@ export function prometheus() {
     const rib = []; for (let y = yTop + 0.6; y <= yBot; y += 0.5) rib.push([k * rStalk(y) + 0.05 * Math.sin(y * 0.9 + k * 5), y]);
     for (const r of clipOut(TP(sp(rib)), handFront)) D.stroke(r, { ...CH, w: 1.4, d: 0.26, speed: 1.2, taper: [30, 30], press: 0.5 });
   }
-  for (const yn of [-9.6, 9.5]) { // nodes: a swelling ring and a leaf-base stub
+  for (const yn of [-5.9, 9.5]) { // nodes: a swelling ring and a leaf-base stub
     const r = rStalk(yn);
     contour([[-r - 0.12, yn - 0.1], [-r * 0.4, yn + 0.32], [r * 0.4, yn + 0.32], [r + 0.12, yn - 0.1]], { w: 1.8, d: 0.52, taper: [6, 6] }, handFront);
     contour([[-r - 0.1, yn + 0.45], [0, yn + 0.8], [r + 0.1, yn + 0.45]], { w: 1.3, d: 0.32, taper: [6, 6] }, handFront);
@@ -216,9 +216,9 @@ export function prometheus() {
   contour([[-1.2, -2.95], [-0.98, -2.5], [-1.06, -2.12]], { w: 1.2, d: 0.34, taper: [6, 6] });       // IP joint folds
   contour([[-0.85, -2.85], [-0.7, -2.55], [-0.78, -2.25]], { w: 1.0, d: 0.26, taper: [6, 6] });
   contour(thenarOut, { w: 2.0, d: 0.56, search: true, broken: 2.5 });
-  contour([[-2.25, -0.78], [-2.75, -0.92], [-3.25, -1.25]], { w: 1.5, d: 0.44, taper: [6, 14] });   // thumb meets thenar
-  contour(thenarIn, { w: 2.3, d: 0.7, taper: [10, 30] });
-  contour([[-3.0, 1.2], [-2.6, 2.6], [-2.35, 3.9]], { w: 1.1, d: 0.2, taper: [20, 20] });             // the thenar's swell
+  contour([[-2.25, -0.78], [-2.7, -0.9], [-3.1, -1.15]], { w: 1.5, d: 0.44, taper: [6, 14] });   // thumb meets thenar
+  contour(thenarIn, { w: 2.0, d: 0.46, taper: [10, 30], broken: 2.2 });
+  contour([[-2.75, 1.0], [-2.45, 2.5], [-2.2, 3.8]], { w: 1.1, d: 0.22, taper: [20, 20] });             // the thenar's swell
 
   // ---------------- shading: light from the upper left; Leonardo's left-handed hatching ----------------
   const thBotRev = [...thBot].reverse();
@@ -230,8 +230,8 @@ export function prometheus() {
       let sh = sm(0.3, 0.95, v) * 0.78;                              // the underside of the cylinder
       sh += sm(f.xR - 1.1, f.xR - 0.05, x) * 0.42;                    // the knuckle end turns away
       sh += sm(f.xL + 1.1, f.xL - 0.1, x) * 0.5;                      // the tip end turns under
-      sh += Math.exp(-Math.max(0, f.yB - y) / 0.2) * 0.55;             // crease
-      if (i > 0) sh += Math.exp(-Math.max(0, y - f.yT) / 0.28) * 0.5;  // the finger above shades the top
+      sh += Math.exp(-Math.max(0, f.yB - y) / 0.18) * 0.8;             // crease
+      if (i > 0) sh += Math.exp(-Math.max(0, y - f.yT) / 0.26) * 0.62; // the finger above shades the top
       if (i < 2 && x < 2.0) sh += Math.exp(-Math.max(0, y - lerpY(thBotRev, x)) / 0.55) * 0.75; // the thumb's cast shadow
       return Math.min(1, sh * (1 - 0.25 * sm(0.75, 0.25, v) * sm(f.xR - 0.4, f.xR - 1.4, x)));
     };
@@ -252,7 +252,7 @@ export function prometheus() {
     const u = (x - xl) / Math.max(0.3, xr - xl);
     const refl = 1 - 0.5 * sm(0.12, 0.0, u);
     return Math.min(1, (sm(0.35, 1.0, u) * 0.7 + sm(1.5, 5.0, y) * 0.45 + Math.exp(-Math.max(0, y - lerpY(thBotRev, x)) / 0.4) * 0.5 * sm(-3.6, -2.4, x)) * refl);
-  }, [thumbP], [-4.6, -2.0, -0.4, 5.6], { sp: 4.8, d: 0.46, thr: [0.25, 0.9] });
+  }, [thumbP], [-4.1, -1.8, -0.4, 5.6], { sp: 4.6, d: 0.5, thr: [0.22, 0.88] });
   // forearm: the lower side, fading out as the study is left unfinished
   shadeIn((x, y) => {
     if (y < 5.3) return 0;
@@ -266,15 +266,15 @@ export function prometheus() {
     const r = rStalk(y), u = x / r;
     if (Math.abs(u) > 1 || y < yTop + 0.3) return 0;
     return Math.min(1, sm(-0.1, 0.55, u) * (1 - 0.5 * sm(0.8, 1.0, u)) + (y > 4.2 ? Math.exp(-(y - 4.3) / 1.1) * 0.8 : 0)) * sm(13, 6, y);
-  }, handFront, [-1.5, yTop, 1.6, yBot], { sp: 4.4, maxLen: 70, thr: [0.2, 0.9], angle: -1.21 + 0.22 + 0.38 - 0.58, d: 0.42, bow: 0.008 });
+  }, handFront, [-1.5, yTop, 1.6, yBot], { sp: 4.4, maxLen: 70, thr: [0.2, 0.9], angle: -Math.PI / 2 + TH, d: 0.42, bow: 0.008 });
 
   // ---------------- mirror script (written before the cut) and the theft diagram ----------------
-  scriptBlock(D, ['il foco furato nella ferula', 'portato di cielo in terra', 'alli omini'], 0.6, 0.07, { size: 21, lh: 29, d: 0.5, kind: 'chalk' });
+  scriptBlock(D, ['il foco furato nella ferula', 'portato di cielo in terra', 'alli omini'], 0.6, 0.07, { size: 21, lh: 29, d: 0.62, kind: 'chalk' });
   const G0 = [0.46, -0.19], SC = 0.31;
   const Pb = (x, z) => [G0[0] + x * SC, G0[1] + z * SC];
   const gc = Pb(XG, 0), wc = Pb(XW, 0);
-  D.stroke(arcPts(gc[0], gc[1], R_LOBE_GIANT * SC, -2.4, -2.4 + TAU * 1.03, { step: 1.5 * PX }), { ...CH, w: 2.0, d: 0.4, speed: 1.6, taper: [8, 8], press: 0.25 });
-  D.stroke(arcPts(wc[0], wc[1], 0.011, 1, 1 + TAU * 1.1, { step: 1 * PX }), { ...CH, w: 1.9, d: 0.55, speed: 0.4, taper: [3, 3] });
+  D.stroke(arcPts(gc[0], gc[1], R_LOBE_GIANT * SC, -2.4, -2.4 + TAU * 1.03, { step: 1.5 * PX }), { ...CH, w: 3.0, d: 0.6, speed: 1.6, taper: [8, 8], press: 0.25 });
+  D.stroke(arcPts(wc[0], wc[1], 0.011, 1, 1 + TAU * 1.1, { step: 1 * PX }), { ...CH, w: 2.5, d: 0.66, speed: 0.4, taper: [3, 3] });
   D.fitTo(0, -30, -0.05);
   const preT = D.mark();
 
@@ -282,9 +282,9 @@ export function prometheus() {
   D.at(0.0);
   shadeIn((x, y) => {
     const r = rStalk(y), u = x / r;
-    if (Math.abs(u) > 1 || y < yTop + 0.3 || y > -6.6) return 0;
+    if (Math.abs(u) > 1 || y < yTop + 0.3 || y > -4.2) return 0;
     return 0.4 + 0.6 * sm(-0.3, 0.7, u);
-  }, handFront, [-1.5, yTop, 1.6, -6.5], { sp: 4.2, maxLen: 40, angle: -1.21 + 0.3 + 0.38 - 0.58, d: 0.4, speed: 2.2, gap: 0.004, thr: [0.3, 0.95], bow: 0.008 });
+  }, handFront, [-1.5, yTop, 1.6, -4.1], { sp: 4.2, maxLen: 40, angle: -Math.PI / 2 + TH + 0.08, d: 0.4, speed: 2.2, gap: 0.004, thr: [0.3, 0.95], bow: 0.008 });
   D.fitTo(preT, 0.0, 0.75);
 
   // flame rising from the hollow top: a teardrop body, side tongues curling out, inner zone lines,
@@ -299,7 +299,7 @@ export function prometheus() {
     }
     return out;
   };
-  const FSC = 1.15;
+  const FSC = 1.35;
   const FP = ([x, yu]) => [flame.x + x * FSC, flame.y - yu * FSC];   // flame frame: y up
   const fl = (pts, o) => D.stroke(resample(pts.map(FP), 1.4 * PX), { ...CH, press: 0.3, ...o, w: (o.w ?? 2) * 1.5 });
   const tongue = (bl, br, tip, cl1, cl2, cr1, cr2, o = {}) => {
@@ -332,8 +332,8 @@ export function prometheus() {
   // the arc that links the large circle to the small one: the real ballistic stream from L1
   const arcS = streamPath({ maxT: 1.36, every: 10 }).map((q) => Pb(q.x, q.z));
   D.at(2.15);
-  D.stroke(resample(arcS, 1.5 * PX), { ...CH, w: 1.9, d: 0.4, dur: 0.8, taper: [10, 20], press: 0.3 });
-  D.text('dal grande al picholo', gc[0] + 0.19, gc[1] + 0.145, { size: 17, d: 0.42, kind: 'chalk', t0: 2.95, dur: 0.5 });
+  D.stroke(resample(arcS, 1.5 * PX), { ...CH, w: 2.8, d: 0.58, dur: 0.8, taper: [10, 20], press: 0.3 });
+  D.text('dal grande al picholo', gc[0] + 0.19, gc[1] + 0.145, { size: 17, d: 0.56, kind: 'chalk', t0: 2.95, dur: 0.5 });
   D.flame = [flame.x - 0.014, flame.y - 0.08];
   return D;
 }

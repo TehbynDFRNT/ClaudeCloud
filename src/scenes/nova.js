@@ -6,7 +6,9 @@
 //   mode: 'fire' | 'system' | 'wave' | 'shell'
 //   cam: camera keys (lib/util.js), volScale: resolution of the volumetric pass
 //   fire/system: fbR, fbTurb, fbDens, fbHeat, fbShell, fbEvo, fbBlue, contact, novaLight, disk, stream
-//   shell: shR, frac, shHeat, gain, skin, knotK, prolate, equator, steps, giant/dwarf
+//   wave: wvR, wvDens, wvHeat, debris, adv, refract (composite refraction strength)
+//   shell: shR, frac, shHeat, gain, skin, knotK, prolate, equator, sheetW, sheetWid, knotGain, faceDim, steps, stepLen, giant/dwarf
+//   dur: authored duration; local time is warped to the plan's actual shot length
 //   post: static post overrides; postKeys: { name: keys } animated post overrides
 import { frag, STARS } from '../engine/glsl.js';
 import { GIANT } from './lib/giant.glsl.js';
@@ -84,7 +86,7 @@ vec4 diskLayer(vec3 ro, vec3 rd, out float tD){
   vec2 q = p.xz - uFbC.xz;
   float rr = length(q);
   float x = rr / uDiskR;
-  if (x > 1.25 || rr < 0.003) return vec4(0.0);
+  if (x > 1.25 || rr < 0.003 || rr < uFbR * 0.86) return vec4(0.0);   // swallowed: no layer, no march split
   tD = t;
   float phi = atan(q.y, q.x);
   float om = 0.9 * pow(max(x, 0.04), -1.5);
@@ -123,9 +125,9 @@ vec4 streamLayer(vec3 ro, vec3 rd, out float tS){
   }
   float w = mix(0.0035, 0.008, bs);
   float prof = exp(-best * best / (w * w));
-  if (prof < 0.003 || bt <= 0.0) return vec4(0.0);
-  tS = bt;
   float dd = length(bp - uFbC);
+  if (prof < 0.003 || bt <= 0.0 || dd < uFbR * 0.93) return vec4(0.0);
+  tS = bt;
   float alive = smoothstep(0.97, 1.1, dd / uFbR);
   float flare = exp(-pow((dd / uFbR - 1.05) / 0.07, 2.0));
   float tex = 0.65 + 0.35 * n3(bp * 45.0 + vec3(0.0, 0.0, -uSpinT * 2.0));
@@ -282,14 +284,14 @@ export default {
     },
     // 3.83 s: system wide. The sphere swallows the disk, severs the stream and slams into the giant.
     'S23-eruption': {
-      mode: 'system', volScale: 0.4, dur: 3.83,
+      mode: 'system', volScale: 0.38, dur: 3.83,
       cam: SYS_CAM(0, 3.83),
       fbR: [[0, 0.08], [3.83, 0.92, 'outSine']],
       fbTurb: 0.12, fbDens: [[0, 30], [0.8, 10], [1.8, 2.5], [3.83, 0.9]], fbHeat: [[0, 1.08], [1.0, 1.0], [3.83, 0.96]], fbShell: [[0, 0.3], [1.2, 1.0]],
       fbEvo: [[0, 2.2], [3.83, 4.5, 'linear']], fbBlue: 0.15, fbPh: [[0, 0], [0.7, 0.0], [0.71, 0.92], [1.5, 0.72], [3.83, 0.42]],
       contact: [[1.9, 0], [3.2, 1.0]], novaLight: [[0, 0.35], [0.5, 0.55], [3.83, 0.45]], scar: [[2.2, 0], [3.83, 0.6]],
       disk: 1, stream: 0.55, giantGlow: 1.0, starGain: 1,
-      post: { bloomStrength: 0.08, halation: 0.03, streakStrength: 0.03, saturation: 1.15, contrast: 1.06 },
+      post: { bloomStrength: 0.08, halation: 0.03, streakStrength: 0.01, saturation: 1.15, contrast: 1.06 },
     },
     // 2.5 s: the pressure wave passes through the camera: a wall of light approaches, envelops (refraction,
     // debris streaking past), then glowing hot gas all around. Peak of the Doppler roar.
@@ -304,7 +306,7 @@ export default {
       postKeys: { zoomBlur: [[0.6, 0.0], [1.05, 0.07], [1.6, 0.025], [2.5, 0.015]], exposure: [[0, 1.0], [0.95, 0.85], [1.12, 0.62], [1.4, 1.05], [2.5, 1.0]] },
       post: { bloomStrength: 0.12, halation: 0.04, saturation: 1.1, contrast: 1.06 },
     },
-    // 2.9 s: limb of the decelerating shell; it fractures into golden fingers and knots.
+    // 2.88 s: limb of the decelerating shell; the white-gold sheet fractures into golden filaments, knots, fingers.
     'S25-shell': {
       mode: 'shell', volScale: 0.55, dur: 2.88, stepLen: 0.045,
       cam: [[0, [1.2, 1.0, 5.6], [1.7, 1.2, 0.0], 36], [2.9, [1.45, 1.05, 5.9], [1.85, 1.25, 0.0], 36, 0, 'outCubic']],
@@ -312,7 +314,7 @@ export default {
       gain: 1.0, skin: 0.5, knotK: 13, prolate: 0.1, equator: 0.5, sheetW: 1, steps: 14, giant: true, giantGlow: 0.8, scar: 0.8, dwarfLum: 1,
       post: { bloomStrength: 0.1 },
     },
-    // 6.8 s: the immense fractured golden shell; the pair small inside; slow pull back.
+    // 6.0 s: the immense fractured golden shell (GK Per / T Pyx knots and fingers); the pair small inside; slow pull back.
     'S26-expansion': {
       mode: 'shell', volScale: 0.6, dur: 6.0, stepLen: 0.042,
       cam: [[0, [3.6, 5.0, 12.4], [0, 0, 0], 34], [6.0, [7.6, 10.4, 25.6], [0, 0, 0], 34]],
@@ -320,7 +322,7 @@ export default {
       gain: 1.0, skin: 0.5, knotK: 11, prolate: 0.12, equator: 0.6, sheetW: 1.6, steps: 32, giant: true, giantGlow: 0.55, scar: 0.6, dwarfLum: 0.6,
       post: { bloomStrength: 0.09 },
     },
-    // 4 s (+ dissolve tail): centred, still. A near-perfect limb-brightened ring, radius ~0.32 H.
+    // 3.33 s (+ dissolve tail to S29b): centred, still. A near-perfect limb-brightened ring, outer radius ~0.32 H.
     'S29a-ring': {
       mode: 'shell', volScale: 0.6, dur: 3.33,
       cam: [[0, [0.0, 58.0, 10.2], [0, 0, 0], 30], [5.5, [0.0, 58.0, 10.2], [0, 0, 0], 30]],

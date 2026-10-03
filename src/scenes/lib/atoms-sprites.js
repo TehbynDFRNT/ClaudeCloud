@@ -42,9 +42,9 @@ void shadeSprite(int id, float type, vec4 a, vec2 d, float dd, inout vec3 col, i
     float kind = e.w;
     float bl = coc / R;                                   // 0 sharp .. 1 pure bokeh
     float m = kind > 1.5 ? 1.0 : smoothstep(0.1, 0.4, bl);
-    float aa = 0.75 + 0.1 * coc;
+    float aa = kind > 1.5 ? 0.35 * r + 1.0 : 0.75 + 0.1 * coc;   // shutter ghosts: soft smear, never a second limb
     float edge = sat((R - dist) / aa + 0.5);
-    float skW = kind < 0.5 ? (0.16 * r + 1.0) * (1.0 - m) : 0.0;
+    float skW = kind < 0.5 ? (0.16 * r + 1.0) * (1.0 - smoothstep(0.03, 0.15, bl)) : 0.0;   // only on (nearly) sharp spheres
     if (edge <= 0.0){
       if (skW > 0.0){ float x = sat((dist - R - 0.5 * aa) / skW); T *= 1.0 - c.a * 0.62 * (1.0 - x) * (1.0 - x); }
       return;
@@ -64,9 +64,10 @@ void shadeSprite(int id, float type, vec4 a, vec2 d, float dd, inout vec3 col, i
     float mx = max(cc.r, max(cc.g, cc.b)) + 1e-6;
     vec3 tint = cc / mx;
     float heat = e.z;
-    vec3 sat1 = pow(tint, vec3(1.4));                      // saturated body colour
+    vec3 t2 = tint * tint;
+    vec3 sat1 = tint * sqrt(tint);                         // saturated body colour (tint^1.5)
     vec3 hotC = mix(tint, vec3(1.0, 0.95, 0.88), sat(0.25 + 0.17 * heat));
-    vec3 edgeC = pow(tint, vec3(2.8)) * 0.2;
+    vec3 edgeC = t2 * tint * 0.2;                          // deep limb (tint^3)
     float coreG = 2.4 + 2.4 * heat;
     float coreP = mix(16.0, 5.0, sat(heat * 0.28));        // hotter = the white core swells
     vec3 meanC = sat1 * 0.62 + hotC * (coreG * 2.0 / (coreP + 2.0));   // mean radiance of the sharp profile
@@ -75,18 +76,19 @@ void shadeSprite(int id, float type, vec4 a, vec2 d, float dd, inout vec3 col, i
       float wrap = sat(0.5 + 0.5 * dot(sp, e.xy));
       float body = smoothstep(0.0, 0.85, nz);
       float core = pow(nz, coreP);
-      float gm = 1.0, fil = 0.0, qs = 0.0, gn = 0.6;
+      float gm = 1.0, qs = 0.0, gn = 0.6;
       if (kind < 0.5){
         float s = b.w, ta = uTime;
         vec3 P = vec3(sp, nz);
+        float det = smoothstep(14.0, 60.0, r);              // fine detail only where it is resolved
+        // granulation: boiling multi-scale plasma cells (hot cells, cooler ember lanes); the finer octaves only
+        // where the sphere is large enough to resolve them
         float g1 = n3(P * 3.1 + vec3(s * 7.13, s * 3.71, ta * 2.7));
         float g2 = n3(P.yzx * 6.4 + vec3(ta * 3.3, s * 1.37, -ta * 2.3));
-        float g3 = n3(vec3(sp * 14.0, s * 5.3 + ta * 8.0));
-        float det = smoothstep(14.0, 60.0, r);              // fine detail only where it is resolved
-        float gr = 0.5 * g1 + (0.32 * g2 + 0.18 * g3 * nz) * det;
-        gn = mix(0.6, smoothstep(-0.4, 0.45, gr), 0.35 + 0.65 * det);
-        gm = 0.75 + 0.5 * gn;
-        fil = pow(1.0 - abs(g2), 12.0) * nz * det;
+        float g3 = det > 0.35 ? n3(vec3(sp * 13.0, s * 5.3 + ta * 8.0)) : 0.0;
+        float gr = 0.55 * g1 + (0.3 * g2 + 0.15 * g3 * nz) * det;
+        gn = mix(0.6, smoothstep(-0.5, 0.5, gr), 0.4 + 0.6 * det);
+        gm = 0.8 + 0.4 * gn;
         for (int k = 0; k < 3; k++){                      // quark cores: orbiting + per-frame jitter
           float ph = s * 2.39 + float(k) * 2.0944 + ta * (4.0 + 3.0 * fract(s * 0.618));
           vec3 qp = vec3(cos(ph), sin(ph) * cos(s * 1.9), sin(ph) * sin(s * 1.9)) * 0.36;
@@ -102,10 +104,10 @@ void shadeSprite(int id, float type, vec4 a, vec2 d, float dd, inout vec3 col, i
       float lit = 0.7 + 0.6 * wrap;
       float rim = smoothstep(0.72, 0.97, rr) * (1.0 - 0.6 * smoothstep(0.96, 1.0, rr)) * wrap;
       // granulation: cool lanes sink toward the deep limb colour, hot cells are saturated body colour
-      vec3 bodyC = mix(pow(tint, vec3(2.3)) * 0.4, sat1 * 1.0, gn);
+      vec3 bodyC = mix(t2 * 0.6, sat1, gn);                // lanes: luminous ember, never brown
       vec3 base = mix(edgeC, bodyC, body);
       vec3 se = base * gm * lit
-              + hotC * (core * coreG * (0.6 + 0.4 * gm) + qs * (0.4 + 0.5 * heat) * nz * nz + fil * 0.5)
+              + hotC * (core * coreG * (0.6 + 0.4 * gm) + qs * (0.4 + 0.5 * heat) * nz * nz)
               + mix(sat1, hotC, 0.3) * rim * 0.34;
       em = mix(se, meanC, m);
     } else em = meanC;
@@ -142,8 +144,11 @@ void shadeSprite(int id, float type, vec4 a, vec2 d, float dd, inout vec3 col, i
     float x2 = dd / (r * r);
     float win = 1.0 - smoothstep(0.35, 1.0, dd / (a.z * a.z));
     float x = sqrt(x2);
-    vec3 g = vec3(1.0, 0.96, 0.9) * exp(-x2 * 2.5) * 2.0 + c.rgb * (exp(-x * 2.2) * 0.7 + 0.008 / (1.0 + x2));
-    col += T * g * c.a * win;
+    // e.x: tint of the hot core (0 = white-hot, 1 = the glow's own colour, e.g. a cold-blue positron flash)
+    vec3 cn = c.rgb / (max(c.r, max(c.g, c.b)) + 1e-6);
+    vec3 g = mix(vec3(1.0, 0.96, 0.9), cn, e.x) * exp(-x2 * 2.5) * 2.0 + c.rgb * (exp(-x * 2.2) * 0.7 + 0.008 / (1.0 + x2));
+    float en = b.x / r; en *= en;                          // defocused glows spread their energy
+    col += T * g * c.a * win * en;
   }
 }
 
@@ -251,8 +256,8 @@ export class SpriteBatch {
     if (!q) return;
     const [x, y, z, pxs, coc] = q;
     const rp = Math.max(0.6, r * pxs);
-    const skirt = kind === 0 && coc < 0.7 * rp ? 0.16 * rp + 1.0 : 0;
-    const R = rp + coc * 1.06 + 1.5 + skirt;
+    const skirt = kind === 0 && coc < 0.18 * rp ? 0.16 * rp + 1.0 : 0;
+    const R = rp + coc * 1.06 + 1.5 + skirt + (kind === 2 ? 0.2 * rp : 0);
     if (!this.onScreen(x, y, R)) return;
     const cluster = kind;
     let lx = 0, ly = 0;
@@ -288,7 +293,7 @@ export class SpriteBatch {
 
   // additive glow (flash) at a world point; r = core radius (world). zBias moves it forward in the
   // depth sort (a flash bursting out between nuclei is not hidden by the ones in front of it).
-  glow(p, r, rgb, inten, reach = 3.5, zBias = 0) {
+  glow(p, r, rgb, inten, reach = 3.5, zBias = 0, coreTint = 0) {
     const q = this.proj(p);
     if (!q) return;
     const [x, y, z, pxs, coc] = q;
@@ -297,7 +302,7 @@ export class SpriteBatch {
     if (!this.onScreen(x, y, R)) return;
     inten *= this.fog(z);
     const zs = Math.max(0.3, z - zBias);
-    this._push([x, y, R, 2e5 + zs, rp, coc, zs, 0, rgb[0], rgb[1], rgb[2], inten, 0, 0, 0, 0], x - R, y - R, x + R, y + R, 0);
+    this._push([x, y, R, 2e5 + zs, rp, coc, zs, 0, rgb[0], rgb[1], rgb[2], inten, coreTint, 0, 0, 0], x - R, y - R, x + R, y + R, 0);
   }
 
   finish() {

@@ -104,7 +104,11 @@ void main(){
   }
   vec3 bg = (starField(rd, pixAngle) + deepSky(rd)) * uStarGain;
   vec3 col = bg * (1.0 - g.a) + g.rgb;
-  vec4 V = volUpsample(dist < 1e8);
+  // fast path: rays clearly clear of the giant's silhouette sample the volume bilinearly (all texels are misses)
+  vec2 gb = sphereHit(ro - uGiantPos, rd, vec3(0.0), uGiantR * (1.0 + uBulge * 1.2) + 4.0 * length(ro - uGiantPos) * pixAngle * uRes.y / uVolRes.y);
+  vec4 V;
+  if (gb.y < 0.0 || uGiantOn < 0.5) { V = texture(uVol, gl_FragCoord.xy / uRes); V.a = abs(V.a); }
+  else V = volUpsample(dist < 1e8);
   col = col * V.a + V.rgb;
   col += dwarfGlow(ro, rd, dist, pixAngle) * mix(1.0, V.a, 0.85);
   fragColor = vec4(col, 1.0);
@@ -135,8 +139,8 @@ const presets = {
   'S06-first-pull': {
     cam: [[0, [-0.272, -0.031, 0.202], [-0.13, 0.03, -0.05], 50, -0.72], [1, [-0.259, -0.027, 0.188], [-0.12, 0.034, -0.05], 48, -0.84, 'inOutSine']],
     headS: [[0, -0.012], [1, 0.08, 'inQuad']],
-    streamAmt: 0.85, streamW: 1.0, rip: 0.5, flowRate: 1.2, detail: 1.0, rake: 1.2, rakeG: 0.12, starGain: 0.5,
-    giant: { relief: 0.006, plumes: 0.6, glow: 1.5 }, dwarfLum: 1.2, volScale: 0.6,
+    streamAmt: 0.85, streamW: 1.0, rip: 0.5, flowRate: 1.2, detail: 0.6, rake: 1.2, rakeG: 0.12, starGain: 0.5,
+    giant: { relief: 0.006, plumes: 0.2, glow: 1.5 }, dwarfLum: 1.2, volScale: 0.5,
     post: { bloomStrength: 0.08 },
   },
   // The stream rips out through L1 and arcs across to the dwarf; camera tracks alongside.
@@ -147,7 +151,7 @@ const presets = {
       [1, [0.11, 0.46, 0.66], [0.19, -0.02, 0.04], 40, 0, 'inOutSine'],
     ],
     headTau: [[0, 0.80], [1, 1.36, 'linear']],
-    streamAmt: 1.0, rip: 1.0, flowRate: 1.6, rake: 0.06, rakeG: 0.1, streamGlow: 1.3, starGain: 0.55,
+    streamAmt: 1.0, rip: 1.0, flowRate: 1.6, rake: 0.0, rakeG: 0.1, streamGlow: 1.3, starGain: 0.55,
     ringAmt: [[0, 0], [0.92, 0], [1, 0.06]],
     giant: { plumes: 0.5 }, dwarfLum: 1.3, volScale: 0.5,
     post: { bloomStrength: 0.09, streakStrength: 0.02 },
@@ -167,7 +171,7 @@ const presets = {
     cam: [[0, [-0.30, 0.060, 0.30], [-0.16, 0.0, 0.02], 42], [1, [-0.285, 0.052, 0.275], [-0.15, 0.0, 0.02], 41, 0, 'inOutSine']],
     streamAmt: 1.0, streamW: 1.15, streamGlow: 1.0, rip: 1.0, flowRate: 2.0, detail: 0.5, rake: 0.0, rakeG: 0.06, starGain: 0.5,
     diskAmt: 0, cutR: 0.26,
-    giant: { relief: 0.004, plumes: 0.6, atmo: 0.6 }, dwarfLum: 1.2, volScale: 0.5,
+    giant: { relief: 0.004, plumes: 0.25, atmo: 0.6 }, dwarfLum: 1.2, volScale: 0.5,
     post: { bloomStrength: 0.09 },
   },
   // The giant is drained: wide, high angle; a substantial disk fed by the stream.
@@ -280,10 +284,19 @@ export default {
       uDiskIn: 0.03, uDiskOut: diskOut, uDiskAmt: diskAmt, uDiskH: ev(P.diskH, u, 0.034), uDiskT: t + 4.0,
       uDiskGlow: ev(P.diskGlow, u, 1.0), uRingAmt: ev(P.ringAmt, u, 0), uRCirc: R_CIRC, uFlare: flare, uHot: hot,
       uClump: [clumpS, clumpAmt],
+      uDiskBound: this.diskBound(diskAmt, ev(P.ringAmt, u, 0), hot[2], diskOut, ev(P.diskH, u, 0.034)),
       uBoxMin: [-0.50, -0.15, -boxZ], uBoxMax: [boxX, 0.15, Math.max(0.38, boxZ)],
       uStarGain: ev(P.starGain, u, 0.6), uRakeG: ev(P.rakeG, u, 0.06),
     };
     return { cam, U, t, u, head, cut, diskOut, diskAmt };
+  },
+
+  // bounding cylinder of the disk / forming ring (mirrors diskH() in lib/stream.glsl.js)
+  diskBound(diskAmt, ringAmt, hot, diskOut, dh) {
+    if (diskAmt + ringAmt <= 0 && hot <= 0) return [0, 0];
+    const ro = Math.max(diskOut * 1.1, ringAmt > 0 ? R_CIRC + 0.1 : 0);
+    const H = dh * ro * Math.pow(Math.max(ro, 0.01) / 0.2, 0.125) * 1.6 + 0.001;
+    return [ro, H * 3.2];
   },
 
   // chase camera riding a point of the ballistic path (S08)
@@ -309,7 +322,7 @@ export default {
     const vt = E.target('binaryVol', vs);
     const U = st.U;
     U.uPixAng = 2 * st.cam.tanH / vt.h;
-    E.draw(this.vol, { ...U, uRelief: 0 }, vt);
+    if (!P.__skipVol) E.draw(this.vol, { ...U, uRelief: 0 }, vt);
     E.draw(this.main, { ...U, uVol: vt, uVolRes: [vt.w, vt.h] }, target);
   },
 

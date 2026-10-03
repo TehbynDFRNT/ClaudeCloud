@@ -81,6 +81,8 @@ function boilUniforms(P, t) {
     uRelief: B.relief ?? 0.2,
     uHeat: B.heat ?? 0,
     uHeatGain: B.heatGain ?? 1,
+    uLane: B.lane ?? 0.2,
+    uMeso: B.meso ?? 0.6,
     uGain: B.gain ?? 1,
     uPlume: B.plume ?? 0,
     uPlumeH: B.plumeH ?? 0.08,
@@ -90,6 +92,9 @@ function boilUniforms(P, t) {
     uFog: B.fog ?? 0.05,
     uHaze: B.haze || [0.05, 0.004, 0.002],
     uDetail: B.detail ?? 1,
+    uGranule: B.granule ?? 1,
+    uOutflow: B.outflow ?? 1,
+    uFarHeat: B.farHeat || [0.16, 0.45],
     uFlowSpin: B.flowSpin ?? 0,
     uSoft: B.soft ?? 0.05,
     uSigma: B.sigma ?? 18,
@@ -129,6 +134,7 @@ function coreUniforms(P, t) {
     uCoreR: C.r ?? 0.5,
     uCoreHeat: C.heat ?? 0.95,
     uCoreGlow: C.glow ?? 1,
+    uCoreSurf: C.surf ?? 1,
     uEvo: (C.evo || [0, 0.6])[0] + (C.evo || [0, 0.6])[1] * t,
     uSpin: (C.spin || [0, 0.4])[0] + (C.spin || [0, 0.4])[1] * t,
     uAxis: E3.norm(C.axis || [1, 0, 0]),
@@ -177,6 +183,12 @@ export default {
     if (P.kind === 'filaments') E.draw(this.pCore, { ...cam.uniforms, ...coreUniforms(P, t) }, A);
     else if (P.volume) E.draw(this.pVol, { ...cam.uniforms, ...volUniforms(P, t) }, A);
     else E.draw(this.pBoil, { ...cam.uniforms, ...boilUniforms(P, t) }, A);
+    // mip chain of the plate: wide DOF taps read a prefiltered level (smooth bokeh, no stipple)
+    const gl = E.G.gl;
+    gl.bindTexture(gl.TEXTURE_2D, A.tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.bindTexture(gl.TEXTURE_2D, null);
     const D = dofAt(P, S);
     const k = A.w / 1920;
     const maxCoc = (D.max ?? 0) * k;
@@ -184,12 +196,17 @@ export default {
     // filaments / sparks as soft HDR geometry at full output resolution
     const strokes = P.kind === 'filaments' || P.kind === 'sparks';
     const Lt = strokes ? E.target('plasmaLines', 1) : null;
+    let evFlash = 0;
     if (strokes) {
       this.lines.begin(Lt.w, Lt.h);
       const Pd = { ...P, dof: { ...D, focus: D.focus ?? 3 } };
       if (P.fil && P.fil.events) Pd.fil = { ...P.fil, events: P.fil.events.map((e) => ({ ...e, t: at(P, S, e.t) })) };
-      if (P.sparks) Pd.sparks = { ...P.sparks, window: [P.sparks.window?.[0] ?? -1.5, Math.max(P.sparks.window?.[1] ?? 0, S.dur + 0.05)] };
-      if (P.kind === 'filaments') drawFilaments(this.lines, cam, t, Pd, Lt.w, Lt.h, S);
+      if (P.sparks) {
+        const w = P.sparks.window || [-1.5, 0];
+        // burst: birth window authored as fractions of the shot; otherwise births run to the end of the shot
+        Pd.sparks = { ...P.sparks, window: P.sparks.burst ? [w[0] * S.dur, w[1] * S.dur] : [w[0], Math.max(w[1], S.dur + 0.05)] };
+      }
+      if (P.kind === 'filaments') evFlash = drawFilaments(this.lines, cam, t, Pd, Lt.w, Lt.h, S).flash;
       else drawSparks(this.lines, cam, t, Pd, Lt.w, Lt.h, S);
       this.lines.flush(Lt);
     }
@@ -197,7 +214,7 @@ export default {
     E.draw(this.pComp, {
       uSrc: B, uLines: Lt || B, uHasLines: strokes ? 1 : 0,
       uLineGain: ov.gain ?? 1, uLineAbsorb: ov.absorb ?? 0,
-      uFlash: flashAt(P, S), uFlashCol: P.flashCol || [0.5, 0.75, 1.0],
+      uFlash: flashAt(P, S) + evFlash, uFlashCol: P.flashCol || [0.5, 0.75, 1.0],
     }, target);
   },
   post(E, S) {

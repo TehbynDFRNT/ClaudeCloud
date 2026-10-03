@@ -127,6 +127,8 @@ export class Drawing {
     const press = o.press ?? 0.18, pfreq = o.pfreq ?? 9;
     const nib = o.nib ?? (kind === 'ink' ? 0.35 : 0), nibA = o.nibAngle ?? 0.75;
     const load = o.load ?? 0.25;
+    // ink pools where the nib lands and where it lifts (heavier pen strokes only)
+    const pool = o.pool ?? (kind === 'ink' && (o.w ?? 2.2) >= 1.8 ? 0.85 : 0);
     const n = pts.length;
     const W = new Float32Array(n), D = new Float32Array(n);
     for (let i = 0; i < n; i++) {
@@ -136,9 +138,10 @@ export class Drawing {
       const nibF = 1 - nib + nib * Math.abs(Math.sin(th - nibA)) * 1.35;
       const taper = (0.28 + 0.72 * smooth(s[i] / tin)) * (0.22 + 0.78 * smooth((L - s[i]) / tout));
       const pr = 1 + press * fnoise((s[i] / PX) / (1080 / pfreq) * 1.0, sd);
-      W[i] = Math.max(0.25 * PX, w0 * nibF * taper * pr);
+      const pl = pool ? Math.exp(-s[i] / (4.5 * PX)) + 0.55 * Math.exp(-(L - s[i]) / (4 * PX)) : 0;
+      W[i] = Math.max(0.25 * PX, w0 * nibF * taper * pr * (1 + pool * pl));
       const dl = 1 - load * smooth(s[i] / Math.max(L, 0.25)) + 0.12 * fnoise(s[i] * 40, sd + 5);
-      D[i] = clamp01(d0 * dl * (0.75 + 0.25 * taper / 1.0));
+      D[i] = clamp01(d0 * dl * (0.75 + 0.25 * taper / 1.0) * (1 + 0.35 * pool * pl));
     }
     const it = { type: 'stroke', kind, ch: KIND_CH[kind], pts, s, L, W, D, t0, t1: t0 + dur, wet: o.wet ?? (kind === 'ink'), id, sd };
     this.items.push(it);
@@ -313,7 +316,7 @@ function drawStroke(ctx, it, t, o) {
       const tl = it.t0 + dt * sm;                     // when the pen laid this part
       const wv = Math.exp(-Math.max(0, t - tl) / tau);
       if (wv < 0.04) continue;
-      ctx.fillStyle = 'rgba(0,0,255,' + (wv * 0.9).toFixed(3) + ')';
+      ctx.fillStyle = 'rgba(0,0,255,' + (wv * 0.9 * (o.wetGain ?? 1)).toFixed(3) + ')';
       fillChunk(ctx, B.Lx, B.Ly, B.Rx, B.Ry, i0, i1);
     }
   }

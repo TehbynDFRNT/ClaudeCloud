@@ -170,7 +170,7 @@ export default {
         [0, ...aimCam(2.75, 158, 7, -0.30, 0.02, 45), 45],
         [1, ...aimCam(2.65, 168, 9, -0.20, 0.03, 45), 45, 0, 'linear'],
       ],
-      spin: [2.0, 0.006], boil: 1.2, plumes: 0.7, scar: 1.0, scarDir: [1, 0, 0], relief: 0.006, limbDark: 0.55, starGain: 0.6,
+      spin: [2.0, 0.006], boil: 1.2, plumes: 0.7, scar: 1.0, scarDir: [1, 0, 0], relief: 0.0035, limbDark: 0.55, starGain: 0.6,
       embers: { count: 2200, gain: 4.0, size: 2.2 }, volScale: 0.4,
       heroPlumes: [
         { c: [0.98, 0.22, -0.02], l: [0.2, 1, 0.1], height: 0.16, width: 0.045, lean: 1.4, phase: 0.1 },
