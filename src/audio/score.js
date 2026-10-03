@@ -27,10 +27,11 @@ const midiHz = (m, a4) => a4 * Math.pow(2, (m - 69) / 12);
 // ----------------------------------------------------------------------------------------------------------
 export const DESIGN = {
   orchestraMakeupDb: 7.0,          // clean make-up gain on the (quiet, ~-24 LUFS) recording
-  // bus trims. Both stems end in a 4x soft clipper whose ceiling is 1.0: the trims put that ceiling under the master
-  // ceiling, so loudness at the strikes and the ignition comes from density (the stems' own saturation) and not
-  // from peaks the master limiter would have to take back. Per-cue cannon levels come from the approach law.
-  cannonsDb: -3.0,
+  // Peak headroom: the ignition stem ends in a 4x soft clipper (ceiling 1.0) and the cannon stem in a look-ahead
+  // true-peak limiter; their ceilings sit under the master ceiling, so loudness at the strikes and the ignition comes
+  // from density and not from peaks the master limiter would have to take back.
+  cannonsDb: 0.0,
+  cannonLimiter: { ceilDb: -4.0, lookMs: 2.0, relMs: 90 },  // cannon stem (JS); per-cue levels: approach law
   ignitionDb: -0.5,
   impactDriveDb: 6.0,              // ignition impact layers (sub, crack, saw stack, walls) into the stem saturator
   synthTrimDb: -24.0,            // source trim so the per-bar auto-level works around 0 dB
@@ -42,7 +43,7 @@ export const DESIGN = {
   // cannon approach law: each cue's loudness (K-weighted, 400 ms from its transient) relative to the orchestra's
   // (K-weighted, the 500 ms before it: the music the hit breaks into) follows rel(d) = far + (near - far) * (1 - d)^shape, so the approach is monotone
   // whatever the music does underneath. Measured on a first render of the stem, corrected and re-rendered.
-  cannon: { relFar: -20, relNear: 5, shape: 1.5, maxCorrDb: 20, passes: 3, tolDb: 0.75 },
+  cannon: { relFar: -20, relNear: 5, shape: 1.5, maxCorrDb: 14, passes: 3, tolDb: 0.75 },
   // orchestra + synth duck under the five strike cannons (d <= maxD; depth grows toward d = 0): 5 ms attack,
   // 80 ms hold, then a 120 ms exponential release (within 1 dB after ~0.3 s), following the boom that masks it.
   duck: { maxD: 0.12, depthDb: [3, 6], attack: 0.005, hold: 0.08, tau: 0.12 },
@@ -631,9 +632,9 @@ function cannonBeat(c, tl) {
 
 // gains: optional per-cue correction in dB (from the approach-law measurement in renderSoundtrack)
 export function buildCannons(ctx, tl, samples, gains = {}) {
-  const clip = softClip(ctx, 0.55); clip.output.connect(ctx.destination);
-  // 2nd-order 28 Hz high-pass on the bus: the sub thump and boom below it only drive the master limiter
-  const out = G(ctx, 1); out.connect(BQ(ctx, 'highpass', 28, 0.707)).connect(clip.input);
+  // 2nd-order 28 Hz high-pass on the bus: the sub thump and boom below it only drive the limiters. Peak control is
+  // the look-ahead limiter applied to the rendered stem (renderSoundtrack), which keeps the boom's waveform intact.
+  const out = G(ctx, 1); out.connect(BQ(ctx, 'highpass', 28, 0.707)).connect(ctx.destination);
   const cues = tl.plan.cues.filter((c) => c.kind === 'cannon').sort((a, b) => a.frame - b.frame);
   const verb = ctx.createConvolver(); verb.normalize = false;
   verb.buffer = impulse(ctx, { seconds: 5.5, rt60: 4.2, seed: 1812, hiHz: 5000, loHz: 260, early: 18, earlyMs: 110 });
@@ -648,7 +649,7 @@ export function buildCannons(ctx, tl, samples, gains = {}) {
   cues.forEach((c, ci) => {
     const d = clamp(c.distance, 0, 1);
     const { t: tcue, basis, beat } = cannonTime(c, tl);
-    const tc = tcue - (tl.lat ? tl.lat['4x'] : 0); // scheduled early by the bus clipper's latency
+    const tc = tcue; // no shaper on this bus: the transient is scheduled on the cue itself
     // deterministic rotation by distance band; close strikes counted back from the last strike (cannon-1 last)
     const b = band(c), gi = group[b].indexOf(c);
     const id = b === 'near' ? NEAR_SET[(group.near.length - 1 - gi) % NEAR_SET.length] : (b === 'mid' ? MID_SET : FAR_SET)[gi % (b === 'mid' ? MID_SET : FAR_SET).length];
@@ -709,7 +710,8 @@ export function buildCannons(ctx, tl, samples, gains = {}) {
       o.frequency.setValueAtTime(45, tc); o.frequency.exponentialRampToValueAtTime(28, tc + 0.45);
       const g = G(ctx, 0);
       curveEnv(g.gain, tc, 1.0, (x) => Math.min(1, x / 0.003) * Math.exp(-x / 0.18) * (1 - smooth(0.8, 1.0, x)), 2000);
-      alive(g); o.connect(g).connect(G(ctx, 0.45 * thump * lvl)).connect(out);
+      // at the cue's base distance level: the approach-law correction drives the samples, not the synthetic sub
+      alive(g); o.connect(g).connect(G(ctx, 0.45 * thump * undb(-23 * Math.pow(d, 0.9)))).connect(out);
       o.start(tc); o.stop(tc + 1.05);
     }
     table.push({ id: c.id, frame: c.frame, frameTime: +(c.frame / tl.fps).toFixed(4), t: +tcue.toFixed(4), beat: +beat.toFixed(4), basis, offsetMs: +((tcue - c.frame / tl.fps) * 1000).toFixed(1),
@@ -1287,11 +1289,15 @@ export async function renderSoundtrack({ base = '/', log = console.log } = {}) {
   const kO = [kWeight(stems.orchestra[0]), kWeight(stems.orchestra[1])];
   let cg = {}, cl = null;
   const cannonPasses = [];
+  let cLim = null;
   for (let pass = 0; pass < DESIGN.cannon.passes; pass++) {
     await render('cannons', (ctx) => buildCannons(ctx, tl, samples, cg));
+    const CL = DESIGN.cannonLimiter;
+    cLim = limit(stems.cannons[0], stems.cannons[1], CL.ceilDb, CL.lookMs, CL.relMs);
+    stems.cannons = [cLim.L, cLim.R];
     cl = cannonLevels(tl, kO, gO, stems.cannons, gC, info.cannons, cg);
     cannonPasses.push(+cl.maxErr.toFixed(2));
-    log(`cannon approach law, pass ${pass}: max error ${cl.maxErr.toFixed(2)} dB`);
+    log(`cannon approach law, pass ${pass}: max error ${cl.maxErr.toFixed(2)} dB (cannon limiter max ${cLim.maxGrDb.toFixed(1)} dB)`);
     if (cl.maxErr <= DESIGN.cannon.tolDb || pass === DESIGN.cannon.passes - 1) break;
     cg = cl.gains;
   }
@@ -1335,7 +1341,7 @@ export async function renderSoundtrack({ base = '/', log = console.log } = {}) {
     times: tl.T, tuningA4: tl.a4, gridCheck: tl.refined.report, shaperLatencySamples: { x2: Math.round(tl.lat['2x'] * SR), x4: Math.round(tl.lat['4x'] * SR) },
     orchestra: info.orchestra, synth: { ...info.synth, steps: info.synth.steps.length, autoLevel: lev.rows.map((r) => ({ bar: r.bar, target: +r.target.toFixed(1), raw: +(r.synthK - r.orchK).toFixed(1), appliedDb: +r.appliedDb.toFixed(1) })), drone: lev.drone, pad: lev.pad },
     synthSteps: info.synth.steps,
-    cannonApproach: { law: DESIGN.cannon, passMaxErrDb: cannonPasses, cues: cl.rows }, duck: { ...DESIGN.duck, cues: info.cannons.filter((c) => c.distance <= DESIGN.duck.maxD).map((c) => c.id) },
+    cannonApproach: { law: DESIGN.cannon, passMaxErrDb: cannonPasses, cues: cl.rows, limiter: { ...DESIGN.cannonLimiter, maxGrDb: +cLim.maxGrDb.toFixed(1) } }, duck: { ...DESIGN.duck, cues: info.cannons.filter((c) => c.distance <= DESIGN.duck.maxD).map((c) => c.id) },
     cannons: info.cannons, cannonSamples: Object.fromEntries(Object.entries(samples).map(([k, s]) => [k, { ...CANNON_SAMPLES[k], onsetMs: +(s.info.onset * 1000).toFixed(2), peakAtMs: +(s.info.peakAt * 1000).toFixed(1), peakDb: +db(s.info.peak).toFixed(1), boomDb: +db(s.info.boomRms).toFixed(1), matchGainDb: +db(s.info.norm).toFixed(1) }])),
     ignition: info.ignition,
     master: { targetLufs: DESIGN.targetLufs, ceilingDbtp: DESIGN.ceilingDbtp, preLufs: +preL.toFixed(2), masterGainDb: +db(gM).toFixed(2), lufs: +L.toFixed(2), compMaxGrDb: +comp.maxGrDb.toFixed(2), compMeanGrDb: +comp.meanGrDb.toFixed(2), limiterMaxGrDb: +lim.maxGrDb.toFixed(2), limiterActivePct: +lim.activePct.toFixed(3), stemLufs, orchestraMakeupDb: DESIGN.orchestraMakeupDb },

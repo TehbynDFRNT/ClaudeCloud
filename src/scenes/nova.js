@@ -103,7 +103,7 @@ vec4 diskLayer(vec3 ro, vec3 rd, out float tD){
   float ring = exp(-pow((rr / R - 1.03) / 0.06, 2.0));
   float obl = clamp(0.35 / abs(rd.y), 1.0, 3.0);  // thin emitting sheet seen obliquely
   vec3 em = novaEmit(h) * 0.35 * dens * alive * (1.0 + 2.5 * exp(-max(rr - R, 0.0) / 0.07)) * obl;
-  em += novaEmit(0.82) * ring * dens * 1.5 * obl;
+  em += novaEmit(0.74) * ring * dens * 1.2 * obl;
   float a = sat(dens * alive * 0.75);
   return vec4(em * uDiskGain, a * step(0.001, uDiskGain));
 }
@@ -155,7 +155,7 @@ vec3 bowLayer(vec3 ro, vec3 rd, float tG){
 
 void main(){
   vec3 rd = cameraRay(frameUV()); vec3 ro = uCamPos;
-  float j = ign(gl_FragCoord.xy);
+  float j = ignStatic(gl_FragCoord.xy);      // static dither: a low-res pass with per-frame jitter fizzes in motion
   float tG = giantHit(ro, rd);
   float tD, tS;
   vec4 dk = diskLayer(ro, rd, tD); if (tD > tG){ tD = 1e9; dk = vec4(0.0); }

@@ -368,8 +368,9 @@ vec3 vxMarch(vec3 ro, vec3 rd, float tMax, float jit, float pixAngle, float tD, 
     float scat;
     vec4 f = vxField(p, rd, uTau, seg, xs, xf, true, scat);
     float a = 1.0 - exp(-f.a * seg);
-    // scattered light: ice-blue dwarf light on the inner rim, ember (reprocessed through red gas) further out
-    vec3 sc = mix(vec3(0.16, 0.38, 1.0), vec3(1.0, 0.3, 0.06), smoothstep(uRin * 1.3, uRin * 3.5, r));
+    // scattered light: cool white dwarf light on the inner rim (a saturated blue added to gold emission would read
+    // pink), ember (reprocessed through red gas) further out
+    vec3 sc = mix(vec3(0.75, 0.8, 0.9), vec3(1.0, 0.3, 0.06), smoothstep(uRin * 1.3, uRin * 3.5, r));
     col += trans * a * (f.rgb + scat * sc);
     trans *= 1.0 - a;
     tPrev = t;
@@ -463,7 +464,7 @@ vec3 vxDwarfGlow(vec3 ro, vec3 rd, float pixAngle){
   float angR = max(uDwarfR / dist, pixAngle * 0.8);
   float resolved = smoothstep(1.2, 3.0, uDwarfR / dist / pixAngle);
   float core = exp(-pow(ang / angR, 2.0)) * 220.0 * (1.0 - resolved);
-  float halo = 1.0 / (1.0 + pow(ang / max(pixAngle * 6.0, angR * 1.6), 2.0)) * 2.2;
+  float halo = 1.0 / (1.0 + pow(ang / max(pixAngle * 6.0, angR * 1.6), 2.0)) * 2.2 * (1.0 - 0.75 * resolved);
   float wide = 1.0 / (1.0 + pow(ang / max(pixAngle * 60.0, angR * 12.0), 2.0)) * 0.12;
   return dwarfColor() * (core + (halo + wide) * uGlowK) * uDwarfLum * front;
 }

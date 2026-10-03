@@ -145,7 +145,7 @@ vec3 boilSky(vec3 rd){
 
 // Emission/absorption march through the plasma body (soft cellular top surface) and the wisps above it.
 vec3 boilMarch(vec3 ro, vec3 rd, out float depth){
-  float ytop = uRelief * 0.6 + uSoft + uPlumeH * 3.0;
+  float ytop = uRelief * 0.6 + uSoft + (uPlume > 0.0 ? uPlumeH * 3.0 : 0.0);
   float ybot = -uRelief - 0.6;
   depth = uTMax;
   vec3 col = vec3(0.0);

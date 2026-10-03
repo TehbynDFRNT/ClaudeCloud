@@ -406,7 +406,8 @@ vec4 giantFar(vec3 ro, vec3 rd, float t, out float dist){
   vec4 c4 = n4(ns * 1.5 + vec3(0.0, t * 0.01, 3.0));
   // broad convection cells with soft (never black) lanes
   vec2 cb = cells3(ns * 2.2 + (c4.rgb - 0.5) * 1.2 + vec3(0.0, 0.0, t * 0.004));
-  float T = 2250.0 + 160.0 * smoothstep(0.85, 0.15, cb.x) * (0.6 + 0.4 * smoothstep(0.0, 0.25, cb.y)) + 110.0 * (c4.b - 0.5) * 2.0 - 60.0;
+  // same temperature logic as the shared giant: crimson lanes ~1850 K, ember-gold upflow centres ~2500 K
+  float T = 1930.0 + 540.0 * smoothstep(0.95, 0.05, cb.x) * (0.6 + 0.4 * smoothstep(0.0, 0.3, cb.y)) + 120.0 * (c4.b - 0.5) * 2.0;
   // granulation only where it is resolved (footprint-filtered), so a 20 px giant never aliases
   float fp = th * 2.0 * uTanHalfFov / uRes.y / uGiantR;
   float lod = 1.0 - smoothstep(0.004, 0.012, fp);

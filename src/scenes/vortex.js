@@ -76,8 +76,8 @@ const DISK = {
   dens: 7.0, densExp: 1.8, tout: 1300, tinK: 0.6, turb: 0.55, arms: 0.55, armM: 2, armPitch: 0.36, armSpeed: 0.05, armSharp: 3.0,
   curtain: 1.0, curtainSpin: 2.0, curtainPhi: 0.6, dwarfR: 0.014, dwarfSurf: 1.0, glowK: 1.0,
   hot: 0, hotPhi: 2.2, streamDir: [0.6, 0, 0.8], streamW: 0.02, shockK: 1.0, streamK: 1.0,
-  rb: 1.25, lod: 0.004, stepK: 0.55, edgeFade: 0.3, grain3: 1.0, starGain: 0.3, irr: 6, armFloor: 0.12, armHeat: 0.35,
-  void: -0.37, puff: 1.0, floor: 0.08, sheet: 1.0, sheetHeat: 0.45, coldGas: 0.5, sheetW: 0.04, maxSteps: 44, sheetMask: -1,
+  rb: 1.25, lod: 0.004, stepK: 0.55, edgeFade: 0.3, grain3: 1.0, starGain: 0.3, irr: 4, armFloor: 0.12, armHeat: 0.35,
+  void: -0.37, puff: 1.0, floor: 0.22, sheet: 1.0, sheetHeat: 0.45, coldGas: 0.42, sheetW: 0.04, maxSteps: 44, sheetMask: -1,
   floorMid: 0.6, kr: 6.0, ky: 10.0,
 };
 
@@ -184,9 +184,9 @@ const presets = {
       [1, [0.098, 0.075, 0.104], [0, 0.0, 0], 50, -0.10],
     ],
     tau: [90, 1.0, 0],
-    heat: [0.92, 0, 0.5, 0], lum: [1.0, 1.0],
-    disk: { omega: 0.32, curtain: 1.0, maxSteps: 50, stepK: 0.4, sheet: 0.9, sheetHeat: 0.5, rimPuff: 0.8, tinK: 0.4 },
-    post: { exposure: 0.2 },
+    heat: [0.75, 0, 0.5, 0], lum: [1.0, 1.0],
+    disk: { omega: 0.32, curtain: 0.5, maxSteps: 56, stepK: 0.4, sheet: 0.9, sheetHeat: 0.5, rimPuff: 0.8, tinK: 0.4, rb: 0.6, dwarfSurf: 0.35, irr: 0.6 },
+    post: { exposure: 0.45 },
   }),
   // Frenzy 31.1: extreme speed - a plunge across the disk surface toward the dwarf.
   'F31.1': D({
