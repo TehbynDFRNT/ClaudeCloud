@@ -20,7 +20,8 @@ import pretty_midi
 from scipy.ndimage import gaussian_filter1d
 
 ROOT = Path(__file__).resolve().parent.parent
-AUDIO = ROOT / 'media/source/winter-mvt1-milman.flac'
+import os
+AUDIO = ROOT / os.environ.get('WINTER_AUDIO', 'media/source/winter-usaf-band.ogg')
 MIDI = ROOT / 'analysis/ref/mutopia-winter-score.mid'
 MAP = ROOT / 'analysis/music-map.json'
 OUT = ROOT / 'analysis/grid.json'
@@ -62,9 +63,15 @@ def main():
     # predicted bar lines: anchor on bars whose DTW duration agrees with local tempo
     pred = starts.copy()
     ok = np.abs(dur - loc) < 0.08 * loc
-    first = int(np.argmax(ok))
+    # anchor on the first run of four consistent bars (a single lucky bar in a messy opening is not enough)
+    first = next(i for i in range(n - 4) if ok[i:i + 4].all())
     for i in range(first - 1, -1, -1):
-        pred[i] = pred[i + 1] - loc[i]
+        pred[i] = pred[i + 1] - loc[first]
+    # if the music starts after a silent lead-in, snap bar 1 to the first clear attack near the prediction
+    on0 = onsets[(onsets > pred[0] - 0.6) & (onsets < pred[0] + 0.6)]
+    if len(on0):
+        shift = on0[0] - pred[0]
+        pred[:first] += shift * np.linspace(1, 0, first, endpoint=False)
     # bar n+1 (end of final bar) predicted from local tempo
     lines_pred = np.append(pred, pred[-1] + loc[-2])
 

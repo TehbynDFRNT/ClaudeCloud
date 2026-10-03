@@ -17,7 +17,8 @@ import numpy as np
 import pretty_midi
 
 ROOT = Path(__file__).resolve().parent.parent
-AUDIO = ROOT / 'media/source/winter-mvt1-milman.flac'
+import os
+AUDIO = ROOT / os.environ.get('WINTER_AUDIO', 'media/source/winter-usaf-band.ogg')
 MIDI = ROOT / 'analysis/ref/mutopia-winter-score.mid'
 OUT = ROOT / 'analysis/music-map.json'
 

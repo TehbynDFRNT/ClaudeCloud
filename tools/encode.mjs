@@ -58,7 +58,7 @@ const args = ['-y', '-hide_banner', '-loglevel', 'warning', '-stats', ...input, 
   '-c:a', 'aac', '-b:a', '320k', '-ar', '48000', '-ac', '2',
   '-t', dur, '-movflags', '+faststart',
   '-metadata', `title=${plan.title}`,
-  '-metadata', 'comment=Music: Vivaldi, L\'inverno I (cond. Philip Milman, Lud and Schlatt\'s Musical Emporium, CC BY 3.0). Picture and sound design rendered in code.',
+  '-metadata', 'comment=Music: Vivaldi, L\'inverno I, The United States Air Force Band. Cannon: Tchaikovsky 1812 Overture, The United States Army Band. Picture and sound design rendered in code.',
   out];
 console.log('ffmpeg', args.join(' '));
 const r = spawnSync('ffmpeg', args, { stdio: 'inherit' });

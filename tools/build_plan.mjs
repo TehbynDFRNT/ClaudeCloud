@@ -10,15 +10,20 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const grid = JSON.parse(fs.readFileSync(path.join(ROOT, 'analysis/grid.json'), 'utf8'));
 const FPS = 24;
-const FRAMES = 4272;
+const FRAMES = 3756;                            // 156.5 s
 
 // ---- audio placements (frames) -------------------------------------------------------------
+// Recording: The United States Air Force Band, Vivaldi 'Winter' I (supplied by the director; public domain).
+// The recording's own 1.70 s lead-in is the film's pre-roll (bar 1 lands at 1.70 s).
 // A: bars 1-38 up to the end of the bar-38 tremolo, cut at the ignition frame.
 // B: bars 56-63 (closing tutti + fermata), entering on the bar-56 downbeat.
-const IGNITION = 3134;                         // film frame of the cut (source 129.5833 s)
-const A = { id: 'winter-a', timelineStart: 24, timelineEnd: IGNITION, sourceInSeconds: 0 };
-const B_START = 3398;                          // ignition + 264 frames (11 s) of electronic pressure wave
-const B = { id: 'winter-b', timelineStart: B_START, timelineEnd: 4194, sourceInSeconds: 189.35 };
+const IGNITION = 2725;                         // film frame of the cut (source 113.5417 s, end of the tremolo)
+const A = { id: 'winter-a', timelineStart: 0, timelineEnd: IGNITION, sourceInSeconds: 0 };
+const B_START = IGNITION + 264;                // 11 s of electronic pressure wave and Doppler roar
+const BAR56_SRC = 166.65;                      // bar-56 downbeat onset (dominant C-major chord)
+const B = { id: 'winter-b', timelineStart: B_START, timelineEnd: 3646, sourceInSeconds: +(BAR56_SRC - 1 / FPS).toFixed(4) };
+const DECAY_END = 3646;                        // fermata has decayed below -65 dB (source ~193.4 s)
+const CREDITS = 3650;
 
 function srcToFrame(s) {
   for (const p of [A, B]) {
@@ -36,7 +41,7 @@ function at(bar, eighth = 0) {
 }
 // Strike onsets (tutti quarter-note hits on the downbeats of bars 33-37), strongest onset-envelope
 // peak within +-80 ms of the DP bar line (see analysis notes in README).
-const STRIKE_SRC = { 33: 110.200, 34: 113.764, 35: 117.310, 36: 120.824, 37: 124.382 };
+const STRIKE_SRC = { 33: 96.536, 34: 99.614, 35: 102.692, 36: 105.705, 37: 108.758 };
 const strike = (bar) => srcToFrame(STRIKE_SRC[bar]);
 
 // ---- storyboard ----------------------------------------------------------------------------
@@ -82,12 +87,12 @@ const SB = [
   { id: 'S24-shockfront', start: IGNITION + 136, scene: 'nova', purpose: 'The pressure wave passes us', action: 'The shock front sweeps through camera; refraction, debris streaks; peak of the Doppler roar', framing: 'Inside the wave' },
   { id: 'S25-shell', start: IGNITION + 196, scene: 'nova', purpose: 'Fracture', action: 'The decelerating shell fractures into golden filaments as the roar descends', framing: 'Medium-wide, slowing' },
   // ACT IV — AFTERMATH (bars 56-63)
-  { id: 'S26-expansion', start: at(56), scene: 'nova', purpose: 'Expansion', action: 'The fractured golden shell, immense, expanding; Rayleigh-Taylor fingers and knots; the pair small inside', framing: 'Wide, slow pull back' },
+  { id: 'S26-expansion', start: srcToFrame(BAR56_SRC), scene: 'nova', purpose: 'Expansion', action: 'The fractured golden shell, immense, expanding; Rayleigh-Taylor fingers and knots; the pair small inside', framing: 'Wide, slow pull back' },
   { id: 'S27-devastation', start: at(58), scene: 'redgiant', purpose: 'Devastation', action: 'Goliath scarred: facing hemisphere stripped and burning, embers drifting, envelope torn', framing: 'Medium, slow lateral drift' },
   { id: 'S28-survival', start: at(60), scene: 'whitedwarf', purpose: 'Survival', action: 'The tiny core endures, still blazing; the shell recedes; a thin thread of matter begins to flow again', framing: 'Medium close, steady' },
   { id: 'S29a-ring', start: at(62), scene: 'nova', purpose: 'Cosmic order', action: 'Final wide: the system inside a perfect ring of the shell', framing: 'Wide, centred, still' },
   { id: 'S29b-drawing', start: at(63), scene: 'studies', purpose: 'Understanding endures', action: 'Dissolve to an ink drawing of the same rings with the tiny centre point; mirror script: il sole nõ si move', framing: 'Flat lay, centred' },
-  { id: 'S30-credits', start: 4158, scene: 'studies', purpose: 'Credits', action: 'Black; brief credit lines', framing: 'Black' },
+  { id: 'S30-credits', start: CREDITS, scene: 'studies', purpose: 'Credits', action: 'Black; brief credit lines', framing: 'Black' },
 ];
 
 function frenzy() {
@@ -129,10 +134,10 @@ for (const bar of [33, 34, 35, 36, 37]) cues.push({
   id: `strike-${bar}`, kind: 'orchestral-strike', frame: strike(bar), sourceAudioId: 'winter-a', sourceSeconds: STRIKE_SRC[bar],
   status: 'verified', confidence: 'signal', evidence: 'Onset-envelope peak within 80 ms of DP bar line; score: tutti quarter-note on the downbeat',
 });
-cues.push({ id: 'ignition', kind: 'edit-cut', frame: IGNITION, sourceAudioId: 'winter-a', sourceSeconds: 129.5833, status: 'verified', confidence: 'authored',
-  evidence: 'Music cut at the end of the bar-38 tremolo (RMS falls from 129.6 s into the caesura); pressure wave starts here' });
-cues.push({ id: 'return-bar56', kind: 'music-reentry', frame: at(56), sourceAudioId: 'winter-b', sourceSeconds: grid.bars[55].start, status: 'candidate', confidence: 'signal',
-  evidence: 'DP bar line for bar 56 (dominant C chord downbeat); not verified by listening' });
+cues.push({ id: 'ignition', kind: 'edit-cut', frame: IGNITION, sourceAudioId: 'winter-a', sourceSeconds: Math.floor((IGNITION / FPS) * 1e4) / 1e4, status: 'verified', confidence: 'authored',
+  evidence: 'Music cut at the end of the bar-37/38 tremolo (tremolo 110.2-113.6 s, RMS falls from 113.6 s); pressure wave starts here' });
+cues.push({ id: 'return-bar56', kind: 'music-reentry', frame: srcToFrame(BAR56_SRC), sourceAudioId: 'winter-b', sourceSeconds: BAR56_SRC, status: 'candidate', confidence: 'signal',
+  evidence: 'Onset peak 48 ms before the DP bar line for bar 56 (dominant C chord downbeat); not verified by listening' });
 for (const bar of [1, 3, 6, 8, 10, 11, 12, 16, 20, 23, 27, 32, 58, 60, 62, 63]) cues.push({
   id: `bar-${bar}`, kind: 'bar-line', frame: at(bar), sourceAudioId: bar < 56 ? 'winter-a' : 'winter-b', sourceSeconds: grid.bars[bar - 1].eighths[0],
   status: 'candidate', confidence: 'signal', evidence: 'DP bar-line fit on onset evidence (analysis/grid.json)',
@@ -149,8 +154,8 @@ const effects = [
   { type: 'letterbox', frame: IGNITION, from: 0.128, to: 0.0, frames: 8 },
   { type: 'flash', frame: IGNITION, amount: 30, decay: 9 },
   { type: 'shake', start: IGNITION, end: IGNITION + 200, amp: 9, env: 'decay' },
-  { type: 'fade', start: 4128, end: 4158, from: 0, to: 1 },
-  { type: 'fade', start: 4158, end: FRAMES, from: 1, to: 1 },
+  { type: 'fade', start: DECAY_END - 34, end: CREDITS, from: 0, to: 1 },
+  { type: 'fade', start: CREDITS, end: FRAMES, from: 1, to: 1 },
 ];
 [[33, 0.5], [34, 0.8], [35, 1.1], [36, 1.5], [37, 2.2]].forEach(([bar, a], i) => {
   effects.push({ type: 'flash', frame: strike(bar), amount: a, decay: 4 + i });
@@ -162,8 +167,8 @@ for (const c of cannons) if (c.distance < 0.75 && c.distance > 0.12) effects.pus
 const text = [
   { id: 'name-goliath', start: at(3) + 40, end: at(5) + 20, content: 'GOLIATH\na red giant', style: 'name', maxCps: 12, minFrames: 60 },
   { id: 'name-david', start: at(6) + 30, end: at(8) - 6, content: 'DAVID\na white dwarf', style: 'name', x: 0.075, maxCps: 12, minFrames: 60 },
-  { id: 'end-title', start: at(63) + 24, end: 4128, content: 'DAVID & GOLIATH', style: 'title', y: 0.86, fadeIn: 24, fadeOut: 20, minFrames: 48 },
-  { id: 'credit', start: 4170, end: FRAMES - 8, content: 'MUSIC\nAntonio Vivaldi, L’inverno, I. Allegro non molto\nconducted by Philip Milman · Lud and Schlatt’s Musical Emporium · CC BY 3.0', style: 'credit', fadeIn: 16, fadeOut: 16, minFrames: 72 },
+  { id: 'end-title', start: at(63) + 24, end: DECAY_END - 34, content: 'DAVID & GOLIATH', style: 'title', y: 0.86, fadeIn: 24, fadeOut: 20, minFrames: 48 },
+  { id: 'credit', start: CREDITS + 10, end: FRAMES - 8, content: 'MUSIC\nAntonio Vivaldi, L’inverno, I. Allegro non molto · The United States Air Force Band\nCannon fire from Tchaikovsky’s 1812 Overture · The United States Army Band (2005)', style: 'credit', fadeIn: 16, fadeOut: 16, minFrames: 72 },
 ];
 
 // ---- transitions ----------------------------------------------------------------------------
@@ -179,13 +184,15 @@ const plan = {
   defaultPost: {},
   shots, overlays,
   audio: [
-    { id: 'winter-a', path: 'media/source/winter-mvt1-milman.flac', timelineStart: A.timelineStart, timelineEnd: A.timelineEnd, sourceInSeconds: A.sourceInSeconds, playbackRate: 1, fadeOutMs: 8, note: 'bars 1-38, cut at ignition' },
-    { id: 'winter-b', path: 'media/source/winter-mvt1-milman.flac', timelineStart: B.timelineStart, timelineEnd: B.timelineEnd, sourceInSeconds: B.sourceInSeconds, playbackRate: 1, fadeInMs: 12, note: 'bars 56-63 aftermath (eight bars incl. fermata)' },
-    { id: 'score-synth', generated: true, timelineStart: 0, timelineEnd: B.timelineEnd, sourceInSeconds: 0, playbackRate: 1, note: '80s synth pulse, cannons, pressure wave, Doppler roar (src/audio/score.js)' },
+    { id: 'winter-a', path: 'media/source/winter-usaf-band.ogg', timelineStart: A.timelineStart, timelineEnd: A.timelineEnd, sourceInSeconds: A.sourceInSeconds, playbackRate: 1, fadeOutMs: 8, note: 'bars 1-38 (recording lead-in 1.70 s), cut at ignition' },
+    { id: 'winter-b', path: 'media/source/winter-usaf-band.ogg', timelineStart: B.timelineStart, timelineEnd: B.timelineEnd, sourceInSeconds: B.sourceInSeconds, playbackRate: 1, fadeInMs: 12, note: 'bars 56-63 aftermath (eight bars incl. fermata)' },
+    { id: 'score-synth', generated: true, timelineStart: 0, timelineEnd: B.timelineEnd, sourceInSeconds: 0, playbackRate: 1, note: '80s synth pulse, pressure wave, Doppler roar (src/audio/score.js); cannon samples processed for distance' },
   ],
   cues, effects, text,
   assets: [
-    { id: 'winter', path: 'media/source/winter-mvt1-milman.flac', role: 'music', origin: 'https://archive.org/details/lud-and-schlatts-musical-emporium (PMM-Vivaldi-Winter-MASTER_V1.flac); also Wikimedia Commons', rights: 'CC BY 3.0 — Vivaldi (public domain composition), conducted by Philip Milman, Lud and Schlatt’s Musical Emporium', sha256: '23ac2a6e955dad40c36d3ed0e911f9ac05ae037d7086db2de276507573209a03' },
+    { id: 'winter', path: 'media/source/winter-usaf-band.ogg', role: 'music', origin: 'Supplied by the director (NOVA-02-Music.zip, winter-original.ogg); same performance as archive.org item TheFourSeasonsWinter (USAFB_Winter.ogg, decoded correlation 0.986) and Wikimedia Commons "Vivaldi Winter mvt 1 Allegro non molto - The USAF Concert.ogg"', rights: 'Public domain: performance by The United States Air Force Band (work of the U.S. federal government); composition public domain', sha256: 'fd3e3200c1342e4da55222d6004ffb74ae3ac851c516acf3160d7c79041c206e' },
+    ...[1, 2, 3, 4, 5, 6].map((k) => ({ id: `cannon-${k}`, path: `media/sfx/cannon-${k}.wav`, role: 'sfx', origin: 'Supplied by the director (NOVA-02-Music.zip); 1.65 s excerpts of media/source/1812-us-army-band-2005.ogg, source times in media/sfx/cannon-provenance.json', rights: 'Public domain: Tchaikovsky 1812 Overture performed by The United States Army Band (2005), work of the U.S. federal government' })),
+    { id: 'cannon-source', path: 'media/source/1812-us-army-band-2005.ogg', role: 'sfx-source', origin: 'Supplied by the director (NOVA-02-Music.zip)', rights: 'Public domain (U.S. Army Band performance; composition public domain)', sha256: 'abdc5a4b0054fd3d535503d738757fd72d88fc5af9c5807a42b64c6aa75f02c5' },
     { id: 'font-cinzel', path: 'src/fonts/Cinzel-normal.woff2', role: 'font', origin: 'Google Fonts', rights: 'SIL OFL 1.1 (src/fonts/OFL-Cinzel.txt)' },
     { id: 'font-cormorant', path: 'src/fonts/CormorantGaramond-italic.woff2', role: 'font', origin: 'Google Fonts', rights: 'SIL OFL 1.1 (src/fonts/OFL-CormorantGaramond.txt)' },
     { id: 'font-imfell', path: 'src/fonts/IMFellEnglish-italic.woff2', role: 'font', origin: 'Google Fonts', rights: 'SIL OFL 1.1 (src/fonts/OFL-IMFellEnglish.txt)' },

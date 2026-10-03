@@ -1,7 +1,7 @@
 {
  "title": "David & Goliath — a nova in two voices",
  "fps": "24/1",
- "frames": 4272,
+ "frames": 3756,
  "width": 1920,
  "height": 1080,
  "backend": "webgl2-canvas (headless Chromium, SwiftShader)",
@@ -19,421 +19,421 @@
    "purpose": "Open in the abyss; something immense is near",
    "action": "From black, faint stars; a crimson limb rises from the bottom of frame, plumes lifting; slow upward drift as the basses begin",
    "framing": "Extreme close to the giant's horizon, wide lens, horizon low in frame",
-   "end": 192
+   "end": 182
   },
   {
    "id": "S02-goliath",
-   "start": 192,
+   "start": 182,
    "scene": "redgiant",
    "purpose": "Introduce GOLIATH: overwhelming mass and heat",
    "action": "Pull back to reveal the boiling red giant, convection cells the size of suns, prominences at the limb; slow rotation",
    "framing": "Three-quarter disk, off-centre left, fills 80% of frame height",
-   "end": 434
+   "end": 394
   },
   {
    "id": "S03-david",
-   "start": 434,
+   "start": 394,
    "scene": "whitedwarf",
    "purpose": "Introduce DAVID: tiny, cold, dense",
    "action": "A single piercing blue-white point in black; slow push reveals an Earth-sized sphere, smooth and ferocious, faint blue magnetic filaments",
    "framing": "Starts as a point at frame centre-right; ends medium close",
-   "end": 597
+   "end": 535
   },
   {
    "id": "S04-scale",
-   "start": 597,
+   "start": 535,
    "scene": "binary",
    "purpose": "Scale and attraction: the giant leans toward the dwarf",
    "action": "Wide system view; the giant swollen into a teardrop toward a tiny bright speck; ice-blue scientific lines draw on: orbit, Roche figure-eight, L1",
    "framing": "Giant left third (huge), dwarf right, orbital plane slightly below eye line",
-   "end": 756
+   "end": 677
   },
   {
    "id": "S05-codex",
-   "start": 756,
+   "start": 677,
    "scene": "studies",
    "purpose": "Humanity's impulse to understand (Leonardo)",
    "action": "Match cut: the same figure-eight drawn in iron-gall ink on parchment with mirror-script notes, the pen line completing",
    "framing": "Flat lay of a notebook page, slight drift",
-   "end": 837
+   "end": 747
   },
   {
    "id": "S06-first-pull",
-   "start": 837,
+   "start": 747,
    "scene": "binary",
    "purpose": "Attraction becomes force",
    "action": "Close on the giant's L1 tip: the surface lifts into a tongue of plasma stretching toward the off-screen dwarf whose light rakes it blue-white",
    "framing": "Low angle along the stretching tongue",
-   "end": 925
+   "end": 817
   },
   {
    "id": "S07-stream",
-   "start": 925,
+   "start": 817,
    "scene": "binary",
    "purpose": "Vast sheets of incandescent matter rip from the giant",
    "action": "A river of fire pours through L1 and arcs across space toward the dwarf; camera tracks alongside the stream",
    "framing": "Medium-wide, stream crossing frame left to right",
-   "end": 1150
+   "end": 979
   },
   {
    "id": "S08-parabola",
-   "start": 1150,
+   "start": 979,
    "scene": "binary",
    "purpose": "Orbital parabolas: the stolen matter falls",
    "action": "Ride with a clump along its ballistic arc as Coriolis bends it around the dwarf; a gold dashed trajectory with tick marks draws ahead of it",
    "framing": "Chase camera above the orbital plane",
-   "end": 1260
+   "end": 1106
   },
   {
    "id": "S09-hotspot",
-   "start": 1260,
+   "start": 1106,
    "scene": "vortex",
    "purpose": "Resistance: impact and sparks",
    "action": "Where the stream slams the forming disk: shock, sparks, turbulent plasma; blue magnetic filaments channel matter",
    "framing": "Close, grazing the disk rim",
-   "end": 1430
+   "end": 1238
   },
   {
    "id": "S10-prometheus",
-   "start": 1430,
+   "start": 1238,
    "scene": "studies",
    "purpose": "Prometheus's stolen fire (restrained glimpse)",
    "action": "Red-chalk study: a hand carrying a flame in a fennel stalk; a faint arc links a large circle to a small one",
    "framing": "Close on the drawing, the flame catching warm light",
-   "end": 1533
+   "end": 1322
   },
   {
    "id": "S11-giant-bleeds",
-   "start": 1533,
+   "start": 1322,
    "scene": "binary",
    "purpose": "Goliath bleeds",
    "action": "The giant's torn L1 tip pouring matter into space",
    "framing": "Medium close on the tip, stream leaving frame right",
-   "end": 1592
+   "end": 1381
   },
   {
    "id": "S12-engulf",
-   "start": 1592,
+   "start": 1381,
    "scene": "vortex",
    "purpose": "Gravitational terror: the vortex engulfs the dwarf",
    "action": "Camera sinks into the disk plane; crimson and gold spirals rush past on both sides; the dwarf blazes at the centre, swallowed",
    "framing": "Wide-angle inside the vortex, dwarf centre frame",
-   "end": 1743
+   "end": 1515
   },
   {
    "id": "S13-atoms",
-   "start": 1743,
+   "start": 1515,
    "scene": "atoms",
    "purpose": "Tactile atomic intensity",
    "action": "Hydrogen nuclei rain onto a compressed layer, jittering, glowing, pressing together",
    "framing": "Macro, shallow depth of field",
-   "end": 1821
+   "end": 1586
   },
   {
    "id": "S14a-ocean",
-   "start": 1821,
+   "start": 1586,
    "scene": "whitedwarf",
    "purpose": "Compression: the hydrogen layer piles up",
    "action": "The dwarf surface under a thickening glowing ocean of accreted gas",
    "framing": "Close, horizon of the dwarf",
-   "end": 1861
+   "end": 1622
   },
   {
    "id": "S14b-boil",
-   "start": 1861,
+   "start": 1622,
    "scene": "plasma",
    "purpose": "Boiling plasma",
    "action": "Gold-crimson plasma convulsing",
    "framing": "Macro",
-   "end": 1901
+   "end": 1657
   },
   {
    "id": "S14c-mass-loss",
-   "start": 1901,
+   "start": 1657,
    "scene": "binary",
    "purpose": "The giant is drained",
    "action": "Wide: the giant visibly feeding the disk",
    "framing": "Wide, high angle",
-   "end": 1942
+   "end": 1693
   },
   {
    "id": "S14d-deluge",
-   "start": 1942,
+   "start": 1693,
    "scene": "studies",
    "purpose": "Leonardo's water vortex rhymes with the disk",
    "action": "Ink study of a swirling deluge vortex drawing itself",
    "framing": "Close on the drawing",
-   "end": 1982
+   "end": 1729
   },
   {
    "id": "S14e-spiral",
-   "start": 1982,
+   "start": 1729,
    "scene": "vortex",
    "purpose": "The real vortex answers the drawing",
    "action": "Top-down accretion spiral, same rotation as the ink",
    "framing": "Top-down, disk fills frame",
-   "end": 2022
+   "end": 1765
   },
   {
    "id": "S14f-cno",
-   "start": 2022,
+   "start": 1765,
    "scene": "atoms",
    "purpose": "The fuel cycle",
    "action": "Glowing nuclei arranged in the CNO cycle, protons striking carbon",
    "framing": "Medium, symmetric",
-   "end": 2062
+   "end": 1799
   },
   {
    "id": "S14g-filaments",
-   "start": 2062,
+   "start": 1799,
    "scene": "plasma",
    "purpose": "Cold blue magnetism tightening",
    "action": "Blue filaments twisting and tightening around a hot core",
    "framing": "Macro",
-   "end": 2104
+   "end": 1836
   },
   {
    "id": "S14h-flare",
-   "start": 2104,
+   "start": 1836,
    "scene": "whitedwarf",
    "purpose": "First flickers",
    "action": "The surface brightens; small flares flicker",
    "framing": "Close",
-   "end": 2146
+   "end": 1873
   },
   {
    "id": "F27.1",
-   "start": 2146,
+   "start": 1873,
    "scene": "binary",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 1/4 of bar 27; see the scene preset",
    "framing": "Varied",
-   "end": 2167
+   "end": 1891
   },
   {
    "id": "F27.2",
-   "start": 2167,
+   "start": 1891,
    "scene": "plasma",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 2/4 of bar 27; see the scene preset",
    "framing": "Varied",
-   "end": 2189
+   "end": 1910
   },
   {
    "id": "F27.3",
-   "start": 2189,
+   "start": 1910,
    "scene": "studies",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 3/4 of bar 27; see the scene preset",
    "framing": "Varied",
-   "end": 2211
+   "end": 1928
   },
   {
    "id": "F27.4",
-   "start": 2211,
+   "start": 1928,
    "scene": "vortex",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 4/4 of bar 27; see the scene preset",
    "framing": "Varied",
-   "end": 2232
+   "end": 1947
   },
   {
    "id": "F28.1",
-   "start": 2232,
+   "start": 1947,
    "scene": "atoms",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 1/4 of bar 28; see the scene preset",
    "framing": "Varied",
-   "end": 2254
+   "end": 1966
   },
   {
    "id": "F28.2",
-   "start": 2254,
+   "start": 1966,
    "scene": "redgiant",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 2/4 of bar 28; see the scene preset",
    "framing": "Varied",
-   "end": 2277
+   "end": 1984
   },
   {
    "id": "F28.3",
-   "start": 2277,
+   "start": 1984,
    "scene": "plasma",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 3/4 of bar 28; see the scene preset",
    "framing": "Varied",
-   "end": 2298
+   "end": 2003
   },
   {
    "id": "F28.4",
-   "start": 2298,
+   "start": 2003,
    "scene": "whitedwarf",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 4/4 of bar 28; see the scene preset",
    "framing": "Varied",
-   "end": 2321
+   "end": 2022
   },
   {
    "id": "F29.1",
-   "start": 2321,
+   "start": 2022,
    "scene": "studies",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 1/4 of bar 29; see the scene preset",
    "framing": "Varied",
-   "end": 2343
+   "end": 2041
   },
   {
    "id": "F29.2",
-   "start": 2343,
+   "start": 2041,
    "scene": "vortex",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 2/4 of bar 29; see the scene preset",
    "framing": "Varied",
-   "end": 2366
+   "end": 2059
   },
   {
    "id": "F29.3",
-   "start": 2366,
+   "start": 2059,
    "scene": "plasma",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 3/4 of bar 29; see the scene preset",
    "framing": "Varied",
-   "end": 2389
+   "end": 2078
   },
   {
    "id": "F29.4",
-   "start": 2389,
+   "start": 2078,
    "scene": "binary",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 4/4 of bar 29; see the scene preset",
    "framing": "Varied",
-   "end": 2411
+   "end": 2097
   },
   {
    "id": "F30.1",
-   "start": 2411,
+   "start": 2097,
    "scene": "atoms",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 1/4 of bar 30; see the scene preset",
    "framing": "Varied",
-   "end": 2433
+   "end": 2116
   },
   {
    "id": "F30.2",
-   "start": 2433,
+   "start": 2116,
    "scene": "plasma",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 2/4 of bar 30; see the scene preset",
    "framing": "Varied",
-   "end": 2455
+   "end": 2135
   },
   {
    "id": "F30.3",
-   "start": 2455,
+   "start": 2135,
    "scene": "studies",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 3/4 of bar 30; see the scene preset",
    "framing": "Varied",
-   "end": 2477
+   "end": 2154
   },
   {
    "id": "F30.4",
-   "start": 2477,
+   "start": 2154,
    "scene": "whitedwarf",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 4/4 of bar 30; see the scene preset",
    "framing": "Varied",
-   "end": 2499
+   "end": 2173
   },
   {
    "id": "F31.1",
-   "start": 2499,
+   "start": 2173,
    "scene": "vortex",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 1/8 of bar 31; see the scene preset",
    "framing": "Varied",
-   "end": 2509
+   "end": 2181
   },
   {
    "id": "F31.2",
-   "start": 2509,
+   "start": 2181,
    "scene": "plasma",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 2/8 of bar 31; see the scene preset",
    "framing": "Varied",
-   "end": 2519
+   "end": 2190
   },
   {
    "id": "F31.3",
-   "start": 2519,
+   "start": 2190,
    "scene": "atoms",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 3/8 of bar 31; see the scene preset",
    "framing": "Varied",
-   "end": 2531
+   "end": 2200
   },
   {
    "id": "F31.4",
-   "start": 2531,
+   "start": 2200,
    "scene": "studies",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 4/8 of bar 31; see the scene preset",
    "framing": "Varied",
-   "end": 2541
+   "end": 2209
   },
   {
    "id": "F31.5",
-   "start": 2541,
+   "start": 2209,
    "scene": "plasma",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 5/8 of bar 31; see the scene preset",
    "framing": "Varied",
-   "end": 2552
+   "end": 2218
   },
   {
    "id": "F31.6",
-   "start": 2552,
+   "start": 2218,
    "scene": "plasma",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 6/8 of bar 31; see the scene preset",
    "framing": "Varied",
-   "end": 2563
+   "end": 2227
   },
   {
    "id": "F31.7",
-   "start": 2563,
+   "start": 2227,
    "scene": "whitedwarf",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 7/8 of bar 31; see the scene preset",
    "framing": "Varied",
-   "end": 2573
+   "end": 2236
   },
   {
    "id": "F31.8",
-   "start": 2573,
+   "start": 2236,
    "scene": "atoms",
    "purpose": "Frenzy of perspectives",
    "action": "Beat-cut 8/8 of bar 31; see the scene preset",
    "framing": "Varied",
-   "end": 2583
+   "end": 2245
   },
   {
    "id": "S16-ladder",
-   "start": 2583,
+   "start": 2245,
    "scene": "vortex",
    "purpose": "Held breath before the strikes",
    "action": "The vortex from above spins faster; the dwarf brightens; silence in the tutti, then tremolo",
    "framing": "Top-down, slow push",
-   "end": 2669
+   "end": 2317
   },
   {
    "id": "S17-strike1",
-   "start": 2669,
+   "start": 2317,
    "scene": "binary",
    "purpose": "Strike 1: the whole system shudders",
    "action": "Hard cut on the strike: wide system, disk flares, stream whips",
    "framing": "Wide",
-   "end": 2754,
+   "end": 2391,
    "sync": {
     "cueId": "strike-33",
     "point": "start",
@@ -443,12 +443,12 @@
   },
   {
    "id": "S18-strike2",
-   "start": 2754,
+   "start": 2391,
    "scene": "vortex",
    "purpose": "Strike 2: closer",
    "action": "Inner disk white-hot around the engulfed dwarf",
    "framing": "Medium",
-   "end": 2839,
+   "end": 2465,
    "sync": {
     "cueId": "strike-34",
     "point": "start",
@@ -458,12 +458,12 @@
   },
   {
    "id": "S19-strike3",
-   "start": 2839,
+   "start": 2465,
    "scene": "whitedwarf",
    "purpose": "Strike 3: the surface convulses",
    "action": "Dwarf surface layer glowing, blue filaments snapping",
    "framing": "Close",
-   "end": 2924,
+   "end": 2537,
    "sync": {
     "cueId": "strike-35",
     "point": "start",
@@ -473,12 +473,12 @@
   },
   {
    "id": "S20-strike4",
-   "start": 2924,
+   "start": 2537,
    "scene": "atoms",
    "purpose": "Strike 4: the nuclei are crushed",
    "action": "Nuclei crushed together; fusion sparks multiplying",
    "framing": "Macro",
-   "end": 3009,
+   "end": 2610,
    "sync": {
     "cueId": "strike-36",
     "point": "start",
@@ -488,12 +488,12 @@
   },
   {
    "id": "S21-strike5",
-   "start": 3009,
+   "start": 2610,
    "scene": "whitedwarf",
    "purpose": "Strike 5 and the final tremolo: inevitability",
    "action": "Extreme close on the surface; light bends; brightness climbs toward white; the image draws inward to a point",
    "framing": "Extreme close, converging",
-   "end": 3134,
+   "end": 2725,
    "sync": {
     "cueId": "strike-37",
     "point": "start",
@@ -503,12 +503,12 @@
   },
   {
    "id": "S22-ignition",
-   "start": 3134,
+   "start": 2725,
    "scene": "nova",
    "purpose": "Ignition: thermonuclear runaway",
    "action": "White-out; frame opens to full height; a white-hot spherical eruption fills the frame from the dwarf",
    "framing": "Close, centred",
-   "end": 3178,
+   "end": 2769,
    "sync": {
     "cueId": "ignition",
     "point": "start",
@@ -518,84 +518,84 @@
   },
   {
    "id": "S23-eruption",
-   "start": 3178,
+   "start": 2769,
    "scene": "nova",
    "purpose": "The eruption overwhelms the system",
    "action": "Wide: the white sphere swallows the disk and races toward the giant, whose facing hemisphere flares white-gold",
    "framing": "Wide system",
-   "end": 3270
+   "end": 2861
   },
   {
    "id": "S24-shockfront",
-   "start": 3270,
+   "start": 2861,
    "scene": "nova",
    "purpose": "The pressure wave passes us",
    "action": "The shock front sweeps through camera; refraction, debris streaks; peak of the Doppler roar",
    "framing": "Inside the wave",
-   "end": 3330
+   "end": 2921
   },
   {
    "id": "S25-shell",
-   "start": 3330,
+   "start": 2921,
    "scene": "nova",
    "purpose": "Fracture",
    "action": "The decelerating shell fractures into golden filaments as the roar descends",
    "framing": "Medium-wide, slowing",
-   "end": 3399
+   "end": 2990
   },
   {
    "id": "S26-expansion",
-   "start": 3399,
+   "start": 2990,
    "scene": "nova",
    "purpose": "Expansion",
    "action": "The fractured golden shell, immense, expanding; Rayleigh-Taylor fingers and knots; the pair small inside",
    "framing": "Wide, slow pull back",
-   "end": 3562
+   "end": 3134
   },
   {
    "id": "S27-devastation",
-   "start": 3562,
+   "start": 3134,
    "scene": "redgiant",
    "purpose": "Devastation",
    "action": "Goliath scarred: facing hemisphere stripped and burning, embers drifting, envelope torn",
    "framing": "Medium, slow lateral drift",
-   "end": 3730
+   "end": 3277
   },
   {
    "id": "S28-survival",
-   "start": 3730,
+   "start": 3277,
    "scene": "whitedwarf",
    "purpose": "Survival",
    "action": "The tiny core endures, still blazing; the shell recedes; a thin thread of matter begins to flow again",
    "framing": "Medium close, steady",
-   "end": 3907
+   "end": 3425
   },
   {
    "id": "S29a-ring",
-   "start": 3907,
+   "start": 3425,
    "scene": "nova",
    "purpose": "Cosmic order",
    "action": "Final wide: the system inside a perfect ring of the shell",
    "framing": "Wide, centred, still",
-   "end": 4003
+   "end": 3505
   },
   {
    "id": "S29b-drawing",
-   "start": 4003,
+   "start": 3505,
    "scene": "studies",
    "purpose": "Understanding endures",
    "action": "Dissolve to an ink drawing of the same rings with the tiny centre point; mirror script: il sole nõ si move",
    "framing": "Flat lay, centred",
-   "end": 4158
+   "end": 3650
   },
   {
    "id": "S30-credits",
-   "start": 4158,
+   "start": 3650,
    "scene": "studies",
    "purpose": "Credits",
    "action": "Black; brief credit lines",
    "framing": "Black",
-   "end": 4272
+   "end": 3756
   }
  ],
  "overlays": [
@@ -604,28 +604,28 @@
    "type": "dissolve",
    "from": "S29a-ring",
    "to": "S29b-drawing",
-   "start": 3985,
-   "end": 4033,
+   "start": 3487,
+   "end": 3535,
    "purpose": "Match dissolve: real rings become ink rings"
   }
  ],
  "audio": [
   {
    "id": "winter-a",
-   "path": "media/source/winter-mvt1-milman.flac",
-   "timelineStart": 24,
-   "timelineEnd": 3134,
+   "path": "media/source/winter-usaf-band.ogg",
+   "timelineStart": 0,
+   "timelineEnd": 2725,
    "sourceInSeconds": 0,
    "playbackRate": 1,
    "fadeOutMs": 8,
-   "note": "bars 1-38, cut at ignition"
+   "note": "bars 1-38 (recording lead-in 1.70 s), cut at ignition"
   },
   {
    "id": "winter-b",
-   "path": "media/source/winter-mvt1-milman.flac",
-   "timelineStart": 3398,
-   "timelineEnd": 4194,
-   "sourceInSeconds": 189.35,
+   "path": "media/source/winter-usaf-band.ogg",
+   "timelineStart": 2989,
+   "timelineEnd": 3646,
+   "sourceInSeconds": 166.6083,
    "playbackRate": 1,
    "fadeInMs": 12,
    "note": "bars 56-63 aftermath (eight bars incl. fermata)"
@@ -634,19 +634,19 @@
    "id": "score-synth",
    "generated": true,
    "timelineStart": 0,
-   "timelineEnd": 4194,
+   "timelineEnd": 3646,
    "sourceInSeconds": 0,
    "playbackRate": 1,
-   "note": "80s synth pulse, cannons, pressure wave, Doppler roar (src/audio/score.js)"
+   "note": "80s synth pulse, pressure wave, Doppler roar (src/audio/score.js); cannon samples processed for distance"
   }
  ],
  "cues": [
   {
    "id": "strike-33",
    "kind": "orchestral-strike",
-   "frame": 2669,
+   "frame": 2317,
    "sourceAudioId": "winter-a",
-   "sourceSeconds": 110.2,
+   "sourceSeconds": 96.536,
    "status": "verified",
    "confidence": "signal",
    "evidence": "Onset-envelope peak within 80 ms of DP bar line; score: tutti quarter-note on the downbeat"
@@ -654,9 +654,9 @@
   {
    "id": "strike-34",
    "kind": "orchestral-strike",
-   "frame": 2754,
+   "frame": 2391,
    "sourceAudioId": "winter-a",
-   "sourceSeconds": 113.764,
+   "sourceSeconds": 99.614,
    "status": "verified",
    "confidence": "signal",
    "evidence": "Onset-envelope peak within 80 ms of DP bar line; score: tutti quarter-note on the downbeat"
@@ -664,9 +664,9 @@
   {
    "id": "strike-35",
    "kind": "orchestral-strike",
-   "frame": 2839,
+   "frame": 2465,
    "sourceAudioId": "winter-a",
-   "sourceSeconds": 117.31,
+   "sourceSeconds": 102.692,
    "status": "verified",
    "confidence": "signal",
    "evidence": "Onset-envelope peak within 80 ms of DP bar line; score: tutti quarter-note on the downbeat"
@@ -674,9 +674,9 @@
   {
    "id": "strike-36",
    "kind": "orchestral-strike",
-   "frame": 2924,
+   "frame": 2537,
    "sourceAudioId": "winter-a",
-   "sourceSeconds": 120.824,
+   "sourceSeconds": 105.705,
    "status": "verified",
    "confidence": "signal",
    "evidence": "Onset-envelope peak within 80 ms of DP bar line; score: tutti quarter-note on the downbeat"
@@ -684,9 +684,9 @@
   {
    "id": "strike-37",
    "kind": "orchestral-strike",
-   "frame": 3009,
+   "frame": 2610,
    "sourceAudioId": "winter-a",
-   "sourceSeconds": 124.382,
+   "sourceSeconds": 108.758,
    "status": "verified",
    "confidence": "signal",
    "evidence": "Onset-envelope peak within 80 ms of DP bar line; score: tutti quarter-note on the downbeat"
@@ -694,29 +694,29 @@
   {
    "id": "ignition",
    "kind": "edit-cut",
-   "frame": 3134,
+   "frame": 2725,
    "sourceAudioId": "winter-a",
-   "sourceSeconds": 129.5833,
+   "sourceSeconds": 113.5416,
    "status": "verified",
    "confidence": "authored",
-   "evidence": "Music cut at the end of the bar-38 tremolo (RMS falls from 129.6 s into the caesura); pressure wave starts here"
+   "evidence": "Music cut at the end of the bar-37/38 tremolo (tremolo 110.2-113.6 s, RMS falls from 113.6 s); pressure wave starts here"
   },
   {
    "id": "return-bar56",
    "kind": "music-reentry",
-   "frame": 3399,
+   "frame": 2990,
    "sourceAudioId": "winter-b",
-   "sourceSeconds": 189.3897,
+   "sourceSeconds": 166.65,
    "status": "candidate",
    "confidence": "signal",
-   "evidence": "DP bar line for bar 56 (dominant C chord downbeat); not verified by listening"
+   "evidence": "Onset peak 48 ms before the DP bar line for bar 56 (dominant C chord downbeat); not verified by listening"
   },
   {
    "id": "bar-1",
    "kind": "bar-line",
-   "frame": 29,
+   "frame": 41,
    "sourceAudioId": "winter-a",
-   "sourceSeconds": 0.2264,
+   "sourceSeconds": 1.6893,
    "status": "candidate",
    "confidence": "signal",
    "evidence": "DP bar-line fit on onset evidence (analysis/grid.json)"
@@ -724,9 +724,9 @@
   {
    "id": "bar-3",
    "kind": "bar-line",
-   "frame": 192,
+   "frame": 182,
    "sourceAudioId": "winter-a",
-   "sourceSeconds": 7.0066,
+   "sourceSeconds": 7.5755,
    "status": "candidate",
    "confidence": "signal",
    "evidence": "DP bar-line fit on onset evidence (analysis/grid.json)"
@@ -734,9 +734,9 @@
   {
    "id": "bar-6",
    "kind": "bar-line",
-   "frame": 434,
+   "frame": 394,
    "sourceAudioId": "winter-a",
-   "sourceSeconds": 17.0957,
+   "sourceSeconds": 16.4223,
    "status": "candidate",
    "confidence": "signal",
    "evidence": "DP bar-line fit on onset evidence (analysis/grid.json)"
@@ -744,9 +744,9 @@
   {
    "id": "bar-8",
    "kind": "bar-line",
-   "frame": 597,
+   "frame": 535,
    "sourceAudioId": "winter-a",
-   "sourceSeconds": 23.872,
+   "sourceSeconds": 22.2912,
    "status": "candidate",
    "confidence": "signal",
    "evidence": "DP bar-line fit on onset evidence (analysis/grid.json)"
@@ -754,9 +754,9 @@
   {
    "id": "bar-10",
    "kind": "bar-line",
-   "frame": 756,
+   "frame": 677,
    "sourceAudioId": "winter-a",
-   "sourceSeconds": 30.5052,
+   "sourceSeconds": 28.1948,
    "status": "candidate",
    "confidence": "signal",
    "evidence": "DP bar-line fit on onset evidence (analysis/grid.json)"
@@ -764,9 +764,9 @@
   {
    "id": "bar-11",
    "kind": "bar-line",
-   "frame": 837,
+   "frame": 747,
    "sourceAudioId": "winter-a",
-   "sourceSeconds": 33.8605,
+   "sourceSeconds": 31.1089,
    "status": "candidate",
    "confidence": "signal",
    "evidence": "DP bar-line fit on onset evidence (analysis/grid.json)"
@@ -774,9 +774,9 @@
   {
    "id": "bar-12",
    "kind": "bar-line",
-   "frame": 925,
+   "frame": 817,
    "sourceAudioId": "winter-a",
-   "sourceSeconds": 37.5427,
+   "sourceSeconds": 34.0346,
    "status": "candidate",
    "confidence": "signal",
    "evidence": "DP bar-line fit on onset evidence (analysis/grid.json)"
@@ -784,9 +784,9 @@
   {
    "id": "bar-16",
    "kind": "bar-line",
-   "frame": 1260,
+   "frame": 1106,
    "sourceAudioId": "winter-a",
-   "sourceSeconds": 51.4976,
+   "sourceSeconds": 46.103,
    "status": "candidate",
    "confidence": "signal",
    "evidence": "DP bar-line fit on onset evidence (analysis/grid.json)"
@@ -794,9 +794,9 @@
   {
    "id": "bar-20",
    "kind": "bar-line",
-   "frame": 1592,
+   "frame": 1381,
    "sourceAudioId": "winter-a",
-   "sourceSeconds": 65.3369,
+   "sourceSeconds": 57.5349,
    "status": "candidate",
    "confidence": "signal",
    "evidence": "DP bar-line fit on onset evidence (analysis/grid.json)"
@@ -804,9 +804,9 @@
   {
    "id": "bar-23",
    "kind": "bar-line",
-   "frame": 1821,
+   "frame": 1586,
    "sourceAudioId": "winter-a",
-   "sourceSeconds": 74.8902,
+   "sourceSeconds": 66.0782,
    "status": "candidate",
    "confidence": "signal",
    "evidence": "DP bar-line fit on onset evidence (analysis/grid.json)"
@@ -814,9 +814,9 @@
   {
    "id": "bar-27",
    "kind": "bar-line",
-   "frame": 2146,
+   "frame": 1873,
    "sourceAudioId": "winter-a",
-   "sourceSeconds": 88.4158,
+   "sourceSeconds": 78.0365,
    "status": "candidate",
    "confidence": "signal",
    "evidence": "DP bar-line fit on onset evidence (analysis/grid.json)"
@@ -824,9 +824,9 @@
   {
    "id": "bar-32",
    "kind": "bar-line",
-   "frame": 2583,
+   "frame": 2245,
    "sourceAudioId": "winter-a",
-   "sourceSeconds": 106.6434,
+   "sourceSeconds": 93.559,
    "status": "candidate",
    "confidence": "signal",
    "evidence": "DP bar-line fit on onset evidence (analysis/grid.json)"
@@ -834,9 +834,9 @@
   {
    "id": "bar-58",
    "kind": "bar-line",
-   "frame": 3562,
+   "frame": 3134,
    "sourceAudioId": "winter-b",
-   "sourceSeconds": 196.1796,
+   "sourceSeconds": 172.6404,
    "status": "candidate",
    "confidence": "signal",
    "evidence": "DP bar-line fit on onset evidence (analysis/grid.json)"
@@ -844,9 +844,9 @@
   {
    "id": "bar-60",
    "kind": "bar-line",
-   "frame": 3730,
+   "frame": 3277,
    "sourceAudioId": "winter-b",
-   "sourceSeconds": 203.1804,
+   "sourceSeconds": 178.621,
    "status": "candidate",
    "confidence": "signal",
    "evidence": "DP bar-line fit on onset evidence (analysis/grid.json)"
@@ -854,9 +854,9 @@
   {
    "id": "bar-62",
    "kind": "bar-line",
-   "frame": 3907,
+   "frame": 3425,
    "sourceAudioId": "winter-b",
-   "sourceSeconds": 210.5549,
+   "sourceSeconds": 184.7569,
    "status": "candidate",
    "confidence": "signal",
    "evidence": "DP bar-line fit on onset evidence (analysis/grid.json)"
@@ -864,9 +864,9 @@
   {
    "id": "bar-63",
    "kind": "bar-line",
-   "frame": 4003,
+   "frame": 3505,
    "sourceAudioId": "winter-b",
-   "sourceSeconds": 214.577,
+   "sourceSeconds": 188.107,
    "status": "candidate",
    "confidence": "signal",
    "evidence": "DP bar-line fit on onset evidence (analysis/grid.json)"
@@ -874,7 +874,7 @@
   {
    "id": "cannon-5",
    "kind": "cannon",
-   "frame": 354,
+   "frame": 323,
    "distance": 1,
    "status": "verified",
    "confidence": "authored",
@@ -883,7 +883,7 @@
   {
    "id": "cannon-7",
    "kind": "cannon",
-   "frame": 514,
+   "frame": 464,
    "distance": 0.95,
    "status": "verified",
    "confidence": "authored",
@@ -892,7 +892,7 @@
   {
    "id": "cannon-9",
    "kind": "cannon",
-   "frame": 675,
+   "frame": 606,
    "distance": 0.9,
    "status": "verified",
    "confidence": "authored",
@@ -901,7 +901,7 @@
   {
    "id": "cannon-11",
    "kind": "cannon",
-   "frame": 837,
+   "frame": 747,
    "distance": 0.85,
    "status": "verified",
    "confidence": "authored",
@@ -910,7 +910,7 @@
   {
    "id": "cannon-12",
    "kind": "cannon",
-   "frame": 925,
+   "frame": 817,
    "distance": 0.8,
    "status": "verified",
    "confidence": "authored",
@@ -919,7 +919,7 @@
   {
    "id": "cannon-16",
    "kind": "cannon",
-   "frame": 1260,
+   "frame": 1106,
    "distance": 0.72,
    "status": "verified",
    "confidence": "authored",
@@ -928,7 +928,7 @@
   {
    "id": "cannon-18",
    "kind": "cannon",
-   "frame": 1430,
+   "frame": 1238,
    "distance": 0.66,
    "status": "verified",
    "confidence": "authored",
@@ -937,7 +937,7 @@
   {
    "id": "cannon-20",
    "kind": "cannon",
-   "frame": 1592,
+   "frame": 1381,
    "distance": 0.58,
    "status": "verified",
    "confidence": "authored",
@@ -946,7 +946,7 @@
   {
    "id": "cannon-21",
    "kind": "cannon",
-   "frame": 1665,
+   "frame": 1445,
    "distance": 0.54,
    "status": "verified",
    "confidence": "authored",
@@ -955,7 +955,7 @@
   {
    "id": "cannon-22",
    "kind": "cannon",
-   "frame": 1743,
+   "frame": 1515,
    "distance": 0.5,
    "status": "verified",
    "confidence": "authored",
@@ -964,7 +964,7 @@
   {
    "id": "cannon-23",
    "kind": "cannon",
-   "frame": 1821,
+   "frame": 1586,
    "distance": 0.46,
    "status": "verified",
    "confidence": "authored",
@@ -973,7 +973,7 @@
   {
    "id": "cannon-24",
    "kind": "cannon",
-   "frame": 1901,
+   "frame": 1657,
    "distance": 0.42,
    "status": "verified",
    "confidence": "authored",
@@ -982,7 +982,7 @@
   {
    "id": "cannon-25",
    "kind": "cannon",
-   "frame": 1982,
+   "frame": 1729,
    "distance": 0.38,
    "status": "verified",
    "confidence": "authored",
@@ -991,7 +991,7 @@
   {
    "id": "cannon-26",
    "kind": "cannon",
-   "frame": 2062,
+   "frame": 1799,
    "distance": 0.34,
    "status": "verified",
    "confidence": "authored",
@@ -1000,7 +1000,7 @@
   {
    "id": "cannon-27",
    "kind": "cannon",
-   "frame": 2146,
+   "frame": 1873,
    "distance": 0.3,
    "status": "verified",
    "confidence": "authored",
@@ -1009,7 +1009,7 @@
   {
    "id": "cannon-28",
    "kind": "cannon",
-   "frame": 2232,
+   "frame": 1947,
    "distance": 0.27,
    "status": "verified",
    "confidence": "authored",
@@ -1018,7 +1018,7 @@
   {
    "id": "cannon-29",
    "kind": "cannon",
-   "frame": 2321,
+   "frame": 2022,
    "distance": 0.24,
    "status": "verified",
    "confidence": "authored",
@@ -1027,7 +1027,7 @@
   {
    "id": "cannon-30",
    "kind": "cannon",
-   "frame": 2411,
+   "frame": 2097,
    "distance": 0.21,
    "status": "verified",
    "confidence": "authored",
@@ -1036,7 +1036,7 @@
   {
    "id": "cannon-31",
    "kind": "cannon",
-   "frame": 2499,
+   "frame": 2173,
    "distance": 0.18,
    "status": "verified",
    "confidence": "authored",
@@ -1045,7 +1045,7 @@
   {
    "id": "cannon-32",
    "kind": "cannon",
-   "frame": 2583,
+   "frame": 2245,
    "distance": 0.15,
    "status": "verified",
    "confidence": "authored",
@@ -1054,7 +1054,7 @@
   {
    "id": "cannon-33",
    "kind": "cannon",
-   "frame": 2669,
+   "frame": 2317,
    "distance": 0.12,
    "status": "verified",
    "confidence": "authored",
@@ -1063,7 +1063,7 @@
   {
    "id": "cannon-34",
    "kind": "cannon",
-   "frame": 2754,
+   "frame": 2391,
    "distance": 0.09,
    "status": "verified",
    "confidence": "authored",
@@ -1072,7 +1072,7 @@
   {
    "id": "cannon-35",
    "kind": "cannon",
-   "frame": 2839,
+   "frame": 2465,
    "distance": 0.06,
    "status": "verified",
    "confidence": "authored",
@@ -1081,7 +1081,7 @@
   {
    "id": "cannon-36",
    "kind": "cannon",
-   "frame": 2924,
+   "frame": 2537,
    "distance": 0.03,
    "status": "verified",
    "confidence": "authored",
@@ -1090,7 +1090,7 @@
   {
    "id": "cannon-37",
    "kind": "cannon",
-   "frame": 3009,
+   "frame": 2610,
    "distance": 0,
    "status": "verified",
    "confidence": "authored",
@@ -1107,205 +1107,205 @@
   },
   {
    "type": "letterbox",
-   "frame": 3134,
+   "frame": 2725,
    "from": 0.128,
    "to": 0,
    "frames": 8
   },
   {
    "type": "flash",
-   "frame": 3134,
+   "frame": 2725,
    "amount": 30,
    "decay": 9
   },
   {
    "type": "shake",
-   "start": 3134,
-   "end": 3334,
+   "start": 2725,
+   "end": 2925,
    "amp": 9,
    "env": "decay"
   },
   {
    "type": "fade",
-   "start": 4128,
-   "end": 4158,
+   "start": 3612,
+   "end": 3650,
    "from": 0,
    "to": 1
   },
   {
    "type": "fade",
-   "start": 4158,
-   "end": 4272,
+   "start": 3650,
+   "end": 3756,
    "from": 1,
    "to": 1
   },
   {
    "type": "flash",
-   "frame": 2669,
+   "frame": 2317,
    "amount": 0.5,
    "decay": 4
   },
   {
    "type": "shake",
-   "start": 2669,
-   "end": 2687,
+   "start": 2317,
+   "end": 2335,
    "amp": 3,
    "env": "decay"
   },
   {
    "type": "flash",
-   "frame": 2754,
+   "frame": 2391,
    "amount": 0.8,
    "decay": 5
   },
   {
    "type": "shake",
-   "start": 2754,
-   "end": 2772,
+   "start": 2391,
+   "end": 2409,
    "amp": 5,
    "env": "decay"
   },
   {
    "type": "flash",
-   "frame": 2839,
+   "frame": 2465,
    "amount": 1.1,
    "decay": 6
   },
   {
    "type": "shake",
-   "start": 2839,
-   "end": 2857,
+   "start": 2465,
+   "end": 2483,
    "amp": 7,
    "env": "decay"
   },
   {
    "type": "flash",
-   "frame": 2924,
+   "frame": 2537,
    "amount": 1.5,
    "decay": 7
   },
   {
    "type": "shake",
-   "start": 2924,
-   "end": 2942,
+   "start": 2537,
+   "end": 2555,
    "amp": 9,
    "env": "decay"
   },
   {
    "type": "flash",
-   "frame": 3009,
+   "frame": 2610,
    "amount": 2.2,
    "decay": 8
   },
   {
    "type": "shake",
-   "start": 3009,
-   "end": 3027,
+   "start": 2610,
+   "end": 2628,
    "amp": 11,
    "env": "decay"
   },
   {
    "type": "shake",
-   "start": 1260,
-   "end": 1270,
+   "start": 1106,
+   "end": 1116,
    "amp": 0.672,
    "env": "decay"
   },
   {
    "type": "shake",
-   "start": 1430,
-   "end": 1440,
+   "start": 1238,
+   "end": 1248,
    "amp": 0.816,
    "env": "decay"
   },
   {
    "type": "shake",
-   "start": 1592,
-   "end": 1602,
+   "start": 1381,
+   "end": 1391,
    "amp": 1.008,
    "env": "decay"
   },
   {
    "type": "shake",
-   "start": 1665,
-   "end": 1675,
+   "start": 1445,
+   "end": 1455,
    "amp": 1.1039999999999999,
    "env": "decay"
   },
   {
    "type": "shake",
-   "start": 1743,
-   "end": 1753,
+   "start": 1515,
+   "end": 1525,
    "amp": 1.2,
    "env": "decay"
   },
   {
    "type": "shake",
-   "start": 1821,
-   "end": 1831,
+   "start": 1586,
+   "end": 1596,
    "amp": 1.296,
    "env": "decay"
   },
   {
    "type": "shake",
-   "start": 1901,
-   "end": 1911,
+   "start": 1657,
+   "end": 1667,
    "amp": 1.3920000000000001,
    "env": "decay"
   },
   {
    "type": "shake",
-   "start": 1982,
-   "end": 1992,
+   "start": 1729,
+   "end": 1739,
    "amp": 1.488,
    "env": "decay"
   },
   {
    "type": "shake",
-   "start": 2062,
-   "end": 2072,
+   "start": 1799,
+   "end": 1809,
    "amp": 1.5839999999999999,
    "env": "decay"
   },
   {
    "type": "shake",
-   "start": 2146,
-   "end": 2156,
+   "start": 1873,
+   "end": 1883,
    "amp": 1.68,
    "env": "decay"
   },
   {
    "type": "shake",
-   "start": 2232,
-   "end": 2242,
+   "start": 1947,
+   "end": 1957,
    "amp": 1.752,
    "env": "decay"
   },
   {
    "type": "shake",
-   "start": 2321,
-   "end": 2331,
+   "start": 2022,
+   "end": 2032,
    "amp": 1.8239999999999998,
    "env": "decay"
   },
   {
    "type": "shake",
-   "start": 2411,
-   "end": 2421,
+   "start": 2097,
+   "end": 2107,
    "amp": 1.896,
    "env": "decay"
   },
   {
    "type": "shake",
-   "start": 2499,
-   "end": 2509,
+   "start": 2173,
+   "end": 2183,
    "amp": 1.968,
    "env": "decay"
   },
   {
    "type": "shake",
-   "start": 2583,
-   "end": 2593,
+   "start": 2245,
+   "end": 2255,
    "amp": 2.04,
    "env": "decay"
   }
@@ -1313,8 +1313,8 @@
  "text": [
   {
    "id": "name-goliath",
-   "start": 232,
-   "end": 374,
+   "start": 222,
+   "end": 343,
    "content": "GOLIATH\na red giant",
    "style": "name",
    "maxCps": 12,
@@ -1322,8 +1322,8 @@
   },
   {
    "id": "name-david",
-   "start": 464,
-   "end": 591,
+   "start": 424,
+   "end": 529,
    "content": "DAVID\na white dwarf",
    "style": "name",
    "x": 0.075,
@@ -1332,8 +1332,8 @@
   },
   {
    "id": "end-title",
-   "start": 4027,
-   "end": 4128,
+   "start": 3529,
+   "end": 3612,
    "content": "DAVID & GOLIATH",
    "style": "title",
    "y": 0.86,
@@ -1343,9 +1343,9 @@
   },
   {
    "id": "credit",
-   "start": 4170,
-   "end": 4264,
-   "content": "MUSIC\nAntonio Vivaldi, L’inverno, I. Allegro non molto\nconducted by Philip Milman · Lud and Schlatt’s Musical Emporium · CC BY 3.0",
+   "start": 3660,
+   "end": 3748,
+   "content": "MUSIC\nAntonio Vivaldi, L’inverno, I. Allegro non molto · The United States Air Force Band\nCannon fire from Tchaikovsky’s 1812 Overture · The United States Army Band (2005)",
    "style": "credit",
    "fadeIn": 16,
    "fadeOut": 16,
@@ -1355,11 +1355,61 @@
  "assets": [
   {
    "id": "winter",
-   "path": "media/source/winter-mvt1-milman.flac",
+   "path": "media/source/winter-usaf-band.ogg",
    "role": "music",
-   "origin": "https://archive.org/details/lud-and-schlatts-musical-emporium (PMM-Vivaldi-Winter-MASTER_V1.flac); also Wikimedia Commons",
-   "rights": "CC BY 3.0 — Vivaldi (public domain composition), conducted by Philip Milman, Lud and Schlatt’s Musical Emporium",
-   "sha256": "23ac2a6e955dad40c36d3ed0e911f9ac05ae037d7086db2de276507573209a03"
+   "origin": "Supplied by the director (NOVA-02-Music.zip, winter-original.ogg); same performance as archive.org item TheFourSeasonsWinter (USAFB_Winter.ogg, decoded correlation 0.986) and Wikimedia Commons \"Vivaldi Winter mvt 1 Allegro non molto - The USAF Concert.ogg\"",
+   "rights": "Public domain: performance by The United States Air Force Band (work of the U.S. federal government); composition public domain",
+   "sha256": "fd3e3200c1342e4da55222d6004ffb74ae3ac851c516acf3160d7c79041c206e"
+  },
+  {
+   "id": "cannon-1",
+   "path": "media/sfx/cannon-1.wav",
+   "role": "sfx",
+   "origin": "Supplied by the director (NOVA-02-Music.zip); 1.65 s excerpts of media/source/1812-us-army-band-2005.ogg, source times in media/sfx/cannon-provenance.json",
+   "rights": "Public domain: Tchaikovsky 1812 Overture performed by The United States Army Band (2005), work of the U.S. federal government"
+  },
+  {
+   "id": "cannon-2",
+   "path": "media/sfx/cannon-2.wav",
+   "role": "sfx",
+   "origin": "Supplied by the director (NOVA-02-Music.zip); 1.65 s excerpts of media/source/1812-us-army-band-2005.ogg, source times in media/sfx/cannon-provenance.json",
+   "rights": "Public domain: Tchaikovsky 1812 Overture performed by The United States Army Band (2005), work of the U.S. federal government"
+  },
+  {
+   "id": "cannon-3",
+   "path": "media/sfx/cannon-3.wav",
+   "role": "sfx",
+   "origin": "Supplied by the director (NOVA-02-Music.zip); 1.65 s excerpts of media/source/1812-us-army-band-2005.ogg, source times in media/sfx/cannon-provenance.json",
+   "rights": "Public domain: Tchaikovsky 1812 Overture performed by The United States Army Band (2005), work of the U.S. federal government"
+  },
+  {
+   "id": "cannon-4",
+   "path": "media/sfx/cannon-4.wav",
+   "role": "sfx",
+   "origin": "Supplied by the director (NOVA-02-Music.zip); 1.65 s excerpts of media/source/1812-us-army-band-2005.ogg, source times in media/sfx/cannon-provenance.json",
+   "rights": "Public domain: Tchaikovsky 1812 Overture performed by The United States Army Band (2005), work of the U.S. federal government"
+  },
+  {
+   "id": "cannon-5",
+   "path": "media/sfx/cannon-5.wav",
+   "role": "sfx",
+   "origin": "Supplied by the director (NOVA-02-Music.zip); 1.65 s excerpts of media/source/1812-us-army-band-2005.ogg, source times in media/sfx/cannon-provenance.json",
+   "rights": "Public domain: Tchaikovsky 1812 Overture performed by The United States Army Band (2005), work of the U.S. federal government"
+  },
+  {
+   "id": "cannon-6",
+   "path": "media/sfx/cannon-6.wav",
+   "role": "sfx",
+   "origin": "Supplied by the director (NOVA-02-Music.zip); 1.65 s excerpts of media/source/1812-us-army-band-2005.ogg, source times in media/sfx/cannon-provenance.json",
+   "rights": "Public domain: Tchaikovsky 1812 Overture performed by The United States Army Band (2005), work of the U.S. federal government"
+  },
+  {
+   "id": "cannon-source",
+   "path": "media/source/1812-us-army-band-2005.ogg",
+   "role": "sfx-source",
+   "origin": "Supplied by the director (NOVA-02-Music.zip)",
+   "rights": "Public domain (U.S. Army Band performance; composition public domain)",
+   "sha256": "abdc5a4b0054fd3d535503d738757fd72d88fc5af9c5807a42b64c6aa75f02c5"
   },
   {
    "id": "font-cinzel",
