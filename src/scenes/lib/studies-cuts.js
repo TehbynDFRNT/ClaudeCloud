@@ -1,5 +1,5 @@
 // The frenzy studies that differ between the two 9:16 cuts (scene 'studies'), composed for a vertical page:
-//   sling  (David cut, F29.1):      iron-gall engineering study of a sling: whirl, tangent of release, parabola
+//   sling  (David cut, F29.1):      iron-gall engineering study of a sling (cord, pouch, stone): whirl, tangent, parabola
 //   eagle  (Prometheus cut, F29.1): red-chalk study of the eagle: the fierce head and an outstretched wing
 //   chains (Prometheus cut, F30.3): iron-gall study of a shackle and chain, a wrist bound to the rock
 // Page units: frame height at zoom 1, origin at the page centre, y down. Times are shot-local seconds; each
@@ -103,8 +103,9 @@ function timedStroke(D, pts, occ, o) {
 }
 
 // ==== F29.1 (David cut): the sling ===================================================================
-// The slinger's fist at the centre of a compass circle, the forearm leaving down to the right; the two cords
-// run side by side from the fist and fork to the leather pouch cradling the stone. Faint ghosts of the sling earlier in its turn
+// The slinger's fist at the centre of a compass circle, the forearm leaving down to the right; one cord runs
+// from the fist and forks only at its end into two strings knotted to the tips of a leather pouch wrapped round
+// the stone. Faint ghosts of the sling earlier in its turn (the same shape)
 // fade back round the circle; during the cut the whirl is swept clockwise (arrows), and at the release point
 // the stone leaves along the tangent (ruled) while its real path bends into a parabola.
 export function sling() {
@@ -117,8 +118,8 @@ export function sling() {
   const s = vel[1] / vel[0], k = 3.3;
   const parY = (x) => Pr[1] + s * (x - Pr[0]) + k * (x - Pr[0]) ** 2;
   const apex = [Pr[0] - s / (2 * k), parY(Pr[0] - s / (2 * k))];
-  const pw = 0.056, stR = 0.029, forkL = 0.052, bow = 0.008;          // pouch half-length, the stone, fork, cord bow
-  const tipIn = 0.006, lipB = 0.006;                                 // tips a little toward the hand; the near flap's sag
+  const pw = 0.056, stR = 0.029, forkL = 0.048, bow = 0.008;          // pouch half-length, the stone, fork, cord bow
+  const tipIn = 0.002, lipB = 0.009;                                 // tips (all but) beside the stone's centre; the near flap's sag
 
   // ---- the fist (as S10's, in ink), the cords leaving its top toward the pouch; the forearm runs down-right
   D.at(-14);
@@ -174,9 +175,12 @@ export function sling() {
     const front = poly([...lip, ...inner]);                           // the near flap
     D.stroke(resample(outer, 1.5 * PX), { w: o.pw, d: o.d * 1.02, speed: o.speed * 0.5, taper: [3, 3], gap: 0, wet: o.wet });
     D.stroke(resample(inner, 1.5 * PX), { w: o.pw * 0.9, d: o.d, speed: o.speed * 0.5, taper: [3, 3], gap: 0, wet: o.wet });
+    for (const E of [E1, E2]) dot(D, E[0], E[1], o.knot, { d: Math.min(0.95, o.d * 1.05), wet: o.wet });   // the strings knotted through the tips
     if (o.ghost) {  // a faded sling: the wrapped stone just shaded in, so it reads as the same object
-      hatch(D, (x, y) => { const dx = (x - St[0]) / stR, dy = (y - St[1]) / stR; return dx * dx + dy * dy <= 0.9 ? 0.7 + 0.35 * (dx * 0.6 + dy * 0.8) : 0; },
-        [St[0] - stR, St[1] - stR, St[0] + stR, St[1] + stR], { angle: 0.95, sp: 2.8, w: 1.0, d: o.d * 0.95, speed: 3, minLen: 2, thr: [0.2, 0.9], wet: false });
+      hatch(D, (x, y) => { const dx = (x - St[0]) / stR, dy = (y - St[1]) / stR; return dx * dx + dy * dy <= 0.8 ? 0.75 + 0.35 * (dx * 0.6 + dy * 0.8) : 0; },
+        [St[0] - stR, St[1] - stR, St[0] + stR, St[1] + stR], { angle: 0.95, sp: 2.2, w: 1.2, d: o.d * 1.1, speed: 3, minLen: 2, thr: [0.2, 0.9], wet: false });
+      const ring = arcPts(St[0], St[1], stR, th + 0.6, th + 0.6 + Math.PI * 1.1, { step: 1.5 * PX, seed: 5 + o.seed });   // its shadowed side
+      D.stroke(ring, { w: o.pw, d: o.d, speed: o.speed * 0.4, taper: [4, 4], gap: 0, wet: false });
     } else {
       const ring = arcPts(St[0], St[1], stR, th - Math.PI * 0.4, th - Math.PI * 0.4 + TAU * 1.02, { step: 1.5 * PX, wob: 0.4 * PX, seed: 5 + o.seed });
       for (const run of clipOut(ring, [front])) D.stroke(run, { w: o.pw * 0.75, d: o.d, speed: o.speed * 0.4, taper: [3, 3], gap: 0, wet: o.wet });
@@ -185,7 +189,7 @@ export function sling() {
     return { P0, v, r, E1, E2, St, Lp, outer, inner, lip, front, Fk };
   };
   // ghosts: the sling a tenth and a fifth of a turn earlier, fading back
-  for (let g = 1; g <= 2; g++) slingAt(thR - g * 0.63, { cw: 1.5, sw: 1.0, pw: 1.4, d: 0.42 - g * 0.07, speed: 1.4, wet: false, ghost: true, seed: 40 + 3 * g });
+  for (let g = 1; g <= 2; g++) slingAt(thR - g * 0.63, { cw: 1.5, sw: 1.0, pw: 1.4, knot: 2.6, d: 0.42 - g * 0.07, speed: 1.4, wet: false, ghost: true, seed: 40 + 3 * g });
   // the construction under the cut's pen: the tangent ruled blind with the stylus, the stone's curve sketched faint
   const tEnd0 = add(Pr, vel, 0.5);
   D.stroke(linePts(Pr[0], Pr[1], tEnd0[0], tEnd0[1], { step: 3 * PX }), { kind: 'relief', w: 1.4, d: 0.5, speed: 3, wet: false, taper: [2, 2] });
@@ -201,7 +205,7 @@ export function sling() {
   // ---- the sling itself, laid in just before the cut: the cord, the strings, the pouch, the stone hatched dark
   D.at(-0.42);
   const s0 = D.mark();
-  const L = slingAt(thR, { cw: 2.8, sw: 1.7, pw: 2.8, d: 0.93, speed: 1.3, wet: true, seed: 60 });
+  const L = slingAt(thR, { cw: 2.6, sw: 1.6, pw: 2.8, knot: 4.2, d: 0.93, speed: 1.3, wet: true, seed: 60 });
   const inStone = (x, y) => { const dx = (x - L.St[0]) / stR, dy = (y - L.St[1]) / stR; return dx * dx + dy * dy; };
   const sbb = [L.St[0] - stR, L.St[1] - stR, L.St[0] + stR, L.St[1] + stR];
   const pouchPoly = poly([...L.outer, ...L.inner]);
@@ -210,8 +214,9 @@ export function sling() {
   // the stone, bare above the near flap: dark, a small light on its upper left
   const lit = (x, y) => ((x - L.St[0]) * 0.6 + (y - L.St[1]) * 0.8) / stR;
   const bare = (x, y) => inStone(x, y) <= 0.84 && !inP(L.front, x, y);
-  hatch(D, (x, y) => (bare(x, y) ? 0.85 + 0.45 * lit(x, y) : 0), sbb, { angle: 0.95, sp: 2.2, w: 1.25, d: 0.88, speed: 3, minLen: 2, thr: [0.2, 0.9], wet: true });
-  hatch(D, (x, y) => (bare(x, y) ? 0.62 + 0.55 * lit(x, y) : 0), sbb, { angle: -0.6, sp: 2.5, w: 1.15, d: 0.82, speed: 3, minLen: 2, thr: [0.2, 0.9], wet: true });
+  hatch(D, (x, y) => (bare(x, y) ? 0.95 + 0.4 * lit(x, y) : 0), sbb, { angle: 0.95, sp: 1.9, w: 1.5, d: 0.9, speed: 3, minLen: 2, thr: [0.2, 0.9], wet: true });
+  hatch(D, (x, y) => (bare(x, y) ? 0.7 + 0.5 * lit(x, y) : 0), sbb, { angle: -0.6, sp: 2.2, w: 1.35, d: 0.86, speed: 3, minLen: 2, thr: [0.2, 0.9], wet: true });
+  hatch(D, (x, y) => (bare(x, y) ? 0.35 + 0.7 * lit(x, y) : 0), sbb, { angle: 0.15, sp: 2.4, w: 1.25, d: 0.84, speed: 3, minLen: 2, thr: [0.2, 0.9], wet: true });
   // the leather, lighter than the stone: the taut wings shaded toward the far side; the near flap paler,
   // darkening where it turns round the stone
   hatch(D, (x, y) => {

@@ -500,8 +500,9 @@ def decimate_regions(V, F, labels, target):
             ms = pymeshlab.MeshSet()
             ms.add_mesh(pymeshlab.Mesh(vertex_matrix=np.asarray(sub.vertices), face_matrix=np.asarray(sub.faces)))
             ms.meshing_decimation_quadric_edge_collapse(targetfacenum=int(budget[L]), preserveboundary=True,
-                                                        boundaryweight=1.0, preservenormal=True, optimalplacement=True,
-                                                        planarquadric=True, qualitythr=0.4, autoclean=False)
+                                                        boundaryweight=1.0, preservenormal=True, preservetopology=True,
+                                                        optimalplacement=True, planarquadric=True, qualitythr=0.4,
+                                                        autoclean=False)
             mm = ms.current_mesh()
             sub = trimesh.Trimesh(mm.vertex_matrix().astype(float), mm.face_matrix().astype(np.int64), process=False)
         log('  region %-4s %7d -> %7d tris' % (REGION_NAMES[L], counts[L], len(sub.faces)))
@@ -784,6 +785,7 @@ def process(name, args):
     cav = cav_full[nn].mean(1)
     rough = {k: v[nn].mean(1) for k, v in rough_full.items()}
     skin = 1 - smoothstep(BAKE['skin_rough'][0], BAKE['skin_rough'][1], rough['r16'])
+    skin = scalar_smooth(skin, adjacency(Fd, len(Vd)), 8)
     bake = np.stack([np.clip(ao, 0, 1) * 255,
                      128 + 127 * np.tanh(cav / BAKE['cav_scale']),
                      np.clip(thick, 0, 1) * 255,
@@ -805,7 +807,7 @@ def process(name, args):
     return res
 
 
-BAKE = dict(ao_maxd=0.25, thick_maxd=0.12, cav_scale=2.5, skin_rough=(0.9, 1.8))
+BAKE = dict(ao_maxd=0.25, thick_maxd=0.12, cav_scale=2.5, skin_rough=(0.5, 1.0))
 
 
 def sol_diadem(m, caster, an):
