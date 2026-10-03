@@ -63,7 +63,7 @@ void main(){
   rgb /= ws; tr /= ws; trD /= ws;
   float pixAngle = 2.0 * uTanHalfFov / uRes.y;
   // stars only through genuinely clear gas (no stars glinting through optically thick glowing matter)
-  vec3 col = rgb + starField(rd, pixAngle) * uStarGain * smoothstep(0.45, 0.97, tr);
+  vec3 col = rgb + starField(rd, pixAngle) * uStarGain * smoothstep(0.62, 0.98, tr);
   if (uCurtain > 0.0) col += vxCurtain(ro, rd, hit ? hd.x : 1e9, vmJit(gl_FragCoord.xy)) * trD;
   if (hit) col += vxDwarfSurface(ro, rd, hd) * trD;
   col += vxDwarfGlow(ro, rd, 2.0 * uTanHalfFov / uFull.y) * trD;
@@ -88,6 +88,16 @@ const P0 = {
 };
 
 const D = (o) => ({ ...P0, ...o, disk: { ...DISK, ...(o.disk || {}) }, post: { ...P0.post, ...(o.post || {}) } });
+
+// low skim along the CCW orbit at azimuth phi, radius r, height y; the view turns `inward` (rad) from the orbital
+// tangent toward the dwarf and pitches `down` (rad). Returns [pos, target].
+function skim(phi, r, y, inward, down) {
+  const pos = [r * Math.cos(phi), y, -r * Math.sin(phi)];
+  const tan = [-Math.sin(phi), 0, -Math.cos(phi)], inw = [-Math.cos(phi), 0, Math.sin(phi)];
+  const c = Math.cos(inward), s = Math.sin(inward);
+  const d = [tan[0] * c + inw[0] * s, -Math.tan(down), tan[2] * c + inw[2] * s];
+  return [pos, v3.add(pos, d)];
+}
 
 // ---------------------------------------------------------------- presets
 const presets = {
@@ -138,22 +148,24 @@ const presets = {
       [1, [0, 1.22, 0.004], [0, 0, 0], 40, -0.10, 'outSine'],
     ],
     tau: [24, 1.2, 0],
+    heat: [0.94, 0, 0.5, 0],
     disk: { omega: 0.3, arms: 1.0, armM: 2, armPitch: 0.30, armFloor: 0.05, armHeat: 0.35, sheet: 0.9, sheetHeat: 0.5,
-      kr: 7.0, ky: 9.0, sheetMask: -0.35, floorMid: 0.25, maxSteps: 40, edgeFade: 0.35, tinK: 0.5 },
-    post: {},
+      kr: 7.0, ky: 9.0, sheetMask: -0.35, floorMid: 0.25, maxSteps: 40, edgeFade: 0.35, tinK: 0.1, rimPuff: 0.5, curtain: 0.02 },
+    post: { bloomStrength: 0.05 },
   }),
-  // Ladder: held breath. Top-down slow push; the vortex visibly accelerates, the dwarf brightens.
+  // Ladder: held breath. A slow oblique push (~55 degrees elevation, long lens: the flare and the thickness of the disk
+  // read, unlike the flat pole-on S14e answer); the vortex visibly accelerates, the dwarf brightens.
   'S16-ladder': D({
     vol: 0.6,
     cam: [
-      [0, [0.0, 1.90, 0.30], [0, 0, 0.02], 38, 0.0],
-      [1, [0.0, 1.50, 0.18], [0, 0, 0.01], 38, -0.22, 'inOutSine'],
+      [0, [0.0, 2.13, 1.49], [0, 0, 0.0], 28, 0.0],
+      [1, [0.0, 1.31, 0.92], [0, 0, 0.0], 28, -0.12, 'inOutSine'],
     ],
     tau: [40, 0.5, 0.42],
-    heatRamp: [0.95, 1.12], lum: [0.8, 2.6],
-    disk: { omega: 0.3, arms: 0.85, armM: 2, armPitch: 0.33, armFloor: 0.1, sheet: 0.9, sheetHeat: 0.6, sheetMask: -0.25,
-      maxSteps: 40, armSpeed: 0.08 },
-    post: {},
+    heatRamp: [0.92, 1.12], lum: [0.6, 2.4],
+    disk: { omega: 0.3, arms: 0.9, armM: 2, armPitch: 0.33, armFloor: 0.06, sheet: 0.9, sheetHeat: 0.6, sheetMask: -0.25,
+      maxSteps: 46, armSpeed: 0.08, tinK: 0.35, curtain: 0.06, h0: 0.085 },
+    post: { bloomStrength: 0.05 },
   }),
   // Strike 2: medium, closer and more compressed; the inner disk flares white-hot on the strike, then pulses/decays.
   'S18-strike2': D({
@@ -176,9 +188,9 @@ const presets = {
       [1, [0.55, 0.075, 0.06], [0.38, 0.0, 0.70], 72, 0.13, 'inQuad'],
     ],
     tau: [78.0, 3.5, 0],
-    heat: [1.12, 0, 0.5, 0],
+    heat: [1.05, 0, 0.5, 0],
     clear: 0.04,
-    disk: { omega: 0.32, arms: 1.0, armFloor: 0.04, armHeat: 0.5, armSpeed: 0.6, sheet: 0.9, sheetHeat: 0.75, sheetMask: -0.15,
+    disk: { omega: 0.32, arms: 1.0, armFloor: 0.04, armHeat: 0.2, armSpeed: 0.6, sheet: 0.9, sheetHeat: 0.55, sheetMask: -0.15,
       maxSteps: 46, cloud: 1.0, void: 0.0, voidW: 0.1, turb: 0.9, floor: 0.32, coldGas: 0.28, irr: 1.0, sheetW: 0.03 },
     post: { blur: [4, 0] },
   }),
@@ -194,17 +206,20 @@ const presets = {
     disk: { omega: 0.32, curtain: 0.5, maxSteps: 56, stepK: 0.4, sheet: 0.9, sheetHeat: 0.5, rimPuff: 0.8, tinK: 0.4, rb: 0.8, dwarfSurf: 0.2, irr: 1.5, tout: 1000 },
     post: { exposure: 0.5, bloomStrength: 0.04 },
   }),
-  // Frenzy 31.1: extreme speed - a plunge across the disk surface toward the dwarf.
+  // Frenzy 31.1: extreme speed - a banking skim just above the arm crests, racing along the CCW orbit (not another
+  // radial approach like S12): the crests tear past below, the dwarf blazes off-centre on the left horizon.
   'F31.1': D({
     vol: 0.55,
     cam: [
-      [0, [-0.62, 0.075, 0.30], [0, 0.0, 0], 64, 0.10],
-      [1, [-0.36, 0.05, 0.16], [0, 0.0, 0], 70, 0.16, 'linear'],
+      [0, ...skim(2.15, 0.39, 0.052, 0.95, 0.10), 66, -0.10],
+      [1, ...skim(2.70, 0.34, 0.036, 1.00, 0.09), 70, -0.22, 'linear'],
     ],
     tau: [100, 4.0, 0],
-    heat: [1.18, 0, 0.5, 0],
-    disk: { omega: 0.32, sheet: 0.9, sheetHeat: 0.75, sheetMask: -0.15, maxSteps: 44 },
-    post: { zoomBlur: 0.035 },
+    heat: [1.1, 0, 0.5, 0],
+    clear: 0.025,
+    disk: { omega: 0.32, sheet: 0.9, sheetHeat: 0.6, sheetMask: -0.15, maxSteps: 48, arms: 1.0, armFloor: 0.05, cloud: 1.2,
+      floor: 0.2, coldGas: 0.32, irr: 1.5, void: -0.1, voidW: 0.12 },
+    post: { blur: [34, 0], zoomBlur: 0.012, exposure: 0.85 },
   }),
 };
 

@@ -29,7 +29,7 @@ void main(){
   vec2 uv = frameUV();
   vec3 rd = cameraRay(uv);
   vec3 ro = uCamPos;
-  float th = uGiantOn > 0.5 ? giantTrace(ro - uGiantPos, rd) : -1.0;   // photosphere (GIANT building block)
+  float th = giantTrace(ro - uGiantPos, rd);       // photosphere (GIANT building block)
   // interleaved-gradient jitter: blue-noise-like, so the upsample's tent filter averages it away (no white grain)
   vec4 v = marchSystem(ro, rd, th > 0.0 ? th : 1e9, ign(gl_FragCoord.xy));
   // flag rays that ended on the photosphere (negative alpha) for the hit-aware upsample in the main pass
@@ -203,7 +203,7 @@ const presets = {
   'S06-first-pull': {
     cam: [[0, [-0.272, -0.031, 0.202], [-0.13, 0.03, -0.05], 50, -0.72], [1, [-0.259, -0.027, 0.188], [-0.12, 0.034, -0.05], 48, -0.84, 'inOutSine']],
     headS: [[0, -0.012], [1, 0.08, 'inQuad']],
-    streamAmt: 0.85, streamW: 1.0, rip: 0.5, flowRate: 1.2, detail: 0.6, rake: 2.2, rakeG: 0.16, starGain: 0.5,
+    streamAmt: 0.85, streamW: 1.0, rip: 0.5, flowRate: 1.2, detail: 0.6, rake: 1.0, rakeG: 0.16, starGain: 0.5,
     giant: { relief: 0.012, plumes: 0, glow: 1.4, atmo: 1.0 }, dwarfLum: 1.2, volScale: 0.5,
     post: { bloomStrength: 0.08 },
   },
@@ -243,7 +243,7 @@ const presets = {
     cam: [[0, [-0.17, 1.40, 1.52], [-0.08, -0.05, 0.0], 40], [1, [-0.13, 1.32, 1.43], [-0.07, -0.05, 0.0], 40, 0, 'linear']],
     streamW: 1.35, streamGlow: 1.4, starGain: 0.6, streamAmt: 1.1, rip: 0.7, flowRate: 2.0, rake: 0.0,
     diskAmt: 1.0, diskOut: 0.27, hot: 1.2,
-    dwarfLum: 1.4, volScale: 0.62,
+    dwarfLum: 1.0, volScale: 0.62,
     post: { bloomStrength: 0.08, streakStrength: 0.02 },
   },
   // Frenzy vista: from behind the giant along the stream; the giant a dark crimson shoulder in the foreground.
@@ -251,7 +251,7 @@ const presets = {
     cam: [[0, [-1.12, 0.56, 0.74], [0.28, -0.06, 0.06], 37], [1, [-0.98, 0.49, 0.66], [0.28, -0.06, 0.06], 36, 0, 'outQuad']],
     streamW: 1.35, streamGlow: 1.4, starGain: 0.6, streamAmt: 1.15, rip: 0.8, flowRate: 2.4, rake: 0.0,
     diskAmt: 1.0, diskOut: 0.27, hot: 1.2,
-    dwarfLum: 1.4, volScale: 0.55,
+    dwarfLum: 1.0, volScale: 0.55,
     post: { bloomStrength: 0.09, streakStrength: 0.02 },
   },
   // Frenzy vista: high orbital view (tilted 25 degrees off the pole) with ice-blue diagram lines.
@@ -259,17 +259,17 @@ const presets = {
     cam: [[0, [0.04, 1.54, 0.72], [0.04, 0, 0.02], 40, 0.10], [1, [0.04, 1.39, 0.65], [0.04, 0, 0.02], 40, -0.06, 'outQuad']],
     streamW: 1.35, streamGlow: 1.4, starGain: 0.6, streamAmt: 1.1, rip: 0.7, flowRate: 2.4, rake: 0.0,
     diskAmt: 1.0, diskOut: 0.27, hot: 1.2,
-    dwarfLum: 1.4, volScale: 0.58,
+    dwarfLum: 1.0, volScale: 0.58,
     overlay: 'topdiagram',
     post: { bloomStrength: 0.08 },
   },
   // Strike 1: the whole system shudders; the disk flares white and decays, the stream whips.
   'S17-strike1': {
-    cam: [[0, [0.57, 0.43, 1.27], [-0.05, -0.01, 0.0], 40], [1, [0.50, 0.395, 1.16], [-0.05, 0.0, 0.0], 41.5, 0, 'outQuad']],
+    cam: [[0, [0.57, 0.43, 1.27], [-0.05, 0.005, 0.0], 40], [1, [0.50, 0.395, 1.16], [-0.05, 0.03, 0.0], 42, 0, 'outQuad']],
     streamW: 1.35, streamGlow: 1.4, starGain: 0.6, streamAmt: 1.15, rip: 0.8, flowRate: 2.2, rake: 0.0,
     diskAmt: 1.0, diskOut: 0.27, hot: 1.3,
-    flare: { amt: 3.6, decay: 0.75 }, whip: { amp: 0.10, speed: 1.1, decay: 1.1, k: 15 },
-    dwarfLum: 1.5, volScale: 0.58,
+    flare: { amt: 2.0, decay: 0.75 }, whip: { amp: 0.10, speed: 1.1, decay: 1.1, k: 15 },
+    dwarfLum: 1.1, volScale: 0.58,
     post: { bloomStrength: 0.08, streakStrength: 0.02 },
   },
 };
@@ -351,7 +351,7 @@ export default {
       uStreamHead: head, uStreamCut: cut, uStreamFade: fade,
       uStreamAmt: ev(P.streamAmt, u, 1), uStreamW: ev(P.streamW, u, 1), uStreamGlow: ev(P.streamGlow, u, 1),
       uRip: ev(P.rip, u, 0.6), uFlowT: t * ev(P.flowRate, 0, 1.6) + (S.seed % 17), uDetail: ev(P.detail, u, 0),
-      uWhip: whip, uWhipK: whipK, uWD: [XW, 0, 0], uRake: ev(P.rake, u, 0.0), uStepK: ev(P.stepK, u, 1),
+      uWhip: whip, uWhipK: whipK, uWD: [XW, 0, 0], uRake: ev(P.rake, u, 0.0), uStepK: ev(P.stepK, u, 1), uDiskCore: ev(P.diskCore, u, 14),
       uDiskIn: 0.03, uDiskOut: diskOut, uDiskAmt: diskAmt, uDiskH: ev(P.diskH, u, 0.034), uDiskT: t + 4.0,
       uDiskGlow: ev(P.diskGlow, u, 1.0), uRingAmt: ev(P.ringAmt, u, 0), uRCirc: R_CIRC, uFlare: flare, uHot: hot,
       uClump: [clumpS, clumpAmt], uCool: ev(P.cool, u, 1),

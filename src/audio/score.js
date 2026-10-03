@@ -46,7 +46,7 @@ export const DESIGN = {
   // (K-weighted, the 500 ms before it: the music the hit breaks into) follows rel(d) = far + (near - far) * (1 - d)^shape, so the approach is monotone
   // whatever the music does underneath. Measured on a first render of the stem, corrected and re-rendered. Close
   // cues are capped at nearMaxCorrDb, where the stem limiter still leaves the boom a natural decay.
-  cannon: { relFar: -20, relNear: 5, shape: 1.5, maxCorrDb: 14, nearMaxCorrDb: 10, passes: 3, tolDb: 0.75 },
+  cannon: { relFar: -20, relNear: 5, shape: 1.5, maxCorrDb: 14, nearMaxCorrDb: 11, passes: 3, tolDb: 0.75 },
   // orchestra + synth duck under the five strike cannons (d <= maxD; depth grows toward d = 0): 5 ms attack,
   // 80 ms hold, then a 120 ms exponential release (within 1 dB after ~0.35 s), following the boom that masks it.
   duck: { maxD: 0.12, depthDb: [4, 10], attack: 0.005, hold: 0.08, tau: 0.12 },
@@ -664,7 +664,8 @@ export function buildCannons(ctx, tl, samples, gains = {}) {
     const lpHz = 350 * Math.pow(18000 / 350, Math.pow(1 - d, 1.6));
     const pan = pans[ci] * 0.55 * d;
     const layers = [{ id, gain: 1 }];
-    if (d <= 0.12) layers.push({ id: NEAR_SET[(NEAR_SET.indexOf(id) + 1) % NEAR_SET.length], gain: undb(-6) });
+    // strikes: a second sample layered under the first, thicker as d -> 0 (-6 dB at d = 0.12 to -2 dB at d = 0)
+    if (d <= 0.12) layers.push({ id: NEAR_SET[(NEAR_SET.indexOf(id) + 1) % NEAR_SET.length], gain: undb(-2 - 4 * d / 0.12) });
     const dist = BQ(ctx, 'lowpass', lpHz, 0.6);
     const p = ctx.createStereoPanner(); p.pan.value = pan;
     const gDry = G(ctx, dry * lvl), gWet = G(ctx, wet * lvl), dPre = ctx.createDelay(1); dPre.delayTime.value = pre;

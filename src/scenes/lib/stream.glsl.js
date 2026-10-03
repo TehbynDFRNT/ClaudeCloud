@@ -31,6 +31,7 @@ uniform float uCool;         // amount of cool absorbing veils in the stream (1 
 uniform vec2 uClump;         // bright knot riding the stream: arc length, strength
 uniform vec2 uDiskBound;     // disk/ring bounding radius and half-height (0 = no disk), from JS
 uniform float uStepK;        // march step multiplier (1 = default; close-ups may relax it)
+uniform float uDiskCore;     // radiance of the boundary layer where the disk meets the dwarf
 
 // display temperature -> film palette (crimson -> ember -> gold -> white -> ice blue), linear
 vec3 heatColor(float T){
@@ -42,8 +43,8 @@ vec3 heatColor(float T){
   vec3 c4 = vec3(1.00, 0.780, 0.480);
   vec3 c5 = vec3(1.00, 0.920, 0.840);
   vec3 c6 = vec3(0.80, 0.890, 1.000);
-  vec3 c7 = vec3(0.58, 0.760, 1.000);
-  vec3 c8 = vec3(0.42, 0.640, 1.000);
+  vec3 c7 = vec3(0.50, 0.700, 1.000);
+  vec3 c8 = vec3(0.34, 0.560, 1.000);
   if (x < 1.0) return mix(c0, c1, sat(x));
   if (x < 2.0) return mix(c1, c2, x - 1.0);
   if (x < 3.0) return mix(c2, c3, x - 2.0);
@@ -60,7 +61,9 @@ vec3 heatEmission(float T){
   return heatColor(T) * b * 1.25;
 }
 // disk source function: optically thick, the inner disk blazes white / ice blue, the rim glows crimson
-vec3 diskEmission(float T){ return heatColor(T) * pow(T / 2600.0, 1.7) * 1.15; }
+// (moderate radiance so the ice-blue inner disk keeps its colour through the tonemap; only the innermost
+// boundary layer and the dwarf itself burn to white)
+vec3 diskEmission(float T){ return heatColor(T) * pow(min(T, 20000.0) / 2600.0, 0.7) * 0.55; }
 
 vec4 fieldAt(vec2 xz){
   vec2 uv = (xz - uFieldBox.xy) * uFieldBox.zw;
@@ -168,11 +171,12 @@ float streamSample(vec3 p, vec4 f, out vec3 j){
     vec3 p2 = p + L * w * 0.9;
     vec4 f2 = fieldAt(p2.xz);
     float w2 = streamW(f2.y);
-    float e2 = (f2.x - wo.x) * (f2.x - wo.x) / (w2 * w2) + (p2.y - wo.y) * (p2.y - wo.y) / (w2 * w2 * 0.64);
+    // same width for both samples: only motion ACROSS the stream toward the dwarf counts (it narrows downstream)
+    float e2 = (f2.x - wo.x) * (f2.x - wo.x) / (w * w) + (p2.y - wo.y) * (p2.y - wo.y) / (h * h);
     float e0 = d * d / (w * w) + y * y / (h * h);
-    float facing = smoothstep(0.1, 0.9, e2 - e0) * exp(-4.0 * exp(-e2 * 0.7));
-    float rim = smoothstep(0.4, 1.2, re);
-    em += vec3(0.20, 0.46, 1.0) * (uRake * 5.5 * facing * rim / (0.02 + r2 * 6.0)) * hot;
+    float facing = smoothstep(0.15, 1.0, e2 - e0) * exp(-5.0 * exp(-e2 * 0.6));
+    float rim = smoothstep(0.85, 1.6, re);
+    em += vec3(0.20, 0.46, 1.0) * (uRake * 4.5 * facing * rim / (0.02 + r2 * 6.0)) * hot;
   }
   j = em * 24.0;
   return (hot * mix(0.3, 0.9, 1.0 - kb) + cool * 1.7) * 26.0;
@@ -180,8 +184,8 @@ float streamSample(vec3 p, vec4 f, out vec3 j){
 
 // accretion disk (and forming ring) around the dwarf
 float diskH(float r){ return uDiskH * r * pow(max(r, 0.01) / 0.2, 0.125) * (1.0 + 0.6 * smoothstep(0.75, 0.98, r / max(uDiskOut, 0.05))) + 0.0010; }
-float diskDensity(vec3 p, out float T){
-  T = 0.0;
+float diskDensity(vec3 p, out float T, out float br){
+  T = 0.0; br = 1.0;
   vec3 q = p - uWD;
   float r = length(q.xz);
   float H = diskH(r);
@@ -196,7 +200,7 @@ float diskDensity(vec3 p, out float T){
   float n = fbm3(vec3(cp * 1.9, lr * 4.5 + q.y / H * 0.15), 3);
   float g2 = n3(vec3(cp * 3.2, lr * 15.0) + 7.0);
   float g1 = n3(vec3(cp * 1.5, lr * 44.0));
-  float streaks = sat(0.5 + 0.30 * g1 + 0.55 * g2);
+  float streaks = sat(0.5 + 0.28 * g1 + 0.6 * g2);
   // tidal two-armed spiral shocks (trailing, fixed in the binary frame), strongest in the outer disk
   float armPh = 2.0 * (phi - 2.0 * lr) + 0.9 + 0.6 * n;
   float arm = pow(0.5 + 0.5 * cos(armPh), 3.0);
@@ -226,9 +230,12 @@ float diskDensity(vec3 p, out float T){
   }
   float vert = exp(-0.35 * z2 * sqrt(z2));                              // flat-topped, sharp-edged vertical profile
   // display temperature: steep radial law (inner white / ice blue, outer crimson); arms and clumps run hotter
-  T = 2000.0 * pow(r / max(uDiskOut, 0.05), -1.25) * (0.80 + 0.25 * streaks + 0.22 * arm * armW + 0.12 * n);
+  // surface brightness texture (what an optically thick disk shows): streaks, clumps and the spiral shocks.
+  // Bright clumps run hot, the lanes between them cooler and redder (colour contrast, not grey shading)
+  br = (0.55 + 0.6 * streaks) * mix(0.55, 1.15, clumps) * mix(1.0, 0.7 + 0.7 * arm, armW);
+  T = 1950.0 * pow(r / max(uDiskOut, 0.05), -1.4) * (0.42 + 0.58 * br);
   T += hs * 3200.0;
-  T *= 1.0 + uFlare * 0.45 * exp(-r / 0.12);
+  T *= 1.0 + uFlare * 0.3 * exp(-r / 0.12);
   return dens * vert;
 }
 
@@ -283,13 +290,15 @@ vec4 marchSystem(vec3 ro, vec3 rd, float tMax, float jit){
       J += js; K += ks;
     }
     if (uDiskAmt + uRingAmt > 0.0 || uHot.z > 0.0){
-      float T;
-      float dd = diskDensity(p, T);
+      float T, br;
+      float dd = diskDensity(p, T, br);
       if (dd > 0.0){
         float rr = length(p.xz - uWD.xz);
         // optically thick inner disk (radiance -> source function), translucent outer disk and rim
         float kd = dd * 26.0 * (1.0 + 70.0 * exp(-rr / 0.06));
-        vec3 S = diskEmission(T) * uDiskGlow * (1.0 + uFlare * (0.35 + exp(-rr / 0.12)));
+        vec3 S = diskEmission(T) * (0.6 + 0.4 * br) * uDiskGlow * (1.0 + uFlare * (0.2 + 0.6 * exp(-rr / 0.12)));
+        // blinding boundary layer where the disk meets the dwarf
+        S += vec3(0.75, 0.86, 1.0) * uDiskCore * exp(-pow((rr - uDiskIn * 1.05) / (0.3 * uDiskIn), 2.0)) * uDiskGlow;
         J += S * kd; K += kd;
       }
     }

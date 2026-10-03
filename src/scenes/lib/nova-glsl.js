@@ -436,7 +436,7 @@ uniform float uWvAdv;     // radial advection clock of the debris (front-relativ
 vec4 waveMarch(vec3 ro, vec3 rd, float jit){
   float R = uWvR;
   vec3 col = vec3(0.0); float T = 1.0;
-  float t = 0.003 * R * (0.5 + jit);
+  float t = 0.008 * R * (0.5 + jit);
   for (int i = 0; i < 56; i++){
     vec3 p = ro + rd * t;
     float r = length(p); vec3 n = p / max(r, 1e-6);
@@ -479,7 +479,8 @@ vec4 waveMarch(vec3 ro, vec3 rd, float jit){
     vec3 em = novaEmit(h);
     // thin, faint cold-blue radiative precursor just ahead of the front
     float pre = exp(-pow((ee + 0.018) / 0.014, 2.0)) * (1.0 - body) * (0.5 + 0.5 * w1);
-    float dt = clamp(min(0.35 * abs(ee - 0.003) * R + 0.002 * R, max(t * 0.09, 0.004 * R)), 0.002 * R, 0.09 * R) * (0.7 + 0.6 * fract(jit + float(i) * 0.618034));
+    // steps grow with distance from the camera (fast ramp: the first 0.1 R no longer eats the step budget)
+    float dt = clamp(min(0.35 * abs(ee - 0.003) * R + 0.002 * R, max(t * 0.13, 0.008 * R)), 0.002 * R, 0.09 * R) * (0.7 + 0.6 * fract(jit + float(i) * 0.618034));
     if (x < 0.4) dt = max(dt, (0.42 - x) * R * 0.9);     // empty hot interior: only the analytic core glow
     float a = 1.0 - exp(-rho * uWvDens * dt / R);
     // thin, very hot inner plasma around the surviving dwarf
