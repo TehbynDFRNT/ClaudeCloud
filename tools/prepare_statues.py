@@ -803,7 +803,7 @@ def process(name, args):
         extra = sol_diadem(mh, caster_full, an)
     res = dict(name=name, cfg=cfg, V=Vd, F=Fd, N=Nd, bake=bake, an=an, eyes=eyes_json, fr=fr, ht=ht, H=H, O_rot=O_rot,
                Rm=Rm, fw=fw, ear_notes=ear_notes, torso=torso, neck_top=neck_top, extra=extra, n_src=n_src,
-               rough=rough, edge_src=edge, regions=dict(source=reg_counts, final=reg_final), t=time.time() - t_start)
+               rough=rough, dense=(V, F), edge_src=edge, regions=dict(source=reg_counts, final=reg_final), t=time.time() - t_start)
     return res
 
 
