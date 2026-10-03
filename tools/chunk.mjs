@@ -92,7 +92,9 @@ if (mode === 'costs') {
 } else if (mode === 'render') {
   const from = +opt('from', 0), to = +opt('to', plan.frames);
   if (from % BLOCK || (to % BLOCK && to !== plan.frames)) throw new Error(`--from/--to must be multiples of ${BLOCK} (or the film end)`);
-  const frames = path.join(ROOT, opt('frames', plan.id ? `out/frames-${plan.id}${PREVIEW ? '-preview' : ''}` : (PREVIEW ? 'out/frames-preview' : 'out/frames')));
+  // frames are shared by every cut at this size (the manifest keeps only frames whose fingerprint still
+  // matches), so rendering the second cut re-renders only the frames where the cuts differ
+  const frames = path.join(ROOT, opt('frames', `out/frames-${W}x${H}`));
   fs.mkdirSync(CHUNKS, { recursive: true });
   const push = (name) => {
     if (!argv.includes('--push')) return;
