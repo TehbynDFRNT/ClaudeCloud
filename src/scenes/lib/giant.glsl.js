@@ -239,9 +239,9 @@ float gScarSurface(float T, vec3 n, vec3 ns, float t, float fp){
 // ---- tracing ---------------------------------------------------------------------------------------------
 // distance to the photosphere along the ray, or -1 (o = ray origin relative to the giant centre)
 float giantTrace(vec3 o, vec3 rd){
-  // geometric relief only when its bumps span >= 1.5 px (shading relief is independent of this)
+  // geometric relief only when its bumps span >= 3 px (shading relief is independent of this)
   float bumpPx = uRelief * uGiantR / max(length(o) - uGiantR, 1e-3 * uGiantR) / (2.0 * uTanHalfFov / uFull.y);   // full-frame px: same decision in every pass
-  bool geo = uRelief > 0.0 && bumpPx > 1.5;
+  bool geo = uRelief > 0.0 && bumpPx > 3.0;
   if (uBulge <= 0.0 && !geo){
     vec2 h = sphereHit(o, rd, vec3(0.0), uGiantR);
     return h.y > 0.0 && h.x > 0.0 ? h.x : -1.0;

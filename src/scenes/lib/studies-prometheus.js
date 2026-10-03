@@ -269,8 +269,8 @@ export function prometheus() {
   }, handFront, [-1.5, yTop, 1.6, yBot], { sp: 4.4, maxLen: 70, thr: [0.2, 0.9], angle: -1.21 + 0.22 + 0.38 - 0.58, d: 0.42, bow: 0.008 });
 
   // ---------------- mirror script (written before the cut) and the theft diagram ----------------
-  scriptBlock(D, ['il foco furato nella ferula', 'portato di cielo in terra', 'alli omini'], 0.5, 0.07, { size: 21, lh: 29, d: 0.5, kind: 'chalk' });
-  const G0 = [0.367, -0.19], SC = 0.31;
+  scriptBlock(D, ['il foco furato nella ferula', 'portato di cielo in terra', 'alli omini'], 0.6, 0.07, { size: 21, lh: 29, d: 0.5, kind: 'chalk' });
+  const G0 = [0.46, -0.19], SC = 0.31;
   const Pb = (x, z) => [G0[0] + x * SC, G0[1] + z * SC];
   const gc = Pb(XG, 0), wc = Pb(XW, 0);
   D.stroke(arcPts(gc[0], gc[1], R_LOBE_GIANT * SC, -2.4, -2.4 + TAU * 1.03, { step: 1.5 * PX }), { ...CH, w: 2.0, d: 0.4, speed: 1.6, taper: [8, 8], press: 0.25 });

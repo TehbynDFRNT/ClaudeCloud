@@ -38,9 +38,13 @@ void main(){
 
   // ---- red chalk: pigment catches the tooth first, pressure fills the valleys; dust haze around strokes
   float chd = o0.g;
-  float grain = P.tooth * 0.85 + 0.15 * P.fib;
-  float cover = sat(chd * 1.45 + (grain - 0.42) * 1.5 * (1.0 - 0.55 * chd));
-  cover *= smoothstep(0.0, 0.05, chd);
+  float cover = 0.0;
+  if (chd > 0.004){
+    // a finer, page-locked tooth sample: chalk catches the peaks first; only pressure fills the valleys
+    float tHi = texture(uPaper, p * 2.31 + vec2(0.37, 0.71)).g;
+    float tN = sat((P.tooth * 0.45 + tHi * 0.55 - 0.2) / 0.26 + 0.12 * (P.fib - 0.25));
+    cover = smoothstep(0.04, 0.32, chd * 1.35 - (1.0 - tN) * 0.78);
+  }
   vec3 chalk = mix(vec3(0.52, 0.17, 0.085), vec3(0.30, 0.062, 0.028), sat(chd * 1.25 - 0.25));
   alb = mix(alb, chalk, cover * 0.93);
   alb *= mix(vec3(1.0), vec3(0.95, 0.85, 0.79), sat(ob.g * 0.25 + oh.g * 0.3) * (1.0 - cover));
@@ -85,6 +89,7 @@ const BUILD = {
   cno: DR.cno,
   collapse: DR.collapse,
   rings: DR.rings,
+  swatch: DR.swatch,
   blank: DR.blank,
 };
 
@@ -103,10 +108,12 @@ const presets = {
   },
   'S10-prometheus': {
     drawing: 'prometheus', design: 3.5,
-    view: [[0, -0.12, -0.02, 1.06, 0.008], [3.5, -0.17, -0.035, 1.14, -0.004]],
+    // the fist on the left third, the flame in the upper third (~90 px under the scope line); the push-in is
+    // anchored on the flame, so the fist sinks toward the frame edge while the fire holds its place
+    view: [[0, 0.041, -0.116, 1.04, 0.006], [3.5, 0.028, -0.134, 1.10, -0.004]],
     paperSeed: 3.7, age: [0.7, 0.3, 0.55, 1.0],
-    key: { pos: [-0.3, -0.15], r: 0.95, pow: 1.4, dir: [-0.8, -0.45, 0.42], col: [1.08, 0.89, 0.66] },
-    flameKeys: [[0.45, 0], [2.1, 1]],
+    key: { pos: [-0.22, -0.2], r: 0.95, pow: 1.4, dir: [-0.8, -0.45, 0.42], col: [1.08, 0.89, 0.66] },
+    flameKeys: [[0.45, 0], [2.1, 1]], flameGain: 2.0,
   },
   'S14d-deluge': {
     drawing: 'deluge', paperSeed: 7.3, design: 1.5,

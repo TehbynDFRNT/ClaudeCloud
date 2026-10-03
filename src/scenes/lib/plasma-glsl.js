@@ -34,9 +34,11 @@ uniform float uEvo;       // convection phase (cells morph through the 3D Worley
 uniform float uCell;      // cells per world unit
 uniform vec2  uDrift;     // pattern drift (cell units)
 uniform float uWarp;      // domain-warp strength
-uniform float uRelief;    // surface relief (world units)
-uniform float uHeat;      // heat offset
-uniform float uHeatGain;  // heat contrast
+uniform float uRelief;    // surface relief (world units; keep small: the plasma is a fluid, not pebbles)
+uniform float uHeat;      // heat offset of the cell BODIES (lanes keep uLane)
+uniform float uHeatGain;  // heat contrast of the cell bodies
+uniform float uLane;      // heat of the intergranular lanes (dim ember rivers, never black)
+uniform float uMeso;      // large-scale hierarchy: clusters of hot granules inside a coarser network
 uniform float uGain;      // emission gain
 uniform float uPlume;     // wisp density above the surface
 uniform float uPlumeH;    // wisp scale height
@@ -45,12 +47,15 @@ uniform float uAbsorb;    // wisp absorption (dark veils) relative to emission
 uniform float uTMax;      // march distance
 uniform float uFog;       // hot haze extinction per unit
 uniform vec3  uHaze;      // haze / sky radiance
-uniform float uDetail;    // fine turbulence amount
+uniform float uDetail;    // fine structure amount
+uniform float uGranule;   // pixel-scale granulation (hard-thresholded grit) amount
+uniform float uOutflow;   // radial outflow fibres (core -> lanes) amount
 uniform float uFlowSpin;  // swirl of the warp field over time
 uniform float uSoft;      // half thickness of the translucent skin (world units)
 uniform float uSigma;     // extinction inside the plasma body (per world unit)
-uniform float uSkin;      // heat drop across the skin (cooler, redder edges)
+uniform float uSkin;      // heat drop across the skin
 uniform float uFlowRate;  // outflow cycles per unit of uEvo
+uniform vec2  uFarHeat;   // far-field heat = x + y * heat (glowing horizon)
 uniform vec4  uVents[4];  // white-hot eruption vents on the surface: xyz, strength
 
 // coarse surface sample (3 fetches): chained domain warp -> cells
@@ -67,40 +72,57 @@ Cell boilCoarse(vec2 xz){
   vec4 c = nz(vec3(q + w, uEvo));
   float F1 = c.g * 1.1, E1 = c.a * 0.8;
   float dome = 1.0 - smoothstep(0.0, 1.0, F1);
-  float plat = smoothstep(0.0, 0.22, E1);          // 0 in the (narrow) lanes, 1 on the cell body
+  float plat = smoothstep(0.0, 0.2, E1);           // 0 in the (narrow) lanes, 1 on the cell body
   float core = exp(-F1 * F1 * 10.0);               // compact upflow core
-  float cellHot = min(1.25, 0.78 + 1.3 * (a.g - 0.45)); // some cells hotter than others
-  C.h = (0.55 * plat + 0.25 * dome - 0.45 + 0.25 * (b.g - 0.5)) * uRelief;
-  C.heat = 0.04 + plat * (0.20 + 0.34 * dome * cellHot) + 0.36 * core * cellHot * plat;
+  // mesoscale: the coarse Worley field (a.g) clusters hot granules; its borders hold cooler, dimmer ones
+  float meso = 1.0 - smoothstep(0.1, 0.95, a.g * 1.1);
+  float hot = mix(1.0, 0.55 + 0.75 * meso, uMeso) * (0.92 + 0.16 * (b.g - 0.5));
+  float body = (0.30 + 0.30 * dome + 0.30 * core) * hot;
+  C.heat = mix(uLane, body * uHeatGain + uHeat, plat);
+  C.h = (0.40 * plat + 0.30 * dome - 0.45 + 0.25 * (b.g - 0.5)) * uRelief;
   for (int i = 0; i < 4; i++){
     if (uVents[i].w <= 0.0) continue;
     vec2 dv = xz - uVents[i].xz;
-    float v = exp(-dot(dv, dv) / 0.02);
-    C.heat += uVents[i].w * v * (0.8 + 0.4 * c.r);
+    float r2 = dot(dv, dv);
+    float v = exp(-r2 / 0.012), halo = exp(-r2 / 0.09);
+    C.heat += uVents[i].w * (v * (0.75 + 0.3 * c.r) + 0.22 * halo);
+    plat = max(plat, halo);
     C.h += uVents[i].w * v * uRelief * 0.6;
   }
   C.w = w2; C.q = q + w; C.F1 = F1; C.plat = plat; C.core = core;
   return C;
 }
 
-// fine structure riding on the cells (2 fetches): marbled flow, bright filaments, dark veins,
-// and small fast-popping bubbles. x = heat offset, y = density modulation
+// fine structure riding on the cells (5 fetches), x = heat offset, y = density modulation:
+//  * outflow fibres: thin bright threads radiating from each upflow core toward the lanes, advected outward
+//    (noise in the cell's polar frame: direction of grad F1 x radius F1 - time)
+//  * granulation + pixel-scale grit (hard thresholded Worley) so the focal plane carries real detail
+//  * downflow threads in the lanes (dim ember rivers with structure, never empty black)
 vec2 boilFlow(vec3 p, Cell C, float k){
   if (k < 0.02) return vec2(0.0);
-  vec2 qf = C.q * 2.9 + C.w * 0.35;
-  vec4 n = nz(vec3(qf, uEvo * uFlowRate + 7.0));
-  float marble = n.b - 0.5;
-  float rid = 1.0 - abs(n.r * 2.0 - 1.0);
-  float fil = rid * rid * rid * rid;                         // thin bright threads
-  float gran = 1.0 - smoothstep(0.0, 0.8, n.g * 1.1);        // granules
-  float vein = exp(-n.a * 0.8 * 12.0);                       // dark veins between granules
-  vec4 m = nz(vec3(qf * 2.45 + (n.rb - 0.5) * 0.5 + 3.1, uEvo * uFlowRate * 2.6 + 19.0));
-  float bub = 1.0 - smoothstep(0.0, 0.7, m.g * 1.1);         // small boiling bubbles
-  float rim = exp(-m.a * 0.8 * 10.0);
-  float tur = m.r - 0.5;
-  float heat = k * uDetail * (C.plat * (0.06 * marble + 0.11 * fil + 0.04 * gran + 0.09 * bub * bub + 0.06 * tur - 0.05)
-                              - 0.035 * vein * (0.3 + 0.7 * C.plat) - 0.03 * rim * C.plat);
-  float dens = k * uDetail * (0.4 * marble + 0.4 * gran + 0.4 * bub - 0.5 * vein - 0.3 * rim);
+  float tf = uEvo * uFlowRate;
+  const float e = 0.07;
+  float fx = nz(vec3(C.q + vec2(e, 0.0), uEvo)).g * 1.1;
+  float fz = nz(vec3(C.q + vec2(0.0, e), uEvo)).g * 1.1;
+  vec2 g = vec2(fx - C.F1, fz - C.F1);
+  vec2 dir = g / max(length(g), 1e-4);
+  vec4 s = nz(vec3(dir * 1.9 + C.q * 0.3, C.F1 * 3.4 - tf * 0.9));
+  float fib = 1.0 - abs(s.r * 2.0 - 1.0); fib *= fib; fib *= fib * fib;   // ^6: thin bright fibres
+  float fibD = s.b - 0.5;                                                  // broad marbling along them
+  vec2 qf = C.q * 3.1 + C.w * 0.35 + dir * tf * 0.05;
+  vec4 n = nz(vec3(qf, tf + 7.0));
+  float gran = 1.0 - smoothstep(0.15, 0.6, n.g * 1.1);
+  float vein = exp(-n.a * 0.8 * 12.0);
+  vec4 m = nz(vec3(qf * 2.7 + (n.rb - 0.5) * 0.6 + 3.1, tf * 2.2 + 19.0));
+  float grit = 1.0 - smoothstep(0.12, 0.42, m.g * 1.1);
+  float rid = 1.0 - abs(m.r * 2.0 - 1.0); rid *= rid; rid *= rid; rid *= rid;   // ^8 lane threads
+  float lane = 1.0 - C.plat;
+  float radial = smoothstep(0.06, 0.4, C.F1) * C.plat;
+  float heat = k * uDetail * (
+      C.plat * (0.06 * fibD + 0.035 * gran + 0.05 * grit * uGranule - 0.035 - 0.05 * vein)
+    + radial * uOutflow * 0.13 * fib
+    + lane * (0.17 * rid + 0.07 * (n.r - 0.5)));
+  float dens = k * uDetail * (0.4 * fibD + 0.3 * gran + 0.3 * grit - 0.4 * vein);
   return vec2(heat, dens);
 }
 
@@ -142,11 +164,11 @@ vec3 boilMarch(vec3 ro, vec3 rd, out float depth){
       float far = smoothstep(uTMax * 0.3, uTMax * 0.95, t);
       vec2 fi = boilFlow(p, f, 1.0 - far);
       float heat = f.heat + fi.x - (1.0 - rho) * uSkin;
-      heat = mix(heat, 0.16 + 0.45 * f.heat, far * 0.7);
+      heat = mix(heat, uFarHeat.x + uFarHeat.y * f.heat, far * 0.7);
       float sig = uSigma * rho * max(0.15, 1.0 + fi.y);
       dt = dIn * (1.0 + t * 0.12);
       float a = 1.0 - exp(-sig * dt);
-      col += T * a * fog * heatEmit(heat * uHeatGain + uHeat);
+      col += T * a * fog * heatEmit(heat);
       T *= 1.0 - a;
       if (T < 0.5 && depth >= uTMax) depth = t;
     } else {
@@ -154,7 +176,7 @@ vec3 boilMarch(vec3 ro, vec3 rd, out float depth){
       if (uPlume > 0.0 && dy < uPlumeH * 4.0){
         float dens = uPlume * boilWisp(p, f.w) * exp(-dy / uPlumeH);
         float hw = f.heat * 0.9 - dy / max(uPlumeH, 0.02) * 0.1 - 0.06;
-        col += T * fog * heatEmit(hw * uHeatGain + uHeat) * dens * dt;
+        col += T * fog * heatEmit(hw) * dens * dt;
         T *= exp(-dens * dt * uAbsorb);
         if (T < 0.55 && depth >= uTMax) depth = t;
       }
@@ -230,6 +252,7 @@ uniform vec3  uAxis;       // flux-rope axis (unit)
 uniform vec3  uHazeCol;    // cold field haze radiance
 uniform float uHazeR;      // haze radius around the axis
 uniform float uGain;
+uniform float uCoreSurf;   // brightness of the boiling surface (keep its cells readable under the bloom)
 
 vec3 coreShade(vec3 ro, vec3 rd, out float depth){
   vec3 col = vec3(0.0);
@@ -263,7 +286,7 @@ vec3 coreShade(vec3 ro, vec3 rd, out float depth){
     float dome = 1.0 - smoothstep(0.0, 0.95, c.g * 1.1);
     float heat = uCoreHeat - 0.13 * lane + 0.08 * dome - 0.06 * exp(-d.a * 0.8 * 10.0) + 0.10 * (d.r - 0.5) + 0.06 * (d.b - 0.5);
     heat -= (1.0 - pow(mu, 0.6)) * 0.42;
-    col = col * 0.35 + heatEmit(heat);
+    col = col * 0.35 + heatEmit(heat) * uCoreSurf;
     depth = max(hs.x, 0.01);
   }
   // cold field haze along the rope: faint, streaked along the axis
@@ -291,7 +314,7 @@ vec3 coreShade(vec3 ro, vec3 rd, out float depth){
 `;
 
 export const DOF = `
-uniform sampler2D uSrc;
+uniform sampler2D uSrc;   // mipmapped (taps of a wide gather read a prefiltered level: no stipple)
 uniform float uFocus;     // focus distance (scene units)
 uniform float uAperture;  // CoC in target pixels for objects at infinity / half focus distance
 uniform float uMaxCoc;    // max CoC radius in target pixels
@@ -299,18 +322,20 @@ uniform int uTaps;        // gather taps (24..48)
 float cocOf(float z){ return min(uMaxCoc, uAperture * abs(1.0 - uFocus / max(z, 1e-3))); }
 void main(){
   vec2 uv = gl_FragCoord.xy / uRes;
-  vec4 c = texture(uSrc, uv);
+  vec4 c = textureLod(uSrc, uv, 0.0);
   float cz = c.a, cc = cocOf(cz);
   vec3 acc = c.rgb; float tot = 1.0;
   if (uMaxCoc > 0.5){
-    float a0 = ign(gl_FragCoord.xy) * TAU;
+    // static per-pixel rotation (no frame-to-frame shimmer); tap footprint matched by the mip level
+    float a0 = ignStatic(gl_FragCoord.xy) * TAU;
     int N = uTaps;
+    float lod = clamp(log2(max(1.0, uMaxCoc * 1.77 / sqrt(float(N)) * 0.7)), 0.0, 4.0);
     for (int i = 0; i < 48; i++){
       if (i >= N) break;
       float fi = float(i) + 0.5;
       float r = sqrt(fi / float(N)) * uMaxCoc;
       float a = fi * 2.39996323 + a0;
-      vec4 s = texture(uSrc, uv + vec2(cos(a), sin(a)) * r / uRes);
+      vec4 s = textureLod(uSrc, uv + vec2(cos(a), sin(a)) * r / uRes, min(lod, log2(max(1.0, r * 0.5))));
       float sc = cocOf(s.a);
       if (s.a > cz) sc = min(sc, cc * 2.0);
       float m = smoothstep(r - 1.0, r + 1.0, sc);
@@ -326,16 +351,16 @@ uniform sampler2D uSrc;
 uniform sampler2D uLines;
 uniform float uHasLines;
 uniform float uLineGain;    // gain on the stroke layer (filaments / sparks, already HDR)
-uniform float uLineAbsorb;  // optical depth of strokes against the plate (filaments silhouetted on the core)
+uniform float uLineAbsorb;  // gain on the strokes' optical depth (alpha of the stroke layer)
 uniform float uFlash;       // additive in-scene flash radiance
 uniform vec3  uFlashCol;
 void main(){
   vec2 uv = gl_FragCoord.xy / uRes;
   vec3 col = texture(uSrc, uv).rgb;
   if (uHasLines > 0.5){
-    vec3 e = texture(uLines, uv).rgb * uLineGain;
-    float tau = uLineAbsorb * min(dot(e, vec3(0.3333)), 8.0) * 0.25;
-    col = col * exp(-tau) + e;
+    vec4 L = texture(uLines, uv);
+    // dense strands in front of the hot core absorb it (dark threads), then add their own emission
+    col = col * exp(-uLineAbsorb * L.a) + L.rgb * uLineGain;
   }
   col += uFlash * uFlashCol;
   fragColor = vec4(col, 1.0);

@@ -135,7 +135,7 @@ const presets = {
   'S06-first-pull': {
     cam: [[0, [-0.272, -0.031, 0.202], [-0.13, 0.03, -0.05], 50, -0.72], [1, [-0.259, -0.027, 0.188], [-0.12, 0.034, -0.05], 48, -0.84, 'inOutSine']],
     headS: [[0, -0.012], [1, 0.08, 'inQuad']],
-    streamAmt: 0.85, streamW: 1.0, rip: 0.5, flowRate: 1.2, detail: 1.0, rake: 1.5, rakeG: 0.12, starGain: 0.5,
+    streamAmt: 0.85, streamW: 1.0, rip: 0.5, flowRate: 1.2, detail: 1.0, rake: 1.2, rakeG: 0.12, starGain: 0.5,
     giant: { relief: 0.006, plumes: 0.6, glow: 1.5 }, dwarfLum: 1.2, volScale: 0.6,
     post: { bloomStrength: 0.08 },
   },
@@ -157,7 +157,7 @@ const presets = {
     chase: { tau: [[0, 1.0], [1, 1.30, 'linear']], back: 0.24, up: 0.27, side: 0.04, lead: 0.2, toDwarf: 0.3, look: 0.42, fov: 48 },
     clump: { tau: [[0, 1.0], [1, 1.30, 'linear']], amt: 1.0 },
     headTau: [[0, 1.014], [1, 1.314, 'linear']],
-    streamAmt: 1.0, streamGlow: 0.75, rip: 0.6, flowRate: 1.8, rake: 0.4, ringAmt: 0.0, starGain: 0.5,
+    streamAmt: 1.0, streamGlow: [[0, 0.75], [0.55, 0.62], [1, 0.3]], rip: 0.6, flowRate: 1.8, rake: 0.4, ringAmt: 0.0, starGain: 0.5,
     dwarfLum: 1.4, volScale: 0.5,
     overlay: 'trajectory',
     post: { bloomStrength: 0.09, streakStrength: 0.02 },

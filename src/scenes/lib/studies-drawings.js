@@ -437,3 +437,17 @@ export function rings() {
   D.stroke(last, { w: 1.7, d: 0.75, t0: -1.2, dur: 4.0, taper: [10, 14], press: 0.2 });
   return D;
 }
+
+// --- debug: a calibration sheet of chalk and ink densities (not used by any shot) ----------------
+export function swatch() {
+  const D = new Drawing(7);
+  D.at(-10);
+  for (let i = 0; i < 10; i++) {
+    const d = 0.1 + i * 0.1, x = -0.75 + i * 0.16;
+    for (let k = 0; k < 4; k++) D.stroke(linePts(x + k * 0.01, -0.35, x + k * 0.01 + 0.06, 0.0), { kind: 'chalk', w: 2 + k * 1.5, d, speed: 3, taper: [4, 4], press: 0.1, nib: 0, wet: false });
+    D.stroke(linePts(x, 0.08, x + 0.1, 0.08), { kind: 'chalk', w: 14, d, speed: 3, taper: [2, 2], press: 0, nib: 0, wet: false });
+    D.stroke(linePts(x, 0.2, x + 0.1, 0.2), { kind: 'ink', w: 3, d, speed: 3, taper: [2, 2], press: 0, wet: false });
+    D.text(String(d.toFixed(1)), x + 0.05, 0.3, { size: 20, d: 0.6, mirror: false });
+  }
+  return D;
+}

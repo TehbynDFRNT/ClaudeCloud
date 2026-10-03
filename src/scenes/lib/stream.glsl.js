@@ -215,7 +215,7 @@ float volBound(vec3 p, vec4 f, out float scale){
   float r = length(q.xz);
   float ro = max(uDiskOut * 1.1, (uRingAmt > 0.0 ? uRCirc + 0.1 : 0.0));
   float bD = (uDiskAmt + uRingAmt > 0.0 || uHot.z > 0.0) ? max(r - ro, abs(q.y) - diskH(ro) * 3.2) : 1e3;
-  scale = bS < bD ? w * (0.62 - 0.2 * uDetail) : diskH(max(r, 0.02));
+  scale = bS < bD ? w * (0.62 - 0.2 * uDetail) * (1.0 - 0.5 * bulb) : diskH(max(r, 0.02));
   return min(bS, bD);
 }
 
