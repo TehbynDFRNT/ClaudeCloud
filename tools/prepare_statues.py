@@ -67,11 +67,14 @@ FIGURES = {
                         'Royal Cast Collection (open.smk.dk), public domain.'),
         face_dir=(-0.42, -0.91, 0.0),
         hints=dict(nose=[32.14, 23.81, 107.45], eyeR=[26.76, 44.85, 126.93], eyeL=[52.05, 22.82, 128.58],
-                   chin=[42.68, 38.88, 79.96]),
+                   chin=[42.68, 38.88, 79.96], mouth=[39.39, 32.38, 95.45]),
+        # head-space hints (head units, final frame), snapped on the mesh
+        head_hints=dict(earR=[None, -0.13, -0.10], earL=[None, -0.13, 0.10]),
+        torso_dir=(-1.0, 0.0, 1.0),     # rough direction the chest faces, head space (sign hint only)
         pupils=True,                    # carved (heart-shaped) pupils: gaze measured from them
         gaze_pitch=None,                # None = measured
         preclip=[],
-        crop_y=-0.92,                   # bottom cut, head units (below the chin = -0.5)
+        crop_y=-0.85,                   # bottom cut, head units (chin = -0.5); the pedestal stub starts below
         target_faces=560000,
         smooth=dict(seams=True),
     ),
@@ -86,11 +89,13 @@ FIGURES = {
                         'Statens Museum for Kunst, Royal Cast Collection (open.smk.dk), public domain.'),
         face_dir=(-0.92, -0.38, 0.0),
         hints=dict(nose=[2.18, 18.27, 85.35], eyeR=[6.5, 29.98, 95.58], eyeL=[14.83, 16.09, 95.32],
-                   chin=[9.37, 22.88, 69.86]),
+                   chin=[9.37, 22.88, 69.86], mouth=[8.86, 22.4, 78.95]),
+        head_hints=dict(),
+        torso_dir=(0.0, 0.0, 1.0),
         pupils=False,
         gaze_pitch=6.0,                 # blank eyes: upturn judged visually (see notes)
         preclip=[],
-        crop_y=-0.95,
+        crop_y=-0.92,
         target_faces=560000,
         smooth=dict(skin=True),
     ),
@@ -107,6 +112,8 @@ FIGURES = {
         face_dir=(0.90, 0.14, 0.42),
         hints=dict(nose=[53.32, 98.43, 30.49], eyeR=[46.7, 103.93, 31.27], eyeL=[51.02, 102.46, 22.1],
                    mouth=[50.99, 93.82, 29.31], beard=[42.47, 76.97, 26.23]),
+        head_hints=dict(),
+        torso_dir=(-1.0, 0.0, 0.3),
         pupils=False,
         gaze_pitch=6.0,
         # relief ground slab (z < 7) and its return on the +X edge (x > 62): keep z >= 7 and x <= 62 (raw = cast)
@@ -388,3 +395,359 @@ def head_transform(name, cfg, m, fr):
 
 
 CHIN_RATIO = 1.35  # stomion->gnathion / nose-tip->stomion, measured: david 1.29, sol 1.42
+K_EAR = 0.26       # ear-canal midpoint lies this far (head units) behind the eyeball centres along +Z (measured on david)
+
+
+def smoothstep(a, b, x):
+    t = np.clip((np.asarray(x, float) - a) / (b - a), 0, 1)
+    return t * t * (3 - 2 * t)
+
+
+def scalar_smooth(s, A, iters):
+    P = umbrella(A)
+    for _ in range(iters):
+        s = 0.5 * s + 0.5 * (P @ s)
+    return s
+
+
+# ------------------------------------------------------------------------------------------------
+# stage 2: head space, crop, smoothing, decimation
+# ------------------------------------------------------------------------------------------------
+def to_head_fn(Rm, O_rot, H):
+    return lambda P: (np.asarray(P, float) @ Rm.T - O_rot) / H
+
+
+def midline_front_profile(Vc, n, d, fw, ylo, yhi, tol, Rm, O_rot, H):
+    """Front profile of the facial symmetry section, in head units: returns (y, f, points)."""
+    on = np.abs(Vc @ n - d) < tol
+    P = (Vc[on] @ Rm.T - O_rot) / H
+    f = P @ fw
+    k = (P[:, 1] > ylo) & (P[:, 1] < yhi)
+    return P[k], f[k]
+
+
+def snap_mouth(Ph, f, hint_y, span=0.03):
+    """stomion: deepest point (along the facial forward axis) of the midline front profile near hint_y."""
+    bins = np.arange(hint_y - span, hint_y + span, 0.002)
+    best = None
+    prof = []
+    for b0 in bins:
+        k = (Ph[:, 1] >= b0) & (Ph[:, 1] < b0 + 0.002)
+        if k.any():
+            i = np.argmax(np.where(k, f, -1e9))
+            prof.append((f[i], Ph[i]))
+    fs = np.array([p[0] for p in prof])
+    i = int(np.argmin(fs[2:-2])) + 2 if len(fs) > 5 else int(np.argmin(fs))
+    return prof[i][1]
+
+
+def importance(V, an, fw):
+    """Per-vertex decimation weight (pymeshlab quality): budget toward eyes, lids, lips, nose."""
+    eyes = np.minimum(np.linalg.norm(V - an['eyeballL'], axis=1), np.linalg.norm(V - an['eyeballR'], axis=1))
+    w_eye = 1 - smoothstep(0.075, 0.13, eyes)
+    w_lip = 1 - smoothstep(0.05, 0.09, np.linalg.norm(V - an['mouth'], axis=1))
+    w_nose = 1 - smoothstep(0.04, 0.08, np.linalg.norm(V - an['noseTip'], axis=1))
+    pc = (an['eyeballL'] + an['eyeballR']) / 2 * 0.6 + an['mouth'] * 0.4
+    dpc = V - pc
+    w_face = (1 - smoothstep(0.22, 0.34, np.linalg.norm(dpc, axis=1))) * smoothstep(-0.12, 0.0, dpc @ fw)
+    w_head = smoothstep(an['chin'][1] - 0.15, an['chin'][1] + 0.02, V[:, 1])
+    w_neck = smoothstep(-0.85, -0.55, V[:, 1])
+    w = 0.25 + 0.5 * w_neck + 1.6 * w_head + 4.0 * w_face + 3.0 * np.maximum(w_eye, np.maximum(w_lip, w_nose))
+    return w
+
+
+def decimate(V, F, q, target):
+    import pymeshlab
+    ms = pymeshlab.MeshSet()
+    ms.add_mesh(pymeshlab.Mesh(vertex_matrix=V, face_matrix=F, v_scalar_array=q))
+    ms.meshing_decimation_quadric_edge_collapse(targetfacenum=int(target), qualityweight=True, preservenormal=True,
+                                                optimalplacement=True, planarquadric=True, qualitythr=0.4, autoclean=True)
+    mm = ms.current_mesh()
+    m = trimesh.Trimesh(mm.vertex_matrix().astype(float), mm.face_matrix().astype(np.int64), process=True)
+    m.update_faces(m.nondegenerate_faces())
+    m.update_faces(m.unique_faces())
+    m.remove_unreferenced_vertices()
+    return m
+
+
+def curvature_fields(V, F, N, A, H_edge):
+    """Signed multi-scale curvature (positive = convex ridge, negative = crevice), in MAD units, plus a
+    roughness field (local energy of fine-scale curvature) used for the skin mask."""
+    cs = []
+    for it in (4, 16, 48):
+        Vs = smooth_positions(V, A, it)
+        c = ((V - Vs) * N).sum(1)
+        mad = np.median(np.abs(c - np.median(c))) + 1e-12
+        cs.append(c / (1.4826 * mad))
+    cav = 0.5 * cs[0] + 0.3 * cs[1] + 0.2 * cs[2]
+    rough = scalar_smooth(np.abs(cs[1]), A, 40)
+    return cav, rough
+
+
+def fib_hemisphere(n, cosine=True):
+    i = np.arange(n) + 0.5
+    phi = i * math.pi * (3 - math.sqrt(5))
+    u = i / n
+    z = np.sqrt(1 - u) if cosine else 1 - u
+    r = np.sqrt(np.maximum(0, 1 - z * z))
+    return np.stack([r * np.cos(phi), r * np.sin(phi), z], 1)
+
+
+def tangent_frames(N, rng):
+    a = np.where(np.abs(N[:, :1]) < 0.9, np.array([[1.0, 0, 0]]), np.array([[0, 1.0, 0]]))
+    T = nrm(np.cross(N, a))
+    B = np.cross(N, T)
+    th = rng.uniform(0, 2 * math.pi, len(N))[:, None]
+    return np.cos(th) * T + np.sin(th) * B, -np.sin(th) * T + np.cos(th) * B
+
+
+def bake_rays(V, N, caster, dirs_local, maxd, inward=False, chunk=400000, seed=7):
+    """Mean normalised hit distance (0 = immediately occluded, 1 = clear up to maxd) per vertex."""
+    rng = np.random.default_rng(seed)
+    T, B = tangent_frames(N, rng)
+    nv, nr = len(V), len(dirs_local)
+    out = np.zeros(nv)
+    sgn = -1.0 if inward else 1.0
+    per = max(1, chunk // nr)
+    for s in range(0, nv, per):
+        e = min(nv, s + per)
+        n_ = N[s:e] * sgn
+        D = (T[s:e, None, :] * dirs_local[None, :, 0:1] + B[s:e, None, :] * dirs_local[None, :, 1:2]
+             + n_[:, None, :] * dirs_local[None, :, 2:3]).reshape(-1, 3)
+        O = np.repeat(V[s:e] + n_ * 2e-4, nr, axis=0)
+        d = caster.distances(O, D, maxd)
+        out[s:e] = (d / maxd).reshape(-1, nr).mean(1)
+    return out
+
+
+# ------------------------------------------------------------------------------------------------
+# anchors on the final head-space surface
+# ------------------------------------------------------------------------------------------------
+def section_polygons(m, y):
+    sec = m.section(plane_origin=[0, y, 0], plane_normal=[0, 1, 0])
+    if sec is None:
+        return []
+    pts = []
+    for ent in sec.entities:
+        P = sec.vertices[ent.points]
+        pts.append(P)
+    # group discrete loops
+    loops = sec.discrete
+    return [np.asarray(L) for L in loops]
+
+
+def loop_centroid(L):
+    x, z = L[:, 0], L[:, 2]
+    a = x * np.roll(z, -1) - np.roll(x, -1) * z
+    A = a.sum() / 2
+    if abs(A) < 1e-12:
+        return L.mean(0), 0.0
+    cx = ((x + np.roll(x, -1)) * a).sum() / (6 * A)
+    cz = ((z + np.roll(z, -1)) * a).sum() / (6 * A)
+    return np.array([cx, L[:, 1].mean(), cz]), abs(A)
+
+
+def neck_loop(m, y, near_xz=(0.0, 0.0)):
+    best = None
+    for L in section_polygons(m, y):
+        c, A = loop_centroid(L)
+        dist = math.hypot(c[0] - near_xz[0], c[2] - near_xz[1])
+        if A > 1e-4 and (best is None or dist < best[0]):
+            best = (dist, c, A)
+    return best
+
+
+def side_ray_point(caster, y, z, side, spread=0.0, medial=False):
+    """Cast rays from the figure's side (side=+1 left/+X, -1 right/-X) toward the axis at (y, z)."""
+    pts = []
+    offs = [(0, 0)] if spread == 0 else [(dy, dz) for dy in np.linspace(-spread, spread, 9) for dz in np.linspace(-spread, spread, 9)]
+    O = np.array([[side * 3.0, y + dy, z + dz] for dy, dz in offs])
+    D = np.tile([-side * 1.0, 0, 0], (len(O), 1))
+    loc, ir, it = caster.first(O, D)
+    if not len(loc):
+        return None
+    if medial:
+        return loc[np.argmin(np.abs(loc[:, 0]))]
+    return loc[0]
+
+
+def body_anchors(m, caster, an, cfg):
+    V = np.asarray(m.vertices)
+    up = np.array([0, 1.0, 0])
+    # neck axis just under the jaw
+    y_jaw = an['chin'][1] - 0.10
+    nl = neck_loop(m, y_jaw)
+    neck_top = nl[1]
+    # torso lateral axis from the cross-section just above the cut
+    y_s = cfg['crop_y'] + 0.06
+    band = np.abs(V[:, 1] - y_s) < 0.01
+    P = V[band][:, [0, 2]]
+    c = P.mean(0)
+    _, _, vt = np.linalg.svd(P - c, full_matrices=False)
+    lat = np.array([vt[0][0], 0, vt[0][1]])
+    fwd_t = np.cross(lat, up)
+    if fwd_t @ np.asarray(cfg['torso_dir'], float) < 0:
+        fwd_t = -fwd_t
+    left_t = np.cross(up, fwd_t)                 # torso's own left
+    out = {}
+    for lab, sgn in (('shoulderL', 1), ('shoulderR', -1)):
+        rel = V - neck_top
+        lt = rel @ left_t
+        ft = rel @ fwd_t
+        sel = (sgn * lt > 0.34) & (sgn * lt < 0.42) & (np.abs(ft) < 0.18)
+        if sel.any():
+            out[lab] = V[np.argmax(np.where(sel, V[:, 1], -1e9))]
+    ys = [out[k][1] for k in out]
+    y_nb = (max(ys) if ys else an['chin'][1] - 0.25) + 0.02
+    nb = neck_loop(m, y_nb, (neck_top[0], neck_top[2]))
+    out['neckBase'] = nb[1] if nb else neck_top
+    out['_torso'] = dict(forward=fwd_t, left=left_t)
+    out['_neckTop'] = neck_top
+    return out
+
+
+def ear_anchors(caster, an, cfg):
+    out, notes = {}, {}
+    hh = cfg.get('head_hints', {})
+    for lab, sgn in (('earL', 1), ('earR', -1)):
+        if lab in hh:
+            _, y, z = hh[lab]
+            p = side_ray_point(caster, y, z, sgn, spread=0.03, medial=True)
+            out[lab] = p
+            notes[lab] = 'measured: most medial point of the ear bowl (concha) seen from the side'
+        else:
+            y = 0.5 * (an['eyeballL'][1] + an['eyeballR'][1]) - 0.07
+            p = side_ray_point(caster, y, 0.0, sgn)
+            out[lab] = p
+            notes[lab] = 'ESTIMATED: ear covered by hair; surface point beside the turn axis, 0.07 below eye height'
+    return out, notes
+
+
+# ------------------------------------------------------------------------------------------------
+# per-figure pipeline
+# ------------------------------------------------------------------------------------------------
+def smooth_skin(V, F, N, A, mode, H_edge):
+    """Selective Taubin smoothing of broad, low-curvature skin only (scanner orange-peel, thin plaster
+    mould-seam ridges). Carving (lids, lips, nostrils, curls) has high medium-scale curvature and is
+    masked out, so it stays crisp."""
+    Vs = smooth_positions(V, A, 12)
+    cm = np.abs(((V - Vs) * N).sum(1))
+    cm = scalar_smooth(cm, A, 6)
+    t0, t1 = mode['t']
+    w = 1 - smoothstep(t0, t1, cm)
+    w = scalar_smooth(w, A, 4) * mode.get('strength', 1.0)
+    V2 = taubin(V, A, mode['iters'], W=w)
+    moved = np.linalg.norm(V2 - V, axis=1)
+    log('  smoothing: mask mean %.2f, moved mean %.5f max %.5f (head units)' % (w.mean(), moved.mean(), moved.max()))
+    return V2, w
+
+
+SMOOTH_MODES = {
+    'skin': dict(t=(0.0006, 0.0020), iters=10, strength=1.0),     # sol: scanner orange-peel on cheeks/brow/neck
+    'seams': dict(t=(0.0005, 0.0016), iters=8, strength=0.9),     # david: thin mould-seam ridges on cheek/neck/nose
+}
+
+
+def process(name, args):
+    cfg = FIGURES[name]
+    t_start = time.time()
+    log('=== %s' % name)
+    m = load_cast(cfg)
+    fr = build_frame(name, cfg, m)
+    ht = head_transform(name, cfg, m, fr)
+    H, Rm = ht['H'], fr['R']
+    ez = 0.5 * (ht['eyeC']['L'][2] + ht['eyeC']['R'][2])
+    O_rot = np.array([ht['x_mid'], ht['y0'], ez - K_EAR * H])
+    th = to_head_fn(Rm, O_rot, H)
+    Vc_full = np.asarray(m.vertices, float)
+    fw = nrm(Rm @ fr['Fw'])                         # facial-symmetry forward, head space
+    an = dict(noseTip=th(fr['nose']), chin=(ht['chin'] - O_rot) / H, crown=(ht['crown'] - O_rot) / H)
+    eyes_json = {}
+    for lab in 'LR':
+        e = fr['eyes'][lab]
+        an['eyeball' + lab] = th(e['centre'])
+        an['eye' + lab] = th(e['apex'])
+        g = e.get('gaze_pupil', e['gaze_cap'])
+        eyes_json[lab] = dict(centre=th(e['centre']), radius=e['radius'] / H, gaze=nrm(Rm @ g))
+        if 'pupil' in e:
+            an['pupil' + lab] = th(e['pupil'])
+            eyes_json[lab]['pupilDepth'] = e['pupil_depth'] / H
+    Ph, f = midline_front_profile(Vc_full, fr['n'], fr['d'], fw, an['chin'][1] - 0.02, an['noseTip'][1], 0.006 * H, Rm, O_rot, H)
+    an['mouth'] = snap_mouth(Ph, f, th(fr['hint']['mouth'])[1])
+    if 'beard' in fr['hint']:
+        bh = th(fr['hint']['beard'])
+        Vh0 = th(Vc_full)
+        sel = (np.linalg.norm(Vh0 - bh, axis=1) < 0.12) & (Vh0[:, 2] > bh[2] - 0.08)
+        an['beardTip'] = Vh0[np.argmin(np.where(sel, Vh0[:, 1], 1e9))]
+    # ---- head space + crop
+    mh = trimesh.Trimesh(th(Vc_full), np.asarray(m.faces), process=False)
+    n_src = len(mh.faces)
+    mh = slice_keep(mh, (0, 1, 0), (0, cfg['crop_y'], 0))
+    log('  crop y >= %.2f: %d -> %d tris' % (cfg['crop_y'], n_src, len(mh.faces)))
+    V = np.asarray(mh.vertices, float)
+    F = np.asarray(mh.faces, np.int64)
+    A = adjacency(F, len(V))
+    N = vnormals(V, F)
+    edge = float(np.median(mh.edges_unique_length))
+    for key, on in cfg['smooth'].items():
+        if on:
+            V, _ = smooth_skin(V, F, N, A, SMOOTH_MODES[key], edge)
+            N = vnormals(V, F)
+    mh = trimesh.Trimesh(V, F, process=False)
+    # curvature fields on the dense surface (transferred to the decimated mesh below)
+    cav_full, rough_full = curvature_fields(V, F, N, A, edge)
+    # ---- decimation (budget toward the face)
+    q = importance(V, an, fw)
+    if len(F) > cfg['target_faces'] * 1.02:
+        md = decimate(V, F, q, cfg['target_faces'])
+        log('  decimated %d -> %d tris' % (len(F), len(md.faces)))
+    else:
+        md = mh
+        log('  no decimation needed (%d tris)' % len(F))
+    md = keep_largest(md)
+    Vd = np.asarray(md.vertices, float)
+    Fd = np.asarray(md.faces, np.int64)
+    Nd = vnormals(Vd, Fd)
+    log('  final %d tris, %d verts, watertight %s' % (len(Fd), len(Vd), md.is_watertight))
+    # ---- bakes
+    caster = Caster(Vd, Fd)
+    t0 = time.time()
+    ao = bake_rays(Vd, Nd, caster, fib_hemisphere(48, cosine=True), BAKE['ao_maxd'])
+    log('  AO baked (%.0fs), mean %.3f' % (time.time() - t0, ao.mean()))
+    cone = np.vstack([[0, 0, 1.0]] + [[math.sin(math.radians(22)) * math.cos(a), math.sin(math.radians(22)) * math.sin(a),
+                                        math.cos(math.radians(22))] for a in np.linspace(0, 2 * math.pi, 7)[:-1]])
+    t0 = time.time()
+    thick = bake_rays(Vd, Nd, caster, cone, BAKE['thick_maxd'], inward=True)
+    log('  thickness baked (%.0fs), mean %.3f' % (time.time() - t0, thick.mean()))
+    tree = cKDTree(V)
+    _, nn = tree.query(Vd, k=4)
+    cav = cav_full[nn].mean(1)
+    rough = rough_full[nn].mean(1)
+    skin = 1 - smoothstep(BAKE['skin_rough'][0], BAKE['skin_rough'][1], rough)
+    bake = np.stack([np.clip(ao, 0, 1) * 255,
+                     128 + 127 * np.tanh(cav / BAKE['cav_scale']),
+                     np.clip(thick, 0, 1) * 255,
+                     skin * 255], 1).round().clip(0, 255).astype(np.uint8)
+    # ---- anchors (dense surface)
+    caster_full = Caster(V, F)
+    ears, ear_notes = ear_anchors(caster_full, an, cfg)
+    an.update(ears)
+    body = body_anchors(mh, caster_full, an, cfg)
+    torso = body.pop('_torso')
+    neck_top = body.pop('_neckTop')
+    an.update(body)
+    extra = {}
+    if name == 'sol':
+        extra = sol_diadem(mh, caster_full, an)
+    res = dict(name=name, cfg=cfg, V=Vd, F=Fd, N=Nd, bake=bake, an=an, eyes=eyes_json, fr=fr, ht=ht, H=H, O_rot=O_rot,
+               Rm=Rm, fw=fw, ear_notes=ear_notes, torso=torso, neck_top=neck_top, extra=extra, n_src=n_src,
+               edge_src=edge, q_stats=None, t=time.time() - t_start)
+    return res
+
+
+BAKE = dict(ao_maxd=0.25, thick_maxd=0.12, cav_scale=2.5, skin_rough=(0.9, 1.8))
+
+
+def sol_diadem(m, caster, an):
+    """Placeholder until the diadem is measured (filled in below)."""
+    return {}
