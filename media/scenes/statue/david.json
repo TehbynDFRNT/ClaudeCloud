@@ -1,0 +1,258 @@
+{
+ "figure": "david",
+ "source": {
+  "title": "Head of David (plaster cast after Michelangelo, 1890)",
+  "object": "SMK KAS2232",
+  "url": "https://open.smk.dk/artwork/image/KAS2232",
+  "download": "https://api.smk.dk/api/v1/download-3d/ht24wq097_smk55-kas2232-head-of-david.stl",
+  "license": "Public Domain Mark 1.0",
+  "license_url": "https://creativecommons.org/publicdomain/mark/1.0/",
+  "attribution": "Head of David, plaster cast after Michelangelo. 3D scan: SMK - Statens Museum for Kunst, Royal Cast Collection (open.smk.dk), public domain."
+ },
+ "counts": {
+  "vertices": 279996,
+  "triangles": 560000,
+  "sourceTriangles": 1083370
+ },
+ "layout": {
+  "file": "david.bin",
+  "byteLength": 12879912,
+  "littleEndian": true,
+  "interleaved": false,
+  "attributes": {
+   "position": {
+    "offset": 0,
+    "byteLength": 3359952,
+    "type": "float32",
+    "components": 3,
+    "stride": 12,
+    "normalized": false
+   },
+   "normal": {
+    "offset": 3359952,
+    "byteLength": 1679976,
+    "type": "int16",
+    "components": 3,
+    "stride": 6,
+    "normalized": true
+   },
+   "bake": {
+    "offset": 5039928,
+    "byteLength": 1119984,
+    "type": "uint8",
+    "components": 4,
+    "stride": 4,
+    "normalized": true,
+    "channels": [
+     "ao",
+     "cavity",
+     "thickness",
+     "skin"
+    ]
+   }
+  },
+  "index": {
+   "offset": 6159912,
+   "byteLength": 6720000,
+   "type": "uint32",
+   "components": 1,
+   "count": 1680000
+  }
+ },
+ "bounds": {
+  "min": [
+   -0.44539,
+   -0.85019,
+   -0.52921
+  ],
+  "max": [
+   0.67197,
+   0.50003,
+   0.59223
+  ]
+ },
+ "frame": {
+  "units": "1.0 = chin-to-crown head height (vertical); source units per head = 119.4747",
+  "axes": "+Y up = vertical turn axis; +Z = measured gaze (a camera on +Z at eye height is stared at); +X = Y x Z = the figure's own left. L/R in anchor names = the figure's own left/right.",
+  "origin": "head centre: halfway between chin and crown, on the turn axis through the neck between the ears",
+  "sourceToHead": [
+   [
+    0.00747,
+    -0.00378,
+    -0.0,
+    -0.18624
+   ],
+   [
+    -0.00055,
+    -0.00108,
+    0.00828,
+    -1.07209
+   ],
+   [
+    -0.00374,
+    -0.00739,
+    -0.00121,
+    0.89843
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
+  "sourceUnitsPerHead": 119.47473,
+  "levelPitchDeg": -8.313,
+  "castUpInHead": [
+   0.0,
+   0.98949,
+   -0.14458
+  ],
+  "restoreCastPosture": "rotate head-space geometry about +X by 8.313 deg to restore the cast's own vertical (the gaze then rises -8.31 deg above horizontal)",
+  "gazeYawFromFaceDeg": 14.839,
+  "facialForward": [
+   -0.25611,
+   0.13976,
+   0.95649
+  ],
+  "profileSide": "-X",
+  "cropY": -0.85
+ },
+ "eyes": {
+  "L": {
+   "centre": [
+    0.12061,
+    -0.04862,
+    0.29082
+   ],
+   "radius": 0.08931,
+   "gaze": [
+    0.22805,
+    0.01164,
+    0.97358
+   ],
+   "pupilDepth": 0.01166
+  },
+  "R": {
+   "centre": [
+    -0.12061,
+    -0.07335,
+    0.22918
+   ],
+   "radius": 0.09381,
+   "gaze": [
+    -0.22805,
+    -0.01164,
+    0.97358
+   ],
+   "pupilDepth": 0.0162
+  }
+ },
+ "anchors": {
+  "noseTip": [
+   -0.02961,
+   -0.23244,
+   0.47447
+  ],
+  "chin": [
+   0.01266,
+   -0.5,
+   0.34408
+  ],
+  "crown": [
+   0.07105,
+   0.5,
+   0.15869
+  ],
+  "eyeballL": [
+   0.12061,
+   -0.04862,
+   0.29082
+  ],
+  "eyeL": [
+   0.12752,
+   -0.05527,
+   0.37961
+  ],
+  "pupilL": [
+   0.14098,
+   -0.04758,
+   0.37777
+  ],
+  "eyeballR": [
+   -0.12061,
+   -0.07335,
+   0.22918
+  ],
+  "eyeR": [
+   -0.16352,
+   -0.09203,
+   0.31049
+  ],
+  "pupilR": [
+   -0.142,
+   -0.07444,
+   0.32052
+  ],
+  "mouth": [
+   -0.00093,
+   -0.352,
+   0.37917
+  ],
+  "earL": [
+   0.36087,
+   -0.16,
+   0.13
+  ],
+  "earR": [
+   -0.1562,
+   -0.145,
+   -0.1075
+  ],
+  "shoulderL": [
+   0.07495,
+   0.4591,
+   0.31215
+  ],
+  "shoulderR": [
+   0.1402,
+   0.29019,
+   -0.36896
+  ],
+  "neckBase": [
+   0.07285,
+   0.4791,
+   0.10425
+  ]
+ },
+ "torso": {
+  "forward": [
+   -0.99998,
+   0.0,
+   -0.00572
+  ],
+  "left": [
+   -0.00572,
+   0.0,
+   0.99998
+  ]
+ },
+ "bake": {
+  "ao": "channel 0: ambient visibility, 48 cosine-weighted rays per vertex, mean normalised free distance up to 0.25 head units (1 = open, 0 = enclosed)",
+  "cavity": "channel 1: signed multi-scale curvature, 0.5 = flat, < 0.5 crevice (curl undercuts, eye corners, lid creases, nostrils), > 0.5 ridge/edge; value = 0.5 + 0.5*tanh(c/2.5), c in robust-sigma units",
+  "thickness": "channel 2: inward free distance along -normal (7-ray 22 deg cone) / 0.12 head units; low = thin (nose wings, ears, lids, curl tips, lips): use for subsurface translucency",
+  "skin": "channel 3: 1 = broad smooth carved skin (face, neck, chest), 0 = hair/beard/deep carving; use for polish/gloss and SSS strength"
+ },
+ "notes": [
+  "Gaze per eye measured relative to the facial symmetry plane (deg, +yaw = figure's left, +pitch = up): {\"eyeL\": {\"yaw\": 28.14, \"pitch\": -7.43}, \"eyeR\": {\"yaw\": 1.5, \"pitch\": -8.76}}.",
+  "Facial symmetry plane residual 0.0043 head units (mirror-ICP on the face).",
+  "Crop: one horizontal plane at y = -0.85, capped (flat cap facing -Y); keep it out of frame or in shadow.",
+  "Turn: yaw about +Y through the origin. The 90-degree turn starts with the camera on the figure's RIGHT (-X side, face pointing screen-right) and ends on +Z (stared at).",
+  "Ears: earL measured: most medial point of the ear bowl (concha) seen from the side; earR measured: most medial point of the ear bowl (concha) seen from the side",
+  "Head units: 1.0 = 119.475 source units (raw STL units).",
+  "Carved heart-shaped pupils: each eye's gaze = eyeball sphere centre -> pupil pit centroid. Michelangelo's eyes diverge (the left eye looks further to his left); +Z is the mean of the two, 14.8 deg to the figure's left of the facial symmetry axis, so at yaw 0 the face is seen slightly turned while the eyes look into the lens.",
+  "The cast's gaze runs 8.3 deg below horizontal; head space is levelled (head tipped back by that amount) so the stare is horizontal. frame.restoreCastPosture undoes it (then place the camera below eye level).",
+  "Thin plaster mould-seam ridges (cheek, neck, nose bridge) softened with a masked Taubin smooth on broad skin only.",
+  "Profile side: the right (-X) side shows the broad chest frontally with the head in profile (the classic view of the SMK photograph). The bust back is hollow (visible from behind and from the far +X side)."
+ ]
+}
