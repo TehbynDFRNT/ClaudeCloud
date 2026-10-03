@@ -104,7 +104,7 @@ function timedStroke(D, pts, occ, o) {
 
 // ==== F29.1 (David cut): the sling ===================================================================
 // The slinger's fist at the centre of a compass circle, the forearm leaving down to the right; the two cords
-// run from the fist to the leather pouch cradling the stone. Faint ghosts of the sling earlier in its turn
+// run side by side from the fist and fork to the leather pouch cradling the stone. Faint ghosts of the sling earlier in its turn
 // fade back round the circle; during the cut the whirl is swept clockwise (arrows), and at the release point
 // the stone leaves along the tangent (ruled) while its real path bends into a parabola.
 export function sling() {
@@ -136,10 +136,11 @@ export function sling() {
   const slingAt = (th, o) => {
     const P0 = at(th), v = tan(th), r = [Math.cos(th), Math.sin(th)];
     const E1 = add(add(P0, v, pw), r, -0.006), E2 = add(add(P0, v, -pw), r, -0.006);
-    const h1 = add(C, v, 0.007), h2 = add(C, v, -0.007);
+    // the two cords run side by side from the fist and fork only near the pouch, as a sling's do
     const occ = [F.sil];
-    for (const [h, E, sd, bw] of [[h1, E1, 1, 0.006], [h2, E2, 2, -0.005]]) {
-      for (const run of clipOut(linePts(h[0], h[1], E[0], E[1], { wob: 0.5 * PX, seed: o.seed + sd, bow: bw }), occ)) D.stroke(run, { w: o.cw, d: o.d, speed: o.speed, taper: [6, 8], wet: o.wet });
+    for (const sg of [1, -1]) {
+      const cord = resample([[0, 0.0035], [0.62, 0.0055], [1, pw]].map(([f, w]) => add(add(C, r, f * (R - 0.006)), v, sg * w)), 1.5 * PX);
+      for (const run of clipOut(cord, occ)) D.stroke(run, { w: o.cw, d: o.d, speed: o.speed, taper: [6, 8], wet: o.wet });
     }
     const lens = (b) => { const pts = []; for (let i = 0; i <= 44; i++) { const u = i / 44; pts.push(add(lerp2(E1, E2, u), r, Math.sin(Math.PI * u) * b)); } return pts; };
     D.stroke(lens(bul), { w: o.pw, d: o.d * 1.02, speed: o.speed * 0.5, taper: [4, 4], wet: o.wet });
@@ -182,13 +183,6 @@ export function sling() {
     const a = add(lerp2(L.E1, L.E2, u), L.r, -0.012), b = add(lerp2(L.E1, L.E2, u), L.r, bul * 0.92 * Math.sin(Math.PI * u));
     D.stroke(linePts(a[0], a[1], b[0], b[1]), { w: 1.3, d: 0.7, speed: 0.6, taper: [3, 3] });
   }
-  // the release cord's knotted end, held between thumb and finger, flicking back over the thumb
-  const tail = [F.T(0.2, -2.55), F.T(-0.6, -3.15), F.T(-1.7, -3.25), F.T(-2.6, -2.85), F.T(-3.1, -2.4)];
-  for (const run of clipOut(spline(tail, 1.3 * PX), [])) D.stroke(run, { w: 2.6, d: 0.9, speed: 0.6, taper: [4, 6], wet: true });
-  const kn = F.T(-3.25, -2.3);
-  circleStroke(D, kn[0], kn[1], 0.0075, { w: 2.6, d: 0.92, speed: 0.15, sweep: TAU * 1.3, wet: true });
-  dot(D, kn[0], kn[1], 5.5, { wet: true });
-  D.stroke(spline([kn, F.T(-3.7, -2.0), F.T(-4.0, -1.7)], 1.3 * PX), { w: 1.8, d: 0.85, speed: 0.4, taper: [3, 10], wet: true });
   D.fitTo(s0, -0.42, -0.04);
 
   // ---- during the cut: the whirl swept by the pen (clockwise) from the pouch's leading edge round to its
