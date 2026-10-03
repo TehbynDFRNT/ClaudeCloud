@@ -175,8 +175,9 @@ export class Film {
     const sc0 = this.scene(shot.scene);
     let overlayMode = null;
     if (sc0.overlay) {
-      this.octx.setTransform(1, 0, 0, 1, 0, 0);
-      this.octx.clearRect(0, 0, this.W, this.H);
+      // fresh canvas state every frame, so no line width/font/shadow can leak between frames (render order
+      // must never change a frame)
+      if (this.octx.reset) this.octx.reset(); else { this.octx.setTransform(1, 0, 0, 1, 0, 0); this.octx.clearRect(0, 0, this.W, this.H); }
       this.setClock(S0);
       math.setFraming(S0.framing);
       try { overlayMode = sc0.overlay(this.E, S0, this.octx) || null; } finally { math.setFraming(null); }
@@ -190,8 +191,8 @@ export class Film {
       if (other) {
         B = this.renderShot(other, f, 'sceneB');
         const u = (f - tr.start + 0.5) / (tr.end - tr.start);
-        const toward = shot.id === tr.from ? u : 1 - u; // weight of "to"
-        mixB = shot.id === tr.from ? toward : 1 - toward;
+        // B is the other shot of the transition; its weight is u when B is the incoming shot, 1-u when outgoing
+        mixB = shot.id === tr.from ? u : 1 - u;
         mixMode = tr.type === 'bleed' ? 1 : 0;
       }
     }

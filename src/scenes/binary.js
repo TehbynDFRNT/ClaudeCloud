@@ -273,6 +273,63 @@ const presets = {
     post: { bloomStrength: 0.08, streakStrength: 0.02 },
   },
 };
+
+// ---------------------------------------------------------------------------------------------------------
+// 9:16 reframing (portrait renders only; landscape ignores it). Every shot here sits before ignition, inside the
+// 3:4 window (y in [0.128H, 0.872H]). In space there is no up, so the shots are rolled: the giant looms at the top,
+// the dwarf is the speck below it and the stolen matter falls down the frame. roll 90 / zoom 0.5625 would be the
+// exact rotation of the 16:9 picture; each shot is tightened or opened from there so its subject (and all of its
+// ink) sits inside the window. Keyed framings: [[u, {...}], [u, {...}, easing]].
+const PORTRAIT = {
+  // diagonal: the giant fills the upper left, the speck sits low right, and the whole figure-eight (with the
+  // orbit and the L1 label, put in the dark on the dwarf's side of the mark) fits in the window
+  'S04-scale': {
+    framing: { roll: 60, zoom: 0.43, pan: [-0.06, -0.075] },
+    diagram: { ...presets['S04-scale'].diagram, labelOff: [46, -4], labelScale: 1.4, inkW: 1.25 },
+  },
+  // the limb a ceiling across the top, the tongue dropping from it; pull back as the tongue stretches
+  'S06-first-pull': {
+    framing: [[0, { roll: 120, zoom: 0.85, pan: [-0.14, -0.14] }], [1, { roll: 120, zoom: 0.7, pan: [0.05, 0.1] }]],
+    volRelief: true,     // this close (and this tight) the smooth/relief photosphere mismatch showed as a band inside the limb
+  },
+  // the giant overhead, the river pouring down through L1 toward the dwarf low in the frame; over the second half
+  // the frame eases back up toward the giant as the camera tracks on, so the source stays overhead (not a sliver
+  // under the bar) while the dwarf holds its place low in the window
+  'S07-stream': {
+    framing: [[0, { roll: 90, zoom: 0.46, pan: [0.17, 0] }], [0.45, { roll: 90, zoom: 0.46, pan: [0.17, 0] }], [1, { roll: 90, zoom: 0.46, pan: [0.05, 0] }]],
+  },
+  // the clump falls down the frame toward the dwarf; open up at the end so the whole bend round the dwarf (and the
+  // gold trajectory drawing ahead of it) stays in the window, the dwarf near the centre and the stream leaving by the
+  // right edge (the giant's clipped limb kept just out of frame)
+  'S08-parabola': {
+    framing: [[0, { roll: 120, zoom: 0.76, pan: [-0.064, 0.164] }], [0.45, { roll: 120, zoom: 0.76, pan: [-0.081, 0.154] }], [1, { roll: 120, zoom: 0.66, pan: [-0.30, -0.125] }]],
+  },
+  // the torn tip overhead, the stream pouring out of the bottom of the frame (no volRelief here: against this bright
+  // stream its volume-resolution limb steps showed more than the thin dark limb line it removes)
+  'S11-giant-bleeds': {
+    framing: { roll: 90, zoom: 0.6 },
+  },
+  // the drained giant upper left feeding the disk lower right, the whole system filling the window
+  'S14c-mass-loss': {
+    framing: { roll: 70, zoom: 0.635, pan: [-0.094, -0.04] },
+  },
+  // frenzy: the giant's crimson shoulder in the top corner, the stream diving into a big bright disk
+  'F27.1': {
+    framing: { roll: 80, zoom: 0.8, pan: [-0.12, -0.06] },
+  },
+  // the whole top-down diagram in the window (air above the giant's crown and below the dwarf's lobe), its ink
+  // heavier so it reads in 19 frames; L1 labelled in the dark right of the neck, between the giant's limb and the
+  // dwarf's lobe
+  'F29.4': {
+    framing: { roll: 70, zoom: 0.44, pan: [-0.10, -0.019] },
+    inkW: 1.6, labelOff: [62, -4], labelScale: 1.5,
+  },
+  // hard cut on the strike: the giant overhead, the stream whipping down into the flaring disk
+  'S17-strike1': {
+    framing: { roll: 90, zoom: 0.471, pan: [0.007, 0.073] },
+  },
+};
+for (const [id, p] of Object.entries(PORTRAIT)) presets[id].portrait = p;
 presets.default = presets['S14c-mass-loss'];
 
 // ---------------------------------------------------------------------------------------------------------
@@ -395,7 +452,9 @@ export default {
     const vt = E.target('binaryVol', vs);
     const U = st.U;
     U.uPixAng = 2 * st.cam.tanH / vt.h;
-    E.draw(this.vol, { ...U, uRelief: 0 }, vt);
+    // the volume stops at the smooth photosphere unless volRelief: then it stops where the main pass's relief
+    // photosphere is, so the two agree on which rays hit the giant (no flat band inside the limb in close shots)
+    E.draw(this.vol, { ...U, uRelief: P.volRelief ? U.uRelief : 0 }, vt);
     E.draw(this.main, { ...U, uVol: vt, uVolRes: [vt.w, vt.h] }, target);
   },
 
@@ -417,9 +476,16 @@ export default {
     if (!P.overlay) return null;
     const st = this.state(E, S);
     const t = st.t;
-    if (P.overlay === 'diagram') this.drawDiagram(E, ctx, st, st.u, P);
-    else if (P.overlay === 'topdiagram') this.drawTopDiagram(E, ctx, st, st.u, P);
-    else if (P.overlay === 'trajectory') this.drawTrajectory(E, ctx, st, t, P);
+    // the overlay canvas is shared by every scene and keeps its state between frames: set what this ink depends
+    // on, so a frame draws the same whatever was rendered before it (render order, chunking, the other cut)
+    ctx.save();
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.setLineDash([]);
+    ctx.shadowBlur = 0; ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    try {
+      if (P.overlay === 'diagram') this.drawDiagram(E, ctx, st, st.u, P);
+      else if (P.overlay === 'topdiagram') this.drawTopDiagram(E, ctx, st, st.u, P);
+      else if (P.overlay === 'trajectory') this.drawTrajectory(E, ctx, st, t, P);
+    } finally { ctx.restore(); }
     return 'add';
   },
 
@@ -522,7 +588,8 @@ export default {
     ctx.font = `italic 400 ${(T.sub * k).toFixed(1)}px "Cormorant Garamond"`;
     const wTxt = T.dx * k + ctx.measureText('1').width;
     const x = off[0] >= 0 ? ex + 3 * k : ex - 3 * k - wTxt;
-    const y = off[1] < 0 ? ey - 4 * k : ey + T.px * 0.62 * k;
+    // above the leader end when it rises, below when it falls, centred on it when the leader is near horizontal
+    const y = Math.abs(off[1]) < 0.35 * Math.abs(off[0]) ? ey + T.px * 0.3 * k : off[1] < 0 ? ey - 4 * k : ey + T.px * 0.62 * k;
     this.label(ctx, 'L', x, y, T.px * k, rgb, a);
     this.label(ctx, '1', x + T.dx * k, y + T.dy * k, T.sub * k, rgb, a);
   },
@@ -532,7 +599,7 @@ export default {
     const k = this.inkScale(E), cam = st.cam, ICE = '160,205,255';
     const G = { ...GIANT_DEF, ...(P.giant || {}) };
     const D = P.diagram || {};
-    const w = 1.25 * k;
+    const w = 1.25 * k * (D.inkW ?? 1);
     const ramp = (a, b) => clamp((t - a) / (b - a));
     const ease = (u) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
     const fadeAll = D.fade ?? 1;
@@ -563,7 +630,8 @@ export default {
       ctx.restore();
       const ul = ramp(...(D.label || [0.82, 0.95]));
       if (ul > 0) {
-        this.l1Label(ctx, l1, k, D.labelOff || [26, -30], { px: 32, sub: 20, dx: 15, dy: 6 }, ICE, 0.92 * ul * fadeAll, true);
+        const ls = D.labelScale ?? 1;
+        this.l1Label(ctx, l1, k, D.labelOff || [26, -30], { px: 32 * ls, sub: 20 * ls, dx: 15 * ls, dy: 6 * ls }, ICE, 0.92 * ul * fadeAll, true);
       }
     }
   },
@@ -571,7 +639,7 @@ export default {
   // F29.4: top-down orbital diagram, fast
   drawTopDiagram(E, ctx, st, t, P) {
     const k = this.inkScale(E), cam = st.cam, ICE = '160,205,255';
-    const w = 1.2 * k;
+    const w = 1.2 * k * (P.inkW ?? 1);
     const u = clamp(0.45 + t * 0.85);
     const ease = (x) => 1 - Math.pow(1 - x, 3);
     const lg = this.projectLine(E, cam, this.lobeG, null);
@@ -590,7 +658,8 @@ export default {
     const l1 = cam.project(L1, E.W, E.H);
     if (l1) {
       ctx.save(); ctx.translate(l1.x, l1.y); ctx.rotate(Math.PI / 4); this.crossMark(ctx, 0, 0, 6 * k, ICE, 0.9, k); ctx.restore();
-      this.l1Label(ctx, l1, k, P.labelOff || [6, -7], { px: 26, sub: 17, dx: 12, dy: 5 }, ICE, 0.85, false);
+      const ls = P.labelScale ?? 1;
+      this.l1Label(ctx, l1, k, P.labelOff || [6, -7], { px: 26 * ls, sub: 17 * ls, dx: 12 * ls, dy: 5 * ls }, ICE, 0.85, false);
     }
   },
 

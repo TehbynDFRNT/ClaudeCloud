@@ -39,7 +39,16 @@ export function makeFingerprinter(plan) {
   const DESCRIPTIVE = new Set(['purpose', 'action', 'framing', 'note']);
   const pixelShot = (s) => Object.fromEntries(Object.entries(s).filter(([k]) => !DESCRIPTIVE.has(k)));
   const shots = [...plan.shots].sort((a, b) => a.start - b.start);
-  const sceneHash = (id) => moduleHash(path.join(ROOT, 'src/scenes', id + '.js'), read, depCache);
+  // a scene's external assets live in media/scenes/<id>/ and are part of its hash
+  const assetHash = (id) => {
+    const dir = path.join(ROOT, 'media/scenes', id);
+    if (!fs.existsSync(dir)) return '';
+    const files = []; const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else files.push(p); } };
+    walk(dir);
+    return sha(files.sort().map((p) => path.relative(ROOT, p) + ':' + sha(fs.readFileSync(p))).join('\n'));
+  };
+  const sceneHashes = new Map();
+  const sceneHash = (id) => { if (!sceneHashes.has(id)) sceneHashes.set(id, moduleHash(path.join(ROOT, 'src/scenes', id + '.js'), read, depCache) + assetHash(id)); return sceneHashes.get(id); };
   const shotAt = (f) => shots.find((s) => f >= s.start && f < s.end) || shots[shots.length - 1];
   const global = sha(JSON.stringify({ fps: plan.fps, w: plan.width, h: plan.height, format: plan.format, defaultPost: plan.defaultPost }));
   return function fingerprint(f, W = plan.width, H = plan.height) {

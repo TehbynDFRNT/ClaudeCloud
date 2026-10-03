@@ -5,22 +5,22 @@ import { Drawing, PX, TAU, arcPts, linePts, hatch, resample } from './studies-in
 import { lobeContour, streamPath, XG, XW, L1, R_LOBE_GIANT, R_CIRC, R_DISK } from './binary.js';
 
 // --- shared helpers -------------------------------------------------------------------------------
-function circleStroke(D, cx, cy, r, o = {}) {
+export function circleStroke(D, cx, cy, r, o = {}) {
   const a0 = o.a0 ?? D.r(0, TAU);
   const sweep = o.sweep ?? TAU * (1.0 + D.r(0.02, 0.06));      // compass arcs overshoot a little
   const pts = arcPts(cx, cy, r, a0, a0 + sweep * (o.dir ?? 1), { wob: o.wob ?? 0, seed: D.n + 3, step: o.step ?? 2 * PX });
   return D.stroke(pts, { taper: [5, 9], press: 0.12, nib: 0.3, ...o });
 }
-function dot(D, x, y, r = 2.2, o = {}) {
+export function dot(D, x, y, r = 2.2, o = {}) {
   const pts = arcPts(x, y, r * PX * 0.5, 0, TAU * 1.6, { step: 0.6 * PX });
   return D.stroke(pts, { w: r * 1.1, d: 0.95, speed: 0.08, taper: [1, 1], press: 0.05, ...o });
 }
-function cross(D, x, y, s = 7, o = {}) {
+export function cross(D, x, y, s = 7, o = {}) {
   D.stroke(linePts(x - s * PX, y - s * PX, x + s * PX, y + s * PX, { wob: 0.4 * PX, seed: D.n }), { w: 1.2, d: 0.7, speed: 0.4, ...o });
   D.stroke(linePts(x + s * PX, y - s * PX, x - s * PX, y + s * PX, { wob: 0.4 * PX, seed: D.n }), { w: 1.2, d: 0.7, speed: 0.4, ...o });
 }
 // a block of mirror-script lines; x is the RIGHT edge (Leonardo writes right to left)
-function scriptBlock(D, lines, x, y, o = {}) {
+export function scriptBlock(D, lines, x, y, o = {}) {
   const lh = (o.lh ?? 30) * PX;
   lines.forEach((ln, i) => {
     const jx = (D.rnd() - 0.5) * 8 * PX * (o.ragged ?? 1);
@@ -29,24 +29,27 @@ function scriptBlock(D, lines, x, y, o = {}) {
 }
 
 // --- S05: the Roche figure-eight in iron-gall ink -------------------------------------------------
-// o.vertical (the 9:16 cut): the same construction turned a quarter clockwise on the page, the giant's lobe
-// above and the dwarf's below (as the space shots are rolled for portrait), the notes still written level
+// o.vertical (the 9:16 cut): the same construction turned onto the page's long axis, the giant's lobe above and
+// the dwarf's below, then tilted by o.angle (radians, counter-clockwise on screen) about L1, which sits at o.l1,
+// so the eight lies along the diagonal where S04's rolled diagram leaves it; the notes are still written level
 export function codex(o = {}) {
   const V = !!o.vertical;
   const D = new Drawing(505);
   // scaled and placed so L1 and the dwarf fall where S04's ice-blue diagram left them (match cut)
   const S = V ? 0.58 : 0.8, YC = 0.0, X1 = -0.0889;
-  const Y1V = -0.075;                                        // vertical: L1 sits a little above the page centre
-  const P = V ? (x, z) => [-z * S, (x - L1[0]) * S + Y1V] : (x, z) => [(x - L1[0]) * S + X1, z * S + YC];
+  const L1V = o.l1 || [0, -0.075], th = o.angle || 0, ct = Math.cos(th), st = Math.sin(th);
+  const R = (a, b) => [L1V[0] + a * ct + b * st, L1V[1] - a * st + b * ct];   // about L1, counter-clockwise on screen
+  const P = V ? (x, z) => R(-z * S, (x - L1[0]) * S) : (x, z) => [(x - L1[0]) * S + X1, z * S + YC];
   const gx = P(XG, 0), wx = P(XW, 0), l1 = P(L1[0], 0), com = P(0, 0);
   // the axis runs along the line of centres; `lp` maps (along, across) offsets from L1 onto the page
-  const lp = V ? (a, c) => [l1[0] - c, l1[1] + a] : (a, c) => [a, YC + c];
+  const lp = V ? (a, c) => R(-c, a) : (a, c) => [a, YC + c];
   const k = V ? S / 0.8 : 1;
   D.at(-30);
   // stylus-ruled axis (blind incision) then a light ink rule
   if (V) {
-    D.stroke(linePts(0, -0.62, 0, 0.62, { step: 3 * PX }), { kind: 'relief', w: 1.6, d: 0.55, speed: 3, wet: false, taper: [2, 2] });
-    D.stroke(linePts(-0.4 * PX, -0.56, 0.6 * PX, 0.6, { step: 2 * PX, wob: 0.25 * PX, seed: 3 }), { w: 0.9, d: 0.32, speed: 1.4, taper: [20, 40], press: 0.3 });
+    const a0 = lp(-0.56, 0), a1 = lp(0.7, 0), b0 = lp(-0.5, 0.0004), b1 = lp(0.66, -0.0006);
+    D.stroke(linePts(a0[0], a0[1], a1[0], a1[1], { step: 3 * PX }), { kind: 'relief', w: 1.6, d: 0.55, speed: 3, wet: false, taper: [2, 2] });
+    D.stroke(linePts(b0[0], b0[1], b1[0], b1[1], { step: 2 * PX, wob: 0.25 * PX, seed: 3 }), { w: 0.9, d: 0.32, speed: 1.4, taper: [20, 40], press: 0.3 });
   } else {
     D.stroke(linePts(-0.88, YC, 0.88, YC, { step: 3 * PX }), { kind: 'relief', w: 1.6, d: 0.55, speed: 3, wet: false, taper: [2, 2] });
     D.stroke(linePts(-0.78, YC + 0.4 * PX, 0.84, YC - 0.6 * PX, { step: 2 * PX, wob: 0.25 * PX, seed: 3 }), { w: 0.9, d: 0.32, speed: 1.4, taper: [20, 40], press: 0.3 });
@@ -85,9 +88,10 @@ export function codex(o = {}) {
   hatch(D, shade, [gx[0] - hr, gx[1] - hr, gx[0] + hr + 0.06 * k, gx[1] + hr + 0.06 * k], { angle: Math.PI * 0.3, sp: 6, w: 1.0, d: 0.45, maxLen: 110, speed: 2.5, gap: 0.01, thr: [0.2, 0.95] });
   // mirror-script notes (written earlier)
   if (V) {
-    scriptBlock(D, ['la luna non à lume da sé', 'ma tanto quanto il sole', 'la vede tanto alumina', 'ogni grave tende al cientro'], 0.4, -0.5, { size: 19, lh: 25, d: 0.55 });
-    scriptBlock(D, ['dove l’una sfera tocca', 'l’altra, quivi è il punto', 'che non à parte'], -0.2, 0.0, { size: 19, lh: 25, d: 0.5 });
-    scriptBlock(D, ['il sole nõ si move'], 0.4, 0.47, { size: 18, d: 0.5 });
+    const N = o.notes || [[0.42, -0.5], [-0.15, 0.27], [-0.13, 0.5]];
+    scriptBlock(D, ['la luna non à lume da sé', 'ma tanto quanto il sole', 'la vede tanto alumina', 'ogni grave tende al cientro'], N[0][0], N[0][1], { size: 19, lh: 25, d: 0.55 });
+    scriptBlock(D, ['dove l’una sfera tocca', 'l’altra, quivi è il punto', 'che non à parte'], N[1][0], N[1][1], { size: 19, lh: 25, d: 0.5 });
+    scriptBlock(D, ['il sole nõ si move'], N[2][0], N[2][1], { size: 18, d: 0.5 });
     D.text('a', gx[0] + 0.03, gx[1] - 0.01, { size: 20, d: 0.7 });
     D.text('b', wx[0] + 0.03, wx[1] + 0.005, { size: 20, d: 0.7 });
     D.text('n', l1[0] + 0.03, l1[1] - 0.008, { size: 20, d: 0.7 });
@@ -265,7 +269,9 @@ export function deluge() {
 }
 
 // --- F27.3: parabola construction — the dwarf as focus, the stream's pericentre arc --------------
-export function parabola() {
+// o.vertical (the 9:16 cut): the notes move inside the curve, so the tall parabola and directrix fill the frame
+export function parabola(o = {}) {
+  const V = !!o.vertical;
   const D = new Drawing(2273);
   // stream around the dwarf; rotate so the axis (dwarf -> closest approach) is horizontal, vertex right
   const sp = streamPath({ maxT: 1.75, every: 4 });
@@ -292,8 +298,8 @@ export function parabola() {
   dot(D, F0[0], F0[1], 3.0);
   circleStroke(D, F0[0], F0[1], 9 * PX, { w: 1.0, d: 0.6, speed: 0.3, wob: 0.5 * PX });
   D.text('f', F0[0] - 0.012, F0[1] - 0.02, { size: 20, d: 0.65 });
-  scriptBlock(D, ['la linia curva del grave', 'equidistante dal punto', 'e dalla linia'], 0.62, -0.25, { size: 20, lh: 27, d: 0.52 });
-  scriptBlock(D, ['il fiume che cade', 'intorno al picholo'], -0.42, 0.24, { size: 18, lh: 25, d: 0.45 });
+  scriptBlock(D, ['la linia curva del grave', 'equidistante dal punto', 'e dalla linia'], V ? -0.19 : 0.62, V ? -0.235 : -0.25, { size: 20, lh: 27, d: 0.52 });
+  scriptBlock(D, ['il fiume che cade', 'intorno al picholo'], V ? -0.22 : -0.42, V ? 0.16 : 0.24, { size: 18, lh: 25, d: 0.45 });
   D.fitTo(0, -12, -0.1);
   // during the cut: the pen sweeps the parabola, then the equal-distance construction
   // already past its vertex at the cut, so the first frame reads as a curve, not a stray mark
@@ -359,7 +365,10 @@ export function eye() {
 }
 
 // --- F30.3: the CNO cycle as an ink wheel of hatched spheres -----------------------------------
-export function cno() {
+// o.vertical (the 9:16 cut): the notes move above and below the wheel; the positron trails are shorter so the
+// wheel can fill the narrow frame
+export function cno(o = {}) {
+  const V = !!o.vertical;
   const D = new Drawing(3033);
   const C = [0.02, 0.0], R = 0.2;
   const names = [['C', '12'], ['N', '13'], ['C', '13'], ['N', '14'], ['O', '15'], ['N', '15']];
@@ -393,7 +402,7 @@ export function cno() {
   for (const i of betaAt) {
     const s = st[i], am = s.a - Math.PI / 6;
     const pts = [];
-    for (let k = 0; k <= 60; k++) { const u = k / 60, r = R + 0.05 + u * 0.1; pts.push([C[0] + Math.cos(am + 0.05 * Math.sin(u * 18)) * r, C[1] + Math.sin(am + 0.05 * Math.sin(u * 18)) * r]); }
+    for (let k = 0; k <= 60; k++) { const u = k / 60, r = R + 0.05 + u * (V ? 0.062 : 0.1); pts.push([C[0] + Math.cos(am + 0.05 * Math.sin(u * 18)) * r, C[1] + Math.sin(am + 0.05 * Math.sin(u * 18)) * r]); }
     D.stroke(resample(pts, 1.4 * PX), { w: 1.1, d: 0.55, speed: 0.5, taper: [6, 6] });
   }
   // helium leaving from N15 -> C12 (inward)
@@ -401,8 +410,8 @@ export function cno() {
   circleStroke(D, hp[0], hp[1], 0.026, { w: 1.6, d: 0.8, speed: 0.35 });
   hatch(D, (x, y) => (Math.hypot(x - hp[0], y - hp[1]) < 0.024 ? Math.max(0, (x - hp[0]) * 20 + (y - hp[1]) * 30 + 0.4) : 0), [hp[0] - 0.03, hp[1] - 0.03, hp[0] + 0.03, hp[1] + 0.03], { angle: 0.95, sp: 4, w: 0.9, d: 0.55, speed: 3 });
   D.text('He', hp[0] + 0.016, hp[1] + 0.06, { size: 20, d: 0.6 });
-  scriptBlock(D, ['la ruota del foco', 'che mai si ferma'], -0.36, 0.22, { size: 19, lh: 26, d: 0.5 });
-  scriptBlock(D, ['il carbone si fa azoto', 'e l’azoto si fa carbone'], 0.74, -0.24, { size: 18, lh: 25, d: 0.45 });
+  scriptBlock(D, ['la ruota del foco', 'che mai si ferma'], V ? 0.2 : -0.36, V ? 0.352 : 0.22, { size: 19, lh: 26, d: 0.5 });
+  scriptBlock(D, ['il carbone si fa azoto', 'e l’azoto si fa carbone'], V ? 0.29 : 0.74, V ? -0.372 : -0.24, { size: 18, lh: 25, d: 0.45 });
   D.fitTo(0, -15, -0.1);
   // during the cut: the arrows race round the wheel (counter-clockwise)
   D.at(-0.12);
@@ -447,7 +456,10 @@ export function collapse() {
 }
 
 // --- S29b: understanding endures — the shell's rings, the tiny centre, the giant, the motto ------
-export function rings() {
+// o.vertical (the 9:16 cut): the motto is written above the rings and the old note in the upper left, so
+// the paper below the rings stays bare and dark for the end title
+export function rings(o = {}) {
+  const V = !!o.vertical;
   const D = new Drawing(2929);
   const C = [0, 0], R = 0.32;
   // registration with S29a's last frame: the shell is centred on the centre of mass (r = 0.321H), the
@@ -490,10 +502,12 @@ export function rings() {
   D.text('a', G[0] + 0.004, G[1] - GR - 0.012, { size: 17, d: 0.6 });
   D.text('b', WDp[0] + 0.013, WDp[1] - 0.012, { size: 17, d: 0.6 });
   // an older note at the left, faint: the great feeds the small
-  scriptBlock(D, ['il grande nutre', 'il picholo'], -0.43, 0.13, { size: 19, lh: 26, d: 0.4 });
+  if (V) scriptBlock(D, ['il grande nutre', 'il picholo'], -0.13, -0.5, { size: 19, lh: 26, d: 0.4 });
+  else scriptBlock(D, ['il grande nutre', 'il picholo'], -0.43, 0.13, { size: 19, lh: 26, d: 0.4 });
   D.fitTo(0, -40, -1.0);
   // during the shot: the motto (above right of the rings), and the pen finishes the last circle
-  D.text('il sole nõ si move', 0.63, -0.265, { size: 28, d: 0.62, t0: -0.55, dur: 1.5 });
+  if (V) D.text('il sole nõ si move', 0.115, -0.395, { size: 28, d: 0.62, t0: -0.55, dur: 1.5 });
+  else D.text('il sole nõ si move', 0.63, -0.265, { size: 28, d: 0.62, t0: -0.55, dur: 1.5 });
   const last = arcPts(C[0], C[1], R * 1.07, -1.9, -1.9 + TAU * 1.01, { step: 1.6 * PX, wob: 0.3 * PX, seed: 77 });
   // already under way through the dissolve, the pen closes the outer circle as the title settles
   D.stroke(last, { w: 1.7, d: 0.75, t0: -1.2, dur: 4.0, taper: [10, 14], press: 0.2 });

@@ -6,6 +6,8 @@
 //    Gaussian evaluated per pixel, so even 1 px strands are antialiased and defocus is a smooth widening.
 //  * disks: radial soft blobs (flashes, spark heads).
 //  * alpha accumulates per-vertex optical depth (strands silhouetted against the hot core in the composite).
+// Aspect/resolution agnostic: every position and width arrives in output pixels of the target it is flushed
+// to; plasma-strokes.js sizes them (landscape W/1920, portrait E.k-based scales from plasma.js).
 
 const VS = `#version 300 es
 layout(location=0) in vec2 aPos;    // pixels, origin top-left

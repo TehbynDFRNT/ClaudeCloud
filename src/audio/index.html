@@ -20,9 +20,10 @@ async function post(path, buf) {
 }
 
 // Renders everything and writes out/audio/mix.wav (24-bit PCM) + out/audio/stems/*.wav (32-bit float).
-window.renderAudio = async ({ outDir = 'out/audio', stems = true } = {}) => {
-  const { mix, stems: st, report } = await renderSoundtrack({ base: '/', log });
-  await post(`${outDir}/mix.wav`, wav(mix[0], mix[1], { bits: 24, seed: 3756 }));
+// only: [stem names] renders just those stems, raw (development); mix.wav is then their 32-bit float sum.
+window.renderAudio = async ({ outDir = 'out/audio', stems = true, only = null } = {}) => {
+  const { mix, stems: st, report } = await renderSoundtrack({ base: '/', log, only });
+  await post(`${outDir}/mix.wav`, only ? wav(mix[0], mix[1], { float: true }) : wav(mix[0], mix[1], { bits: 24, seed: 3986 }));
   log(`wrote ${outDir}/mix.wav`);
   if (stems) for (const [name, ch] of Object.entries(st)) {
     await post(`${outDir}/stems/${name}.wav`, wav(ch[0], ch[1], { float: true }));

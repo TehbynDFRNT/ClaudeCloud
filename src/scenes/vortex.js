@@ -130,9 +130,10 @@ const presets = {
     disk: { omega: 0.3, maxSteps: 52, sheet: 0.8, sheetHeat: 0.6, sheetMask: -0.05, arms: 1.0, armFloor: 0.05, cloud: 1.0,
       void: 0.0, voidW: 0.1, turb: 0.9, floor: 0.12, coldGas: 0.33, irr: 1.2 },
     post: { zoomBlur: 0.012, exposure: 0.8 },
-    // 9:16: the disk plane is tilted across the tall frame and keeps rolling as the camera sinks (the vortex
-    // taking hold), widening a touch so the rising upper layers close in from both sides around the centred dwarf
-    portrait: { framing: [[0, { roll: 20, zoom: 0.68 }], [1, { roll: 50, zoom: 0.6 }, 'inOutSine']] },
+    // 9:16: the disk plane starts tilted across the tall frame and keeps rolling as the camera sinks (the vortex
+    // taking hold) until it stands almost upright, widening a touch: by the end the disk runs up the frame through
+    // the centred dwarf and its rising upper layers close in as walls on both sides
+    portrait: { framing: [[0, { roll: 15, zoom: 0.66 }], [1, { roll: 70, zoom: 0.58 }, 'inOutSine']] },
   }),
   // Resistance: the stream slams the young disk's rim. Impact point from lib/binary.js streamPath()
   // (first rim crossing at local (-0.96, 0.27), azimuth -2.87, velocity (0.965, 0.261)).
@@ -155,8 +156,9 @@ const presets = {
     },
     post: { overlayGain: 5.0 },
     // 9:16: the picture turned a quarter so the stream pours straight down the tall frame and slams the rim in the
-    // upper third; the sparks fan out, the shocked gas streams on down toward the young disk's dwarf at the bottom
-    portrait: { framing: { roll: 90, zoom: 0.66, pan: [-0.14, 0.02] } },
+    // upper third; the sparks fan out, the shocked gas streams on down toward the young disk, which stays whole in
+    // the lower third of the 3:4 window (the zoom eases out against the camera's push so it never meets the bar)
+    portrait: { framing: [[0, { roll: 90, zoom: 0.6, pan: [0.04, 0.02] }], [1, { roll: 90, zoom: 0.54, pan: [0.06, 0.02] }, 'inOutSine']] },
   }),
   // The real vortex answers Leonardo's ink drawing: top-down, centred, counter-clockwise, spiral strands filling frame.
   // (camera slightly +Z of the axis so screen-up = -Z, screen-right = +X: CCW on screen = CCW from +Y)
@@ -204,10 +206,13 @@ const presets = {
     disk: { omega: 0.34, h0: 0.05, dens: 9, tout: 1000, tinK: 0.6, arms: 0.6, sheet: 0.9, sheetHeat: 0.5, coldGas: 0.5, sheetMask: -0.2,
       rimPuff: 0.6, curtain: 1.2, maxSteps: 46, irr: 1.5 },
     post: {},
-    // 9:16: level, the inner ring big across the frame, the disk above and below it. The strike is a dark punch now
-    // (plan `dip`, no white flash), so the disk answers it in kind: it cuts in extinguished - only the dwarf and its
-    // blue curtains burning - and re-ignites ring by ring from the inside out to the white-hot hold (~1 s).
-    portrait: { framing: { zoom: 0.9 }, heat: [1.0, -0.55, 0.22, 0], flare: [-0.9, 0.25, 0.12] },
+    // 9:16: level, the inner ring big across the frame, the disk above and below it. Strikes no longer flash white
+    // (director's note; the plan's `dip` punches the exposure down), and the 16:9 in-world strike flare would land
+    // the cut on a blazing disk that hides the dip (even with the flare merely removed, the cut would land brighter
+    // than the dark S17 frame before it, the only strike to do so). So the strike flare is inverted into a brief quench: the cut
+    // lands dark (dwarf and blue curtains burning), the disk re-ignites from the inside out and is back on the
+    // approved white-hot hold within ~0.5 s; the eighth-note pulses are unchanged.
+    portrait: { framing: { zoom: 0.9 }, heat: [1.0, -0.45, 0.2, 0], flare: [-0.7, 0.22, 0.12] },
   }),
   // Frenzy 27.4: a spiral arm rushes toward the lens (camera low, looking upstream into the flow).
   'F27.4': D({
@@ -254,8 +259,9 @@ const presets = {
       floor: 0.2, coldGas: 0.32, irr: 1.5, void: -0.1, voidW: 0.12 },
     post: { blur: [34, 0], zoomBlur: 0.012, exposure: 0.85 },
     // 9:16: the bank steepened into a diagonal that climbs the tall frame (same sense as the landscape bank), the
-    // blazing crests on the right, the streaking stars on the left; the motion blur turns with it (post below)
-    portrait: { framing: { roll: -60, zoom: 0.66, pan: [-0.45, 0] } },
+    // blazing crests on the right, the streaking stars on the left, the contrast edge near the centre (pan.y toward
+    // the stars moves it across the bank); the motion blur turns with it (post below)
+    portrait: { framing: { roll: -60, zoom: 0.66, pan: [-0.42, 0.16] } },
   }),
 };
 
@@ -286,7 +292,7 @@ function camAt(P, local, dur) {
 
 function filmTime(E, S) {
   const real = E.plan && E.plan.shots && E.plan.shots.find((s) => s.id === S.shot.id);
-  return real ? real.start / E.fps + S.local : S.t;
+  return real ? (real.span ? real.span[0] : real.start) / E.fps + S.local : S.t;   // span: an insert cut into the shot
 }
 
 export default {

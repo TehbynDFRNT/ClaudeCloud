@@ -157,7 +157,8 @@ if (mode === 'costs') {
   const out = path.join(ROOT, opt('out', plan.id ? `dist/${plan.id}${PREVIEW ? '-preview' : ''}.mp4` : (PREVIEW ? 'dist/preview-cut.mp4' : 'dist/david-and-goliath.mp4')));
   const [num, den] = plan.fps.split('/').map(Number);
   run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'warning', '-f', 'concat', '-safe', '0', '-i', list, '-i', audio,
-    '-map', '0:v:0', '-map', '1:a:0', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '320k', '-ar', '48000', '-ac', '2',
+    '-map', '0:v:0', '-map', '1:a:0', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '512k', '-aac_coder', 'fast',   // keeps the climax's true peak under -1 dBTP after coding
+     '-ar', '48000', '-ac', '2',
     '-t', (plan.frames / (num / (den || 1))).toFixed(6), '-movflags', '+faststart',
     '-metadata', `title=${plan.title}`,
     '-metadata', 'comment=Music: Vivaldi, L\'inverno I, The United States Air Force Band. Cannon: Tchaikovsky 1812 Overture, The United States Army Band. Picture and sound design rendered in code.',

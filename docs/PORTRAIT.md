@@ -45,7 +45,7 @@ Scene presets may carry a `portrait` block. It is used only in portrait renders;
 ```
 
 - **`framing`** reframes every camera the shot builds (`engine/math.js` `setFraming`). Each camera is reframed exactly once.
-  - `roll`: degrees, counter-clockwise on screen.
+  - `roll`: degrees. Positive rolls the camera counter-clockwise, so the picture turns clockwise on screen: the top of the old frame moves to the right.
   - `zoom`: divides tan(fov/2); 2 is twice as tight.
   - `pan`: the point of the original 16:9 frame (frameUV, y up) that becomes the new centre.
   - `dolly`: world units forward along the view direction.

@@ -8,8 +8,13 @@
 //   fire/system: fbR, fbTurb, fbDens, fbHeat, fbShell, fbEvo, fbBlue, contact, novaLight, disk, stream
 //   wave: wvR, wvDens, wvHeat, debris, adv, refract (composite refraction strength)
 //   shell: shR, frac, shHeat, gain, skin, knotK, prolate, equator, sheetW, sheetWid, knotGain, faceDim, steps, stepLen, giant/dwarf
-//   dur: authored duration; local time is warped to the plan's actual shot length
+//   dur: authored duration; local time is warped to the plan's actual shot length (the 9:16 plan shortened S23-S25:
+//        every key lands at the same fraction of the shot, so the beats keep their place against the score)
+//   span: optional [a, b] authored window played over the shot instead of [0, dur] (trim a shot's head or tail without
+//        speeding it up, e.g. from plan shot params when an insert shortens it)
 //   post: static post overrides; postKeys: { name: keys } animated post overrides
+//   portrait: 9:16 overrides (engine/film.js): a `framing` per shot, plus S22's emergence from the dark. Landscape renders
+//        ignore it, so the 16:9 frames are unchanged. Nothing here injects a `flash`: ignition is dark (S22-dark).
 import { frag, STARS } from '../engine/glsl.js';
 import { GIANT } from './lib/giant.glsl.js';
 import { DWARF } from './lib/dwarf.glsl.js';
@@ -281,6 +286,8 @@ export default {
   scale: 1,
   presets: {
     // 1.83 s: out of the white-out, a white-hot ball erupts from the dwarf and fills the frame.
+    // 9:16: no white-out. The cut comes out of black (S22-dark): a white-hot point at frame centre on black, the stars
+    // only fading in as it swells into the seething ball, which then grows exactly as before to fill the frame.
     'S22-ignition': {
       mode: 'fire', volScale: 0.5, dur: 1.83,
       cam: [[0, [0, 0.06, -1.9], [0, 0, 0], 40], [0.8, [0.02, 0.07, -1.95], [0, 0, 0], 40], [1.83, [0.06, 0.12, -2.25], [0, 0.01, 0], 40, 0, 'inQuad']],
@@ -288,6 +295,11 @@ export default {
       fbTurb: 0.26, fbDens: 26, fbHeat: [[0, 1.1], [1.0, 1.0], [1.83, 0.96]], fbShell: 0, fbEvo: [[0, 0], [1.83, 2.2, 'linear']], fbBlue: 0.3,
       starGain: 1,
       post: { bloomStrength: 0.14, halation: 0.04, streakStrength: 0.06, saturation: 1.12, contrast: 1.1, lift: 0 },
+      portrait: {
+        framing: { zoom: 0.72 },   // centred; the ball reads ~1.3x larger on a phone than in 16:9, fills the frame at the end
+        fbR: [[0, 0.006], [0.3, 0.12, 'inQuad'], [0.95, 0.45, 'outQuad'], [1.83, 1.2, 'inQuad']],
+        starGain: [[0, 0], [0.6, 1, 'inOutSine']],
+      },
     },
     // 3.83 s: system wide. The sphere swallows the disk, severs the stream and slams into the giant.
     'S23-eruption': {
@@ -299,6 +311,8 @@ export default {
       contact: [[1.4, 0], [2.6, 1.0]], novaLight: [[0, 0.35], [0.5, 0.55], [3.83, 0.45]], scar: [[1.8, 0], [3.83, 0.6]],
       disk: [[0, 1], [0.6, 1], [0.9, 0]], stream: [[0, 0.55], [1.2, 0.55], [1.6, 0]], giantGlow: 1.0, giantFar: true, starGain: 0.5,
       post: { bloomStrength: 0.08, halation: 0.03, streakStrength: 0.01, saturation: 1.1, contrast: 1.06, lift: 0 },
+      // 9:16: the 16:9 composition turned a quarter: the giant above, the eruption below swelling up into it
+      portrait: { framing: { roll: 90, zoom: 0.62, pan: [0.08, 0] } },
     },
     // 2.5 s: the pressure wave passes through the camera: a wall of light approaches, envelops (refraction,
     // debris streaking past), then glowing hot gas all around. Peak of the Doppler roar.
@@ -312,6 +326,8 @@ export default {
       starGain: [[0, 0.6], [0.95, 0.5], [1.15, 0.0]],
       postKeys: { zoomBlur: [[0.6, 0.0], [0.98, 0.012], [1.1, 0.05], [1.6, 0.03], [2.5, 0.02]], exposure: [[0, 1.0], [0.95, 0.85], [1.12, 0.62], [1.4, 1.05], [2.5, 1.0]] },
       post: { bloomStrength: 0.12, halation: 0.04, saturation: 1.1, contrast: 1.06, lift: 0 },
+      // 9:16: the approaching sphere just fits the width, closing in to the contact; inside, the full wide-angle field
+      portrait: { framing: [[0, { zoom: 0.52 }], [0.45, { zoom: 0.6 }, 'inOutSine']] },
     },
     // 2.88 s: limb of the decelerating shell; the gold sheet tears into filaments, knots condense, fingers grow.
     'S25-shell': {
@@ -321,6 +337,8 @@ export default {
       knotK: 13, knotKc: 34, prolate: 0.1, deform: 0.04, equator: 0.6, clump: 0.85, sheetW: 1.6, sheetWid: 0.026, knotGain: 1.0, tailGain: 1.2, tailL: 0.028,
       wisp: 6, diffuse: 1.8, skin: 0.3, giant: true, giantGlow: 0.8, scar: 0.8, dwarfLum: 1, starGain: 0.6,
       post: { bloomStrength: 0.1, lift: 0 },
+      // 9:16: the limb arches over the top of the frame like a dome, the giant and the dwarf inside it below
+      portrait: { framing: { roll: -30, zoom: 0.6, pan: [-0.25, -0.3] } },
     },
     // 6.0 s: the immense fractured golden shell (GK Per / T Pyx knots and fingers); the pair small inside; slow pull back.
     'S26-expansion': {
@@ -330,8 +348,12 @@ export default {
       knotK: 16, knotKc: 34, prolate: 0.12, deform: 0.06, equator: 0.8, clump: 0.92, sheetW: 1.5, knotGain: 1.0, tailGain: 1.2, tailL: 0.028,
       wisp: 0, diffuse: 1.8, skin: 0.3, giant: true, giantGlow: 0.55, scar: 0.6, dwarfLum: 0.6, starGain: 0.6,
       post: { bloomStrength: 0.09, lift: 0 },
+      // 9:16: same pull back; the whole shell fits the width at the end (radius ~0.45 W)
+      portrait: { framing: { zoom: 0.59 } },
     },
     // 3.33 s (+ dissolve tail to S29b): centred, still. A near-perfect limb-brightened ring, outer radius ~0.32 H.
+    // 9:16: the same view scaled by 0.40 / 0.321 on the short side (zoom 0.5625 * 0.40 / 0.321): the ring is centred
+    // with radius 0.40 W, registered with the ink rings of S29b.
     'S29a-ring': {
       mode: 'shell', volScale: 0.75, dur: 3.33,
       cam: [[0, [0.0, 58.0, 10.2], [0, 0, 0], 30], [5.5, [0.0, 58.0, 10.2], [0, 0, 0], 30]],
@@ -339,6 +361,7 @@ export default {
       knotK: 11, knotKc: 34, prolate: 0.0, deform: 0, equator: 1.2, clump: 0.7, sheetW: 1.5, sheetWid: 0.012, knotGain: 0.55, tailGain: 1.0, tailL: 0.028,
       wisp: 0, diffuse: 2.2, skin: 0.35, faceDim: 0.95, giant: true, giantGlow: 0.55, scar: 0.6, dwarfLum: 0.5, starGain: 0.6,
       post: { bloomStrength: 0.08, lift: 0 },
+      portrait: { framing: { zoom: 0.701 } },
     },
     default: { mode: 'fire', fbR: 0.6 },
   },
@@ -353,7 +376,11 @@ export default {
   },
 
   // local time warped to the preset's authored duration (robust to plan retiming); may exceed dur in dissolves
-  localT(S) { const P = S.params; return Math.max(0, S.local) * (P.dur ? P.dur / S.dur : 1); },
+  localT(S) {
+    const P = S.params;
+    if (P.span) return P.span[0] + Math.max(0, S.local) * (P.span[1] - P.span[0]) / S.dur;
+    return Math.max(0, S.local) * (P.dur ? P.dur / S.dur : 1);
+  },
 
   render(E, S, target) {
     const P = S.params;

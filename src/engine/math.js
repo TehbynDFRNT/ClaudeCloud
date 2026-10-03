@@ -34,7 +34,8 @@ export const ease = {
 
 // Per-shot reframing for a different output aspect (the 9:16 cut). The film sets it for the shot being
 // drawn (identity otherwise), and every camera() built while it is set is reframed exactly once:
-//   roll  extra camera roll, degrees (positive = counter-clockwise on screen)
+//   roll  extra camera roll, degrees (positive rolls the camera counter-clockwise, so the picture turns
+//         clockwise on screen: the top of the old frame moves to the right)
 //   zoom  tan(fov/2) divisor (2 = twice as tight)
 //   pan   [x, y] point of the ORIGINAL 16:9 frame (frameUV units, y up) that becomes the new centre
 //   dolly world units along the view direction (positive = closer)

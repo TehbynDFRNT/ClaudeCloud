@@ -194,8 +194,9 @@ export default {
     // pixel scales (preset values are px of the 1920x1080 landscape frame). Portrait: E.k-style (short side
     // / 1080) times the magnification the framing zoom gives relative to the landscape frame (zoom 0.5625 =
     // the landscape pixel scale, rotated). DOF follows the magnification (a tighter frame enlarges the blur
-    // with the subject); stroke widths follow it by sqrt by default (P.strokeK overrides).
-    const mag = S.portrait ? ((S.framing && S.framing.zoom) || 1) * 16 / 9 : 1;
+    // with the subject); stroke widths follow it by sqrt by default (P.strokeK overrides). The magnification
+    // is zoom x the portrait frame's H/W (16/9 at 9:16), so it holds at any portrait aspect.
+    const mag = S.portrait ? ((S.framing && S.framing.zoom) || 1) * (S.H / S.W) : 1;
     const kc = S.portrait ? Math.pow(mag, P.dofMag ?? 1) : 1;
     const k = S.portrait ? (Math.min(A.w, A.h) / 1080) * kc : A.w / 1920;
     const maxCoc = (D.max ?? 0) * k;

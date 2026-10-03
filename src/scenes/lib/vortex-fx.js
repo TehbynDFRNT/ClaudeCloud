@@ -49,7 +49,7 @@ export function sparks(ctx, E, F, o) {
     if (!A || !B) continue;
     const heat = Math.exp(-3.0 * a / lk) * (0.6 + 0.4 * hash2(id, 9, 5));
     const fade = Math.min(1, a / 0.03);
-    const wpx = Math.max(0.5 * pk, Math.min(3.0 * pk * (o.maxW || 1), (o.width || 0.004) * H / (B.z * cam.tanH * 2)));
+    const wpx = Math.max(0.5 * pk, Math.min(3.0 * pk, (o.width || 0.004) * H / (B.z * cam.tanH * 2)));
     const alpha = Math.min(1, heat * fade * (o.gain || 1));
     if (alpha < 0.01) continue;
     // tapered streak: transparent tail -> hot head, plus a tiny bright head dot

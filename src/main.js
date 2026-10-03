@@ -15,6 +15,8 @@ async function boot() {
     fetch('../' + (q.get('plan') || 'film-plan.json')).then((r) => r.json()),   // ?plan=film-plan-prometheus.json for another cut
     fetch('../analysis/grid.json').then((r) => r.json()).catch(() => null),
   ]);
+  // scenes with external assets (e.g. the statue meshes) load them before the first frame
+  await Promise.all(Object.values(scenes).filter((s) => s.preload).map((s) => s.preload(plan)));
   const film = new Film({ canvas, W, H, plan, grid, scenes });
   window.film = film;
   window.renderFrame = (f) => film.renderFrame(f);

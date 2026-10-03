@@ -568,9 +568,11 @@ GEN.cno = function (B, P, t, S, fx) {
       if (t >= ta && t < RT[s]) {
         const u = (t - ta) / (RT[s] - ta);
         const tang = norm(sub(stations[(s + 5) % 6], stations[s]));
+        // inS: optional per-station overrides of the approach ({ station: { up, dist } })
+        const o = (P.inS && P.inS[s]) || {};
         const dir = s === 0 && P.inDir ? norm(P.inDir)
-          : norm(add(add(mul(outward, P.inOut ?? 0.95), mul(tang, P.inTan ?? 0.3)), [0, P.inUp ?? 0.85, 0]));
-        const startP = add(stations[s], mul(dir, P.inDist ?? 26));
+          : norm(add(add(mul(outward, P.inOut ?? 0.95), mul(tang, P.inTan ?? 0.3)), [0, o.up ?? P.inUp ?? 0.85, 0]));
+        const startP = add(stations[s], mul(dir, o.dist ?? P.inDist ?? 26));
         const p = mix3(startP, stations[s], u * u * 0.15 + u * 0.85);
         const pt = mix3(startP, stations[s], Math.max(0, u - 0.3));
         B.streak(p, pt, 0.3, mix3(GOLD, WHITE, 0.2), 6.0, 1.2, s);
@@ -593,7 +595,9 @@ GEN.cno = function (B, P, t, S, fx) {
       }
       if (s === 5) {
         // 15N + p -> 12C + alpha: the helium nucleus is ejected outward and upward, never into the lens
-        const d = norm(add(sub(outward, mul(cam0(B), dot3(outward, cam0(B)) * 1.2)), [0, 0.6, 0]));
+        // (alphaOut scales the outward push, negative sends it into the ring's interior; alphaUp the lift)
+        const ow = mul(outward, P.alphaOut ?? 1);
+        const d = norm(add(sub(ow, mul(cam0(B), dot3(ow, cam0(B)) * 1.2)), [0, P.alphaUp ?? 0.6, 0]));
         const p = add(stations[s], mul(d, 3 + 22 * (1 - Math.exp(-tau * 2.5))));
         addNucleus(B, p, 4, 2, { rot: axisAngle([0, 1, 0], t * 4), heat: 1.2 * Math.exp(-tau / 0.4) + 0.3, jit: 0.08, t, f, seed: 333, alpha: 0.95 });
         B.streak(p, add(stations[s], mul(d, 3)), 0.35, mix3(GOLD, WHITE, 0.5), 2.0, 1.5, 77);
@@ -737,7 +741,8 @@ const presets = {
   // S13: keep world up so the proton rain falls straight down the tall frame onto the layer
   P['S13-atoms'].portrait = {
     framing: { zoom: 0.72 },
-    rain: { ...P['S13-atoms'].rain, x: [-13, 13], rate: 30, trail: 12, trailInt: 6.0 },
+    // the narrower frame sees less of the rain's spread: concentrate it so as many protons fall in frame
+    rain: { ...P['S13-atoms'].rain, x: [-12, 12], rate: 38 },
   };
   // S14f: the ring turned about the vertical axis (a tall ellipse, symmetric about the frame's centre line);
   // the hero proton falls from above through the empty interior onto carbon at the bottom
@@ -748,33 +753,50 @@ const presets = {
     cam: [[0, [0, 0.8, -65], [0, 0, 0], 26], [1.7, [0, 0.8, -62], [0, 0, 0], 26]],
     dof: { focus: [[0, 64], [1.7, 61]], K: 40, max: 120 },
     field: { ...P['S14f-cno'].field, n: 22, box: [[-40, 40], [-50, 40], [45, 170]] },
+    // the cycle's closing beat (15N + p -> 12C + 4He) stays in the narrow frame: station 5's proton rises in
+    // from the empty lower corner (not across station 4 above it), and the helium nucleus climbs up through
+    // the ring's empty interior, a mirror of the hero proton's fall that opened the cycle
+    inS: { 5: { up: -1.4, dist: 18 } }, alphaOut: -0.6, alphaUp: 0.45,
   };
   // S20: macro on the crushed lattice, world up (the chain reaction spreads across the tall frame)
+  // Strikes punch the exposure down now (the plan's dip), so the build must not end in a frame-filling white
+  // burn that cuts into strike 5's dark dip and reads as a white flash on the hit: the emission still climbs,
+  // but to a white-hot crushed lattice with ember edges and the dark lower layer showing, not to a white-out.
   P['S20-strike4'].portrait = {
     framing: { zoom: 0.72 },
-    // strikes punch the exposure down now (plan dip), so the build must not end in a frame-filling white burn
-    // before strike 5: the emission climbs to a white-hot core with the edges left ember
-    heat: [[0, 0.2], [0.1, 0.3], [0.38, 0.85], [0.8, 0.55], [2.0, 0.95], [2.65, 1.6], [3.042, 3.3, 'inQuad']],
-    haze: [[0, 0.04], [2.4, 0.07], [3.042, 0.13, 'inQuad']],
-    fill: [[0, 0], [2.74, 0], [3.042, 1.3, 'inCubic']], fillR: [[2.74, 0.15], [3.042, 0.38]],
+    heat: [[0, 0.2], [0.1, 0.3], [0.38, 0.85], [0.8, 0.55], [2.0, 0.95], [2.65, 1.7], [3.042, 2.0, 'inQuad']],
+    haze: [[0, 0.04], [2.4, 0.07], [3.042, 0.11, 'inQuad']],
+    fill: [[0, 0], [2.74, 0], [3.042, 0.9, 'inCubic']], fillR: [[2.74, 0.12], [3.042, 0.3]],
   };
   // F28.1: exact rotation: the 12-wide close-packed layer runs down the tall frame
   P['F28.1'].portrait = { framing: { roll: 90, zoom: 0.5625 } };
-  // F30.1: rotated so the proton drops in from the top onto carbon, tighter
-  P['F30.1'].portrait = { framing: { roll: 90, zoom: 0.85 } };
-  // F31.3: rotated: the head-on collision runs top to bottom
-  // (wide enough on the first frame to see both nuclei coming, then a crash-in on the impact)
-  // the nuclei start a little nearer so both are in the 3:4 window on the first frame; the frame recoils
-  // after the impact so the sprayed nucleons stay in it
+  // F30.1: rotated so the proton drops in from the top onto carbon, a little tighter than the exact rotation
+  // (tighter still and the fusion flash fills the 3:4 window, losing the dark surround). The proton starts
+  // half as far out on the same line, so the comet is on screen for several frames before the strike.
+  P['F30.1'].portrait = {
+    framing: { roll: -90, zoom: 0.65 },
+    bodies: P['F30.1'].bodies.map((b, i) => (i === 1 ? { ...b, p0: [-12.8, 3, 2.5], trail: 0.5 } : b)),
+  };
+  // F31.3: rotated: the head-on collision runs top to bottom. The nuclei start a little nearer, so both are
+  // already entering from the window's top and bottom edges on the first frame. A crash-in on the impact,
+  // capped at 0.66, then a quick recoil wider than the opening (0.52), so the starburst and the sprayed
+  // nucleons keep a dark surround in the 3:4 window instead of washing it out
   P['F31.3'].portrait = {
-    framing: [[0, { roll: 90, zoom: 0.55 }], [0.28, { roll: 90, zoom: 0.76 }, 'inQuad'], [1, { roll: 90, zoom: 0.62 }, 'outQuad']],
+    framing: [[0, { roll: 90, zoom: 0.55 }], [0.28, { roll: 90, zoom: 0.66 }, 'inQuad'], [0.5, { roll: 90, zoom: 0.52 }, 'outQuad'], [1, { roll: 90, zoom: 0.55 }, 'inOutSine']],
     bodies: [
       { ...P['F31.3'].bodies[0], p0: [-6.2, -0.6, 1.1] },
       { ...P['F31.3'].bodies[1], p0: [6.2, 0.9, -0.7] },
     ],
   };
-  // F31.8: rotated: the lateral track becomes a vertical one through the swarm, Dutch tilt kept
-  P['F31.8'].portrait = { framing: { roll: 90, zoom: 0.62 } };
+  // F31.8: rotated: the lateral track becomes a vertical one through the swarm, Dutch tilt kept.
+  // No white flash in this cut: the frenzy ends white-hot (clipped emitters, a hot core, ember dark between
+  // them) instead of burning the whole frame out to white for its last two frames before S16.
+  P['F31.8'].portrait = {
+    framing: { roll: 90, zoom: 0.62 },
+    fill: [[0, 0], [0.235, 0], [0.333, 0.5, 'inCubic']],
+    fillR: [[0.235, 0.22], [0.29, 0.3], [0.333, 0.42, 'inQuad']],
+    fillCol: [[0.235, [1.0, 0.22, 0.04]], [0.29, [1.0, 0.5, 0.14]], [0.333, [1.0, 0.68, 0.34]]],
+  };
 }
 presets.default = presets['S13-atoms'];
 

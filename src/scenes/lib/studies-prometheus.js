@@ -47,7 +47,10 @@ function lerpX(pts, y) { // x(y) through points sorted by y
 }
 const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
-export function prometheus() {
+// o.vertical (the 9:16 cut): the fist, stalk and flame are unchanged; the theft diagram moves to the top
+// right beside the flame and the notes to the open paper right of the fist
+export function prometheus(o = {}) {
+  const V = !!o.vertical;
   const D = new Drawing(1010);
   const CM = 0.034;
   const O = [-0.30, 0.12];
@@ -269,12 +272,14 @@ export function prometheus() {
   }, handFront, [-1.5, yTop, 1.6, yBot], { sp: 4.4, maxLen: 70, thr: [0.2, 0.9], angle: -Math.PI / 2 + TH, d: 0.42, bow: 0.008 });
 
   // ---------------- mirror script (written before the cut) and the theft diagram ----------------
-  scriptBlock(D, ['il foco furato nella ferula', 'portato di cielo in terra', 'alli omini'], 0.6, 0.07, { size: 21, lh: 29, d: 0.62, kind: 'chalk' });
-  const G0 = [0.46, -0.19], SC = 0.31;
+  if (V) scriptBlock(D, ['il foco furato', 'nella ferula portato', 'di cielo in terra', 'alli omini'], 0.11, 0.15, { size: 20, lh: 27, d: 0.62, kind: 'chalk' });
+  else scriptBlock(D, ['il foco furato nella ferula', 'portato di cielo in terra', 'alli omini'], 0.6, 0.07, { size: 21, lh: 29, d: 0.62, kind: 'chalk' });
+  const G0 = V ? [0.045, -0.385] : [0.46, -0.19], SC = V ? 0.15 : 0.31;
+  const kS = SC / 0.31;
   const Pb = (x, z) => [G0[0] + x * SC, G0[1] + z * SC];
   const gc = Pb(XG, 0), wc = Pb(XW, 0);
-  D.stroke(arcPts(gc[0], gc[1], R_LOBE_GIANT * SC, -2.4, -2.4 + TAU * 1.03, { step: 1.5 * PX }), { ...CH, w: 3.0, d: 0.6, speed: 1.6, taper: [8, 8], press: 0.25 });
-  D.stroke(arcPts(wc[0], wc[1], 0.011, 1, 1 + TAU * 1.1, { step: 1 * PX }), { ...CH, w: 2.5, d: 0.66, speed: 0.4, taper: [3, 3] });
+  D.stroke(arcPts(gc[0], gc[1], R_LOBE_GIANT * SC, -2.4, -2.4 + TAU * 1.03, { step: 1.5 * PX }), { ...CH, w: 3.0, d: 0.6, speed: 1.6 * kS, taper: [8, 8], press: 0.25 });
+  D.stroke(arcPts(wc[0], wc[1], V ? 0.008 : 0.011, 1, 1 + TAU * 1.1, { step: 1 * PX }), { ...CH, w: 2.5, d: 0.66, speed: 0.4, taper: [3, 3] });
   D.fitTo(0, -30, -0.05);
   const preT = D.mark();
 
@@ -333,7 +338,8 @@ export function prometheus() {
   const arcS = streamPath({ maxT: 1.36, every: 10 }).map((q) => Pb(q.x, q.z));
   D.at(2.15);
   D.stroke(resample(arcS, 1.5 * PX), { ...CH, w: 2.8, d: 0.58, dur: 0.8, taper: [10, 20], press: 0.3 });
-  D.text('dal grande al picholo', gc[0] + 0.19, gc[1] + 0.145, { size: 17, d: 0.56, kind: 'chalk', t0: 2.95, dur: 0.5 });
+  if (V) D.text('dal grande al picholo', 0.105, gc[1] + 0.085, { size: 17, d: 0.56, kind: 'chalk', t0: 2.95, dur: 0.5 });
+  else D.text('dal grande al picholo', gc[0] + 0.19, gc[1] + 0.145, { size: 17, d: 0.56, kind: 'chalk', t0: 2.95, dur: 0.5 });
   D.flame = [flame.x - 0.014, flame.y - 0.08];
   return D;
 }

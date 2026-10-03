@@ -11,8 +11,11 @@
 //              fil, filL, filW, filN (planes), filSpan (deg), filAt (centre the planes on the camera, offset deg),
 //              filPhase (deg), filK (strands per plane), shimmer, tremolo, snapAt
 //   ocean, oceanH, heat, oceanGain, turbF, turbV, cells, warp, big, detail, conv {dir, at, amp}
-//   flare, flareSize, flash, flashR, flashDir, plume, columns, colL, haze, hazePx (angular, 1080p px), hazeF, crimson,
-//   scorch, shell, shellR (frame heights), shellBlur, thread, threadGain, stars, atmo, dust, white, tOff, post {...}
+//   flare, flareSize, flash, flashR, flashDir, plume, columns, colL, haze, hazePx (angular, px of a 1080 short side), hazeF,
+//   crimson, scorch, shell, shellR (frame heights), shellBlur, thread, threadGain, stars, atmo, dust, white, tOff, post {...}
+//   implode (0..1, S21 9:16 end: the view lensed into a collapsing point at frame centre, then black), implodeShape {...}
+//   portrait {...}: 9:16 overrides (engine). Unframed portrait shots measure `screen` in the real frame aspect; with a
+//   portrait `framing` the rig composes in 16:9 first (the framing then reframes that composition).
 import { frag, STARS } from '../engine/glsl.js';
 import { DWARF } from './lib/dwarf.glsl.js';
 import { DWARF_CLOSE } from './lib/dwarf-close.glsl.js';
@@ -254,7 +257,9 @@ function implosion(s, sh, minPx) {
   if (!(s > 0)) return { imp: [0, 1, 0, 1], core: [0, 1, 0, 0] };
   const end = sh.end ?? 0.9;
   const u = clamp(s / end);
-  const R = (sh.r0 ?? 5.0) * Math.pow(1 - u, sh.pow ?? 2.2) + 0.004;
+  // the horizon closes in from infinity: no lens step on the first frame, and the squeeze at the window edges grows
+  // with a steadily increasing rate; it joins the collapse curve at u = 0.4, before the rim enters the 3:4 window
+  const R = (sh.r0 ?? 5.0) * Math.pow(1 - u, sh.pow ?? 2.2) / Math.max(smoothstep(0, 0.4, u), 1e-4) + 0.004;
   const kill = 1 - smoothstep(sh.killA ?? 0.8, sh.killB ?? 0.93, s);
   const Z = 1 + (sh.zoom ?? 1.5) * u * u;
   const swirl = (sh.swirl ?? 1.4) * Math.pow(u, 1.5);
@@ -292,7 +297,7 @@ export default {
       detail: 0.6, haze: 0.0006, hazeF: 60, crimson: 0.25, atmo: 1.0, stars: 0.8,
       post: { bloomStrength: 0.12, exposure: 1.0 },
       // 9:16: the horizon high in the 3:4 window (sky ~30%), the thickening ocean below
-      portrait: { fov: 40, pitch: [[0, -21], [1, -19]] },
+      portrait: { fov: 40, pitch: [[0, -23.5], [1, -22.5]] },
     },
     // First flickers: the surface brightens, small flares; oblique view with the limb against black
     'S14h-flare': {
@@ -320,6 +325,8 @@ export default {
       ocean: 0.86, oceanH: 0.0045, heat: 0.3, oceanGain: 1.0, turbF: 160, turbV: 2.4, flare: 0.6, cells: 0.85, detail: 0.7,
       haze: 0.0008, hazeF: 160, crimson: 0, atmo: 1.0, stars: 0.6,
       post: { bloomStrength: 0.15 },
+      // 9:16: a little wider so the narrow frame still holds several cells rushing past
+      portrait: { fov: 54 },
     },
     // Frenzy: a violent bright flash of the surface. High oblique view across the curved surface: the flash erupts
     // mid-frame, its front races across the visible surface, white-hot fingers and sparks shoot up past the limb.
@@ -331,8 +338,8 @@ export default {
       plume: [[0, 0.05], [1, 0.9, 'outCubic']],
       haze: 0.004, hazeF: 8, crimson: 0.2, atmo: 1.2, stars: 0.6,
       post: { bloomStrength: [[0, 0.12], ['1f', 0.2], [1, 0.12]], streakStrength: [[0, 0.08], ['1f', 0.6], ['3f', 0.22], [1, 0.08]], streakTint: [0.3, 0.55, 1.0], halation: 0.008, exposure: 1.0 },
-      // 9:16: recentred on the flash; the limb crosses the frame above it, the fingers shoot up into the black
-      portrait: { framing: { pan: [-0.22, 0.3], zoom: 0.8 } },
+      // 9:16: recentred on the flash and turned so the limb runs nearly level: the fingers shoot straight up into the black
+      portrait: { framing: { pan: [-0.22, 0.3], zoom: 0.8, roll: 30 } },
     },
     // Strike 3 (cut on the strike): the surface layer convulses, blue filaments snap at local = 0. The biggest whip and
     // recoil land 6-24 frames in, after the plan's strike flash has decayed; torn ends drag hot plasma and fade over ~2.5 s,
@@ -345,7 +352,7 @@ export default {
       haze: 0.003, hazeF: 10, crimson: 0.2, atmo: 1.2, stars: 0.8,
       post: { bloomStrength: 0.16 },
       // 9:16: the landscape composition turned a quarter: the star below, the limb across, the filaments rising above
-      portrait: { framing: { roll: 90, zoom: 0.5625 } },
+      portrait: { framing: { roll: -90, zoom: 0.5625 } },
     },
     // Strike 5 + final tremolo: extreme close; the curved horizon and black sky across the top of the scope band, a
     // corridor of blue magnetic arches over the convecting ocean, vibrating in tremolo; the heat haze bends limb, stars
@@ -367,26 +374,26 @@ export default {
         vignette: [[0, 0.55], ['e-12f', 0.6], ['e-4f', 0.9], [1, 0.4]],
         saturation: 1.08,
       },
-      // 9:16: no white-out. The glow and the tremolo climb to e-26f; then, in the last second, the camera tips down
+      // 9:16: no white-out. The glow and the tremolo climb to e-32f; then, in the last second, the camera tips down
       // into the ocean while the whole view is lensed inward into a disc at frame centre that collapses to a hot point
       // and goes out: the last 3 frames are black (the held breath before the ignition, which is dark).
       portrait: {
-        fov: [[0, 50], ['e-26f', 47], [1, 42, 'inQuad']],
-        alt: [[0, 0.076], ['e-26f', 0.066], [1, 0.03, 'inQuad']],
-        pitch: [[0, -28], [0.45, -27.5], ['e-26f', -25.5], [1, -62, 'inOutSine']],
-        roll: [[0, 5], ['e-26f', 11], [1, 26, 'inQuad']],
-        surf: [[0, 1.7], ['e-26f', 2.2], [1, 2.6, 'inQuad']],
-        heat: [[0, 0.12], ['e-26f', 0.38], [1, 0.6, 'inQuad']],
-        oceanGain: [[0, 1.0], ['e-26f', 1.4], [1, 1.8, 'inQuad']],
-        haze: [[0, 0.0008], [0.4, 0.0014], ['e-26f', 0.0045], [1, 0.008, 'inQuad']],
+        fov: [[0, 50], ['e-32f', 47], [1, 42, 'inQuad']],
+        alt: [[0, 0.076], ['e-32f', 0.066], [1, 0.03, 'inQuad']],
+        pitch: [[0, -28], [0.45, -27.5], ['e-32f', -25.5], [1, -62, 'inOutSine']],
+        roll: [[0, 5], ['e-32f', 11], [1, 26, 'inQuad']],
+        surf: [[0, 1.7], ['e-32f', 2.2], [1, 2.6, 'inQuad']],
+        heat: [[0, 0.12], ['e-32f', 0.38], [1, 0.6, 'inQuad']],
+        oceanGain: [[0, 1.0], ['e-32f', 1.4], [1, 1.8, 'inQuad']],
+        haze: [[0, 0.0008], [0.4, 0.0014], ['e-32f', 0.0045], [1, 0.008, 'inQuad']],
         white: 0,
-        implode: [[0, 0], ['e-26f', 0], [1, 1, 'linear']],
-        implodeShape: { r0: 4.2, pow: 1.6, end: 0.92, zoom: 1.2, swirl: 4.0, gain: 0.5, core: 10, streaks: 0.8, killA: 0.82, killB: 0.93 },
+        implode: [[0, 0], ['e-32f', 0], [1, 1, 'linear']],
+        implodeShape: { r0: 4.2, pow: 1.6, end: 0.92, zoom: 1.2, swirl: 4.0, gain: 0.5, core: 10, streaks: 0.8, killA: 0.84, killB: 0.92 },
         post: {
-          bloomStrength: [[0, 0.16], ['e-26f', 0.2], ['e-14f', 0.15], [1, 0.12]],
+          bloomStrength: [[0, 0.16], ['e-32f', 0.2], ['e-14f', 0.15], [1, 0.12]],
           exposure: 1.0,
-          zoomBlur: [[0, 0], ['e-26f', 0], ['e-8f', 0.07, 'inQuad'], [1, 0.04]],
-          vignette: [[0, 0.55], ['e-26f', 0.62], [1, 0.62]],
+          zoomBlur: [[0, 0], ['e-32f', 0], ['e-8f', 0.07, 'inQuad'], [1, 0.04]],
+          vignette: [[0, 0.55], ['e-32f', 0.62], [1, 0.62]],
           saturation: 1.08,
         },
       },
@@ -401,8 +408,13 @@ export default {
       thread: [[0, 0.30], ['1s', 0.42], [1, 0.66, 'inOutSine']], threadGain: 1.0,
       haze: 0.0, hazePx: 1.2, hazeF: 4.5, crimson: 0.35, atmo: 1.2, stars: 1.0,
       post: { bloomStrength: 0.14, exposure: 1.0, vignette: 0.5 },
-      // 9:16: the survivor centred (ring centred like S29a's, radius ~0.44W-0.52W), disc ~0.36W growing to ~0.44W
-      portrait: { fov: 50, screen: [[0, [0, 0.05]], [1, [0, 0.04]]], shellR: [[0, 0.25], [1, 0.29]] },
+      // 9:16 (full frame after ignition): the survivor centred, disc ~0.34W growing to ~0.41W; the ring of knots is
+      // centred and grows from ~0.33W to ~0.38W radius, so it lands on S29a's ring (~0.37W) on the cut while the
+      // dwarf drops to a point; the new thread curls in from the left within the first second
+      portrait: {
+        fov: 53, el: [[0, 16], [1, 13]], screen: [[0, [0, 0.04]], [1, [0, 0]]], shellR: [[0, 0.20], [1, 0.215]],
+        thread: [[0, 0.44], ['1s', 0.55], [1, 0.74, 'inOutSine']],   // the narrow frame sees only the last stretch: run it further
+      },
     },
     default: {
       rig: 'orbit', dist: 6, az: 0, el: 8, fov: 32, screen: [0.2, 0.05],

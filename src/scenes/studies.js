@@ -8,6 +8,7 @@ import { keys } from '../engine/math.js';
 import { PAPER, PAPER_BAKE, BAKE_RECT, BAKE_DENSITY, BAKE_RECT_P, BAKE_DENSITY_P, makePaperTexture } from './lib/studies-paper.js';
 import { renderDrawing } from './lib/studies-ink.js';
 import * as DR from './lib/studies-drawings.js';
+import * as CU from './lib/studies-cuts.js';
 
 const FS = frag(PAPER, `
 uniform vec4 uShadeY;   // lower page falling into shadow: y0, y1, amount
@@ -94,15 +95,22 @@ const BLACK = frag(`void main(){ fragColor = vec4(0.0, 0.0, 0.0, 1.0); }`);
 
 const BUILD = {
   codex: DR.codex,
-  codexV: () => DR.codex({ vertical: true }),
+  // S05 (9:16): the eight tilted 35 deg off the vertical about L1, matching S04's rolled diagram (L1 ~ 0.52 W, 0.47 H)
+  codexV: () => DR.codex({ vertical: true, angle: 35 * Math.PI / 180, l1: [0.022, -0.05] }),
   prometheus: DR.prometheus,
   prometheusV: () => DR.prometheus({ vertical: true }),
   deluge: DR.deluge,
   parabola: DR.parabola,
+  parabolaV: () => DR.parabola({ vertical: true }),
   eye: DR.eye,
   cno: DR.cno,
+  cnoV: () => DR.cno({ vertical: true }),
   collapse: DR.collapse,
   rings: DR.rings,
+  ringsV: () => DR.rings({ vertical: true }),
+  sling: CU.sling,
+  chains: CU.chains,
+  eagle: CU.eagle,
   swatch: DR.swatch,
   blank: DR.blank,
 };
@@ -120,11 +128,14 @@ const presets = {
     view: [[0, 0.0, 0.0, 1.0, -0.008], [2.917, 0.03, 0.006, 1.035, 0.004]],
     key: { pos: [-0.28, -0.2], r: 0.95, pow: 1.4, dir: [-0.8, -0.45, 0.42], col: [1.14, 0.93, 0.68] },
     gutter: [0.862, 0.12, 0.034, 1], cockle: 2.4,   // a notebook: the sheet curls into the binding at the right
-    // 9:16: the eight stands upright, the giant's lobe above (like the rolled space shots), the binding at the right edge
+    // 9:16: the eight lies on the diagonal of S04's rolled diagram (giant upper left, dwarf lower right) for the
+    // match cut, the notes in the corners it leaves, the binding at the right edge
     portrait: {
       drawing: 'codexV',
-      view: [[0, 0.0, -0.008, 0.615, -0.008], [2.917, 0.012, -0.004, 0.635, 0.004]],
-      gutter: [0.455, 0.1, 0.03, 1],
+      // the first frame matches S04 (L1 within ~3 px at 540 wide; the eight a touch smaller so the dwarf's lobe
+      // clears the right edge at the cut); then the camera drifts right and opens a little to take in the lobe
+      view: [[0, 0.006, -0.004, 0.595, -0.008], [2.917, 0.044, 0.012, 0.585, 0.004]],
+      gutter: [0.535, 0.1, 0.03, 1],
     },
   },
   'S10-prometheus': {
@@ -137,7 +148,7 @@ const presets = {
     flameKeys: [[0.45, 0], [2.1, 1]], flameGain: 2.0,
     portrait: {
       drawing: 'prometheusV',
-      view: [[0, -0.13, -0.02, 0.76, 0.006], [3.5, -0.14, -0.035, 0.82, -0.004]],
+      view: [[0, -0.19, -0.04, 0.84, 0.006], [3.5, -0.192, -0.055, 0.9, -0.004]],
     },
   },
   'S14d-deluge': {
@@ -151,16 +162,41 @@ const presets = {
     drawing: 'parabola', paperSeed: 11.1, design: 0.75,
     view: [[0, 0.0, 0.0, 1.02, -0.02], [0.75, 0.03, 0.0, 1.16, 0.01, 'outQuad']],
     key: { pos: [0.05, -0.15], r: 0.9, pow: 1.3, dir: [-0.8, -0.4, 0.42], col: [1.1, 0.9, 0.67] },
+    // 9:16: the parabola stands the full height of the window, the directrix ruled down the right
+    portrait: { drawing: 'parabolaV', view: [[0, -0.1, 0.0, 0.8, -0.02], [0.75, -0.08, 0.0, 0.9, 0.01, 'outQuad']] },
   },
   'F29.1': {
     drawing: 'eye', paperSeed: 13.9, design: 0.792,
     view: [[0, -0.02, 0.0, 1.0, 0.015], [0.792, 0.06, 0.0, 1.14, -0.01, 'outQuad']],
     key: { pos: [-0.05, -0.15], r: 0.9, pow: 1.3, dir: [-0.8, -0.4, 0.42], col: [1.1, 0.9, 0.67] },
   },
+  // David cut (9:16): the sling — whirl, release along the tangent, the stone's parabola
+  'F29.1-sling': {
+    drawing: 'sling', paperSeed: 29.3, design: 0.792,
+    view: [[0, 0.0, -0.03, 0.95, 0.02], [0.792, 0.01, -0.035, 1.04, -0.012, 'outQuad']],
+    key: { pos: [-0.12, -0.18], r: 0.95, pow: 1.3, dir: [-0.8, -0.4, 0.42], col: [1.1, 0.9, 0.67] },
+    portrait: { view: [[0, -0.01, -0.012, 0.8, 0.02], [0.792, -0.004, -0.017, 0.85, -0.012, 'outQuad']] },
+  },
+  // Prometheus cut (9:16): the eagle in red chalk — the fierce head, the wing fanning open
+  'F29.1-eagle': {
+    drawing: 'eagle', paperSeed: 29.9, design: 0.792, age: [0.7, 0.35, 0.55, 1.0],
+    view: [[0, 0.0, -0.02, 0.95, -0.02], [0.792, 0.01, -0.03, 1.04, 0.012, 'outQuad']],
+    key: { pos: [-0.12, -0.2], r: 0.95, pow: 1.3, dir: [-0.8, -0.4, 0.42], col: [1.1, 0.9, 0.67] },
+    portrait: { view: [[0, 0.008, 0.015, 0.76, -0.02], [0.792, 0.013, 0.02, 0.79, 0.012, 'outQuad']] },
+  },
   'F30.3': {
     drawing: 'cno', paperSeed: 17.2, design: 0.792,
     view: [[0, 0.02, 0.0, 1.0, 0.06], [0.792, 0.02, 0.0, 1.12, -0.05, 'linear']],
     key: { pos: [-0.05, -0.12], r: 0.9, pow: 1.3, dir: [-0.8, -0.4, 0.42], col: [1.1, 0.9, 0.67] },
+    // 9:16: the wheel fills the width (~0.6 W), the notes above and below it
+    portrait: { drawing: 'cnoV', view: [[0, 0.02, 0.0, 0.8, 0.06], [0.792, 0.02, 0.0, 0.88, -0.05, 'linear']] },
+  },
+  // Prometheus cut (9:16): the shackle and chain, a wrist bound to the rock
+  'F30.3-chains': {
+    drawing: 'chains', paperSeed: 31.7, design: 0.792,
+    view: [[0, 0.0, -0.03, 0.95, -0.03], [0.792, 0.0, -0.03, 1.04, 0.02, 'linear']],
+    key: { pos: [-0.12, -0.15], r: 0.95, pow: 1.3, dir: [-0.8, -0.4, 0.42], col: [1.1, 0.9, 0.67] },
+    portrait: { view: [[0, 0.0, 0.0, 0.75, -0.03], [0.792, 0.0, 0.01, 0.82, 0.02, 'linear']] },
   },
   'F31.4': {
     drawing: 'collapse', paperSeed: 19.5, design: 0.375,
@@ -179,8 +215,14 @@ const presets = {
     shadeY: [0.28, 0.52, 0.92, 0],
     gutter: [-1.0, 0.15, 0.04, -1], cockle: 2.4,    // the binding at the left edge of the sheet
     postEase: [0.0, 1.25],
+    // 9:16 (full frame): the ring registers with S29a at r = 0.40 W (= 0.225 H, so zoom 0.225 / 0.32) centred on
+    // the frame through the dissolve, then eases a touch up and out; the ink stays above 0.74 H throughout,
+    // clear of the end-title band (0.76-0.84 H), which sits in the shaded lower page
+    portrait: {
+      drawing: 'ringsV',
+      view: [[-0.75, 0.0, 0.0, 0.703125, 0.0], [0.8, 0.0, 0.0, 0.703125, 0.0], [2.4, 0.0, 0.03, 0.665, 0.0], [6.042, 0.003, 0.033, 0.66, 0.002, 'linear']],
+    },
   },
-  'S30-credits': { black: true },
   default: { drawing: 'blank', view: [[0, 0, 0, 1, 0]] },
 };
 

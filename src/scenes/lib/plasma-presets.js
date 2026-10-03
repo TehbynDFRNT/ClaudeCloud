@@ -213,19 +213,12 @@ const P0 = (fr) => [[0, fr[0]], [1, fr[1], 'inOutSine']];
 
 S14B.portrait = { framing: { zoom: 0.8 } };
 
-// the chains: the rope stood up through the frame, core centred, pushing in while the strands bite. Same
-// strands and look as the 16:9 shot (approved photography); the opening frame's rope is unchanged, the
-// tightening ends tighter, and the first event locks a strand onto a neighbour (reconnection, same flash and
-// sparks) instead of snapping it, so nothing reads as a chain breaking: the bundle only ever tightens.
+// the chains: the rope stood up through the frame, core centred, pushing in while the strands bite. Framing
+// only: same strands, motion and events as the 16:9 shot (approved photography); the push-in carries the
+// "chains tighten" read. samples 160 -> 240 only smooths the curves at the higher magnification.
 S14G.portrait = {
   framing: P0([{ roll: 66, pan: [-0.162, -0.02], zoom: 0.62 }, { roll: 66, pan: [-0.17, 0.012], zoom: 0.8 }]),
-  fil: {
-    ...S14G.fil, samples: 240, pinch: [1.0, 0.3], wrap: [1.9, 1.06], twist: [0.5, 2.5],
-    events: [
-      { t: 0.33, i: 1, j: 9, s: 0.9, type: 'reconnect', sparks: 75, flash: 1.6, surge: 6 },
-      { t: 0.68, i: 2, j: 12, s: -0.7, type: 'reconnect', sparks: 40, flash: 1.1, surge: 4 },
-    ],
-  },
+  fil: { ...S14G.fil, samples: 240 },
 };
 
 F272.portrait = { framing: { zoom: 0.85, pan: [0, -0.1] } };

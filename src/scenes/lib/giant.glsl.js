@@ -74,6 +74,10 @@ uniform vec3 uHeroPlC[4];     // optional hero plumes in OBJECT space (zero = un
 uniform vec3 uHeroPlL[4];     //   lean direction,
 uniform vec4 uHeroPlP[4];     //   (e-folding height R, base half-width R, lean, phase)
 uniform float uGiantHeroOnly; // optional: 1 = draw only the hero loops/plumes (close-ups), 0 = full tables
+uniform float uLoopFix;       // optional: 1 = corrected hero-loop geometry for tall arches (cull bound covers the
+                              //   true extent; legs past +-PI are drawn to their feet); 0 = legacy (existing shots)
+uniform float uTraceSteps;    // optional: relief-trace step budget (> 64, max 256) for grazing close-ups, where 64
+                              //   steps run out short of the horizon; 0 = legacy 64
 ${PLUME_GLSL}
 // palette ramp (linear) keyed by display temperature; saturated crimson -> ember -> gold -> white-gold
 vec3 giantColor(float T){
@@ -269,7 +273,9 @@ float giantTrace(vec3 o, vec3 rd){
   float th = max(hs.x, 0.0), prev = th;
   float k = uBulge > 0.0 ? 0.6 : 0.9;
   float minStep = uGiantR * (geo ? 0.0012 : 0.0004);
-  for (int i = 0; i < 64; i++){
+  int nIt = uTraceSteps > 64.5 ? min(int(uTraceSteps), 256) : 64;
+  for (int i = 0; i < 256; i++){
+    if (i >= nIt) break;
     vec3 p = o + rd * th; float r = length(p);
     float d = r - (geo ? giantRadius(p / r) : giantRadius0(p / r));
     if (d < 0.0003 * uGiantR || th >= tCap){
@@ -305,7 +311,9 @@ void gLoopEval(vec3 ros, vec3 rds, vec3 C, vec3 e1, vec3 e2, float rho, float th
       P = C + rho * (cos(th) * e1 + sin(th) * e2);
       tp = max(dot(P - ros, rds), 0.0);
       vec3 q = ros + rds * tp - C;
-      th = clamp(atan(dot(q, e2), dot(q, e1)), thA, thB);
+      float an = atan(dot(q, e2), dot(q, e1));
+      if (uLoopFix > 0.5 && an < -0.5 * PI) an += TAU;      // unwrap about the apex: arches taller than a half
+      th = clamp(an, thA, thB);                              // circle run past +-PI on one leg
     }
     if (s == 0) th0 = th; else if (abs(th - th0) < 0.03) continue;
     float u = (th - thA) / (thB - thA);                       // 0..1 along the arc
@@ -351,6 +359,13 @@ void gLoopOne(vec3 ros, vec3 rds, vec3 c, vec3 ax, vec4 P, int n, float tMax, fl
   float rb = giantRadius0(c) / R;
   vec3 bc = c * R * (rb + H0 * 0.5);
   float br = R * (max(rb * sin(P.x), H0 * 0.6) * 1.3 + 4.0 * P.z);
+  if (uLoopFix > 0.5){
+    // true extent: half-span max(P.x, 0.85 H) (H <= 1.08 H0), arcade sub-loops offset sideways and along the
+    // axis, arch bulge + wobble (x1.15), tube halo + sway (12 P.z)
+    float fn = float(max(n, 1) - 1);
+    float sM = max(P.x, H0 * 0.92) + fn * P.x * 0.15;
+    br = R * (length(vec3(sM, H0 * 0.62, fn * P.x * 0.75)) * 1.15 + 12.0 * P.z);
+  }
   vec3 oc = ros - bc; float b = dot(oc, rds); float hh = b * b - dot(oc, oc) + br * br;
   if (hh < 0.0 || -b + sqrt(hh) < 0.0) return;
   vec3 bn = cross(c, ax);

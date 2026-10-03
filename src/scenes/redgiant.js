@@ -141,12 +141,15 @@ export default {
           [0, ...horizonCam(0.033, -11.2, 0), 62],
           [1, ...horizonCam(0.038, 0.2, 2), 62, 0, 'inOutSine'],
         ],
+        // loopFix: tall-arch loop geometry drawn to the feet; traceSteps: the low grazing horizon needs more relief-trace
+        // steps than the legacy 64 (otherwise a stepped ledge with a bright gap under it grows at the left horizon)
+        loopFix: 1, traceSteps: 200,
         heroes: [
-          { c: [0.05, 0.86, 0.48], a: [1, 0, 0.15], span: 0.075, height: 0.12, width: 0.010, phase: 0.3 },
-          { c: [-0.17, 0.80, 0.60], a: [0.8, 0, -0.6], span: 0.06, height: 0.08, width: 0.008, phase: 0.7 },
+          { c: [0.03, 0.86, 0.48], a: [1, 0, 0.15], span: 0.092, height: 0.10, width: 0.010, phase: 0.3 },
+          { c: [-0.17, 0.80, 0.60], a: [0.8, 0, -0.6], span: 0.075, height: 0.075, width: 0.008, phase: 0.7 },
         ],
         heroPlumes: [
-          { c: [0.15, 0.88, 0.44], l: [1, 0, 0], height: 0.11, width: 0.014, lean: 1.6, phase: 0.2 },
+          { c: [0.11, 0.88, 0.44], l: [-1, 0, 0.2], height: 0.11, width: 0.014, lean: 1.0, phase: 0.2 },
           { c: [0.0, 0.85, 0.52], l: [-1, 0, 0.3], height: 0.17, width: 0.018, lean: 0.9, phase: 0.6 },
           { c: [0.17, 0.79, 0.58], l: [0.6, 0.2, -0.8], height: 0.13, width: 0.016, lean: 2.0, phase: 0.85 },
           { c: [-0.02, 0.76, 0.66], l: [1, 0, 0], height: 0.12, width: 0.012, lean: 0.4, phase: 0.45 },
@@ -171,13 +174,14 @@ export default {
       // its limb a great arc from upper left to lower right, leaving the lower-left dark for the name card.
       // The hero loop and plumes move to the visible (left / lower-left) limb.
       portrait: {
+        loopFix: 1,
         cam: [
           [0, ...aimCam(2.0, -22, 4, 0.30, 0.30, 40, [0, 0, 0], 9 / 16), 40],
           [0.34, ...aimCam(2.75, -12, 7, 0.60, 0.60, 40, [0, 0, 0], 9 / 16), 40, 0, 'outCubic'],
           [1, ...aimCam(3.0, -6, 9, 0.62, 0.62, 40, [0, 0, 0], 9 / 16), 40, 0, 'inOutSine'],
         ],
         heroes: [
-          { c: [0.043, -0.983, -0.133], a: [0.978, 0.069, -0.2], span: 0.22, height: 0.22, width: 0.012, phase: 1.15 },
+          { c: [-0.059, -0.984, -0.111], a: [0.976, -0.034, -0.212], span: 0.22, height: 0.22, width: 0.012, phase: 1.15 },
         ],
         heroPlumes: [
           { c: [0.682, -0.685, -0.232], l: [0.4, 0.9, 0], height: 0.12, width: 0.03, lean: 1.2, phase: 0.4 },
@@ -201,9 +205,13 @@ export default {
       heroOnly: 1, scarDir: [0.02, 0.74, 0.67], embers: { count: 900, gain: 5.0, size: 2.0, speed: 2.5, streak: 0.06 },
       spin: [1.3, 0.02], boil: 4.0, plumes: 2.0, relief: 0.01, limbDark: 0.35, glow: 1.5, atmo: -0.3, starGain: 0.4,
       post: { bloomStrength: 0.11 },
-      // 9:16: wider, so the hero loop becomes an arch spanning the window with the plumes rising through it
+      // 9:16: wider and centred on the eruption, so the hero loop is an arch spanning the window with the plumes
+      // rising through it. loopFix draws the tall arch's screen-right legs down to the horizon (legacy geometry cut
+      // them off above it, leaving a dark step at the foot) and culls the arcade by its true extent; traceSteps
+      // keeps the grazing horizon from serrating where the legacy 64 relief-trace steps run out.
       portrait: {
-        framing: { zoom: 0.78, pan: [-0.27, 0], roll: 0, dolly: 0 },
+        framing: { zoom: 0.72, pan: [-0.12, 0], roll: 0, dolly: 0 },
+        loopFix: 1, traceSteps: 200,
       },
     },
     'S27-devastation': {
@@ -222,7 +230,7 @@ export default {
       // 9:16 (full frame, after ignition): the landscape composition turned a quarter so GOLIATH hangs above and
       // its stripped, burning hemisphere faces down toward where the nova was; embers drift down into the dark.
       portrait: {
-        framing: { roll: 90, zoom: 0.6, pan: [0.06, 0], dolly: 0 },
+        framing: { roll: 90, zoom: 0.57, pan: [0.06, 0], dolly: 0 },   // both limbs just inside the frame width
       },
     },
     default: { cam: [[0, [0, 0, -3.2], [0, 0, 0], 40]] },   // cam key times are fractions of the shot (camAbs: seconds)
@@ -246,7 +254,7 @@ export default {
         uBoil: P.boil ?? 1, uBulge: P.bulge ?? 0, uBulgeDir: P.bulgeDir || [1, 0, 0],
         uScar: P.scar ?? 0, uScarDir: P.scarDir || [1, 0, 0], uGiantGlow: P.glow ?? 1, uPlumes: P.plumes ?? 0.6,
         uRelief: P.relief ?? 0, uLimbDark: P.limbDark ?? 0.62, uGiantAtmo: P.atmo ?? 0, uGiantHeroOnly: P.heroOnly ?? 0,
-        uStarGain: P.starGain ?? 1,
+        uStarGain: P.starGain ?? 1, uLoopFix: P.loopFix ?? 0, uTraceSteps: P.traceSteps ?? 0,
         ...heroUniforms(P.heroes, P.heroPlumes),
       },
     };
@@ -311,7 +319,7 @@ export default {
       if (occluded(p1)) continue;
       const a = cam.project(p1, W, H), b = cam.project(p0, W, H);
       if (!a || !b) continue;
-      const mg = 20 * E.k;
+      const mg = 20 * Math.max(1, E.k);           // never below the original 20 px (small landscape tests unchanged)
       if (a.x < -mg || a.x > W + mg || a.y < -mg || a.y > H + mg) continue;
       const u = age / life;
       const heat = Math.pow(1 - u, 1.4) * (0.35 + 0.65 * h(10)) * Math.min(1, age * 3);
