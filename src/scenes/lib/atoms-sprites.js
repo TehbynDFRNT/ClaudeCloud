@@ -42,31 +42,52 @@ void shadeSprite(int id, float type, vec4 a, vec2 d, float dd, inout vec3 col, i
     float s2 = min(dot(sp, sp), 1.0);
     float th = sqrt(1.0 - s2);                            // chord through the sphere / normal z
     float wrap = sat(0.5 + 0.5 * dot(sp, e.xy));          // subsurface: lit from the cluster interior
-    float fres = pow(1.0 - th, 3.0);
-    float I = (0.18 + 0.82 * th) * (0.5 + 0.8 * wrap) + fres * (0.25 + 1.1 * wrap);
+    float rr = sqrt(s2);
+    float fres = pow(1.0 - th, 4.0) * smoothstep(1.0, 0.95, rr);
     float m = smoothstep(0.1, 0.62, bl);
-    if (m < 0.9){
-      // shimmering internal caustics, fast and fine (quark-sea flicker), seeded per sphere
-      vec3 np = vec3(sp * 1.9, th * 1.4) + vec3(b.w * 7.13, b.w * 3.71, b.w * 1.37);
-      float n = 1.0 - abs(n3(np + vec3(0.0, 0.0, uTime * 2.6)));
-      float n2 = n3(np * 2.3 + vec3(uTime * 1.9, 0.0, 5.0)) * 0.5 + 0.5;
-      float sh = n * n * n * 0.9 + n2 * 0.35;
-      if (e.w > 0.5){                                     // distant nucleus: lumpy cluster of cores
-        vec2 cl = cells3(vec3(sp * 2.1, th * 1.5) + b.w * 5.3);
-        sh = 0.4 + 1.3 * (1.0 - smoothstep(0.0, 0.75, cl.x)) * (0.6 + 0.4 * n);
+    vec3 cc = c.rgb;
+    float mx = max(cc.r, max(cc.g, cc.b)) + 1e-5;
+    vec3 hot = mix(cc, vec3(mx) * vec3(1.0, 0.94, 0.86), 0.22 + 0.5 * sat(e.z * 0.6));   // white-hot core
+    vec3 deep = cc * pow(cc / mx, vec3(0.7));                                         // saturated body
+    vec3 em;
+    if (m < 0.95){
+      // internally lit translucent sphere: white-hot core, saturated body falling off toward a darker
+      // band, a thin bright limb line (internal reflection), caustic filaments, a small glint
+      float body = 0.2 + 0.8 * pow(th, 1.3);
+      float core = pow(th, 4.0 + 3.0 * sat(e.z));
+      float lit = 0.35 + 0.95 * wrap;
+      vec3 np = vec3(sp * 1.3, th * 1.1) + vec3(b.w * 7.13, b.w * 3.71, b.w * 1.37);
+      float n = 0.0, caustic = 0.0;
+      if (e.w < 1.5){                                     // (e.w = 2: dim shutter ghost, no texture)
+        n = n3(np + vec3(0.0, 0.0, uTime * 2.2));
+        float cs = 1.0 - abs(n3(np * 2.4 + vec3(uTime * 1.3, 4.0, uTime * 0.9)));
+        caustic = pow(cs, 12.0) * th * 0.65;
       }
-      I *= mix(0.62 + 0.75 * sh, 1.0, m);
+      float sh = 0.86 + 0.3 * n;
+      if (e.w > 0.5 && e.w < 1.5){                        // distant nucleus: lumpy cluster of cores
+        vec2 cl = cells3(vec3(sp * 2.1, th * 1.5) + b.w * 5.3);
+        sh = 0.4 + 1.25 * (1.0 - smoothstep(0.0, 0.75, cl.x)) * (0.75 + 0.25 * n);
+        caustic = 0.0;
+      }
+      float rw = max(0.02, 0.9 / r);                      // limb line at least ~1 px wide
+      float limb = exp(-pow((rr - (1.0 - rw * 1.2)) / rw, 2.0)) * (0.3 + 1.0 * wrap);
+      vec2 gl = sp + e.xy * 0.4 - 0.25 * vec2(fract(b.w * 0.618) - 0.5, fract(b.w * 0.382) - 0.3);
+      float gw = max(0.075, 1.2 / r);
+      float glint = exp(-dot(gl, gl) / (gw * gw)) * (0.5 + 0.5 * fract(b.w * 0.737));
+      vec3 se = deep * (body * 0.6 * lit * sh)
+              + hot * (core * (1.3 + 2.6 * e.z) * (0.55 + 0.6 * wrap) * sh + caustic * (0.5 + 0.6 * e.z) + glint * 1.8)
+              + mix(cc, hot, 0.3) * limb * 0.75;
+      float u = dist / R;
+      float bok = 0.55 + 0.2 * smoothstep(0.55, 0.97, u) + 0.03 * sin(u * 37.0 + b.w * 9.0);
+      em = mix(se, cc * bok, m);
+    } else {
+      float u = dist / R;
+      float bok = 0.55 + 0.2 * smoothstep(0.55, 0.97, u) + 0.03 * sin(u * 37.0 + b.w * 9.0);
+      em = cc * bok * mix(vec3(1.0), vec3(0.85 + 0.3 * u, 1.0, 1.12 - 0.25 * u), smoothstep(0.6, 1.0, u)); // bokeh fringe
     }
-    float u = dist / R;
-    // bokeh disc: flat with a bright, slightly coloured rim and faint onion rings
-    float bok = 0.78 + 0.55 * smoothstep(0.5, 0.97, u) + 0.05 * sin(u * 37.0 + b.w * 9.0);
-    I = mix(I, bok, m);
     float norm = mix(1.0, (r * r) / (R * R), bl);
-    vec3 em = c.rgb * I;
-    em += vec3(1.0, 0.92, 0.84) * e.z * th * th * (1.0 - m) * length(c.rgb) * 0.6;   // white-hot core
-    em *= mix(vec3(1.0), vec3(0.85 + 0.3 * u, 1.0, 1.12 - 0.25 * u), m * smoothstep(0.6, 1.0, u)); // bokeh fringe
     col += T * em * (norm * edge);
-    T *= 1.0 - c.a * edge * norm * mix(0.25 + 0.75 * th, 0.85, m);
+    T *= 1.0 - c.a * edge * norm * mix(0.12 + 0.88 * th, 0.85, m);
   } else if (type < 1.5){
     // ---- streak / trail: head at a.xy, tail at a.xy + e.xy
     vec2 tl = e.xy;
@@ -86,7 +107,7 @@ void shadeSprite(int id, float type, vec4 a, vec2 d, float dd, inout vec3 col, i
     float x2 = dd / (r * r);
     float win = 1.0 - smoothstep(0.35, 1.0, dd / (a.z * a.z));
     float x = sqrt(x2);
-    vec3 g = vec3(1.0, 0.96, 0.9) * exp(-x2 * 2.2) * 2.0 + c.rgb * (exp(-x * 1.6) * 0.9 + 0.12 / (1.0 + x2));
+    vec3 g = vec3(1.0, 0.96, 0.9) * exp(-x2 * 2.5) * 2.0 + c.rgb * (exp(-x * 2.2) * 0.7 + 0.025 / (1.0 + x2));
     col += T * g * c.a * win;
   }
 }
@@ -116,7 +137,7 @@ vec3 compositeSprites(vec2 q, inout float T, vec3 layer, float zLayer){
       if (pending && z > zLayer){ col += T * layer; pending = false; }
       shadeSprite(id, type, a, d, dd, col, T);
     }
-    if (T < 0.004) break;
+    if (T < 0.01) break;
   }
   if (pending) col += T * layer;
   return col;
@@ -156,7 +177,10 @@ export class SpriteBatch {
     this.cam = cam;
     this.focus = dof.focus; this.K = dof.K * this.k; this.cmax = (dof.max ?? 160) * this.k;
     this.tanH = cam.tanH; this.asp = this.W / this.H;
+    this.fogN = dof.fog ? dof.fog[0] : 1e9; this.fogL = dof.fog ? dof.fog[1] : 1e9;
   }
+  // extinction of the dense plasma with depth (aerial perspective)
+  fog(z) { return z > this.fogN ? Math.exp(-(z - this.fogN) / this.fogL) : 1; }
 
   // project a world point -> [x, y(up), z, pxPerUnit, coc] or null
   proj(p) {
@@ -202,6 +226,7 @@ export class SpriteBatch {
         if (dl > 1e-3) { lx = (ddx / dl) * s; ly = (ddy / dl) * s; }
       }
     }
+    inten *= this.fog(z);
     this._push([x, y, R, z, rp, coc, z, seed, rgb[0] * inten, rgb[1] * inten, rgb[2] * inten, alpha, lx, ly, heat, cluster],
       x - R, y - R, x + R, y + R, 0);
   }
@@ -218,7 +243,7 @@ export class SpriteBatch {
     const minx = Math.min(h[0], t[0]) - pad, maxx = Math.max(h[0], t[0]) + pad;
     const miny = Math.min(h[1], t[1]) - pad, maxy = Math.max(h[1], t[1]) + pad;
     if (maxx < 0 || minx > this.W || maxy < this.H * this.lb || miny > this.H * (1 - this.lb)) return;
-    // energy of a defocused thin line spreads: keep the integral roughly constant
+    inten *= this.fog(h[2]);
     this._push([h[0], h[1], R, 1e5 + h[2], rp, h[4], h[2], seed, rgb[0] * inten, rgb[1] * inten, rgb[2] * inten, 0, tx, ty, fadeExp, 0],
       minx, miny, maxx, maxy, 1);
   }
@@ -231,6 +256,7 @@ export class SpriteBatch {
     const rp = Math.max(0.8, r * pxs);
     const R = (rp + coc * 0.5) * reach;
     if (!this.onScreen(x, y, R)) return;
+    inten *= this.fog(z);
     this._push([x, y, R, 2e5 + z, rp, coc, z, 0, rgb[0], rgb[1], rgb[2], inten, 0, 0, 0, 0], x - R, y - R, x + R, y + R, 0);
   }
 

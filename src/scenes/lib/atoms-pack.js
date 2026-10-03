@@ -1,9 +1,9 @@
 // Nucleus geometry for the 'atoms' scene: compact, deterministic packings of A nucleons
-// (unit nucleon radius, centres ~1.62 apart so the translucent spheres interpenetrate a little),
+// (unit nucleon radius, centres ~1.8 apart; spheres are drawn at radius 0.88 so they nearly touch),
 // with Z protons spread through the cluster (greedy farthest-point choice) so gold and
 // blue-white nucleons interleave the way the eye expects of a real nucleus.
 
-const SPACING = 1.62;
+const SPACING = 1.8;
 const cache = new Map();
 
 export function packNucleus(A, Z) {
@@ -28,16 +28,24 @@ export function packNucleus(A, Z) {
       }
     }
   };
-  for (let it = 0; it < 500; it++) {
-    push();
-    const s = 1 - 0.03 * (1 - it / 500);
+  // alternate gentle compaction toward the centroid with overlap resolution until it settles
+  for (let it = 0; it < 1600; it++) {
+    push(); push();
+    const s = 1 - 0.012 * (1 - it / 1600);
     for (const q of p) { q[0] *= s; q[1] *= s; q[2] *= s; }
   }
-  for (let it = 0; it < 40; it++) push();
+  for (let it = 0; it < 60; it++) push();
   // centre on the centroid
   const c = [0, 0, 0];
   for (const q of p) { c[0] += q[0] / A; c[1] += q[1] / A; c[2] += q[2] / A; }
   for (const q of p) { q[0] -= c[0]; q[1] -= c[1]; q[2] -= c[2]; }
+  // nuclear size ~ A^(1/3): normalise the rms radius so heavier stations always read larger
+  if (A > 1) {
+    let rms = 0;
+    for (const q of p) rms += (q[0] * q[0] + q[1] * q[1] + q[2] * q[2]) / A;
+    const k = (0.77 * Math.cbrt(A)) / Math.sqrt(rms);
+    for (const q of p) { q[0] *= k; q[1] *= k; q[2] *= k; }
+  }
   let radius = 1;
   for (const q of p) radius = Math.max(radius, Math.hypot(q[0], q[1], q[2]) + 1);
   // protons: greedy farthest-point so they spread through the cluster

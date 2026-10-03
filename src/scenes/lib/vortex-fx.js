@@ -46,12 +46,19 @@ export function sparks(ctx, E, F, o) {
     if (!A || !B) continue;
     const heat = Math.exp(-3.0 * a / lk) * (0.6 + 0.4 * hash2(id, 9, 5));
     const fade = Math.min(1, a / 0.03);
-    const wpx = Math.max(0.6, Math.min(4.0, (o.width || 0.004) * H / (B.z * cam.tanH * 2)));
+    const wpx = Math.max(0.5, Math.min(3.0, (o.width || 0.004) * H / (B.z * cam.tanH * 2)));
     const alpha = Math.min(1, heat * fade * (o.gain || 1));
     if (alpha < 0.01) continue;
-    ctx.strokeStyle = `rgba(${sparkRGB(heat)},${alpha.toFixed(3)})`;
+    // tapered streak: transparent tail -> hot head, plus a tiny bright head dot
+    const g = ctx.createLinearGradient(A.x, A.y, B.x, B.y);
+    const rgb = sparkRGB(heat);
+    g.addColorStop(0, `rgba(${rgb},0)`);
+    g.addColorStop(1, `rgba(${rgb},${alpha.toFixed(3)})`);
+    ctx.strokeStyle = g;
     ctx.lineWidth = wpx;
     ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke();
+    ctx.fillStyle = `rgba(255,${Math.round(220 + 35 * heat)},${Math.round(160 + 90 * heat)},${(alpha * 0.9).toFixed(3)})`;
+    ctx.beginPath(); ctx.arc(B.x, B.y, wpx * 0.75, 0, Math.PI * 2); ctx.fill();
   }
   ctx.restore();
 }

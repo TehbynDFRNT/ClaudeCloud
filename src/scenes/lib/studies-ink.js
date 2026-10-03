@@ -179,6 +179,8 @@ export class Drawing {
 // ---------- hatching ----------
 // region: inside(x, y) -> bool, bbox [x0, y0, x1, y1]. Lines at `angle` (page radians, y down: +45deg = '\'),
 // spaced `sp` (px1080). Each inside-interval becomes a stroke, shortened and bowed by hand.
+// `inside` may also return a number in [0,1] (shade); each line gets its own random threshold, so lines
+// run longer where the shade is deeper (natural tonal gradation, no mechanical rows).
 export function hatch(D, inside, bbox, o = {}) {
   const ang = o.angle ?? Math.PI / 4;
   const ux = Math.cos(ang), uy = Math.sin(ang), nx = -uy, ny = ux;
@@ -190,17 +192,23 @@ export function hatch(D, inside, bbox, o = {}) {
   const strokes = [];
   for (let k = -R; k <= R; k += sp) {
     const kk = k + (D.rnd() - 0.5) * sp * (o.jit ?? 0.35);
+    const thr = (o.thr ?? [0.15, 0.85]);
+    const th = thr[0] + (thr[1] - thr[0]) * D.rnd();
     let run = null;
     const flush = (end) => {
       if (!run) return;
       const L = Math.hypot(end[0] - run[0], end[1] - run[1]);
       if (L >= minLen) {
-        // split long runs into hand-length dashes
-        let pieces = Math.max(1, Math.ceil(L / maxLen));
+        // split long runs into hand-length strokes at random places (with small overlaps / gaps)
+        const pieces = Math.max(1, Math.round(L / maxLen + D.r(-0.3, 0.3)));
+        const cuts = [0];
+        for (let q = 1; q < pieces; q++) cuts.push((q + D.r(-0.3, 0.3)) / pieces);
+        cuts.push(1);
         for (let q = 0; q < pieces; q++) {
-          let a = q / pieces, b = (q + 1) / pieces;
-          a += D.r(0, o.shortenA ?? 0.08); b -= D.r(0, o.shortenB ?? 0.18);
-          if (b - a <= 0.05) continue;
+          let a = cuts[q], b = cuts[q + 1];
+          a += D.r(-0.02, o.shortenA ?? 0.06); b -= D.r(-0.02, o.shortenB ?? 0.12);
+          a = Math.max(0, a); b = Math.min(1, b);
+          if ((b - a) * L < minLen) continue;
           const p0 = [run[0] + (end[0] - run[0]) * a, run[1] + (end[1] - run[1]) * a];
           const p1 = [run[0] + (end[0] - run[0]) * b, run[1] + (end[1] - run[1]) * b];
           strokes.push({ p0, p1, k: kk });
@@ -211,7 +219,8 @@ export function hatch(D, inside, bbox, o = {}) {
     let last = null;
     for (let t = -R; t <= R; t += step) {
       const x = cx + nx * kk + ux * t, y = cy + ny * kk + uy * t;
-      const ins = inside(x, y);
+      const v = inside(x, y);
+      const ins = v === true || (typeof v === 'number' && v > th);
       if (ins && !run) run = [x, y];
       if (!ins && run) flush(last);
       last = [x, y];
@@ -332,10 +341,18 @@ function drawText(ctx, it, t, o) {
   let x = 0;
   const style = CH_STYLE[KIND_CH[it.kind] ?? 0];
   words.forEach((w, i) => {
-    const d = clamp01(it.d * (0.82 + 0.28 * hash1(it.id * 31 + i, 9)) * (o.gain ?? 1));
+    const h = (k) => hash1(it.id * 31 + i * 7 + k, 9);
+    const d = clamp01(it.d * (0.82 + 0.28 * h(0)) * (o.gain ?? 1));
     ctx.fillStyle = style + d.toFixed(3) + ')';
-    ctx.fillText(w, x, 0);
-    x += ctx.measureText(w).width + space;
+    // a hand, not a press: each word sits a little off the line, slightly turned and sized
+    ctx.save();
+    ctx.translate(x, (h(1) - 0.5) * base * 0.09);
+    ctx.rotate((h(2) - 0.5) * 0.05);
+    const sc2 = 0.95 + 0.1 * h(3);
+    ctx.scale(sc2, sc2);
+    ctx.fillText(w, 0, 0);
+    ctx.restore();
+    x += (ctx.measureText(w).width + space) * (0.97 + 0.08 * h(4));
   });
   ctx.restore();
 }
