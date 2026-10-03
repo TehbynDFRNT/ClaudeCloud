@@ -39,7 +39,7 @@ const CLIP = 240;
 const ext = codec === 'vp9' ? 'webm' : 'mp4';
 const vEnc = codec === 'vp9'
   ? ['-c:v', 'libvpx-vp9', '-b:v', '3M', '-deadline', 'realtime', '-cpu-used', '8', '-row-mt', '1']
-  : ['-c:v', 'libx264', '-preset', 'medium', '-crf', '20', '-maxrate', '7000k', '-bufsize', '14000k', '-pix_fmt', 'yuv420p', '-profile:v', 'high', '-level', '4.1'];
+  : ['-c:v', 'libx264', '-preset', 'medium', '-crf', opt('crf', '20'), '-maxrate', opt('maxrate', '7000k'), '-bufsize', '14000k', '-pix_fmt', 'yuv420p', '-profile:v', 'high', '-level', '4.1'];
 const cuts = []; for (let a = CLIP; a < plan.frames; a += CLIP) cuts.push(a);
 // one encode, split at forced keyframes on the exact block boundaries
 run(['-i', video, '-map', '0:v:0', '-an', ...vEnc, '-r', String(FPS), '-g', String(FPS), '-keyint_min', String(FPS), '-sc_threshold', '0',

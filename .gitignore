@@ -4,3 +4,7 @@ analysis/ref/
 __pycache__/
 *.pyc
 .DS_Store
+dist/*.mp4
+dist/*.verify.json
+dist/chunks/concat.txt
+dist/preview/concat.txt

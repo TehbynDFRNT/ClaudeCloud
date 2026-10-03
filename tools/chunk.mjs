@@ -141,7 +141,7 @@ if (mode === 'costs') {
     '-metadata', 'comment=Music: Vivaldi, L\'inverno I, The United States Air Force Band. Cannon: Tchaikovsky 1812 Overture, The United States Army Band. Picture and sound design rendered in code.',
     out]);
   console.log(`wrote ${path.relative(ROOT, out)} (${(fs.statSync(out).size / 1e6).toFixed(1)} MB)`);
-  run('python3', [path.join(ROOT, 'tools/verify_video.py'), out, '--plan', path.join(ROOT, 'film-plan.json'), '--out', out.replace(/\.mp4$/, '.verify.json')], { cwd: path.join(ROOT, 'tools') });
+  if (!PREVIEW) run('python3', [path.join(ROOT, 'tools/verify_video.py'), out, '--plan', path.join(ROOT, 'film-plan.json'), '--out', out.replace(/\.mp4$/, '.verify.json')], { cwd: path.join(ROOT, 'tools') });
 } else {
   console.error('modes: costs | plan | render | assemble');
   process.exit(1);
