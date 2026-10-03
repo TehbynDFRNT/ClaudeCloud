@@ -9,6 +9,7 @@ import { PAPER, PAPER_BAKE, BAKE_RECT, BAKE_DENSITY, BAKE_RECT_P, BAKE_DENSITY_P
 import { renderDrawing } from './lib/studies-ink.js';
 import * as DR from './lib/studies-drawings.js';
 import * as CU from './lib/studies-cuts.js';
+import * as SOL from './lib/studies-sol.js';
 
 const FS = frag(PAPER, `
 uniform vec4 uShadeY;   // lower page falling into shadow: y0, y1, amount
@@ -111,6 +112,8 @@ const BUILD = {
   sling: CU.sling,
   chains: CU.chains,
   eagle: CU.eagle,
+  sol: SOL.sol,
+  solstice: SOL.solstice,
   swatch: DR.swatch,
   blank: DR.blank,
 };
@@ -197,6 +200,20 @@ const presets = {
     view: [[0, 0.0, -0.03, 0.95, -0.03], [0.792, 0.0, -0.03, 1.04, 0.02, 'linear']],
     key: { pos: [-0.12, -0.15], r: 0.95, pow: 1.3, dir: [-0.8, -0.4, 0.42], col: [1.1, 0.9, 0.67] },
     portrait: { view: [[0, 0.0, 0.0, 0.75, -0.03], [0.792, 0.0, 0.01, 0.82, 0.02, 'linear']] },
+  },
+  // Sol Invictus cut (9:16): a coin of the unconquered sun, the radiate bust; a lens on the crown of rays
+  'F29.1-sol': {
+    drawing: 'sol', paperSeed: 29.6, design: 0.792,
+    view: [[0, 0.0, -0.04, 0.95, -0.02], [0.792, 0.01, -0.045, 1.04, 0.012, 'outQuad']],
+    key: { pos: [-0.12, -0.2], r: 0.95, pow: 1.3, dir: [-0.8, -0.4, 0.42], col: [1.1, 0.9, 0.67] },
+    portrait: { view: [[0, -0.005, -0.04, 0.8, -0.02], [0.792, 0.0, -0.045, 0.84, 0.012, 'outQuad']] },
+  },
+  // Sol Invictus cut (9:16): the winter solstice on the sphere; the sun at its lowest noon, BRUMA
+  'F30.3-solstice': {
+    drawing: 'solstice', paperSeed: 30.7, design: 0.792,
+    view: [[0, 0.0, 0.0, 0.95, 0.03], [0.792, 0.0, 0.0, 1.04, -0.02, 'linear']],
+    key: { pos: [-0.1, -0.15], r: 0.95, pow: 1.3, dir: [-0.8, -0.4, 0.42], col: [1.1, 0.9, 0.67] },
+    portrait: { view: [[0, 0.0, 0.0, 0.76, 0.02], [0.792, 0.0, 0.005, 0.82, -0.015, 'linear']] },
   },
   'F31.4': {
     drawing: 'collapse', paperSeed: 19.5, design: 0.375,
