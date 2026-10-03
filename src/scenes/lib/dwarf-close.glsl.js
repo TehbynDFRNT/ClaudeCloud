@@ -135,11 +135,14 @@ vec3 wdBackdrop(vec3 rd, float t){
       float kr = 0.26 + 0.9 * bl;
       float disc = smoothstep(kr, kr - 0.05 - 0.2 * bl, k.x) * (0.7 + 0.45 * smoothstep(kr - 0.14, kr - 0.03, k.x));
       float gate = smoothstep(0.05, 0.45, n3(vec3(kp * 3.1, 7.0)));
-      float knots = disc * gate * prof * 0.16;
-      float fill = prof * (0.25 + 0.75 * clump) * 0.055;
-      // gold inner face, crimson outer edge
-      vec3 shC = mix(vec3(1.0, 0.50, 0.14), vec3(0.85, 0.07, 0.018), smoothstep(0.86, 1.06, rho));
-      c += shC * uShell * (fill + knots * (0.4 + 0.6 * clump));
+      float rim = smoothstep(0.55, 0.96, rho);                       // the interior stays black
+      float knots = disc * gate * prof * rim * 0.30;
+      float fill = prof * rim * clump * 0.07;
+      // ember-gold inner face, crimson outer edge; knots hotter (gold)
+      float outer = smoothstep(0.90, 1.08, rho);
+      vec3 shC = mix(vec3(1.0, 0.36, 0.07), vec3(0.85, 0.07, 0.018), outer);
+      vec3 knC = mix(vec3(1.0, 0.55, 0.17), vec3(1.0, 0.25, 0.05), outer);
+      c += uShell * (shC * fill + knC * knots * (0.4 + 0.6 * clump));
     }
   }
   return c;
@@ -157,8 +160,8 @@ vec3 wdCorona(vec3 ro, vec3 rd, float tHit, float mu){
     c1 = exp(-(b - 1.0) / H1) * sqrt(TAU * H1);
     c2 = exp(-(b - 1.0) / H2) * sqrt(TAU * H2);
   } else {
-    c1 = H1 / max(mu, sqrt(H1) * 0.8);
-    c2 = H2 / max(mu, sqrt(H2) * 0.8) * 0.5;
+    c1 = H1 / max(mu, sqrt(H1) * 0.8) * 0.6;
+    c2 = H2 / max(mu, sqrt(H2) * 0.8) * 0.06;
   }
   vec3 dirc = b > 1e-4 ? pc / b : vec3(0.0);
   float gside = sat(dot(dirc, uGiantDir));
@@ -171,6 +174,7 @@ vec3 wdCorona(vec3 ro, vec3 rd, float tHit, float mu){
 
 // ---------- dipole field geometry helpers
 // signed deformation of a line's L as a function of position along it (c = cos theta in [-1,1])
+float filGap(float snapT){ return 0.55 * (1.0 - exp(-snapT * 0.9)); }
 float filDeform(float id, float c, float t, float snapT, float tears){
   float d = uFilShimmer * n3(vec3(id * 3.1, c * 2.2, t * 0.35));
   d += uTremolo * (0.6 * sin(t * 52.0 + id * 2.3 + c * 9.0) + 0.4 * sin(t * 33.0 + id * 5.1 - c * 13.0)) * (1.0 - c * c) * 0.6;
@@ -180,8 +184,9 @@ float filDeform(float id, float c, float t, float snapT, float tears){
       // torn: a whip runs from the break (apex) toward the footpoints, peaking ~0.3 s after the snap (after the
       // strike flash has decayed) and dying away over ~2.5 s; the loose ends recoil outward
       float env = sat(snapT / 0.3) * exp(-0.42 * max(snapT - 0.3, 0.0));
-      d += 0.30 * env * sin(ac * 9.0 - snapT * 7.0 + id) * smoothstep(0.0, 0.3, ac);
-      d += 0.40 * (1.0 - exp(-snapT * 1.3)) * smoothstep(0.6, 0.05, ac);
+      float nearEnd = 0.5 + 1.5 * exp(-max(ac - filGap(snapT), 0.0) * 6.0);      // the loose end lashes hardest
+      d += 0.26 * env * nearEnd * sin(ac * 16.0 - snapT * 9.0 + id) * smoothstep(0.0, 0.3, ac);
+      d += 0.18 * (1.0 - exp(-snapT * 1.3)) * smoothstep(0.6, 0.05, ac);
     } else {
       // intact loops ring and visibly re-tension
       d += 0.12 * sin(snapT * 8.0 + id * 1.7) * exp(-snapT * 0.8) * (1.0 - c * c);
@@ -232,7 +237,7 @@ vec3 wdFilaments(vec3 ro, vec3 rd, float tMax, float pixA, float t){
       float w = max(w0, wpx);
       float core = exp(-d * d / (w * w)) * (w0 / w);
       float glow = exp(-d / (w0 * 6.0 + wpx)) * 0.08 * w0 / max(w0, wpx * 0.25);
-      float v = core + glow;
+      float v = (core + glow) * (tMax < 1e8 ? smoothstep(0.0, 3.0 * w + 0.002, r - 1.0) : 1.0);
       if (v < 2e-3) continue;
       // brightness along the strand: plasma beads drifting toward the footpoints, hot footpoints
       float bead = 0.55 + 0.45 * n3(vec3(id * 5.7, ac * 7.0 - t * 0.9 * (0.6 + hk), 3.0));
@@ -241,7 +246,7 @@ vec3 wdFilaments(vec3 ro, vec3 rd, float tMax, float pixA, float t){
       float foot = (1.0 + 2.0 * exp(-(r - 1.0) * 14.0)) * mix(1.0, 0.35, smoothstep(0.1, 1.0, hgt));
       float br = uFil * (0.25 + 0.95 * hk * hk) * bead * seg * foot / max(sinA, 0.4);
       if (snapT >= 0.0 && tears > 0.5){
-        float gap = 0.70 * (1.0 - exp(-snapT * 1.1));                                         // torn ends retract to the footpoints
+        float gap = filGap(snapT);                                                            // torn ends retract to the footpoints
         float keep = smoothstep(gap, gap + 0.05, ac);
         float endG = exp(-pow((ac - gap - 0.035) / 0.05, 2.0));                               // the torn end glows hot
         float drag = exp(-max(ac - gap, 0.0) * 7.0) * (0.5 + 0.5 * n3(vec3(id * 3.3, ac * 30.0 - snapT * 4.0, 1.0)));
@@ -315,8 +320,9 @@ vec3 wdFlashPlume(vec3 ro, vec3 rd, float tMax, float t, float pixA){
   vec3 pf = nf * (1.0 + 0.03 + 0.12 * uFlashR);
   vec2 rp = rayPoint(ro, rd, pf);
   if (rp.x < tMax + 0.2){
-    float w = 0.02 + 0.06 * uFlashR;
-    col += vec3(1.0, 0.94, 0.86) * uFlash.w * 0.5 / (1.0 + rp.y * rp.y / (w * w));
+    float w = 0.015 + 0.05 * uFlashR;
+    float q = rp.y * rp.y / (w * w);
+    col += vec3(1.0, 0.94, 0.86) * uFlash.w * (0.9 * exp(-q) + 0.04 / (1.0 + q));
   }
   if (uPlume <= 0.0) return col;
   vec3 u = normalize(cross(nf, abs(nf.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0))), v = cross(nf, u);
@@ -362,26 +368,38 @@ vec3 wdFlashPlume(vec3 ro, vec3 rd, float tMax, float t, float pixA){
   return col;
 }
 
-float wdFlashMask(vec3 n, float t){
-  if (uFlash.w <= 0.0) return 0.0;
+// (heat behind the front, thin bright front) of the thermonuclear flash
+vec2 wdFlashParts(vec3 n, float t){
+  if (uFlash.w <= 0.0) return vec2(0.0);
   float g = acos(clamp(dot(n, uFlash.xyz), -1.0, 1.0));
   float rag = fbm3(n * 9.0 + vec3(0.0, 0.0, t * 3.0), 3);
   float core = exp(-pow(g / max(uFlashR * 0.35, 1e-3), 2.0));
   float fr = g - uFlashR - rag * 0.06;
-  float ring = exp(-fr * fr / pow(0.02 + 0.03 * uFlashR, 2.0)) + 0.35 * exp(-max(-fr, 0.0) * 5.0) * step(fr, 0.0);
-  return uFlash.w * (core * (1.0 + 0.6 * rag) + ring * 0.9);
+  float front = exp(-fr * fr / pow(0.012 + 0.02 * uFlashR, 2.0));
+  float behind = smoothstep(0.02, -0.08, fr) * exp(-max(-fr, 0.0) * 2.5);
+  return uFlash.w * vec2(core * (1.0 + 0.6 * rag) + behind * 0.6 + front * 0.5, front);
 }
+float wdFlashMask(vec3 n, float t){ vec2 f = wdFlashParts(n, t); return f.x + f.y; }
 
 // accretion footprints at the magnetic poles (arcs where the curtains land)
 vec3 wdFootprint(vec3 n, float t){
   if (uColumns <= 0.0) return vec3(0.0);
-  float zc = dot(n, uMagAxis);
-  float s2 = max(1.0 - zc * zc, 1e-4);
-  float Ls = 1.0 / s2;
-  float phi = atan(dot(n, cross(uMagAxis, uMagRef)), dot(n, uMagRef));
-  float arc = smoothstep(uColL.x * 0.92, uColL.x, Ls) * smoothstep(uColL.y * 1.1, uColL.y, Ls);
-  float az = exp(-pow((phi - 0.3) / 0.9, 2.0)) + exp(-pow((phi - 0.3 - PI) / 0.9, 2.0)) + exp(-pow((phi - 0.3 + PI) / 0.9, 2.0));
-  return vec3(0.80, 0.90, 1.0) * uColumns * arc * az * 2.2 * (0.6 + 0.8 * smoothstep(-0.2, 0.6, n3(n * 40.0 + t * 3.0)));
+  vec3 m = uMagAxis, a = uMagRef, b = cross(m, a);
+  float zc = dot(n, m);
+  float acc = 0.0;
+  for (int j = 0; j < 11; j++){
+    float fj = float(j);
+    vec3 h = hash33(vec3(fj * 3.7 + 1.0, 2.3, 5.1));
+    float phi = 0.3 + (j < 6 ? 0.0 : PI) + (h.x - 0.5) * (j < 6 ? 1.3 : 0.9);
+    float L = mix(uColL.x, uColL.y, h.y);
+    float st = sqrt(1.0 / L), ct = sqrt(1.0 - 1.0 / L);
+    vec3 e = cos(phi) * a + sin(phi) * b;
+    vec3 f = st * e + ct * sign(zc) * m;                     // landing point in this hemisphere
+    float d = length(n - f);
+    float w = 0.012 + 0.012 * h.z;
+    acc += (exp(-d * d / (w * w)) + 0.25 * exp(-d / (w * 2.5))) * (0.35 + 0.9 * hash11(fj * 7.7 + 3.0));
+  }
+  return vec3(0.80, 0.90, 1.0) * uColumns * acc * 3.0 * (0.7 + 0.6 * smoothstep(-0.2, 0.6, n3(n * 60.0 + t * 4.0)));
 }
 
 vec3 wdSurface(vec3 n, float mu, float t){
@@ -391,11 +409,11 @@ vec3 wdSurface(vec3 n, float mu, float t){
   float cm = dot(n, uMagAxis);
   float cap = smoothstep(0.80, 0.97, abs(cm));
   // smooth degenerate photosphere: clear limb darkening, deeper ice-blue toward the limb
-  float limb = 0.22 + 0.78 * pow(mu, 0.8);
+  float limb = 0.12 + 0.88 * pow(mu, 1.15);
   vec3 c = mix(vec3(0.20, 0.42, 1.0), vec3(0.70, 0.85, 1.0), pow(mu, 0.6));
   // very low-contrast sculpting: magnetic banding, brighter polar caps, broad mottling
   float band = sin(cm * 15.0 + big * 2.5) * 0.5 + 0.5;
-  float b = 1.0 + 0.08 * big + 0.03 * mid + 0.28 * cap + 0.06 * (band - 0.5);
+  float b = 1.0 + 0.12 * big + 0.04 * mid + 0.35 * cap + 0.10 * (band - 0.5);
   vec3 col = c * limb * b * uSurfGain;
   // under the ocean the floor is dim, saturated cold blue: it shows only through the narrowest cracks
   float oc = sat(uOcean * 2.0);
@@ -432,7 +450,7 @@ vec2 wdConvulse(vec3 n, float t){
   ring *= exp(-ts * 0.4);
   // the whole layer heaves: bulges out and recoils, strongest near the origin
   float heave = sin(ts * 6.5) * exp(-ts * 1.0) * (0.45 + 0.55 * exp(-g * g * 0.8));
-  return vec2(uConvAmp * (ring * 1.3 + heave * 1.4), exp(-front * front / 0.004) * exp(-ts * 0.35));
+  return vec2(uConvAmp * (ring * 1.3 + heave * 1.4), exp(-front * front / 0.0015) * exp(-ts * 0.35));
 }
 
 // ---------- accreted hydrogen ocean
@@ -476,12 +494,17 @@ float coverMean(float uA, float uB){
 vec4 wdOcean(vec3 ro, vec3 rd, float tSurf, float t, float pixA){
   if (uOcean <= 0.0) return vec4(0.0, 0.0, 0.0, 1.0);
   float Hm = uOceanH * uOcean;
-  float Hx = Hm * (1.75 + uConvAmp * 1.6);
+  vec2 cv = vec2(0.0);
+  if (uConvAmp > 0.0){
+    vec2 h0 = sphereHit(ro, rd, vec3(0.0), 1.0 + Hm);
+    cv = wdConvulse(normalize(ro + rd * (h0.x > 0.0 ? h0.x : max(dot(-ro, rd), 0.0))), t);
+  }
+  float Hx = Hm * (1.45 + max(cv.x, 0.0) * 1.1 + 0.05);    // just above the tallest billows: grazing rays reach the layer
   vec2 hh = sphereHit(ro, rd, vec3(0.0), 1.0 + Hx);
   if (hh.y <= 0.0 || hh.x > tSurf) return vec4(0.0, 0.0, 0.0, 1.0);
   float t0 = max(hh.x, 0.0), t1 = min(hh.y, tSurf);
   const int N = 22;
-  float tCap = t0 + float(N) * Hm * 0.30;                   // grazing rays: march the first stretch, the rest is opaque
+  float tCap = t0 + float(N) * Hm * 0.45;                   // grazing rays: march the first stretch, the rest is opaque
   bool capped = t1 > tCap;
   t1 = min(t1, tCap);
   // per-ray domain warp, large-scale structure and convulsion, evaluated mid-layer
@@ -500,11 +523,10 @@ vec4 wdOcean(vec3 ro, vec3 rd, float tSurf, float t, float pixA){
   if (uBig > 0.0){
     float cm = dot(nm, uMagAxis);
     float belt = exp(-cm * cm / 0.05);
-    float cap = smoothstep(0.72, 0.95, abs(cm));
+    float cap = smoothstep(0.86, 0.98, abs(cm));
     float bpatch = fbm3(rotY(uSpin) * nm * 2.4 + vec3(5.0, 1.0, tv * 0.02), 3);
-    bigH = uBig * (0.13 * belt - 0.32 * cap + 0.22 * bpatch);
+    bigH = uBig * (0.13 * belt - 0.16 * cap + 0.22 * bpatch);
   }
-  vec2 cv = wdConvulse(nm, t);
   float foot = pixA * tm / max(abs(dot(rd, nm)), 0.08);                  // pixel footprint on the layer
   float lod = smoothstep(0.12, 0.6, foot * uTurbF * 0.55);
   float sigma0 = (1.6 + 5.0 * uOcean) / Hm;
@@ -512,7 +534,8 @@ vec4 wdOcean(vec3 ro, vec3 rd, float tSurf, float t, float pixA){
   float j = 0.5 + 0.6 * (ignStatic(gl_FragCoord.xy) - 0.5);           // static mild jitter: no frame-to-frame crawl
   vec3 acc = vec3(0.0); float T = 1.0;
   vec3 S = vec3(0.0);
-  float hb = 0.22 * uOceanHeat + bigH + 0.35 * cv.y;
+  vec2 fl = wdFlashParts(nm, t);
+  float hb = 0.22 * uOceanHeat + bigH + 0.20 * cv.y + 0.16 * min(fl.x, 4.0);
   for (int i = 0; i < N; i++){
     float ts = t0 + (float(i) + j) * dt;
     vec3 p = ro + rd * ts;
@@ -524,7 +547,7 @@ vec4 wdOcean(vec3 ro, vec3 rd, float tSurf, float t, float pixA){
     if (dens <= 0.002) continue;
     float g3 = n3(p * (uTurbF * 4.1) + vec3(0.0, tv * 0.6, 0.0));        // 3D grain so emission is not extruded
     float skin = smoothstep(top - 0.45, top, 0.5 * (hA + hB));            // hot compressed skin near the top
-    float hh2 = heat * (0.86 + 0.22 * skin) + 0.05 * g3 + hb + 0.10 * max(cv.x, 0.0);
+    float hh2 = heat * (0.86 + 0.22 * skin) + 0.05 * g3 + hb + 0.04 * max(cv.x, 0.0);
     S = oceanEmit(hh2) * uOceanGain;
     float a = 1.0 - exp(-sigma0 * dens * dt);
     acc += T * S * a;
@@ -541,7 +564,7 @@ vec4 wdOcean(vec3 ro, vec3 rd, float tSurf, float t, float pixA){
   }
   // the flash and the accretion footprints heat the layer from below
   if (uFlash.w > 0.0 || uColumns > 0.0)
-    acc += (vec3(1.0, 0.95, 0.88) * wdFlashMask(nm, t) + wdFootprint(nm, t)) * uSurfGain * (1.0 - T);
+    acc += (vec3(1.0, 0.95, 0.88) * fl.y * 1.5 + wdFootprint(nm, t)) * uSurfGain * (1.0 - T);
   return vec4(acc, T);
 }
 
@@ -597,6 +620,7 @@ vec3 wdColumns(vec3 ro, vec3 rd, float tMax, float pixA, float t){
     vec3 T = normalize(3.0 * s * c * e + (2.0 * c * c - s * s) * m);
     float sinA = max(length(cross(rd, T)), 0.4);
     float wpx = pixA * tp * 0.6;
+    float edgeOn = smoothstep(0.06, 0.3, abs(dn));
     float L = mix(uColL.x, uColL.y, h.y);
     float dIn = abs(psi - 1.0 / L) / max(grad, 1e-4);
     float d = dIn * abs(dn) / sinA;
@@ -617,7 +641,7 @@ vec3 wdColumns(vec3 ro, vec3 rd, float tMax, float pixA, float t){
     float detach = smoothstep(0.0, 0.12, fall);                      // fades in where the gas leaves the disk plane
     float heat = 0.55 + 0.55 * fall * fall;
     vec3 sc = mix(oceanEmit(heat), vec3(0.75, 0.88, 1.0) * 6.0, smoothstep(0.85, 1.0, fall));
-    acc += sc * (core * clump * frag * (0.4 + 2.0 * pow(fall, 4.0)) + (glow * (0.3 + clump) + sheath) * 0.5) * detach * bri;
+    acc += sc * (core * clump * frag * (0.4 + 2.0 * pow(fall, 4.0)) + (glow * (0.3 + clump) + sheath) * 0.5) * detach * bri * edgeOn;
   }
   return acc * uColumns;
 }
@@ -642,19 +666,19 @@ vec3 wdThread(vec3 ro, vec3 rd, float tMax, float pixA, float t){
   float d = best * abs(rd.y) / sinA;
   // width varies along the stream, clumps with real gaps flow toward the dwarf
   float nw = n3(vec3(sBest * 30.0 - t * 0.8, 4.0, 1.0)) * 0.5 + 0.5;
-  float w0 = 0.004 * (1.0 + 1.4 * (1.0 - sBest)) * (0.55 + 0.9 * nw), wpx = pixA * tp * 0.6;
+  float w0 = 0.010 * (1.0 + 1.2 * (1.0 - sBest)) * (0.45 + 1.1 * nw), wpx = pixA * tp * 0.6;
   float w = max(w0, wpx);
   float core = exp(-d * d / (w * w)) * (w0 / w);
   float cl = n3(vec3(sBest * 60.0 - t * 1.6, 2.0, 5.0)) * 0.5 + 0.5;
-  float clumps = smoothstep(0.40, 0.72, cl) * (0.6 + 0.4 * (n3(vec3(sBest * 170.0 - t * 4.0, 7.0, 1.0)) * 0.5 + 0.5));
-  float glow = exp(-d / (w0 * 7.0 + wpx)) * 0.10 * (0.3 + clumps);
-  float ws = w0 * 16.0 + wpx * 2.0;
-  float sheath = exp(-d * d / (ws * ws)) * 0.035;                  // faint gold sheath
+  float clumps = smoothstep(0.45, 0.70, cl) * (0.55 + 0.45 * (n3(vec3(sBest * 170.0 - t * 4.0, 7.0, 1.0)) * 0.5 + 0.5));
+  float glow = exp(-d / (w0 * 4.0 + wpx)) * 0.22 * (0.15 + clumps);
+  float ws = w0 * 9.0 + wpx * 2.0;
+  float sheath = exp(-d * d / (ws * ws)) * 0.05 * (0.4 + 0.6 * clumps);   // faint gold sheath
   // the head: a taper of separating beads running ahead
   float ahead = sBest - uThread;
   float body = smoothstep(0.03, -0.02, ahead);
   float beads = smoothstep(0.55, 0.9, sin(ahead * 260.0 - t * 3.0) * 0.5 + 0.5) * exp(-max(ahead, 0.0) / 0.025) * step(-0.02, ahead);
-  float bodyCl = mix(clumps, 1.0, 0.25 * body);
+  float bodyCl = clumps + 0.06;
   vec3 cC = mix(vec3(0.85, 0.07, 0.018), vec3(1.0, 0.45, 0.11), smoothstep(0.25, 0.95, sBest));
   vec3 cG = vec3(1.0, 0.55, 0.16);
   float far = smoothstep(0.8, 0.2, best);

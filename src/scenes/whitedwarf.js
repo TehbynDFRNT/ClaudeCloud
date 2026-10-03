@@ -205,9 +205,9 @@ export default {
     'S03-david': {
       rig: 'orbit', dist: [[0, 1100], [1, 7.6, 'inOutSine']], az: [[0, -9], [1, 5]], el: [[0, 9], [1, 6]],
       fov: [[0, 30], [1, 28]], screen: [[0, [0.25, 0.05]], [1, [0.25, 0.08]]], drift: 0.4,
-      spin: [0.2, 0.05], magTilt: 24, magAz: 35, surf: [[0, 1.9], [0.55, 1.6], [1, 0.95]], fil: 1.5, filL: [1.25, 2.1], filW: 0.0045, shimmer: 0.015,
-      ocean: 0, haze: 0.0, hazePx: [[0, 0], [0.5, 1.0], [1, 3.2]], hazeF: 4.0, crimson: 0.5, atmo: [[0, 1.0], [1, 1.6]], stars: 0.75, dust: 1.0,
-      post: { exposure: [[0, 1.15], [1, 1.0]], bloomStrength: [[0, 0.2], [1, 0.3]], bloomThreshold: [[0, 1.0], [1, 0.7]], streakStrength: [[0, 0.28], [0.5, 0.10], [1, 0.04]], vignette: 0.6 },
+      spin: [0.2, 0.05], magTilt: 24, magAz: 35, surf: [[0, 1.9], [0.55, 1.8], [1, 1.6]], fil: 1.5, filL: [1.25, 2.1], filW: 0.0045, shimmer: 0.015,
+      ocean: 0, haze: 0.0, hazePx: [[0, 0], [0.5, 1.0], [1, 3.2]], hazeF: 4.0, crimson: 0.5, atmo: [[0, 1.0], [1, 1.5]], stars: 0.75, dust: 2.5,
+      post: { exposure: [[0, 1.15], [1, 1.0]], bloomStrength: [[0, 0.2], [1, 0.22]], bloomThreshold: 1.1, streakStrength: [[0, 0.28], [0.5, 0.10], [1, 0.04]], vignette: 0.6 },
     },
     // Compression: the hydrogen ocean piles up. Skimming the horizon; smooth swirling layer, convection not yet set in.
     // The layer visibly thickens against the horizon over the shot.
@@ -249,10 +249,10 @@ export default {
       rig: 'orbit', dist: [[0, 1.75], [1, 1.68]], az: [[0, -32], [1, -30]], el: [[0, 34], [1, 35]], fov: 40, screen: [[0, [0.35, -1.25]], [1, [0.35, -1.27]]], roll: -18,
       spin: [0.2, 0.05], magTilt: 30, magAz: 200, surf: 1.8, fil: 1.6, filL: [1.15, 1.6], filW: 0.003, shimmer: 0.03,
       ocean: 0.9, oceanH: 0.012, heat: 0.3, oceanGain: 1.0, turbF: 34, turbV: 2.0, cells: 0.75, warp: 0.6, big: 0.5,
-      flash: [[0, 1.2], ['1f', 9.0, 'outQuad'], ['3f', 4.0], [1, 1.6, 'outQuad']], flashR: [[0, 0.03], [1, 0.75, 'outCubic']], flashDir: [-0.45, 0.88, 0.15],
+      flash: [[0, 1.0], ['1f', 5.0, 'outQuad'], ['3f', 2.2], [1, 0.9, 'outQuad']], flashR: [[0, 0.03], [1, 0.75, 'outCubic']], flashDir: [-0.45, 0.88, 0.15],
       plume: [[0, 0.05], [1, 0.9, 'outCubic']],
       haze: 0.004, hazeF: 8, crimson: 0.2, atmo: 1.2, stars: 0.6,
-      post: { bloomStrength: [[0, 0.2], ['1f', 0.45], [1, 0.25]], streakStrength: [[0, 0.1], ['1f', 0.7], ['3f', 0.3], [1, 0.12]], exposure: 1.0 },
+      post: { bloomStrength: [[0, 0.14], ['1f', 0.24], [1, 0.16]], streakStrength: [[0, 0.08], ['1f', 0.55], ['3f', 0.22], [1, 0.08]], exposure: 1.0 },
     },
     // Strike 3 (cut on the strike): the surface layer convulses, blue filaments snap at local = 0. The biggest whip and
     // recoil land 6-24 frames in, after the plan's strike flash has decayed; torn ends drag hot plasma and fade over ~2.5 s,
@@ -260,8 +260,8 @@ export default {
     'S19-strike3': {
       rig: 'orbit', dist: [[0, 2.05], [1, 1.85]], az: [[0, 12], [1, 16]], el: [[0, 4], [1, 6]], fov: 40, screen: [[0, [-0.62, -0.78]], [1, [-0.6, -0.74]]], roll: 24,
       spin: [0.2, 0.05], magTilt: 75, magAz: 200, surf: 1.6, fil: 3.2, filL: [1.15, 2.4], filW: 0.0065, filN: 10, filK: 3, shimmer: 0.02, snapAt: 0,
-      ocean: 0.9, oceanH: 0.010, heat: 0.2, oceanGain: 1.0, turbF: 44, turbV: 1.4, cells: 0.7, warp: 0.6, big: 0.6,
-      conv: { dir: [0.05, 0.25, 0.97], at: 0.0, amp: 1.6 },
+      ocean: 0.9, oceanH: 0.010, heat: 0.2, oceanGain: 1.0, turbF: 85, turbV: 1.4, cells: 0.8, warp: 0.9, big: 1.0, detail: 0.5,
+      conv: { dir: [0.05, 0.25, 0.97], at: 0.0, amp: 1.4 },
       haze: 0.003, hazeF: 10, crimson: 0.2, atmo: 1.2, stars: 0.8,
       post: { bloomStrength: 0.16 },
     },
@@ -292,7 +292,7 @@ export default {
       rig: 'orbit', dist: [[0, 10.5], [1, 8.6, 'inOutSine']], az: [[0, 9], [1, 3]], el: [[0, 13], [1, 11]], fov: 34, screen: [[0, [0.16, 0.08]], [1, [0.15, 0.07]]], drift: 0.2,
       spin: [0.2, 0.05], magTilt: 24, magAz: 35, surf: 1.6, fil: [[0, 0.25], [1, 0.7]], filL: [1.3, 2.6], filW: 0.004, shimmer: 0.02,
       ocean: 0, scorch: 1.0,
-      shell: [[0, 1.0], [1, 0.6]], shellR: [[0, 0.62], [1, 0.74]], shellBlur: [[0, 0.06], [1, 0.14]],
+      shell: [[0, 1.2], [1, 0.75]], shellR: [[0, 0.60], [1, 0.70]], shellBlur: [[0, 0.06], [1, 0.14]],
       thread: [[0, 0.30], ['1s', 0.42], [1, 0.66, 'inOutSine']], threadGain: 1.0,
       haze: 0.0, hazePx: 1.2, hazeF: 4.5, crimson: 0.35, atmo: 1.2, stars: 1.0,
       post: { bloomStrength: 0.14, exposure: 1.0, vignette: 0.5 },

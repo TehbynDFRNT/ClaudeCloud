@@ -8,9 +8,15 @@
 //    profile across the noise values at both ends), so they stay crisp and alias-free with coarse steps.
 //  * Keplerian shear: angular speed = uOmega * r^-1.5. Turbulence lives in log-polar coordinates (eddies scale with
 //    r; 8 lattice cells around keeps phi seamless) and is advected by two cross-faded layers (no winding problem).
-//  * Trailing logarithmic spiral arms (shock heated), hot puffed inner rim, irradiated flared skin, magnetic
-//    accretion curtains along dipole field lines onto the poles, optional L1 stream + impact hot spot at the rim.
-//  * Display temperature -> colour: crimson -> ember -> molten gold -> white -> ice blue; brightness ~ T^2.6.
+//    Motion blur of the flow is deterministic: the azimuthal smear during the shutter (om * uSmear) prefilters the
+//    noise octaves it would wash out (no per-pixel time jitter, so no grain).
+//  * Trailing logarithmic spiral arms (shock heated), hot puffed inner rim, irradiated flared skin (scattered light:
+//    ice-blue dwarf light on the inner rim, ember reprocessed light on the outer skin), optional L1 stream impact:
+//    analytic stream tube, analytic bow-shock sheet and a volumetric splash plume.
+//  * Emission law (vxEmit) is designed through the film's ACES grade: saturated crimson -> ember -> molten gold up
+//    to ~5000 K, white only above ~6500 K, brightness ~T^3 in the warm range and ~T^1.2 above, so the white-hot inner
+//    disk is a few stops above the gold mid-disk instead of seven (no extreme camera stop-down needed).
+// Magnetic curtains and the dwarf are drawn at full resolution in the composite pass (VXMAG below).
 export const VORTEX = `
 uniform float uTau;        // disk time (seconds, may run faster/slower than film time)
 uniform float uOmega;      // angular speed at r = 1 (rad per disk-second)
@@ -27,14 +33,13 @@ uniform float uTurb;       // lognormal contrast of the diffuse gas
 uniform float uArms, uArmM, uArmPitch, uArmSpeed; // spiral arms: strength, count, pitch (rad), pattern speed
 uniform float uArmFloor;   // inter-arm density fraction
 uniform float uArmHeat;    // spiral shock heating
-uniform float uCurtain;    // magnetic curtain brightness
-uniform float uCurtainSpin;// magnetosphere angular speed
-uniform float uDwarfSurf;  // dwarf surface brightness
+uniform float uArmSharp;   // arm crest sharpness (power)
 uniform float uHot;        // stream + hot spot strength (0 = none)
 uniform float uHotPhi;     // azimuth of the impact point on the rim
 uniform vec3 uStreamDir;   // stream velocity direction (unit, toward the impact)
 uniform float uStreamW;    // stream half width
-uniform float uShutter;    // per-pixel time jitter (disk-seconds) -> motion blur of the flow
+uniform float uShockK;     // bow-shock brightness
+uniform float uSmear;      // shutter length in disk-seconds (deterministic flow motion blur)
 uniform float uRb;         // radial bound of the gas
 uniform float uLod;        // step growth with distance (fraction of t)
 uniform float uStepK;      // step = uStepK * H inside the gas
@@ -51,25 +56,23 @@ uniform float uFloorMid;   // cold dense midplane layer
 uniform float uSheetMask;  // sheets only in coherent patches (-1 = everywhere)
 uniform float uMaxSteps;   // march step cap (<= 52)
 uniform float uKr, uKy;    // radial (per unit ln r) and vertical (per unit y/r) lattice frequency of the sheets
+uniform vec4 uClear;       // camera clearing: xyz = centre, w = radius (thins gas right at the lens; 0 = off)
 
-vec3 vxColor(float T){
-  vec3 c0 = vec3(0.30, 0.012, 0.006);   // 1300 K abyssal crimson
-  vec3 c1 = vec3(0.85, 0.055, 0.016);   // 1800 K crimson
-  vec3 c2 = vec3(1.00, 0.20, 0.035);    // 2400 K ember
-  vec3 c3 = vec3(1.00, 0.46, 0.11);     // 3200 K molten gold
-  vec3 c4 = vec3(1.00, 0.63, 0.27);     // 4800 K white-gold
-  vec3 c5 = vec3(1.00, 0.93, 0.86);     // 7500 K white
-  vec3 c6 = vec3(0.74, 0.86, 1.00);     // 12000 K blue-white
-  vec3 c7 = vec3(0.46, 0.66, 1.00);     // 20000 K ice
-  if (T < 1800.0) return mix(c0, c1, sat((T - 1300.0) / 500.0));
-  if (T < 2400.0) return mix(c1, c2, (T - 1800.0) / 600.0);
-  if (T < 3200.0) return mix(c2, c3, (T - 2400.0) / 800.0);
-  if (T < 4800.0) return mix(c3, c4, (T - 3200.0) / 1600.0);
-  if (T < 7500.0) return mix(c4, c5, (T - 4800.0) / 2700.0);
-  if (T < 12000.0) return mix(c5, c6, (T - 7500.0) / 4500.0);
-  return mix(c6, c7, sat((T - 12000.0) / 8000.0));
+// emission (exposure-1 linear radiance) vs display temperature; knots solved through the post grade
+vec3 vxEmit(float T){
+  T = max(T, 800.0);
+  if (T < 1300.0) return mix(vec3(0.004, 0.0002, 0.0001), vec3(0.06, 0.003, 0.0006), (T - 800.0) / 500.0);
+  if (T < 1800.0) return mix(vec3(0.06, 0.003, 0.0006), vec3(0.26, 0.016, 0.0012), (T - 1300.0) / 500.0);
+  if (T < 2400.0) return mix(vec3(0.26, 0.016, 0.0012), vec3(0.70, 0.045, 0.0015), (T - 1800.0) / 600.0);
+  if (T < 3000.0) return mix(vec3(0.70, 0.045, 0.0015), vec3(1.25, 0.12, 0.002), (T - 2400.0) / 600.0);
+  if (T < 3800.0) return mix(vec3(1.25, 0.12, 0.002), vec3(1.9, 0.36, 0.006), (T - 3000.0) / 800.0);
+  if (T < 5000.0) return mix(vec3(1.9, 0.36, 0.006), vec3(3.4, 0.85, 0.04), (T - 3800.0) / 1200.0);
+  if (T < 6500.0) return mix(vec3(3.4, 0.85, 0.04), vec3(6.0, 2.4, 0.6), (T - 5000.0) / 1500.0);
+  if (T < 8500.0) return mix(vec3(6.0, 2.4, 0.6), vec3(8.5, 6.5, 4.2), (T - 6500.0) / 2000.0);
+  if (T < 12000.0) return mix(vec3(8.5, 6.5, 4.2), vec3(10.0, 10.0, 10.0), (T - 8500.0) / 3500.0);
+  if (T < 20000.0) return mix(vec3(10.0, 10.0, 10.0), vec3(11.0, 12.5, 15.0), (T - 12000.0) / 8000.0);
+  return vec3(11.0, 12.5, 15.0) * pow(T / 20000.0, 0.8);
 }
-vec3 vxEmit(float T){ return vxColor(T) * 0.35 * pow(max(T, 600.0) / 2200.0, 2.6); }
 
 float diskH(float r){
   float h = uH0 * pow(r, uFlare);
@@ -78,18 +81,17 @@ float diskH(float r){
 
 // stream + hot spot geometry (local frame)
 vec3 hotPos(){ return vec3(cos(uHotPhi), 0.0, -sin(uHotPhi)) * uRout * 0.97; }
+// downstream (orbital, CCW) direction at the impact
+vec3 hotDown(){ return vec3(-sin(uHotPhi), 0.0, -cos(uHotPhi)); }
 
 // conservative-ish distance to any gas (0 inside the bounding shell)
 float gasGap(vec3 p, float r){
   float H = diskH(r);
   float g = max(abs(p.y) - 4.2 * H, max(r - min(uRb, uRout * 1.3), uRin * 0.62 - r));
   if (uHot > 0.0){
-    vec3 d = p - hotPos();
-    float s = dot(d, -uStreamDir);
-    float dl = length(d + uStreamDir * s);
-    float gs = (s > -0.15) ? dl - uStreamW * (3.5 + 2.0 * max(s, 0.0)) : length(d) - 0.25;
-    g = min(g, max(gs, 0.0));
-    g = min(g, max(length(d) - 0.35, 0.0));
+    // splash plume above/below the rim, swept downstream
+    vec3 d = p - hotPos() - hotDown() * 0.12;
+    g = min(g, max(length(d * vec3(1.0, 0.8, 1.0)) - 0.26, 0.0));
   }
   return max(g, 0.0);
 }
@@ -118,7 +120,10 @@ vec3 vxField(vec3 p, vec3 rd, float tau, float seg, inout vec4 xs, inout vec2 xf
   vec2 radial = p.xz / max(r, 1e-4);
   float rdr = dot(rd.xz, radial), rdt = rd.x * radial.y - rd.z * radial.x;
   float rate = length(vec3(uKr * rdr, 1.27 * rdt, uKy * rd.y)) / max(r, 1e-3);
-  float k1 = sat(seg * rate * 1.6 - 0.35), k2 = sat(seg * rate * 4.8 - 0.35);
+  // deterministic motion blur: azimuthal smear during the shutter, in lattice cells of the B octave
+  float sm = om * uSmear * (8.0 / TAU);
+  float k1 = max(sat(seg * rate * 1.6 - 0.35), 0.85 * smoothstep(0.3, 1.2, sm));
+  float k2 = max(sat(seg * rate * 4.8 - 0.35), smoothstep(0.1, 0.4, sm));
   float n = 0.0, puff = 0.0, sheet = 0.0, fine = 0.0, w2 = 0.0;
   vec4 xsn = vec4(0.0); vec2 xfn = vec2(0.0);
   for (int i = 0; i < 2; i++){
@@ -133,7 +138,7 @@ vec3 vxField(vec3 p, vec3 rd, float tau, float seg, inout vec4 xs, inout vec2 xf
     q += (A.rgb - 0.5) * vec3(1.6, 0.9, 1.4);
     vec4 B = n4(q);
     vec4 C = n4(q * 3.0 + 17.0);
-    float t = (B.r - 0.5) * 1.1 + (B.b - 0.5) * 0.6 + ((C.r - 0.5) * 0.42 + (C.b - 0.5) * 0.24) * uGrain3;
+    float t = (B.r - 0.5) * 1.1 + (B.b - 0.5) * 0.6 + ((C.r - 0.5) * 0.42 + (C.b - 0.5) * 0.24) * uGrain3 * (1.0 - k2);
     vec2 x = vec2(B.r - 0.5, B.b - 0.5);
     float xc = C.r - 0.5;
     vec2 x0 = i == 0 ? xs.xy : xs.zw;
@@ -151,19 +156,28 @@ vec3 vxField(vec3 p, vec3 rd, float tau, float seg, inout vec4 xs, inout vec2 xf
   n *= nrm; puff *= nrm; sheet *= mix(1.0, nrm, 0.5);
   // spiral arms (trailing, CCW) perturbed by turbulence
   float psi = uArmM * (phi + lr / tan(uArmPitch) - uArmSpeed * tau) + 1.9 * n;
-  float armP = pow(0.5 + 0.5 * cos(psi), 3.0);
+  float armP = pow(0.5 + 0.5 * cos(psi), uArmSharp);
   float arm = mix(1.0, mix(uArmFloor, 2.2, armP), uArms);
   // radial profile: inner truncation at the magnetosphere, ragged outer edge
   float rin = uRin * (1.0 + 0.12 * puff);
   float edge = uRout * (1.0 + 0.12 * puff + 0.06 * n);
   float sig = smoothstep(rin * 0.92, rin * 1.22, r) * (1.0 - smoothstep(edge - uEdgeFade, edge, r));
-  // stream impact: shock-heated, compressed, splashed-up region of the disk's own turbulent sheets
-  float hinf = 0.0;
+  // stream impact: shock-heated, compressed region of the disk's own turbulent sheets + a splash plume
+  float hinf = 0.0, plume = 0.0, Tp = 0.0;
   if (uHot > 0.0){
-    float dphi = phi - uHotPhi; dphi = mod(dphi + PI, TAU) - PI;
-    float down = exp(-max(dphi, 0.0) * 2.6) * exp(-max(-dphi, 0.0) * 16.0);
-    float rr = (r - uRout * 0.95) / (0.07 + 0.10 * max(dphi, 0.0));
-    hinf = uHot * exp(-rr * rr) * down * exp(-pow(p.y / 0.07, 2.0));
+    float dphi = phi - uHotPhi; dphi = mod(dphi + PI, TAU) - PI;     // > 0 downstream
+    float dn = max(dphi, 0.0);
+    float down = exp(-dn * 2.2) * exp(-max(-dphi, 0.0) * 14.0);
+    float rr = (r - uRout * 0.95) / (0.06 + 0.10 * dn);
+    float horiz = exp(-rr * rr) * down;
+    hinf = uHot * horiz * exp(-pow(p.y / 0.06, 2.0));
+    // splash: shocked gas thrown above and below the plane, rising and cooling as the flow sweeps it downstream
+    float yext = (0.045 + 0.16 * sat(dn * 1.8)) * (1.0 + 0.35 * puff + 0.25 * n);
+    float yy = abs(p.y) / yext;
+    float shell = exp(-yy * yy) * smoothstep(-0.05, 0.25, n + 0.6 * sheet - 0.2);
+    plume = uHot * horiz * shell * (0.3 + 1.6 * sheet) * 3.2;
+    float hot = exp(-dn * 2.8) * exp(-yy * 0.9);
+    Tp = mix(1900.0, 9800.0, hot) * (0.85 + 0.35 * sheet + 0.1 * n);
   }
   float Heff = H * max(0.15, 1.0 + uPuff * (1.5 * puff + 0.6 * n)) * (1.0 + 0.3 * uArms * armP) * (1.0 + 0.6 * hinf);
   float zz = abs(p.y) / max(Heff, 1e-4);
@@ -172,10 +186,11 @@ vec3 vxField(vec3 p, vec3 rd, float tau, float seg, inout vec4 xs, inout vec2 xf
   float patchy = smoothstep(uSheetMask - 0.18, uSheetMask + 0.18, puff * 1.4 + 0.5 * n);
   float zm = abs(p.y) / max(0.55 * Heff, 1e-4);
   float rf = (uFloor + uFloorMid * exp(-0.5 * zm * zm)) * clump, rs = uSheet * sheet * patchy;
-  float ws = rs / max(rf + rs, 1e-5);          // fraction of the sample in hot sheets
   rs *= 1.0 + 4.0 * hinf;
-  ws = rs / max(rf + rs, 1e-5);
+  float ws = rs / max(rf + rs, 1e-5);          // fraction of the sample in hot sheets
   float rho = uDens * pow(r, -uDensExp) * sig * vert * arm * (rf + rs);
+  // camera clearing (a lens-sized pocket so the near field is discrete clumps, not fog)
+  if (uClear.w > 0.0){ float dc = length(p - uClear.xyz) / uClear.w; rho *= smoothstep(0.35, 1.0, dc + 0.25 * n); }
   float rT = max(r, rin);
   float T = uTout * pow(rT / uRout, -0.55) * (1.0 + uTinK * (uRin / rT) * (uRin / rT));
   // cold diffuse gas vs. hot dissipative sheets: temperature contrast is what makes structure visible
@@ -188,93 +203,109 @@ vec3 vxField(vec3 p, vec3 rd, float tau, float seg, inout vec4 xs, inout vec2 xf
   float cth = dot(normalize(p), -rd);
   float hg = 0.8775 / pow(1.1225 - 0.7 * cth, 1.5);
   float scat = uIrr * lit * hg * pow(uRin / max(r, uRin), 2.0) * sig;
+  T *= uHeat;
   if (uHot > 0.0){
-    vec3 d = p - hotPos();
-    // incoming stream: a turbulent tube along -uStreamDir with flow-aligned striations moving into the impact
-    float s = dot(d, -uStreamDir);
-    vec3 perp = d + uStreamDir * s;
-    vec3 sideV = normalize(cross(uStreamDir, vec3(0.0, 1.0, 0.0)));
-    float ph1 = dot(perp, sideV), ph2 = perp.y;
-    float w = uStreamW * (1.0 + 0.6 * max(s, 0.0));
-    float along = s * 3.0 + tau * 1.6;
-    float sn = n3(vec3(along, ph1 / w * 0.7, ph2 / w * 0.7)) * 0.75
-             + n3(vec3(along * 2.7 + 5.0, ph1 / w * 1.5, ph2 / w * 1.5)) * 0.4;
-    float tube = exp(-(ph1 * ph1 + ph2 * ph2) / (w * w * (1.0 + 0.6 * sn))) * smoothstep(-0.02, 0.03, s);
-    float srho = uHot * 30.0 * tube * exp(2.2 * sn - 0.3);
-    float Ts = 2900.0 + 900.0 * sn + 2500.0 * exp(-max(s, 0.0) * 14.0);
-    float tot = rho + srho;
-    T = (T * uHeat * rho + Ts * srho) / max(tot, 1e-5) / uHeat;
+    float rp = uDens * plume * sig;
+    float tot = rho + rp;
+    T = (T * rho + Tp * uHeat * rp) / max(tot, 1e-5);
     scat *= rho / max(tot, 1e-5);
     rho = tot;
   }
-  return vec3(rho, T * uHeat, scat);
+  return vec3(rho, T, scat);
 }
 
-// ---------------- magnetic accretion curtains (dipole field lines, axis +Y) ----------------
-vec3 vxCurtain(vec3 ro, vec3 rd, float tMax, float jit){
-  float Rm = uRin * 1.55;
-  vec2 h = sphereHit(ro, rd, vec3(0.0), Rm);
-  if (h.x > h.y || h.y < 0.0) return vec3(0.0);
-  float t0 = max(h.x, 0.0), t1 = min(h.y, tMax);
-  if (t1 <= t0) return vec3(0.0);
-  const int N = 26;
-  float dt = (t1 - t0) / float(N);
+// ---------------- S09: analytic stream tube and bow shock ----------------
+// stream axis: hotPos() + U*s, U = -uStreamDir (upstream), s >= SHOCK_S0 (it ends at the shock apex)
+const float SHOCK_S0 = 0.03;
+// closest approach of the ray to the stream axis -> (t, column density through the Gaussian tube, temperature, 0)
+vec4 vxStream(vec3 ro, vec3 rd){
+  vec3 U = -uStreamDir;
+  vec3 w0 = ro - hotPos();
+  float b = dot(rd, U), d = dot(rd, w0), e = dot(U, w0);
+  float den = max(1.0 - b * b, 0.04);
+  float t = (b * e - d) / den;
+  float s = e + b * t;
+  vec3 v = w0 + rd * t - U * s;
+  float dist = length(v);
+  float ds = max(s - SHOCK_S0, 0.0);
+  // the head splays and frays as it rams the shocked gas
+  float head = exp(-ds / 0.07);
+  float w = uStreamW * (1.0 + 0.5 * max(s, 0.0) + 1.6 * head);
+  // lateral coordinate across the tube as seen along the ray (signed), and the along-flow coordinate
+  vec3 side = normalize(cross(U, rd) + vec3(1e-5));
+  float lat = dot(v, side) / w;
+  float fs = s + uTau * 0.35;                                  // material coordinate (flows into the impact)
+  float sn = n3(vec3(fs * 6.0, lat * 1.2, 2.7)) * 0.6 + n3(vec3(fs * 15.0, lat * 2.4, 8.1)) * 0.3;
+  float strands = 0.35 + 0.65 * smoothstep(-0.35, 0.35, n3(vec3(lat * 2.6, fs * 1.4, 4.0)) + 0.4 * n3(vec3(lat * 5.5, fs * 3.0, 11.0)));
+  float prof = exp(-dist * dist / (w * w * (1.0 + 0.7 * sn)));
+  float ends = smoothstep(SHOCK_S0 - 0.03, SHOCK_S0 + 0.12, s) * (1.0 - smoothstep(0.9, 1.6, s));
+  float col = 1.7725 * w / sqrt(den) * prof * ends * strands * exp(1.5 * sn) / (1.0 + 2.0 * head);
+  float Ts = 2900.0 + 1300.0 * sn + 6500.0 * head * head + 900.0 * strands;
+  return vec4(t, col, Ts, 0.0);
+}
+// bow shock: thin paraboloid sheet facing upstream, apex SHOCK_S0 upstream of the rim point, torn into knots.
+// returns the emission of up to two crossings; tHit = ray distance of the nearer one (negative = none)
+vec3 vxShockHit(vec3 ro, vec3 rd, float tt, out float tHit){
+  vec3 U = -uStreamDir;
+  vec3 E1 = normalize(cross(U, vec3(0.0, 1.0, 0.0)));
+  vec3 E2 = cross(E1, U);
+  vec3 o = ro - hotPos();
+  vec3 lo = vec3(dot(o, U), dot(o, E1), dot(o, E2)), ld = vec3(dot(rd, U), dot(rd, E1), dot(rd, E2));
+  const float Rc = 0.045, RHO = 0.15;
+  float A2 = (ld.y * ld.y + ld.z * ld.z) / (2.0 * Rc);
+  float B2 = ld.x + (lo.y * ld.y + lo.z * ld.z) / Rc;
+  float C2 = lo.x - SHOCK_S0 + (lo.y * lo.y + lo.z * lo.z) / (2.0 * Rc);
+  tHit = -1.0;
+  float disc = B2 * B2 - 4.0 * A2 * C2;
+  if (disc < 0.0 || A2 < 1e-6) return vec3(0.0);
+  float sq = sqrt(disc);
   vec3 acc = vec3(0.0);
-  for (int i = 0; i < N; i++){
-    vec3 p = ro + rd * (t0 + (float(i) + jit) * dt);
-    float r = length(p);
-    if (r < uDwarfR * 1.02) continue;
-    float s2 = dot(p.xz, p.xz) / (r * r);
-    float L = r / max(s2, 1e-3);
-    float m = smoothstep(uRin * 0.82, uRin * 0.98, L) * (1.0 - smoothstep(uRin * 1.12, uRin * 1.45, L));
-    if (m <= 0.0) continue;
-    float phi = atan(-p.z, p.x) - uCurtainSpin * uTau;
-    float c = abs(p.y) / r;   // ~ |cos theta|: 0 at the disk, 1 at the poles
-    vec3 q = vec3(cos(phi) * 24.0, sin(phi) * 24.0, L / uRin * 14.0);
-    float fil = n3(q) * 0.65 + n3(q * vec3(2.3, 2.3, 1.7) + vec3(0.0, 0.0, c * 2.0 - uTau * 1.5)) * 0.35;
-    fil = pow(sat(fil * 1.0 + 0.5), 7.0);
-    float flow = 0.6 + 0.4 * n3(vec3(phi * 5.0, c * 9.0 - uTau * 5.0, L * 40.0));
-    float fall = pow(uRin / r, 1.6);
-    float bundle = 0.35 + 0.65 * pow(0.5 + 0.5 * cos(phi * 2.0 + 0.6 * sign(p.y)), 2.0);
-    acc += m * fil * flow * fall * bundle * dt;
+  for (int k = 0; k < 2; k++){
+    float th = (-B2 + (k == 0 ? -sq : sq)) / (2.0 * A2);
+    if (th <= 0.0) continue;
+    vec3 x = lo + ld * th;
+    float rho = length(x.yz);
+    if (rho > RHO) continue;
+    vec3 nn = normalize(vec3(1.0, x.y / Rc, x.z / Rc));
+    float ci = max(abs(dot(ld, nn)), 0.15);
+    vec3 kq = vec3(x.y / 0.011, x.z / 0.011, tt * 1.4 + rho * 30.0);
+    float kn = n3(kq) * 0.65 + n3(kq * 2.3 + 5.0) * 0.35;
+    float knots = smoothstep(-0.18, 0.5, kn);
+    float fr = rho / RHO;
+    float prof = exp(-fr * fr * 3.0) * (1.0 - smoothstep(0.8, 1.0, fr));
+    float T = mix(4200.0, 9800.0, exp(-fr * fr * 6.0)) * (0.85 + 0.3 * knots) * uHeat;
+    acc += vxEmit(T) * (prof * knots * 0.07 / ci);
+    if (tHit < 0.0) tHit = th;
   }
-  return acc * C_ICE * uCurtain * 900.0 / max(uRin, 1e-3);
+  return acc * uShockK;
 }
 
-// ---------------- the dwarf ----------------
-vec3 vxDwarfSurface(vec3 ro, vec3 rd, vec2 h){
-  vec3 n = normalize(ro + rd * max(h.x, 0.0) - uDwarfPos);
-  float mu = sat(dot(n, -rd));
-  vec3 nq = rotY(uCurtainSpin * uTau) * n;
-  float g = n3(nq * 22.0) * 0.5 + n3(nq * 61.0) * 0.25;
-  float caps = smoothstep(0.80, 0.97, abs(n.y));
-  float ring = exp(-pow((abs(n.y) - 0.9) / 0.04, 2.0));
-  vec3 c = dwarfColor() * (0.45 + 0.55 * pow(mu, 0.5)) * (1.0 + 0.25 * g);
-  return (c + C_ICE * (caps * 0.8 + ring * 2.5)) * 420.0 * uDwarfSurf * uDwarfLum;
-}
-// point-source glow consistent with lib/dwarf.glsl.js (core suppressed once the sphere is resolved)
-vec3 vxDwarfGlow(vec3 ro, vec3 rd, float pixAngle, float pixRender){
-  vec3 d = uDwarfPos - ro;
-  float t = dot(d, rd);
-  if (t <= 0.0) return vec3(0.0);
-  float dist = length(d);
-  float front = smoothstep(0.0, 0.5, t / dist);
-  float ang = length(cross(rd, d / dist));
-  float angR0 = max(uDwarfR / dist, pixAngle * 0.8);
-  float angR = max(angR0, pixRender * 0.75);                 // never thinner than a render pixel (no flicker)
-  float resolved = smoothstep(1.2, 3.0, uDwarfR / dist / pixAngle);
-  float core = exp(-pow(ang / angR, 2.0)) * 220.0 * (angR0 * angR0) / (angR * angR) * (1.0 - resolved);
-  float halo = 1.0 / (1.0 + pow(ang / max(pixAngle * 6.0, angR * 1.6), 2.0)) * 2.2;
-  float wide = 1.0 / (1.0 + pow(ang / max(pixAngle * 60.0, angR * 12.0), 2.0)) * 0.12;
-  return dwarfColor() * (core + halo + wide) * uDwarfLum * front;
+// ray-start jitter: high-passed white noise (blue-ish): no structured IGN hatching, finer grain than white noise
+float vxJit(vec2 px){
+  vec2 o = vec2(fract(uFrame * 0.6180339), fract(uFrame * 0.7548776)) * 517.0;
+  float c = hash12(px + o);
+  float nb = hash12(px + o + vec2(1.0, 0.0)) + hash12(px + o - vec2(1.0, 0.0)) + hash12(px + o + vec2(0.0, 1.0)) + hash12(px + o - vec2(0.0, 1.0));
+  return fract(c - 0.25 * nb + 0.5);
 }
 
 // ---------------- main volume march ----------------
 // returns radiance; trans = final transmittance (0 if the ray ended opaque); transD = transmittance at distance tD
-vec3 vxMarch(vec3 ro, vec3 rd, float tMax, float jit, float jitT, float pixAngle, float tD, out float trans, out float transD){
+vec3 vxMarch(vec3 ro, vec3 rd, float tMax, float jit, float pixAngle, float tD, out float trans, out float transD){
   vec3 col = vec3(0.0);
   trans = 1.0; transD = -1.0;
-  float Yb = 4.2 * diskH(uRb) + (uHot > 0.0 ? 0.4 : 0.0);
+  // S09 analytic events: stream tube (absorbs + emits) and the bow shock (emits), composited at their distance
+  float tS = 1e9, tauS = 0.0; vec3 emS = vec3(0.0);
+  float tB = -1.0; vec3 emB = vec3(0.0);
+  if (uHot > 0.0){
+    vec4 st = vxStream(ro, rd);
+    if (st.x > 0.0 && st.x < tMax && st.y > 1e-4){
+      tS = st.x; tauS = st.y * uHot * 60.0;
+      emS = vxEmit(st.z * uHeat) * (1.0 - exp(-tauS));
+    }
+    emB = vxShockHit(ro, rd, uTau, tB);
+    if (tB > tMax) tB = -1.0;
+  }
+  float Yb = 4.2 * diskH(uRb) + (uHot > 0.0 ? 0.3 : 0.0);
   float t0 = 0.0, t1 = tMax;
   if (abs(rd.y) > 1e-5){
     float ta = (-Yb - ro.y) / rd.y, tb = (Yb - ro.y) / rd.y;
@@ -286,20 +317,14 @@ vec3 vxMarch(vec3 ro, vec3 rd, float tMax, float jit, float jitT, float pixAngle
     float disc = b * b - a2 * c;
     if (disc < 0.0) t1 = -1.0; else { float s = sqrt(disc); t0 = max(t0, (-b - s) / a2); t1 = min(t1, (-b + s) / a2); }
   }
-  if (t1 <= t0){ transD = 1.0; return col; }
-  // exit of the disk's own bound (the step budget ignores the stream's larger bound)
-  float t1d = t1;
-  if (uHot > 0.0 && a2 > 1e-8){
-    float Rd = uRout * 1.25;
-    float b = dot(ro.xz, rd.xz), c = dot(ro.xz, ro.xz) - Rd * Rd;
-    float disc = b * b - a2 * c;
-    t1d = disc < 0.0 ? t0 : min(t1, (-b + sqrt(disc)) / a2);
+  if (t1 <= t0){
+    transD = 1.0;
+    if (tB > 0.0) col += emB;
+    if (tS < 1e8){ col += emS; trans = exp(-tauS); }
+    return col;
   }
-  float tt = uTau + (jitT - 0.5) * uShutter;
-  vec2 hc = uHot > 0.0 ? rayPoint(ro, rd, hotPos()) : vec2(1e9);
-  float transC = -1.0;
   float t = t0, tPrev = t0;
-  bool first = true, hasPrev = false;
+  bool hasPrev = false;
   vec4 xs = vec4(0.0); vec2 xf = vec2(0.0);
   const int N = 52;
   for (int i = 0; i < N; i++){
@@ -308,49 +333,122 @@ vec3 vxMarch(vec3 ro, vec3 rd, float tMax, float jit, float jitT, float pixAngle
     float r = length(p.xz);
     float gap = gasGap(p, r);
     float lodStep = t * uLod + pixAngle * t;
-    float budget = max(t1d - t, 0.0) / max(uMaxSteps - float(i), 1.0);
+    float budget = max(t1 - t, 0.0) / max(uMaxSteps - float(i), 1.0);
     if (gap > 0.0){ t += max(gap * 0.85, max(lodStep, max(budget * mix(0.35, 1.0, smoothstep(0.15, 0.4, r)), 0.002))); hasPrev = false; continue; }
     float H = diskH(r);
     float dt = clamp(max(uStepK * H, lodStep), 0.0015, 0.12);
     // the reach-the-exit budget is waived in the thin inner disk: resolving the opaque rim matters more there
     dt = max(dt, budget * mix(0.35, 1.0, smoothstep(0.15, 0.4, r)));
     if (uHot > 0.0){
-      vec3 dh = p - hotPos();
-      float ss = dot(dh, -uStreamDir);
-      float dl = length(dh + uStreamDir * ss);
-      float ws0 = uStreamW * (1.0 + 0.6 * max(ss, 0.0));
-      float dtS = dl < 2.6 * ws0 && ss > -0.05 ? 0.5 * ws0 : 0.035;
-      dt = min(dt, min(dtS, mix(0.013, 0.026, smoothstep(0.1, 0.35, length(dh)))) + lodStep);
-      dt = max(dt, budget);
+      float dh = length(p - hotPos() - hotDown() * 0.1);
+      dt = min(dt, mix(0.018, 0.04, smoothstep(0.1, 0.3, dh)) + lodStep);
+      dt = max(dt, budget * 0.7);
     }
     if (!hasPrev){
       // entering gas: this sample only initialises the pre-integration state (every contributing segment is integrated)
-      vxField(p, rd, tt, 0.0, xs, xf, false);
+      vxField(p, rd, uTau, 0.0, xs, xf, false);
       hasPrev = true; tPrev = t;
-      t += dt * max(jit, 0.04); jit = fract(jit + 0.6180339); first = false;
+      t += dt * max(jit, 0.04); jit = fract(jit + 0.6180339);
       continue;
     }
     float seg = t - tPrev;
-    vec3 f = vxField(p, rd, tt, seg, xs, xf, true);
-    float a = 1.0 - exp(-f.x * seg);
+    // analytic events falling inside this segment are composited before the segment's gas
+    if (tB > 0.0 && tB <= t){ col += trans * emB; tB = -1.0; }
+    if (tS < 1e8 && tS <= t){ col += trans * emS; trans *= exp(-tauS); tS = 1e9; }
     if (transD < 0.0 && t > tD) transD = trans;
-    if (transC < 0.0 && t > hc.x) transC = trans;
-    col += trans * a * (vxEmit(f.y) + f.z * vec3(1.0, 0.62, 0.30));
+    vec3 f = vxField(p, rd, uTau, seg, xs, xf, true);
+    float a = 1.0 - exp(-f.x * seg);
+    // scattered light: ice-blue dwarf light on the inner rim, ember (reprocessed through red gas) further out
+    vec3 sc = mix(vec3(0.16, 0.38, 1.0), vec3(1.0, 0.3, 0.06), smoothstep(uRin * 1.3, uRin * 3.5, r));
+    col += trans * a * (vxEmit(f.y) + f.z * sc);
     trans *= 1.0 - a;
     tPrev = t;
     t += dt;
   }
-  if (trans < 0.012){ trans = 0.0; if (transD < 0.0) transD = 0.0; if (transC < 0.0) transC = 0.0; }
-  if (transD < 0.0) transD = trans;
-  if (uHot > 0.0){
-    // white-hot impact core: closed-form line integral of a Gaussian blob, attenuated by the gas in front of it
-    if (transC < 0.0) transC = trans;
-    float sc = 0.026;
-    float g = exp(-hc.y * hc.y / (sc * sc));
-    float g2 = exp(-hc.y * hc.y / (0.07 * 0.07));
-    float flick = 0.85 + 0.15 * n3(vec3(uTau * 3.0, 1.7, 0.3));
-    col += transC * uHot * flick * (vxEmit(9500.0 * uHeat) * 1.3 * g + vxEmit(5200.0 * uHeat) * 0.18 * g2);
+  if (trans < 0.012){ trans = 0.0; }
+  else {
+    if (tB > 0.0){ col += trans * emB; }
+    if (tS < 1e8){ col += trans * emS; trans *= exp(-tauS); }
   }
+  if (transD < 0.0) transD = trans;
   return col;
+}
+`;
+
+// ---------------- full-resolution composite chunk: magnetic curtains + the dwarf ----------------
+// Requires DWARF (uDwarfPos, uDwarfR, uDwarfLum, dwarfColor).
+export const VXMAG = `
+uniform float uTau, uRin;
+uniform float uCurtain;     // curtain brightness (0 = off)
+uniform float uCurtainSpin; // magnetosphere angular speed
+uniform float uCurtainPhi;  // azimuth of the upper curtain (lower one is opposite)
+uniform float uDwarfSurf;   // dwarf surface radiance multiplier
+uniform float uGlowK;       // dwarf glow (halo + wide) multiplier
+
+const vec3 C_CURT = vec3(0.16, 0.40, 1.0);
+// Accretion curtains: plasma lifted off the inner disk edge, sliding along dipole field lines (r = L sin^2 theta)
+// onto the dwarf's magnetic poles. Two broad curtains (oblique rotator), field-aligned threads, poleward knots.
+vec3 vxCurtain(vec3 ro, vec3 rd, float tMax, float jit){
+  float Rm = uRin * 1.65;
+  vec2 h = sphereHit(ro, rd, uDwarfPos, Rm);
+  if (h.x > h.y || h.y < 0.0) return vec3(0.0);
+  float t0 = max(h.x, 0.0), t1 = min(h.y, tMax);
+  if (t1 <= t0) return vec3(0.0);
+  const int N = 28;
+  float dt = (t1 - t0) / float(N);
+  vec3 acc = vec3(0.0);
+  float spin = uCurtainSpin * uTau;
+  for (int i = 0; i < N; i++){
+    vec3 p = ro + rd * (t0 + (float(i) + jit) * dt) - uDwarfPos;
+    float r = length(p);
+    if (r < uDwarfR) continue;
+    float s2 = dot(p.xz, p.xz) / (r * r);
+    float L = r / max(s2, 1e-3);
+    float x = (L - uRin * 1.06) / (uRin * 0.24);
+    float m = exp(-x * x);
+    if (m < 0.02) continue;
+    float c = abs(p.y) / r;                       // 0 in the disk plane, 1 at the pole
+    float hemi = p.y >= 0.0 ? 1.0 : -1.0;
+    float phi = atan(-p.z, p.x) - spin;
+    float bun = pow(0.5 + 0.5 * cos(phi - uCurtainPhi - (hemi > 0.0 ? 0.0 : PI)), 2.0);
+    // field-aligned threads: constant along a field line (functions of phi and L only)
+    float th = n3(vec3(cos(phi) * 9.0, sin(phi) * 9.0, L / uRin * 4.0 + hemi * 7.0));
+    float thr = smoothstep(-0.12, 0.42, th);
+    // knots sliding poleward along the lines
+    float fl = 0.6 + 0.4 * n3(vec3(cos(phi) * 6.0 + 3.0, sin(phi) * 6.0, c * 6.0 - uTau * 3.5));
+    float g = min(pow(uRin / r, 1.2), 6.0);
+    float lift = smoothstep(0.06, 0.4, c);           // lifts off above the disk surface
+    acc += m * (0.04 + 0.96 * bun) * thr * fl * g * lift * dt;
+  }
+  return acc * C_CURT * uCurtain * 40.0 / max(uRin, 1e-3);
+}
+
+// resolved dwarf: limb darkened, faint granulation, blue accretion footprints where the curtains land
+vec3 vxDwarfSurface(vec3 ro, vec3 rd, vec2 h){
+  vec3 n = normalize(ro + rd * max(h.x, 0.0) - uDwarfPos);
+  float mu = sat(dot(n, -rd));
+  vec3 nq = rotY(uCurtainSpin * uTau) * n;
+  float g = n3(nq * 22.0) * 0.5 + n3(nq * 61.0) * 0.25;
+  // footprint ring: field lines from L ~ 1.06 rin land at sin^2(theta) = R / L
+  float cr = sqrt(max(1.0 - uDwarfR / (uRin * 1.06), 0.0));
+  float ring = exp(-pow((abs(n.y) - cr) / 0.035, 2.0));
+  float caps = smoothstep(cr - 0.05, cr + 0.06, abs(n.y));
+  vec3 c = dwarfColor() * (0.28 + 0.72 * pow(mu, 0.55)) * (1.0 + 0.22 * g);
+  return (c + C_CURT * (caps * 0.5 + ring * 1.6) * (0.6 + 0.4 * mu)) * 9.0 * uDwarfSurf * uDwarfLum;
+}
+// point-source glow consistent with lib/dwarf.glsl.js (core suppressed once the sphere is resolved)
+vec3 vxDwarfGlow(vec3 ro, vec3 rd, float pixAngle){
+  vec3 d = uDwarfPos - ro;
+  float t = dot(d, rd);
+  if (t <= 0.0) return vec3(0.0);
+  float dist = length(d);
+  float front = smoothstep(0.0, 0.5, t / dist);
+  float ang = length(cross(rd, d / dist));
+  float angR = max(uDwarfR / dist, pixAngle * 0.8);
+  float resolved = smoothstep(1.2, 3.0, uDwarfR / dist / pixAngle);
+  float core = exp(-pow(ang / angR, 2.0)) * 220.0 * (1.0 - resolved);
+  float halo = 1.0 / (1.0 + pow(ang / max(pixAngle * 6.0, angR * 1.6), 2.0)) * 2.2;
+  float wide = 1.0 / (1.0 + pow(ang / max(pixAngle * 60.0, angR * 12.0), 2.0)) * 0.12;
+  return dwarfColor() * (core + (halo + wide) * uGlowK) * uDwarfLum * front;
 }
 `;

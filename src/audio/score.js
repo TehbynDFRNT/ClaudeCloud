@@ -27,10 +27,14 @@ const midiHz = (m, a4) => a4 * Math.pow(2, (m - 69) / 12);
 // ----------------------------------------------------------------------------------------------------------
 export const DESIGN = {
   orchestraMakeupDb: 7.0,          // clean make-up gain on the (quiet, ~-24 LUFS) recording
-  cannonsDb: 0.0,                  // bus trim; per-cue levels come from the approach law below
-  ignitionDb: 4.0,
+  // bus trims. Both stems end in a 4x soft clipper whose ceiling is 1.0: the trims put that ceiling under the master
+  // ceiling, so loudness at the strikes and the ignition comes from density (the stems' own saturation) and not
+  // from peaks the master limiter would have to take back. Per-cue cannon levels come from the approach law.
+  cannonsDb: -1.5,
+  ignitionDb: -0.5,
+  impactDriveDb: 6.0,              // ignition impact layers (sub, crack, saw stack, walls) into the stem saturator
   synthTrimDb: -24.0,            // source trim so the per-bar auto-level works around 0 dB
-  targetLufs: -15.5,
+  targetLufs: -15.8,
   ceilingDbtp: -1.0,
   limiterCeilingDb: -1.35,         // internal ceiling (true-peak estimate, 4x oversampled) leaves margin
   // gentle glue: threshold relative to the loudness target (applied after the master gain), 50 ms RMS detector
@@ -38,9 +42,10 @@ export const DESIGN = {
   // cannon approach law: each cue's loudness (K-weighted, 400 ms from its transient) relative to the orchestra's
   // (K-weighted, +-1 s around it) follows rel(d) = far + (near - far) * (1 - d)^shape, so the approach is monotone
   // whatever the music does underneath. Measured on a first render of the stem, corrected and re-rendered.
-  cannon: { relFar: -20, relNear: 3, shape: 1.5, maxCorrDb: 14, passes: 3, tolDb: 0.75 },
-  // orchestra + synth duck under the five strike cannons (d <= maxD): 5 ms attack, 30 ms hold, ~120 ms release
-  duck: { maxD: 0.12, depthDb: [2, 3], attack: 0.005, hold: 0.03, tau: 0.045 },
+  cannon: { relFar: -20, relNear: 5, shape: 1.5, maxCorrDb: 16, passes: 3, tolDb: 0.75 },
+  // orchestra + synth duck under the five strike cannons (d <= maxD; depth grows toward d = 0): 5 ms attack,
+  // 50 ms hold, then a 90 ms exponential release (back within 1 dB after ~250 ms). The point-blank cannon masks it.
+  duck: { maxD: 0.12, depthDb: [3, 6], attack: 0.005, hold: 0.05, tau: 0.09 },
   // synth sections (bars from the director's notes); offsets = K-weighted level relative to the orchestra
   synth: {
     sections: [
@@ -736,10 +741,14 @@ export function buildIgnition(ctx, tl) {
   const t = T.ignition - l4, hz = (m) => midiHz(m, a4); // scheduled early by the bus clipper's latency
   const tsh = t - l4;                                    // sub + saw stack also pass their own 4x saturator
   const clip = softClip(ctx, 0.6); clip.output.connect(out);
-  // only the impact reaches the clipper knee; 2nd-order 20 Hz high-pass keeps DC and infrasound out of the clipper
-  const bus = G(ctx, undb(-9)); bus.connect(BQ(ctx, 'highpass', 20, 0.707)).connect(clip.input);
+  // 2nd-order 20 Hz high-pass keeps DC and infrasound out of the clipper. Two feeds: `imp` (the impact layers:
+  // sub, crack, saw stack, walls) is driven into the saturator for density; `bus` (Doppler roar, C drone, reverb
+  // return) stays mostly below its knee.
+  const clipIn = G(ctx, 1); clipIn.connect(BQ(ctx, 'highpass', 20, 0.707)).connect(clip.input);
+  const bus = G(ctx, undb(-9 + 3.5)); bus.connect(clipIn);
+  const imp = G(ctx, undb(-9 + DESIGN.impactDriveDb)); imp.connect(clipIn);
   const alive = keepAlive(ctx);
-  alive(bus);
+  alive(clipIn, bus, imp);
   // enormous reverb tail (seeded IR with a slow swell)
   const verb = ctx.createConvolver(); verb.normalize = false;
   verb.buffer = impulse(ctx, { seconds: 11, rt60: 8.0, seed: 2725, hiHz: 7000, loHz: 220, early: 20, earlyMs: 140, swell: 0.22 });
@@ -757,13 +766,13 @@ export function buildIgnition(ctx, tl) {
   curveEnv(sub2Env.gain, tsh, 4, (x) => Math.min(1, x / 0.004) * Math.exp(-x / 0.5) * (1 - smooth(3.5, 4, x)), 1000);
   const subSat = ctx.createWaveShaper(); subSat.curve = tanhCurve(1.8); subSat.oversample = '4x';
   alive(subEnv, sub2Env, subSat); sub.connect(subEnv).connect(subSat); sub2.connect(sub2Env).connect(G(ctx, 0.35)).connect(subSat);
-  const subOut = subSat.connect(G(ctx, 0.95)); subOut.connect(bus); send(subOut, 0.06);
+  const subOut = subSat.connect(G(ctx, 0.6)); subOut.connect(imp); send(subOut, 0.06);
   // parallel, hard-saturated copy band-limited to 80-250 Hz: its odd harmonics carry the impact on small speakers
   // (same 4x shaper latency as subSat, so it is aligned by the same early start)
   const subHard = ctx.createWaveShaper(); subHard.curve = tanhCurve(7.0); subHard.oversample = '4x';
   alive(subHard);
-  const hardOut = chain(subEnv, G(ctx, 1.6), subHard, BQ(ctx, 'highpass', 80, 0.7), BQ(ctx, 'lowpass', 250, 0.7), G(ctx, 0.55));
-  hardOut.connect(bus); send(hardOut, 0.08);
+  const hardOut = chain(subEnv, G(ctx, 1.6), subHard, BQ(ctx, 'highpass', 80, 0.7), BQ(ctx, 'lowpass', 250, 0.7), G(ctx, 0.9));
+  hardOut.connect(imp); send(hardOut, 0.08);
   [sub, sub2].forEach((o) => { o.start(tsh); o.stop(tsh + 8.1); });
 
   // 2) crack: seeded noise burst, band-pass sweeping down
@@ -773,7 +782,7 @@ export function buildIgnition(ctx, tl) {
   cbp.frequency.setValueAtTime(2600, t); cbp.frequency.exponentialRampToValueAtTime(240, t + 0.3);
   const cEnv = G(ctx, 0);
   curveEnv(cEnv.gain, t, 1.0, (x) => Math.min(1, x / 0.0008) * (0.25 * Math.exp(-x / 0.012) + Math.exp(-x / 0.11)) * (1 - smooth(0.85, 1.0, x)), 4000);
-  alive(cbp); const crackOut = chain(crack, cbp, cEnv, G(ctx, 1.1)); crackOut.connect(bus); send(crackOut, 0.7);
+  alive(cbp); const crackOut = chain(crack, cbp, cEnv, G(ctx, 1.4)); crackOut.connect(imp); send(crackOut, 0.7);
   crack.start(t); crack.stop(t + 1.05);
 
   // 3) detuned saw stack (C power chord tuned to A4 = a4) -> waveshaper -> sweeping resonant low-pass
@@ -805,7 +814,7 @@ export function buildIgnition(ctx, tl) {
     const floor = 0.12 + 0.18 * (1 - smooth(2.0, 3.5, x));
     return Math.min(1, x / 0.015) * (floor + (1 - floor) * Math.exp(-x / 0.8)) * (1 - smooth(3.0, 7.0, x));
   }, 500);
-  const stackOut = chain(stack, sat, sweep, sweep2, stackEnv, G(ctx, 0.75)); stackOut.connect(bus); send(stackOut, 0.55);
+  const stackOut = chain(stack, sat, sweep, sweep2, stackEnv, G(ctx, 0.9)); stackOut.connect(imp); send(stackOut, 0.55);
 
   // 4) noise wall: stereo pink noise, closing low-pass, plus a low pressure rumble
   const wallBuf = noiseBuffer(ctx, 12, 9001, { channels: 2, pink: true });
@@ -815,12 +824,12 @@ export function buildIgnition(ctx, tl) {
   const wEnv = G(ctx, 0);
   curveEnv(wEnv.gain, t, 9, (x) => smooth(0, 0.035, x) * (0.08 + 0.92 * Math.exp(-x / 0.7)) * (1 - smooth(3, 6, x)), 500);
   const wHp = alive(BQ(ctx, 'highpass', 45, 0.7));
-  const wallOut = chain(wall, wHp, wlp, wEnv, G(ctx, 0.9)); wallOut.connect(bus); send(wallOut, 0.5);
+  const wallOut = chain(wall, wHp, wlp, wEnv, G(ctx, 0.9)); wallOut.connect(imp); send(wallOut, 0.5);
   const rum = ctx.createBufferSource(); rum.buffer = wallBuf; // offset start for decorrelation
   const rEnv = G(ctx, 0);
   curveEnv(rEnv.gain, t, 10, (x) => smooth(0, 0.08, x) * Math.exp(-x / 2.0) * (1 - smooth(6, 9, x)), 500);
   // 25 Hz high-pass: pink noise below it is only DC drift and infrasound
-  chain(rum, alive(BQ(ctx, 'highpass', 25, 0.707)), BQ(ctx, 'lowpass', 90, 0.7), BQ(ctx, 'lowpass', 90, 0.7), rEnv, G(ctx, 2.2), bus);
+  chain(rum, alive(BQ(ctx, 'highpass', 25, 0.707)), BQ(ctx, 'lowpass', 90, 0.7), BQ(ctx, 'lowpass', 90, 0.7), rEnv, G(ctx, 1.3), imp);
   // mid wall: 300 Hz-3 kHz band of the blast, sustained ~1.5 s and darkening, the part a TV speaker can play
   const mid = ctx.createBufferSource(); mid.buffer = wallBuf;
   const mLp = BQ(ctx, 'lowpass', 3000, 0.7);
@@ -828,7 +837,7 @@ export function buildIgnition(ctx, tl) {
   const mEnv = G(ctx, 0);
   curveEnv(mEnv.gain, t, 4, (x) => smooth(0, 0.012, x) * (x < 1.5 ? 0.6 + 0.4 * Math.exp(-x / 0.25) : 0.6 * Math.exp(-(x - 1.5) / 0.55)) * (1 - smooth(3.2, 4, x)), 500);
   alive(mLp);
-  const midOut = chain(mid, BQ(ctx, 'highpass', 300, 0.7), mLp, mEnv, G(ctx, 1.5)); midOut.connect(bus); send(midOut, 0.45);
+  const midOut = chain(mid, BQ(ctx, 'highpass', 300, 0.7), mLp, mEnv, G(ctx, 2.4)); midOut.connect(imp); send(midOut, 0.45);
   wall.start(t); wall.stop(t + 9.1); rum.start(t, 3.3); rum.stop(t + 10.1); mid.start(t, 6.7); mid.stop(t + 4.05);
 
   // 5) descending Doppler roar -> C drone resolving into bar 56

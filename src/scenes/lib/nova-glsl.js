@@ -164,6 +164,8 @@ uniform float uClump;    // 0..1 large-scale clumping (arcs, complexes, voids)
 uniform float uWisp;     // torn inter-knot filaments
 uniform float uDiffuse;  // faint diffuse layer
 uniform float uFaceDim;  // 0..1 suppress the projected interior relative to the limb (calm ring)
+uniform float uKnotKc;   // knot cells per cube-face edge (~25: one knot per ~0.06 rad)
+uniform float uKnotDens; // probability that a cell holds a knot
 // palette (linear radiance per unit column), precomputed on the CPU from the same ramp
 uniform vec3 uCHead0, uCHead1, uCHot, uCTail0, uCTail1, uCSheet, uCGap, uCWisp, uCSkin;
 
@@ -188,34 +190,100 @@ vec3 shDir(vec3 oc, vec3 rd, float b, float p, float r, float s){
 // z = equatorial weight, w = patch field (0..1)
 vec4 shLarge(vec3 n){
   vec4 a = n4(n * 1.25 + vec3(uShSeed * 0.37, 5.1, 2.3 + uShEvo * 0.01));
-  vec4 a2 = n4(n.yzx * 2.6 + vec3(1.7, uShSeed, 8.2));
   // arcs: borders of a few huge cells, bent and broken -> chains of knots; plus a few dense complexes;
   // large empty patches between them (perlin channels span ~0.32..0.68, F2-F1 median ~0.2)
-  float arc = (1.0 - smoothstep(0.0, 0.05 + 0.1 * a2.r, a.a)) * smoothstep(0.44, 0.58, a2.b + 0.3 * (a.r - 0.5));
-  float blob = smoothstep(0.54, 0.68, a.r + 0.3 * (a2.r - 0.5));
-  float open = smoothstep(0.43, 0.55, a.r + 0.3 * (a2.b - 0.5));
+  float arc = (1.0 - smoothstep(0.0, 0.05 + 0.1 * a.b, a.a)) * smoothstep(0.44, 0.58, a.b + 0.3 * (a.r - 0.5));
+  float blob = smoothstep(0.54, 0.68, a.r + 0.3 * (a.b - 0.5));
+  float open = smoothstep(0.43, 0.55, a.r + 0.25 * (a.g - 0.48));
   float g = max(0.85 * arc, blob) * open;
   float gate = mix(1.0, 0.02 + 0.98 * g, uClump);
   float lop = 0.5 + 1.0 * smoothstep(-0.7, 0.9, dot(n, normalize(vec3(-0.5, 0.35, 0.6))) + (a.r - 0.5) * 0.9);
   float c = dot(n, uShAxis);
   float eq = 1.0 + uEquator * exp(-c * c / 0.05);
-  return vec4(gate, lop, eq, a2.r);
+  return vec4(gate, lop, eq, a.b);
 }
-// knot field (unwarped direction, so fingers stay registered with their heads):
-// x = head mask, y = brightness rank pk, z = head radius (fraction of R), w = finger length
-vec4 shKnot(vec3 n, float widen){
-  vec4 B = n4(n * uKnotK + vec3(11.3, uShSeed * 1.7, -uShEvo * 0.08));
-  float pk = sat((B.r - 0.5) * 1.8 + 0.5);
-  float kw = mix(0.5, 0.15 + 0.2 * pk, smoothstep(0.0, 1.0, uFrac)) * widen;
-  // crisp-edged heads: a narrow threshold on the (texture-blurred) F1 field gives sharp, slightly irregular
-  // blobs at any screen size; a brighter core inside
-  float f = B.g * 1.1;
-  float m = smoothstep(kw, kw * 0.55, f) * (0.55 + 0.45 * smoothstep(kw * 0.7, 0.0, f));
-  float xh = 0.982 - 0.028 * (pk - 0.5) * 2.0 - 0.016 * (B.b - 0.5) * 2.0;
-  // power-law finger lengths: most short, a few long
-  float u = fract(B.b * 5.31 + B.r * 3.7);
-  float L = uTailL * (0.45 + 2.2 * u * u * u) * smoothstep(0.0, 1.0, uFrac);
-  return vec4(m, pk, xh, L);
+// ---- analytic knots: one per cell of an equi-angular cube map, jittered inside the cell interior so its whole
+// footprint stays in that cell. Each knot is a 3D gaussian head with a tapered finger pointing at the centre.
+vec3 knotCell(vec3 n){
+  vec3 an = abs(n); vec2 uv; float face;
+  if (an.x >= an.y && an.x >= an.z){ face = n.x > 0.0 ? 0.0 : 1.0; uv = n.yz / an.x; }
+  else if (an.y >= an.z){ face = n.y > 0.0 ? 2.0 : 3.0; uv = n.zx / an.y; }
+  else { face = n.z > 0.0 ? 4.0 : 5.0; uv = n.xy / an.z; }
+  vec2 ab = atan(uv) * (4.0 / PI);
+  return vec3(face, min(floor((ab * 0.5 + 0.5) * uKnotKc), uKnotKc - 1.0));
+}
+vec3 cubeDir(vec2 ab, float face){
+  vec2 uv = tan(ab * (PI / 4.0));
+  vec3 d = face < 0.5 ? vec3(1.0, uv) : face < 1.5 ? vec3(-1.0, uv) : face < 2.5 ? vec3(uv.y, 1.0, uv.x)
+         : face < 3.5 ? vec3(uv.y, -1.0, uv.x) : face < 4.5 ? vec3(uv, 1.0) : vec3(uv, -1.0);
+  return normalize(d);
+}
+// radiance of the knot in cell cid seen along the ray (oc = ray origin - centre); pa = pixel angle
+vec3 knotEval(vec3 oc, vec3 rd, vec3 cid, float tMax, float pa){
+  vec3 h1 = hash33(cid * vec3(7.31, 1.17, 1.93) + uShSeed * 11.7 + 0.37);
+  if (h1.z > uKnotDens) return vec3(0.0);
+  vec3 nk = cubeDir((cid.yz + 0.2 + 0.6 * h1.xy) / uKnotKc * 2.0 - 1.0, cid.x);
+  vec4 Lg = shLarge(nk);
+  // knots live in the complexes and arcs: the large-scale field sets presence, not only brightness
+  if (h1.z > uKnotDens * mix(1.0, Lg.x, uClump * 0.9)) return vec3(0.0);
+  float g = sqrt(Lg.x) * Lg.y * Lg.z;
+  vec3 h2 = hash33(cid.zxy * vec3(3.7, 5.3, 2.9) + uShSeed * 3.1 + 17.0);
+  float q = h2.x;
+  float fr = smoothstep(0.0, 1.0, uFrac);
+  float scK = shScale(nk) * uShR;
+  vec3 Ph = nk * (0.972 + 0.026 * (h2.y - 0.5) * 2.0) * scK;
+  float s = (0.0011 + 0.0014 * h2.y + 0.0011 * q * q) * scK;
+  float B = 0.1 + 0.6 * q * q * q * q + 3.5 * pow(q, 40.0);    // power law: a few blazing knots
+  vec3 col = vec3(0.0);
+  // head (column normalised to peak 1 when resolved; flux-conserving blur to the pixel footprint)
+  float th = dot(Ph - oc, rd);
+  if (th > 0.0 && th < tMax){
+    vec3 dv = oc + rd * th - Ph; float dr = dot(dv, nk);
+    float d2 = dot(dv, dv) - dr * dr * 0.6;                   // heads drawn out along the finger axis
+    float px = 0.6 * th * pa; float se2 = s * s + px * px;
+    vec3 hc = mix(uCHead0, uCHead1, smoothstep(0.55, 0.97, q));
+    hc = mix(hc, uCHot, smoothstep(0.975, 0.998, q));
+    col += hc * (s * s / se2) * exp(-d2 / se2) * B * fr * fr * uKnotGain;
+  }
+  // finger: tapered tube from the head toward the centre
+  float L = uTailL * (0.3 + 1.5 * h2.z * h2.z * h2.z) * fr * scK;
+  if (L > 1e-4 * scK && uTailGain > 0.0){
+    vec3 ax = -nk, w0 = oc - Ph;
+    float b2 = dot(rd, ax), dd = dot(rd, w0), ee = dot(ax, w0);
+    float den = max(1.0 - b2 * b2, 1e-6), sinA = sqrt(den);
+    float u = clamp((ee - b2 * dd) / den, 0.0, L);
+    float x = mix(0.25, u / L, smoothstep(0.04, 0.2, sinA));  // end-on: the whole finger lies behind the head
+    vec3 Q = Ph + ax * (x * L);
+    float tq = dot(Q - oc, rd);
+    if (tq > 0.0 && tq < tMax){
+      vec3 dv = oc + rd * tq - Q; float d2 = dot(dv, dv);
+      float sw = s * (0.85 - 0.5 * x);
+      float px = 0.6 * tq * pa; float se2 = sw * sw + px * px;
+      float eps = exp(-x / 0.45) * smoothstep(0.0, 0.1, x);
+      float path = min(1.0 / sinA, 0.45 * L / (1.7725 * sw));
+      col += mix(uCTail1, uCTail0, sat(x * 1.3)) * eps * path * (sw / sqrt(se2)) * exp(-d2 / se2) * sqrt(B) * uTailGain * fr;
+    }
+  }
+  return col * g;
+}
+// visit the cells the ray's direction sweeps through the knot layer (radii rLo..rHi) on one side
+vec3 knotsSide(vec3 oc, vec3 rd, float b, float p, float s, float sc, float tMax, float pa){
+  float rHi = 1.03 * sc, rLo = 0.82 * sc;
+  if (p >= rHi) return vec3(0.0);
+  vec3 nt = p > 1e-5 * sc ? (oc - rd * b) / p : normalize(cross(rd, vec3(0.31, 0.83, 0.46)));
+  float phA = atan(sqrt(rHi * rHi - p * p), p);
+  float phB = p < rLo ? atan(sqrt(rLo * rLo - p * p), p) : 0.0;
+  int M = int(clamp(ceil((phA - phB) * uKnotKc / 0.45), 1.0, 10.0));
+  vec3 col = vec3(0.0), prev = vec3(-1.0);
+  for (int i = 0; i < 10; i++){
+    if (i >= M) break;
+    float ph = s * mix(phB, phA, (float(i) + 0.5) / float(M));
+    vec3 cid = knotCell(nt * cos(ph) + rd * sin(ph));
+    if (cid == prev) continue;
+    prev = cid;
+    col += knotEval(oc, rd, cid, tMax, pa);
+  }
+  return col;
 }
 vec3 shWarp(vec3 n){
   vec4 w = n4(n * 1.7 + vec3(2.3, uShSeed * 0.37, 5.1));
@@ -236,92 +304,55 @@ vec2 shFil(vec3 n){
   return vec2(fil, thick);
 }
 
-// one side (front s = -1 or back s = +1) of the shell: heads, sheet / filaments, diffuse layer, skin, fingers
-vec3 shellSide(vec3 oc, vec3 rd, float b, float p, float s, float tMax){
+// one side (front s = -1 or back s = +1) of the shell: analytic knots + thin layers (sheet / filaments,
+// diffuse, skin) integrated at their crossings
+vec3 shellSide(vec3 oc, vec3 rd, float b, float p, float s, float tMax, float pa){
   float fr = smoothstep(0.0, 1.0, uFrac);
-  // head layer crossing (two iterations for the direction-dependent radius)
+  // layer crossing (two iterations for the direction-dependent radius)
   float sc = uShR;
   vec3 n0 = normalize(oc + rd * (-b));
   for (int it = 0; it < 2; it++){
     sc = shScale(n0) * uShR;
-    n0 = shDir(oc, rd, b, p, 0.975 * sc, s);
+    n0 = shDir(oc, rd, b, p, 0.965 * sc, s);
   }
-  float th = dot(n0 * 0.975 * sc - oc, rd);
-  if (th > tMax || th < 0.0) return vec3(0.0);
-  float rh = 0.975 * sc;
-  float cosT = sqrt(max(rh * rh - p * p, 0.0)) / rh;
-  // obliquity: chord through the head layer relative to a knot's size (1 face-on, up to 2.2 at the limb)
-  float wl = 0.02 * sc;
-  float chord = wl / max(cosT, sqrt(2.0 * wl / sc));
-  float obl = clamp(sqrt(chord / (0.025 * sc)), 1.0, 2.2);
+  vec3 col = vec3(0.0);
+  if (uKnotGain > 0.0 && fr > 0.01) col += knotsSide(oc, rd, b, p, s, sc, tMax, pa);
+  float th = dot(n0 * 0.965 * sc - oc, rd);
+  if (th > tMax || th < 0.0) return col;
+  float rh = 0.965 * sc;
   // outside the limb the crossing freezes at the tangent point: fade angular detail to its mean (no spikes)
   float lb = smoothstep(0.0, 0.03, (p - rh) / sc);
   vec4 Lg = shLarge(n0);
   float gate = Lg.x, wgt = Lg.y * Lg.z;
-  vec4 K = shKnot(n0, obl);
-  vec2 F = shFil(n0);
+  vec3 c = vec3(0.0);
+  vec2 F = (uSheetW > 0.0 || uWisp > 0.0) ? shFil(n0) : vec2(0.0, 0.5);
   float fil = mix(F.x, 0.25, lb), thick = mix(F.y, 0.5, lb);
-  float km = mix(K.x, 0.0, lb);
-  vec3 col = vec3(0.0);
-  // knot heads: gated by the large-scale field; strongly uneven brightness
-  float w = 0.008 + 0.012 * (1.0 - fr);
-  float head = min(shellCross(p, K.z * sc, w * sc), 1.7725 * 0.02 * sc) / (obl * obl);
-  float bright = 0.08 + 0.9 * smoothstep(0.45, 0.85, K.y) + 2.2 * smoothstep(0.82, 0.97, K.y);
-  vec3 hc = mix(uCHead0, uCHead1, smoothstep(0.4, 0.85, K.y));
-  hc = mix(hc, uCHot, smoothstep(0.88, 0.98, K.y) * (0.5 + 0.5 * gate));
-  float onFil = 0.35 + 0.65 * smoothstep(0.1, 0.6, F.x);       // knots condense on the filaments
-  col += hc * head * km * bright * gate * onFil * mix(0.0, 1.0, fr * fr) * uKnotGain;
-  // a second population of small knots (detail at a finer scale)
-  vec4 C = n4(n0.yzx * (uKnotK * 2.3) + vec3(-4.1, 7.9, uShSeed));
-  float k2 = smoothstep(0.17 * obl, 0.08 * obl, C.g * 1.1) * mix(1.0, 0.0, lb);
-  float head2 = min(shellCross(p, (0.972 - 0.03 * (C.b - 0.5)) * sc, 0.006 * sc), 1.7725 * 0.012 * sc) / (obl * obl);
-  col += uCHead0 * head2 * k2 * smoothstep(0.42, 0.75, C.r) * (0.15 + 0.85 * gate) * fr * fr * uKnotGain * 0.7;
   // continuous sheet: gold where thick, crimson where thin; holes open and it contracts onto filaments
   float hole = smoothstep(fr * 0.95 - 0.12, fr * 0.95 + 0.1, thick * 0.75 + 0.25 * fil);
   float sheetD = mix(1.0, 0.15 + 1.4 * fil, fr) * hole * (0.35 + 0.65 * thick);
   float sheet = shellCross(p, (0.962 + 0.02 * (thick - 0.5)) * sc, uSheetWid * sc) * sheetD;
-  col += mix(uCGap, uCSheet, thick * thick * (1.0 - 0.5 * fr) + 0.5 * fr * fil) * sheet * uSheetW * mix(1.0, gate, fr);
+  c += mix(uCGap, uCSheet, thick * thick * (1.0 - 0.5 * fr) + 0.5 * fr * fil) * sheet * uSheetW * mix(1.0, gate, fr);
   // torn filaments between the knots (fractured state)
   float wisp = shellCross(p, (0.958 + 0.03 * (thick - 0.5)) * sc, 0.016 * sc) * fil * fr;
-  col += uCWisp * wisp * uWisp * gate * gate;
+  c += uCWisp * wisp * uWisp * gate * gate;
   // faint diffuse layer (deep crimson), thicker; gives depth without filling the gaps
-  col += uCGap * shellCross(p, 0.9 * sc, 0.07 * sc) * uDiffuse * (0.25 + 0.75 * gate) * (0.6 + 0.4 * Lg.w);
+  c += uCGap * shellCross(p, 0.93 * sc, 0.05 * sc) * uDiffuse * (0.12 + 0.88 * gate * sqrt(gate)) * (0.6 + 0.4 * Lg.w);
   // thin cold-blue forward shock, just outside the knots: steady with gentle patches
-  float skin = shellCross(p, (1.025 + 0.006 * (Lg.w - 0.5)) * sc, 0.006 * sc) * (0.55 + 0.45 * smoothstep(0.3, 0.7, Lg.w));
-  col += uCSkin * skin * uSkin;
-  col *= wgt / sc;
-  // fingers: a stack of thin layers below the heads (each crossing samples the knot field where it crosses)
-  if (fr > 0.02 && uTailGain > 0.0){
-    vec3 tc = vec3(0.0);
-    for (int k = 0; k < 4; k++){
-      float d = k == 0 ? 0.02 : k == 1 ? 0.042 : k == 2 ? 0.07 : 0.105;
-      float dw = k == 0 ? 0.011 : k == 1 ? 0.013 : k == 2 ? 0.017 : 0.022;
-      float rk = (0.975 - d) * sc;
-      vec3 nk = shDir(oc, rd, b, p, rk, s);
-      if (dot(nk * rk - oc, rd) > tMax) continue;
-      vec4 Kk = shKnot(nk, 1.15);
-      if (Kk.x < 0.01) continue;
-      vec4 Lk = shLarge(nk);
-      float below = Kk.z - (0.975 - d);
-      float prof = below > 0.0 ? exp(-below / max(Kk.w, 1e-3)) : exp(-pow(below / 0.012, 2.0));
-      float lay = shellCross(p, rk, dw * sc) / (1.7725 * dw * sc);    // normalised layer: path length factor
-      float amp = Kk.x * (0.2 + 1.2 * smoothstep(0.4, 0.9, Kk.y)) * Lk.x * Lk.y * Lk.z;
-      tc += mix(uCTail0, uCTail1, smoothstep(0.3, 0.75, Kk.y) * (1.0 - float(k) * 0.25)) * prof * lay * amp * (k == 0 ? 0.6 : 1.0) * dw * 1.7;
-    }
-    col += tc * uTailGain * fr;
-  }
-  return col;
+  float skin = shellCross(p, (1.035 + 0.006 * (Lg.w - 0.5)) * sc, 0.006 * sc) * (0.55 + 0.45 * smoothstep(0.35, 0.65, Lg.w));
+  c += uCSkin * skin * uSkin;
+  return col + c * wgt / sc;
 }
 
 vec3 shellMarch(vec3 ro, vec3 rd, float jit, float tMax){
   float smax = 1.0 + max(uProlate * 0.7, 0.0) + abs(uDeform) * 0.8;
-  float rOut = uShR * smax * 1.08;
+  float rOut = uShR * smax * 1.1;
   vec2 ho = sphereHit(ro, rd, uShC, rOut);
   if (ho.y <= 0.0 || ho.x > ho.y) return vec3(0.0);
   vec3 oc = ro - uShC;
   float b = dot(oc, rd), c0 = dot(oc, oc);
   float p = sqrt(max(c0 - b * b, 0.0));     // impact parameter
-  vec3 col = shellSide(oc, rd, b, p, -1.0, tMax) + shellSide(oc, rd, b, p, 1.0, tMax);
+  float pa = 2.0 * uTanHalfFov / uRes.y;
+  vec3 col = shellSide(oc, rd, b, p, -1.0, tMax, pa) + shellSide(oc, rd, b, p, 1.0, tMax, pa);
   // final ring: dim the projected interior toward the centre, keep the limb
   float face = 1.0 - uFaceDim * (1.0 - smoothstep(0.7, 0.97, p / uShR));
   return col * uShGain * face;

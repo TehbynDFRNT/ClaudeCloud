@@ -334,8 +334,8 @@ export default {
       mode: 'shell', volScale: 0.75, dur: 6.0,
       cam: [[0, [3.6, 5.0, 12.4], [0, 0, 0], 34], [6.0, [7.6, 10.4, 25.6], [0, 0, 0], 34]],
       shR: [[0, 7.0], [6.0, 7.45, 'linear']], frac: 1, shHeat: [[0, 0.62], [6.0, 0.57]],
-      knotK: 16, prolate: 0.12, deform: 0.06, equator: 0.8, clump: 0.92, sheetW: 2, knotGain: 40, tailGain: 9, tailL: 0.035,
-      wisp: 1.5, diffuse: 1, skin: 0.45, giant: true, giantGlow: 0.55, scar: 0.6, dwarfLum: 0.6, starGain: 0.6,
+      knotK: 16, knotKc: 34, prolate: 0.12, deform: 0.06, equator: 0.8, clump: 0.92, sheetW: 2, knotGain: 1.0, tailGain: 1.2, tailL: 0.028,
+      wisp: 6, diffuse: 1.6, skin: 0.3, giant: true, giantGlow: 0.55, scar: 0.6, dwarfLum: 0.6, starGain: 0.6,
       post: { bloomStrength: 0.09, lift: 0 },
     },
     // 3.33 s (+ dissolve tail to S29b): centred, still. A near-perfect limb-brightened ring, outer radius ~0.32 H.
@@ -399,9 +399,9 @@ export default {
         ...cam.uniforms, uShC: [0, 0, 0], uShR: kv(P.shR, t, 5), uShAxis: [0, 1, 0], uProlate: kv(P.prolate, t, 0.1), uDeform: kv(P.deform, t, 0),
         uFrac: fr, ...shellPalette(H, fr),
         uShGain: kv(P.gain, t, 1), uSkin: kv(P.skin, t, 2), uKnotK: kv(P.knotK, t, 12), uShSeed: P.seed ?? 5.0, uShEvo: S.t,
-        uEquator: kv(P.equator, t, 0.6), uSheetW: kv(P.sheetW, t, 2), uSheetWid: kv(P.sheetWid, t, 0.026), uKnotGain: kv(P.knotGain, t, 40),
+        uEquator: kv(P.equator, t, 0.6), uSheetW: kv(P.sheetW, t, 2), uSheetWid: kv(P.sheetWid, t, 0.026), uKnotGain: kv(P.knotGain, t, 1.5),
         uTailGain: kv(P.tailGain, t, 9), uTailL: kv(P.tailL, t, 0.035), uClump: kv(P.clump, t, 0.85), uWisp: kv(P.wisp, t, 12),
-        uDiffuse: kv(P.diffuse, t, 1), uFaceDim: kv(P.faceDim, t, 0),
+        uDiffuse: kv(P.diffuse, t, 1), uFaceDim: kv(P.faceDim, t, 0), uKnotKc: P.knotKc ?? 25, uKnotDens: kv(P.knotDens, t, 0.9),
         ...giantU(1, 0), ...(P.giant ? {} : { uGiantR: 0 }),
       }, vol);
       if (P.giant) Object.assign(comp, giantU(kv(P.giantGlow, t, 0.6), kv(P.scar, t, 0.8)), { uUseGiant: 1, uGiantFar: 1, uNovaLight: 0, uContact: 0 });
