@@ -373,6 +373,15 @@ void main(){
     float a0 = ignStatic(gl_FragCoord.xy) * TAU;
     int N = uTaps;
     float R = clamp(max(cc, uMaxCoc * 0.4), 1.0, uMaxCoc);
+    // in focus, with in-focus surroundings (4 probes on the gather rim): nothing to gather
+    if (cc < 0.75){
+      float pm = 0.0;
+      for (int k = 0; k < 4; k++){
+        vec2 o = vec2(cos(a0 + float(k) * 1.5708), sin(a0 + float(k) * 1.5708)) * R * 0.75;
+        pm = max(pm, cocOf(textureLod(uSrc, uv + o / uRes, 0.0).a));
+      }
+      if (pm < 1.0){ fragColor = vec4(c.rgb, cz); return; }
+    }
     float lod = clamp(log2(max(1.0, R * 1.77 / sqrt(float(N)) * 1.1)), 0.0, 4.5);   // ~ tap spacing
     for (int i = 0; i < 48; i++){
       if (i >= N) break;

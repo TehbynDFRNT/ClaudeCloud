@@ -186,7 +186,7 @@ export default {
     // mip chain of the plate: wide DOF taps read a prefiltered level (smooth bokeh, no stipple)
     const gl = E.G.gl;
     gl.bindTexture(gl.TEXTURE_2D, A.tex);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);   // bilinear within the nearest level (cheap)
     gl.generateMipmap(gl.TEXTURE_2D);
     gl.bindTexture(gl.TEXTURE_2D, null);
     const D = dofAt(P, S);

@@ -46,6 +46,10 @@ export const DESIGN = {
   // orchestra + synth duck under the five strike cannons (d <= maxD; depth grows toward d = 0): 5 ms attack,
   // 50 ms hold, then a 90 ms exponential release (back within 1 dB after ~250 ms). The point-blank cannon masks it.
   duck: { maxD: 0.12, depthDb: [3, 6], attack: 0.005, hold: 0.05, tau: 0.09 },
+  // the ladder (bars 32-38) is the cannons' section: orchestra + synth sit a static 2.5 dB lower there (ramped
+  // over the 2 s before the bar-32 downbeat), so the strikes have headroom under the ceiling. The internal dynamics
+  // (tremolo swells, strikes) are untouched.
+  ladderRide: { db: -2.5, fromBar: 32, rampS: 2.0 },
   // synth sections (bars from the director's notes); offsets = K-weighted level relative to the orchestra
   synth: {
     sections: [
@@ -57,6 +61,7 @@ export const DESIGN = {
     ],
     // drone (rubato solo): follows the orchestra's plain-RMS envelope, 18 dB under it, never closer than 14 dB
     drone: { offsetDb: -18, capDb: -14 },
+    plainCapDb: -12,               // pulse bars: never closer than 12 dB to the orchestra's plain RMS (brief: 12-18)
     padOffset: -29,                // aftermath pad (bar 63 fermata, F/C) relative to the orchestra (K-weighted)
     detuneCents: 14,               // between the two saws
   },
@@ -1073,13 +1078,16 @@ function autoLevelSynth(tl, orch, syn, synthInfo) {
       const u = sec.to > sec.from ? (bar - sec.from) / (sec.to - sec.from) : 0;
       const target = sec.offset[0] + (sec.offset[1] - sec.offset[0]) * u;
       const lo = 10 * Math.log10(ms(kO, a, b) + 1e-20), ls = 10 * Math.log10(ms(kS, a, b) + 1e-20);
-      sr.push({ bar, ta, tb, target, orchK: lo, synthK: ls, gainDb: clamp(target - (ls - lo), -30, 30), sec });
+      const po = 10 * Math.log10(ms(orch, a, b) + 1e-20), ps = 10 * Math.log10(ms(syn, a, b) + 1e-20);
+      sr.push({ bar, ta, tb, target, orchK: lo, synthK: ls, gainDb: clamp(target - (ls - lo), -30, 30), capDb: DESIGN.synth.plainCapDb - (ps - po), sec });
     }
+    // smoothed within the section; a bar never goes more than 1 dB above its own target gain (a soft entry, e.g.
+    // the orchestra's bar 20, is not pulled up by louder neighbours) nor closer than plainCapDb to the orchestra
     const W = [1, 2, 3, 2, 1];
     sr.forEach((r, i) => {
       let s = 0, w = 0;
       for (let k = -2; k <= 2; k++) { const x = sr[i + k]; if (x) { s += W[k + 2] * x.gainDb; w += W[k + 2]; } }
-      r.appliedDb = s / w;
+      r.appliedDb = Math.min(s / w, r.gainDb + 1, r.capDb);
     });
     rows.push(...sr);
   }

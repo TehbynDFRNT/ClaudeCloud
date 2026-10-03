@@ -151,7 +151,8 @@ const F312 = {
     plume: 0, tmax: 6, fog: 0.0, haze: [0.01, 0.002, 0.001], detail: 1.1, granule: 1.2, outflow: 1.0, flowSpin: 2.0,
     soft: 0.01, sigma: 80, skin: 0.03, flowRate: 1.2,
   },
-  dof: { track: 1.0, aperture: 6, max: 10 },
+  // looking straight down at a near-flat plane: depth is uniform, so no DOF pass (crisp cells everywhere)
+  dof: { aperture: 0, max: 0 },
   post: { bloomStrength: 0.02, halation: 0.008, vignette: 0.45, saturation: 1.3, contrast: 1.12, zoomBlur: 0.016 },
 };
 
