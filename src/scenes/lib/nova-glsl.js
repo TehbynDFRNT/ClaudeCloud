@@ -206,9 +206,11 @@ vec4 shLarge(vec3 n){
 vec4 shKnot(vec3 n, float widen){
   vec4 B = n4(n * uKnotK + vec3(11.3, uShSeed * 1.7, -uShEvo * 0.08));
   float pk = sat((B.r - 0.5) * 1.8 + 0.5);
-  float kw = mix(0.5, 0.11 + 0.17 * pk, smoothstep(0.0, 1.0, uFrac)) * widen;
-  float f = B.g * 1.1 / kw;
-  float m = exp(-f * f * 2.2);
+  float kw = mix(0.5, 0.15 + 0.2 * pk, smoothstep(0.0, 1.0, uFrac)) * widen;
+  // crisp-edged heads: a narrow threshold on the (texture-blurred) F1 field gives sharp, slightly irregular
+  // blobs at any screen size; a brighter core inside
+  float f = B.g * 1.1;
+  float m = smoothstep(kw, kw * 0.55, f) * (0.55 + 0.45 * smoothstep(kw * 0.7, 0.0, f));
   float xh = 0.982 - 0.028 * (pk - 0.5) * 2.0 - 0.016 * (B.b - 0.5) * 2.0;
   // power-law finger lengths: most short, a few long
   float u = fract(B.b * 5.31 + B.r * 3.7);
@@ -223,12 +225,12 @@ vec3 shWarp(vec3 n){
 // torn filament network (warped, two scales, borders of varying width, ~40% of borders missing)
 // x = filament strength, y = sheet thickness texture (0 thin .. 1 thick)
 vec2 shFil(vec3 n){
-  vec3 nw = normalize(n + shWarp(n) * 0.9);
-  vec4 Q1 = n4(nw * (uKnotK * 0.5) + vec3(-4.1, 7.9, uShSeed + uShEvo * 0.03));
-  vec4 Q2 = n4(nw.zxy * (uKnotK * 1.35) + vec3(3.3, -uShSeed, 1.9));
-  float bw = 0.03 + 0.2 * Q2.r * Q2.r;                         // width varies along each edge
-  float e1 = (1.0 - smoothstep(0.0, bw, Q1.a + 0.06 * (Q2.b - 0.5))) * smoothstep(0.36, 0.56, Q2.b + 0.3 * (Q1.r - 0.5));
-  float e2 = (1.0 - smoothstep(0.0, 0.04 + 0.08 * Q1.b, Q2.a)) * smoothstep(0.48, 0.72, Q1.b + 0.2 * (Q2.r - 0.5));
+  vec3 nw = normalize(n + shWarp(n) * 1.6);
+  vec4 Q1 = n4(nw * (uKnotK * 0.45) + vec3(-4.1, 7.9, uShSeed + uShEvo * 0.03));
+  vec4 Q2 = n4(nw.zxy * (uKnotK * 1.2) + vec3(3.3, -uShSeed, 1.9));
+  float bw = 0.015 + 0.09 * Q2.r * Q2.r;                       // width varies along each edge
+  float e1 = (1.0 - smoothstep(0.0, bw, Q1.a + 0.05 * (Q2.b - 0.5))) * smoothstep(0.44, 0.6, Q2.b + 0.35 * (Q1.r - 0.5));
+  float e2 = (1.0 - smoothstep(0.0, 0.03 + 0.05 * Q1.b, Q2.a)) * smoothstep(0.52, 0.7, Q1.b + 0.25 * (Q2.r - 0.5));
   float fil = max(e1, 0.6 * e2);
   float thick = sat(0.5 + (Q1.r - 0.5) * 1.6 + (Q2.r - 0.5) * 0.8);
   return vec2(fil, thick);
@@ -269,6 +271,11 @@ vec3 shellSide(vec3 oc, vec3 rd, float b, float p, float s, float tMax){
   hc = mix(hc, uCHot, smoothstep(0.88, 0.98, K.y) * (0.5 + 0.5 * gate));
   float onFil = 0.35 + 0.65 * smoothstep(0.1, 0.6, F.x);       // knots condense on the filaments
   col += hc * head * km * bright * gate * onFil * mix(0.0, 1.0, fr * fr) * uKnotGain;
+  // a second population of small knots (detail at a finer scale)
+  vec4 C = n4(n0.yzx * (uKnotK * 2.3) + vec3(-4.1, 7.9, uShSeed));
+  float k2 = smoothstep(0.17 * obl, 0.08 * obl, C.g * 1.1) * mix(1.0, 0.0, lb);
+  float head2 = min(shellCross(p, (0.972 - 0.03 * (C.b - 0.5)) * sc, 0.006 * sc), 1.7725 * 0.012 * sc) / (obl * obl);
+  col += uCHead0 * head2 * k2 * smoothstep(0.42, 0.75, C.r) * (0.15 + 0.85 * gate) * fr * fr * uKnotGain * 0.7;
   // continuous sheet: gold where thick, crimson where thin; holes open and it contracts onto filaments
   float hole = smoothstep(fr * 0.95 - 0.12, fr * 0.95 + 0.1, thick * 0.75 + 0.25 * fil);
   float sheetD = mix(1.0, 0.15 + 1.4 * fil, fr) * hole * (0.35 + 0.65 * thick);
@@ -355,8 +362,8 @@ vec4 giantFar(vec3 ro, vec3 rd, float t, out float dist){
   float mu = sat(dot(gNormal0(p), -rd));
   vec3 ns = rotY(uGiantSpin) * n;
   vec4 c4 = n4(ns * 1.5 + vec3(0.0, t * 0.01, 3.0));
-  float T = 2200.0 + 170.0 * (c4.r - 0.5) * 2.0 + 80.0 * (c4.b - 0.5) * 2.0;
-  T *= mix(1.0 - 0.42 * uLimbDark, 1.0, pow(mu, 0.5));
+  float T = 2280.0 + 170.0 * (c4.r - 0.5) * 2.0 + 80.0 * (c4.b - 0.5) * 2.0;
+  T *= mix(1.0 - 0.5 * uLimbDark, 1.0, pow(mu, 0.42));
   float f = dot(n, uScarDir) + (c4.b - 0.5) * 0.5;
   T += uScar * 380.0 * smoothstep(0.1, 0.9, f) * (0.75 + 0.25 * c4.r);
   dist = th;

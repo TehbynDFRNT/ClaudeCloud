@@ -282,14 +282,16 @@ float wdFlareMask(vec3 n, float t){
     vec3 v = cross(nn, u);
     float len = 0.07 + 0.06 * hash13(c * 3.7);
     float ax = dot(dq, u) / len;
-    float ar = dot(dq, v) + 0.45 * len * (1.0 - ax * ax) * (0.4 + 0.6 * life);   // the arch grows as the loop rises
+    float ar = dot(dq, v) + 0.22 * len * (1.0 - ax * ax) * (0.4 + 0.6 * life);   // a low arch that grows as the loop rises
     float along = max(abs(ax) - 1.0, 0.0) * len;
-    float w = 0.012;
+    float w = 0.011 + 0.006 * (1.0 - min(abs(ax), 1.0));
     float core = exp(-(ar * ar + along * along) / (w * w));
     float feet = exp(-((abs(ax) - 0.92) * (abs(ax) - 0.92)) / 0.03) * exp(-ar * ar / (w * w * 2.0));
-    float halo = exp(-length(dq) / 0.06) * 0.10;
+    float dl = length(dq);
+    float hotc = exp(-dl * dl / (len * len * 0.12));                               // white-hot kernel at the loop top
+    float halo = exp(-dl / 0.05) * 0.10 * smoothstep(0.2, 0.08, dl);
     float flick = 0.55 + 0.45 * sin(t * (31.0 + 23.0 * r2) + r3 * 40.0);
-    acc += (core * (0.6 + 0.8 * feet) + halo) * life * flick;
+    acc += (core * (0.5 + 0.7 * feet) + hotc * 0.9 + halo) * life * flick;
   }
   return acc * (0.5 + uFlare);
 }

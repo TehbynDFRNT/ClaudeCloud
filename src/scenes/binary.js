@@ -75,6 +75,26 @@ vec4 volUpsample(bool hit){
   s.a = s.a < 0.0 ? -s.a - 0.001 : s.a;
   return s;
 }
+// minimum along the ray of F(p) = |p| - r0(p/|p|) (tidal shape, no relief): ~ signed distance of the ray to the
+// silhouette; returns (minF, t at min). Coarse samples + golden-section refinement.
+float giantF(vec3 p){ float r = length(p); return r - giantRadius0(p / max(r, 1e-6)); }
+vec2 giantMinF(vec3 o, vec3 rd, vec2 hs){
+  float t0 = max(hs.x, 0.0), t1 = max(hs.y, t0 + 1e-4);
+  float bt = t0, bf = 1e9;
+  for (int i = 0; i <= 12; i++){
+    float t = mix(t0, t1, float(i) / 12.0);
+    float f = giantF(o + rd * t);
+    if (f < bf){ bf = f; bt = t; }
+  }
+  float h = (t1 - t0) / 12.0;
+  float a = max(t0, bt - h), b = min(t1, bt + h);
+  for (int i = 0; i < 6; i++){
+    float c = b - 0.618 * (b - a), d = a + 0.618 * (b - a);
+    if (giantF(o + rd * c) < giantF(o + rd * d)) b = d; else a = c;
+  }
+  float tm = 0.5 * (a + b);
+  return vec2(min(bf, giantF(o + rd * tm)), tm);
+}
 vec3 giantNormal(vec3 p){
   vec3 o = p - uGiantPos;
   float e = 0.002 * uGiantR;
@@ -108,7 +128,15 @@ void main(){
   vec2 gb = sphereHit(ro - uGiantPos, rd, vec3(0.0), uGiantR * (1.0 + uBulge * 1.2) + 4.0 * length(ro - uGiantPos) * pixAngle * uRes.y / uVolRes.y);
   vec4 V;
   if (gb.y < 0.0 || uGiantOn < 0.5) { V = texture(uVol, gl_FragCoord.xy / uRes); V.a = abs(V.a); }
-  else V = volUpsample(dist < 1e8);
+  else {
+    // anti-aliased limb: blend hit- and miss-consistent upsamples by the sub-pixel coverage of the silhouette
+    vec2 mf = giantMinF(ro - uGiantPos, rd, gb);
+    float sd = mf.x / (max(mf.y, 1e-4) * pixAngle);
+    float cov = sat(0.5 - sd);
+    cov = dist < 1e8 ? max(cov, 0.5) : min(cov, 0.5);         // stay consistent with the photosphere hit
+    if (cov <= 0.0 || cov >= 1.0) V = volUpsample(dist < 1e8);
+    else V = mix(volUpsample(false), volUpsample(true), cov);
+  }
   col = col * V.a + V.rgb;
   col += dwarfGlow(ro, rd, dist, pixAngle) * mix(1.0, V.a, 0.85);
   fragColor = vec4(col, 1.0);
@@ -169,7 +197,7 @@ const presets = {
   // Goliath bleeds: the torn L1 tip pours matter into space.
   'S11-giant-bleeds': {
     cam: [[0, [-0.30, 0.060, 0.30], [-0.16, 0.0, 0.02], 42], [1, [-0.285, 0.052, 0.275], [-0.15, 0.0, 0.02], 41, 0, 'inOutSine']],
-    streamAmt: 1.0, streamW: 1.15, streamGlow: 1.0, rip: 1.0, flowRate: 2.0, detail: 0.5, rake: 0.0, rakeG: 0.06, starGain: 0.5,
+    streamAmt: 1.0, streamW: 1.15, streamGlow: 1.15, cool: 2.4, rip: 1.0, flowRate: 2.0, detail: 0.5, rake: 0.0, rakeG: 0.06, starGain: 0.5,
     diskAmt: 0, cutR: 0.26,
     giant: { relief: 0.004, plumes: 0.25, atmo: 0.6 }, dwarfLum: 1.2, volScale: 0.45,
     post: { bloomStrength: 0.09 },
@@ -179,7 +207,7 @@ const presets = {
     cam: [[0, [-0.17, 1.40, 1.52], [-0.08, -0.05, 0.0], 40], [1, [-0.13, 1.32, 1.43], [-0.07, -0.05, 0.0], 40, 0, 'linear']],
     streamW: 1.35, streamGlow: 1.4, starGain: 0.6, streamAmt: 1.1, rip: 0.7, flowRate: 2.0, rake: 1.0,
     diskAmt: 1.0, diskOut: 0.27, hot: 1.2,
-    dwarfLum: 2.2, volScale: 0.5,
+    dwarfLum: 2.2, volScale: 0.6,
     post: { bloomStrength: 0.09, streakStrength: 0.02 },
   },
   // Frenzy vista: from behind the giant along the stream.
@@ -195,7 +223,7 @@ const presets = {
     cam: [[0, [0.02, 1.55, 0.02], [0.02, 0, 0.0], 40, 0.10], [1, [0.02, 1.38, 0.02], [0.02, 0, 0.0], 40, -0.06, 'outQuad']],
     streamW: 1.35, streamGlow: 1.4, starGain: 0.6, streamAmt: 1.1, rip: 0.7, flowRate: 2.4, rake: 1.0,
     diskAmt: 1.0, diskOut: 0.27, hot: 1.2,
-    dwarfLum: 2.2, volScale: 0.5,
+    dwarfLum: 2.2, volScale: 0.6,
     overlay: 'topdiagram',
     post: { bloomStrength: 0.09 },
   },
@@ -205,7 +233,7 @@ const presets = {
     streamW: 1.35, streamGlow: 1.4, starGain: 0.6, streamAmt: 1.15, rip: 0.8, flowRate: 2.2, rake: 1.0,
     diskAmt: 1.0, diskOut: 0.27, hot: 1.3,
     flare: { amt: 3.6, decay: 0.75 }, whip: { amp: 0.045, speed: 0.75, decay: 0.8 },
-    dwarfLum: 2.2, volScale: 0.5,
+    dwarfLum: 2.2, volScale: 0.55,
     post: { bloomStrength: 0.09, streakStrength: 0.02 },
   },
 };
@@ -283,7 +311,7 @@ export default {
       uWhip: whip, uWD: [XW, 0, 0], uRake: ev(P.rake, u, 1.0),
       uDiskIn: 0.03, uDiskOut: diskOut, uDiskAmt: diskAmt, uDiskH: ev(P.diskH, u, 0.034), uDiskT: t + 4.0,
       uDiskGlow: ev(P.diskGlow, u, 1.0), uRingAmt: ev(P.ringAmt, u, 0), uRCirc: R_CIRC, uFlare: flare, uHot: hot,
-      uClump: [clumpS, clumpAmt],
+      uClump: [clumpS, clumpAmt], uCool: ev(P.cool, u, 1),
       uDiskBound: this.diskBound(diskAmt, ev(P.ringAmt, u, 0), hot[2], diskOut, ev(P.diskH, u, 0.034)),
       uBoxMin: [-0.50, -0.15, -boxZ], uBoxMax: [boxX, 0.15, Math.max(0.38, boxZ)],
       uStarGain: ev(P.starGain, u, 0.6), uRakeG: ev(P.rakeG, u, 0.06),

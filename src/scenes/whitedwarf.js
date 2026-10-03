@@ -221,7 +221,7 @@ export default {
     // First flickers: the surface brightens, small flares; oblique view with the limb against black
     'S14h-flare': {
       rig: 'surface', lat: [[0, -14], [1, -12.5]], lon: 40, alt: 0.22, heading: [[0, 20], [1, 26]], pitch: [[0, -34], [1, -38]], fov: 38, roll: 22,
-      spin: [0.2, 0.05], magTilt: 40, magAz: 80, surf: [[0, 1.2], [1, 1.9]], fil: 2.2, filL: [1.03, 1.16], filW: 0.0026, filN: 10, shimmer: 0.03,
+      spin: [0.2, 0.01], magLocal: [-6, 113], surf: [[0, 1.2], [1, 1.9]], fil: 2.6, filL: [1.025, 1.10], filW: 0.0022, filN: 6, filSpan: 30, filAt: -30, shimmer: 0.03,
       ocean: 0.66, oceanH: 0.008, heat: [[0, 0.0], [1, 0.22]], oceanGain: [[0, 0.8], [1, 1.25]], turbF: 40, cells: 0.45, turbV: 1.1,
       flare: [[0, 0.35], [1, 1.0]], flareSize: 2.4, detail: 0.5,
       haze: 0.0015, hazeF: 25, crimson: 0.2, atmo: 1.0, stars: 0.7,
@@ -269,14 +269,14 @@ export default {
     // corridor of blue magnetic arches over the convecting ocean, vibrating in tremolo; the heat haze bends limb, stars
     // and arches more and more; in the last 12 frames the camera pitches down into a point of white.
     'S21-strike5': {
-      rig: 'surface', lat: [[0, 18], [1, 18.5]], lon: [[0, -8], [1, -7.0]], alt: [[0, 0.075], ['e-12f', 0.05], [1, 0.016, 'inQuad']],
-      heading: [[0, 92], [1, 100]], pitch: [[0, -28], ['e-12f', -30], [1, -75, 'inQuad']], fov: [[0, 44], ['e-12f', 40], [1, 28, 'inQuad']], roll: [[0, 6], ['e-12f', 13], [1, 22]],
+      rig: 'surface', lat: [[0, 18], [1, 18.4]], lon: [[0, -8], [1, -7.2]], alt: [[0, 0.076], ['e-12f', 0.064], [1, 0.016, 'inQuad']],
+      heading: [[0, 92], [1, 99]], pitch: [[0, -28], ['e-12f', -28.5], [1, -75, 'inQuad']], fov: [[0, 44], ['e-12f', 41], [1, 28, 'inQuad']], roll: [[0, 5], ['e-12f', 11], [1, 22]],
       spin: [0.2, 0.0], magLocal: [-6, 0], surf: [[0, 1.7], [0.6, 1.9], ['e-12f', 1.9], [1, 2.6, 'inQuad']],
       fil: [[0, 3.0], [1, 5.0]], filL: [1.03, 1.10], filW: 0.0025, filN: 10, filSpan: 22, filAt: 31, filK: 2,
       shimmer: 0.03, tremolo: [[0, 0.02], [1, 0.08, 'inQuad']],
       ocean: 1.0, oceanH: 0.0055, heat: [[0, 0.12], ['e-12f', 0.3], [1, 0.6, 'inQuad']], oceanGain: [[0, 1.0], ['e-12f', 1.2], [1, 1.8, 'inQuad']], turbF: 95, turbV: [[0, 1.4], [1, 2.8]],
       cells: 1.0, detail: 0.9, flare: [[0, 0.4], [1, 1.0]], flareSize: 1.4,
-      haze: [[0, 0.0012], ['e-12f', 0.005], [1, 0.007, 'inQuad']], hazeF: 45, crimson: 0, atmo: 1.0, stars: 0.7,
+      haze: [[0, 0.0008], [0.4, 0.0014], ['e-12f', 0.0045], [1, 0.007, 'inQuad']], hazeF: 45, crimson: 0, atmo: 1.0, stars: 0.7,
       white: [[0, 0], ['e-12f', 0], [1, 1.0, 'linear']],
       post: {
         bloomStrength: [[0, 0.16], ['e-12f', 0.22], [1, 0.5, 'inQuad']],

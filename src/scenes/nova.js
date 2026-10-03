@@ -220,7 +220,7 @@ void main(){
 // full-resolution composite
 const COMP = frag(STARS, GIANT, DWARF, NOVA_COMMON, NOVA_GIANTFAR, `
 uniform sampler2D uVol;
-uniform float uStarGain, uUseGiant, uUseDwarf, uNovaLight, uContact, uVolGain, uRefract, uGiantFar;
+uniform float uStarGain, uUseGiant, uUseDwarf, uNovaLight, uContact, uVolGain, uRefract, uGiantFar, uDwarfOcc;
 uniform vec3 uNovaPos;
 void main(){
   vec2 uv = frameUV();
@@ -259,7 +259,7 @@ void main(){
     }
     bg = bg * (1.0 - g.a) + g.rgb;
   }
-  if (uUseDwarf > 0.5) bg += dwarfGlow(ro, rd, dist, pixAngle);
+  if (uUseDwarf > 0.5) bg += dwarfGlow(ro, rd, uDwarfOcc > 0.5 ? dist : 1e9, pixAngle);
   fragColor = vec4(v.rgb * uVolGain + v.a * bg, 1.0);
 }`);
 
@@ -335,7 +335,7 @@ export default {
       cam: [[0, [3.6, 5.0, 12.4], [0, 0, 0], 34], [6.0, [7.6, 10.4, 25.6], [0, 0, 0], 34]],
       shR: [[0, 7.0], [6.0, 7.45, 'linear']], frac: 1, shHeat: [[0, 0.62], [6.0, 0.57]],
       knotK: 16, prolate: 0.12, deform: 0.06, equator: 0.8, clump: 0.92, sheetW: 2, knotGain: 40, tailGain: 9, tailL: 0.035,
-      wisp: 4, diffuse: 1, skin: 0.45, giant: true, giantGlow: 0.55, scar: 0.6, dwarfLum: 0.6, starGain: 0.6,
+      wisp: 1.5, diffuse: 1, skin: 0.45, giant: true, giantGlow: 0.55, scar: 0.6, dwarfLum: 0.6, starGain: 0.6,
       post: { bloomStrength: 0.09, lift: 0 },
     },
     // 3.33 s (+ dissolve tail to S29b): centred, still. A near-perfect limb-brightened ring, outer radius ~0.32 H.
@@ -407,6 +407,16 @@ export default {
       if (P.giant) Object.assign(comp, giantU(kv(P.giantGlow, t, 0.6), kv(P.scar, t, 0.8)), { uUseGiant: 1, uGiantFar: 1, uNovaLight: 0, uContact: 0 });
       if (P.dwarfLum !== undefined) Object.assign(comp, { uUseDwarf: 1, uDwarfPos: WD, uDwarfR: 0.0005, uDwarfLum: kv(P.dwarfLum, t, 1) });
     }
+    // the dwarf's glow is an optical halo: hide it only when the giant really blocks the line of sight to the dwarf
+    // (a per-pixel depth test cuts the halo out of the giant's disc when both sit at nearly the same depth)
+    if (comp.uUseDwarf && comp.uUseGiant) {
+      const dp = comp.uDwarfPos, cp = cam.pos, gp = GIANT_POS;
+      const d = [dp[0] - cp[0], dp[1] - cp[1], dp[2] - cp[2]], L = Math.hypot(...d);
+      const u = d.map((x) => x / L), w = [gp[0] - cp[0], gp[1] - cp[1], gp[2] - cp[2]];
+      const tc = w[0] * u[0] + w[1] * u[1] + w[2] * u[2];
+      const miss = Math.hypot(w[0] - u[0] * tc, w[1] - u[1] * tc, w[2] - u[2] * tc);
+      comp.uDwarfOcc = tc > 0 && tc < L && miss < 0.31 * 1.3 ? 1 : 0;
+    } else comp.uDwarfOcc = 1;
     E.draw(this.pComp, comp, target);
   },
 

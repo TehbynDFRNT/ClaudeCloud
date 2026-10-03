@@ -27,24 +27,32 @@ const midiHz = (m, a4) => a4 * Math.pow(2, (m - 69) / 12);
 // ----------------------------------------------------------------------------------------------------------
 export const DESIGN = {
   orchestraMakeupDb: 7.0,          // clean make-up gain on the (quiet, ~-24 LUFS) recording
-  cannonsDb: -1.5,
-  ignitionDb: 1.5,
+  cannonsDb: 0.0,                  // bus trim; per-cue levels come from the approach law below
+  ignitionDb: 4.0,
   synthTrimDb: -24.0,            // source trim so the per-bar auto-level works around 0 dB
-  targetLufs: -15.0,
+  targetLufs: -15.5,
   ceilingDbtp: -1.0,
   limiterCeilingDb: -1.35,         // internal ceiling (true-peak estimate, 4x oversampled) leaves margin
   // gentle glue: threshold relative to the loudness target (applied after the master gain), 50 ms RMS detector
   comp: { thresholdRel: 6, ratio: 1.5, kneeDb: 8, attack: 0.030, release: 0.40, rms: 0.050 },
+  // cannon approach law: each cue's loudness (K-weighted, 400 ms from its transient) relative to the orchestra's
+  // (K-weighted, +-1 s around it) follows rel(d) = far + (near - far) * (1 - d)^shape, so the approach is monotone
+  // whatever the music does underneath. Measured on a first render of the stem, corrected and re-rendered.
+  cannon: { relFar: -20, relNear: 3, shape: 1.5, maxCorrDb: 14, passes: 3, tolDb: 0.75 },
+  // orchestra + synth duck under the five strike cannons (d <= maxD): 5 ms attack, 30 ms hold, ~120 ms release
+  duck: { maxD: 0.12, depthDb: [2, 3], attack: 0.005, hold: 0.03, tau: 0.045 },
   // synth sections (bars from the director's notes); offsets = K-weighted level relative to the orchestra
   synth: {
     sections: [
       { from: 3, to: 11, mode: 'pulse', sub: 1, offset: [-31, -17] },
-      { from: 12, to: 19, mode: 'drone', offset: [-20, -20] },
+      { from: 12, to: 19, mode: 'drone' },
       { from: 20, to: 26, mode: 'pulse', sub: 1, offset: [-16, -15] },
       { from: 27, to: 31, mode: 'pulse', sub: 2, offset: [-16.5, -15.5] },
       { from: 32, to: 38, mode: 'pulse', sub: 2, offset: [-15.5, -14.5], open: true },
     ],
-    padOffset: -24,                // aftermath pad (bar 63 fermata, F/C) relative to the orchestra
+    // drone (rubato solo): follows the orchestra's plain-RMS envelope, 18 dB under it, never closer than 14 dB
+    drone: { offsetDb: -18, capDb: -14 },
+    padOffset: -29,                // aftermath pad (bar 63 fermata, F/C) relative to the orchestra (K-weighted)
     detuneCents: 14,               // between the two saws
   },
 };
@@ -54,17 +62,22 @@ export const DESIGN = {
 //  tuned ~+29 cents sharp of A440): 1 > 2 > 3 > 4 > 6 > 5 ; weight (<120 Hz energy, first 300 ms): 1 > 6 > 4 > 3 > 5 > 2.
 //  cannon-5 also carries a second hit at 0.97 s; cannon-4 has the sharpest crack.
 // bodyHz: low-pass of the body after the broadband attack; tau: body decay; maxLen: hard window (s after onset);
-// notches: bleed partials removed (Hz at playbackRate 1).
+// notches: bleed partials removed (Hz at playbackRate 1). Tail-spectrum prominence check (Welch, 0.12-0.9 s): the
+// D5 partial (592 Hz, clashes with F minor) in cannon-2 (+12.5 dB) and cannon-4 (+7.7 dB), Eb3 158 Hz in cannon-5.
 export const CANNON_SAMPLES = {
   'cannon-1': { rank: 1, bodyHz: 900, tau: 0.34, maxLen: 1.20, notches: [] },
-  'cannon-2': { rank: 2, bodyHz: 520, tau: 0.28, maxLen: 1.00, notches: [475, 949] },
+  'cannon-2': { rank: 2, bodyHz: 520, tau: 0.28, maxLen: 1.00, notches: [475, 592, 949] },
   'cannon-3': { rank: 3, bodyHz: 420, tau: 0.24, maxLen: 0.95, notches: [158.5, 316, 475, 633] },
-  'cannon-4': { rank: 4, bodyHz: 420, tau: 0.24, maxLen: 0.95, notches: [237.5, 352, 475] },
+  'cannon-4': { rank: 4, bodyHz: 420, tau: 0.24, maxLen: 0.95, notches: [237.5, 352, 475, 592] },
   'cannon-6': { rank: 5, bodyHz: 320, tau: 0.20, maxLen: 0.85, notches: [158.5, 237.5, 316, 475, 633] },
-  'cannon-5': { rank: 6, bodyHz: 300, tau: 0.18, maxLen: 0.80, notches: [237.5, 316, 475, 633] },
+  'cannon-5': { rank: 6, bodyHz: 300, tau: 0.18, maxLen: 0.80, notches: [158.5, 237.5, 316, 475, 633] },
 };
-const NEAR_SET = ['cannon-1', 'cannon-4', 'cannon-3', 'cannon-2']; // heavy + clean, for close strikes
-const ALL_SET = ['cannon-1', 'cannon-2', 'cannon-3', 'cannon-4', 'cannon-6', 'cannon-5'];
+// Rotation by distance band. The two dirtiest samples (5, 6) only play far away (d > 0.5), where the distance
+// low-pass hides their bleed; the far rotation starts with the lightest sample (cannon-2). The heaviest and cleanest
+// (cannon-1) is kept for the strikes and the final hit.
+const NEAR_SET = ['cannon-1', 'cannon-4', 'cannon-3', 'cannon-2']; // d <= 0.15, counted back from the last strike
+const MID_SET = ['cannon-3', 'cannon-2', 'cannon-4', 'cannon-1'];  // 0.15 < d <= 0.5
+const FAR_SET = ['cannon-2', 'cannon-6', 'cannon-3', 'cannon-5', 'cannon-4']; // d > 0.5
 
 // ----------------------------------------------------------------------------------------------------------
 // helpers
@@ -332,9 +345,20 @@ export function refineGrid(tl, winter) {
       let bm = 0, bt = 0; for (let x = -0.05; x <= 0.0501; x += O.dt) { const v = O.at(e + x); if (v > bm) { bm = v; bt = x; } }
       if (bm >= 0.3) offs.push(bt);
     }
-    const bl = clamp(median(offs), -0.06, 0.06);
+    let bl = clamp(median(offs), -0.06, 0.06), basis = 'onset flux';
+    // A section with verified downbeat onsets in the plan (the ladder strikes, bars 33-37) takes its lead from them:
+    // in its dense tremolo the strongest flux near an eighth is often a tremolo stroke, which biases the flux
+    // estimate toward the grid (-18 ms there, against -18..-29 ms at the verified strikes).
+    const anchors = [];
+    for (const c of tl.plan.cues) {
+      const m = /^[a-z-]+-(\d+)$/.exec(c.id);
+      if (c.kind !== 'orchestral-strike' || c.status !== 'verified' || !m) continue;
+      const bar = +m[1], ev = table.get(bar);
+      if (bar >= sec.from && bar <= sec.to && ev && !refitted.has(bar)) anchors.push(c.sourceSeconds - ev[0]);
+    }
+    if (anchors.length >= 3) { bl = clamp(median(anchors), -0.06, 0.06); basis = `${anchors.length} verified strike onsets`; }
     for (let bar = sec.from; bar <= sec.to; bar++) if (!refitted.has(bar)) table.set(bar, table.get(bar).map((e) => e + bl));
-    report.sections.push({ bars: [sec.from, sec.to], leadMs: +(bl * 1000).toFixed(1), eighthsUsed: offs.length });
+    report.sections.push({ bars: [sec.from, sec.to], leadMs: +(bl * 1000).toFixed(1), basis, fluxLeadMs: +(clamp(median(offs), -0.06, 0.06) * 1000).toFixed(1), eighthsUsed: offs.length });
   }
   return { table, report, onsets: O };
 }
@@ -381,10 +405,12 @@ function synthSteps(tl) {
       if (t == null || t >= T.ignition - 0.004) continue;
       const m = held.get(`${bar}:${k}`);
       const u = clamp((t - tStart) / (tEnd - tStart), 0, 1);
-      const strike = sec.open && strikes.some((s) => Math.abs(s - t) < 0.06);
+      // strike accents sit exactly on the plan's verified strike onsets (with the orchestral hit and the cannon)
+      const sHit = sec.open && j === 0 ? strikes.find((s) => Math.abs(s - t) < 0.06) : undefined;
+      const strike = sHit !== undefined;
       const vel = strike ? 1.3 : (k === 0 && j === 0 ? 1.0 : (k % 2 === 0 && j === 0 ? 0.9 : (j === 0 ? 0.8 : 0.7)));
       const L = low(m);
-      steps.push({ t, bar, k, j, sec, u, strike, vel, low: L, note: L + (idx % 2 ? 12 : 0) });
+      steps.push({ t: strike ? sHit : t, bar, k, j, sec, u, strike, vel, low: L, note: L + (idx % 2 ? 12 : 0) });
       idx++;
     }
   }
@@ -519,7 +545,8 @@ export function buildSynth(ctx, tl) {
       const pad = G(ctx, 0);
       curveEnv(pad.gain, tp, te - tp, (x) => smooth(0, 1.4, x) * (1 - smooth(te - tp - 0.5, te - tp, x)), 200);
       const lp = BQ(ctx, 'lowpass', 520, 0.6);
-      const notes = [root - 12, root - 5, root]; // F2 C3 F3 (root is F3 = 53 in the grid)
+      const r = 41 + ((((root - 41) % 12) + 12) % 12); // fold the root into F2..E3 (bar 63's bass is F2 = 41)
+      const notes = [r, r + 7, r + 12];                 // root, fifth, octave: F2 C3 F3
       notes.forEach((m, i) => [-6, 6].forEach((c) => {
         const o = ctx.createOscillator(); o.type = i === 2 ? 'triangle' : 'sawtooth'; o.frequency.value = hz(m); o.detune.value = c;
         o.connect(G(ctx, i === 0 ? 0.35 : 0.22)).connect(lp); o.start(tp); o.stop(te + 0.05);
@@ -554,7 +581,17 @@ export function analyseSample(buf) {
   return { peak: pk, peakAt: pi / buf.sampleRate, onset: on / buf.sampleRate, duration: buf.duration, boomRms: Math.sqrt(e / Math.max(1, n1 - on)) };
 }
 
+// A cue whose frame is a shot cut or carries a picture hit (shake/flash) may lead its picture by at most 20 ms: a
+// bar-line cue whose recording-checked downbeat is earlier splits the difference between the beat and the frame.
+export const MAX_PICTURE_LEAD = 0.020;
 export function cannonTime(c, tl) {
+  const r = cannonBeat(c, tl), ft = c.frame / tl.fps;
+  const onPicture = tl.plan.shots.some((s) => s.start === c.frame) ||
+    tl.plan.effects.some((e) => (e.type === 'shake' || e.type === 'flash') && (e.frame ?? e.start) === c.frame);
+  if (onPicture && r.t < ft - MAX_PICTURE_LEAD) return { t: ft - MAX_PICTURE_LEAD, basis: `${r.basis}; lead capped at ${MAX_PICTURE_LEAD * 1000} ms (picture hit)`, beat: r.t };
+  return { ...r, beat: r.t };
+}
+function cannonBeat(c, tl) {
   const { plan, music, fps } = tl;
   const ft = c.frame / fps;
   const strike = plan.cues.find((s) => s.kind === 'orchestral-strike' && s.frame === c.frame);
@@ -582,29 +619,31 @@ export function cannonTime(c, tl) {
   return { t: ft, basis: 'frame' };
 }
 
-export function buildCannons(ctx, tl, samples) {
+// gains: optional per-cue correction in dB (from the approach-law measurement in renderSoundtrack)
+export function buildCannons(ctx, tl, samples, gains = {}) {
   const clip = softClip(ctx, 0.55); clip.output.connect(ctx.destination);
-  const out = clip.input;
+  // 2nd-order 28 Hz high-pass on the bus: the sub thump and boom below it only drive the master limiter
+  const out = G(ctx, 1); out.connect(BQ(ctx, 'highpass', 28, 0.707)).connect(clip.input);
   const cues = tl.plan.cues.filter((c) => c.kind === 'cannon').sort((a, b) => a.frame - b.frame);
   const verb = ctx.createConvolver(); verb.normalize = false;
   verb.buffer = impulse(ctx, { seconds: 5.5, rt60: 4.2, seed: 1812, hiHz: 5000, loHz: 260, early: 18, earlyMs: 110 });
   const verbOut = G(ctx, 1); verb.connect(verbOut).connect(out);
   const alive = keepAlive(ctx);
-  alive(verb);
+  alive(verb, out);
   const rng = mulberry32(1812);
   const pans = cues.map(() => rng() * 2 - 1);
-  const nearCues = cues.filter((c) => c.distance <= 0.2), farCues = cues.filter((c) => c.distance > 0.2);
+  const band = (c) => (c.distance <= 0.15 ? 'near' : c.distance <= 0.5 ? 'mid' : 'far');
+  const group = { near: cues.filter((c) => band(c) === 'near'), mid: cues.filter((c) => band(c) === 'mid'), far: cues.filter((c) => band(c) === 'far') };
   const table = [];
   cues.forEach((c, ci) => {
     const d = clamp(c.distance, 0, 1);
-    const { t: tcue, basis } = cannonTime(c, tl);
+    const { t: tcue, basis, beat } = cannonTime(c, tl);
     const tc = tcue - (tl.lat ? tl.lat['4x'] : 0); // scheduled early by the bus clipper's latency
-    // deterministic rotation; close strikes use the heavy/clean set, counted back from the last strike
-    let id;
-    const ni = nearCues.indexOf(c);
-    if (ni >= 0) id = NEAR_SET[(nearCues.length - 1 - ni) % NEAR_SET.length];
-    else id = ALL_SET[farCues.indexOf(c) % ALL_SET.length];
-    const lvl = undb(-23 * Math.pow(d, 0.9));
+    // deterministic rotation by distance band; close strikes counted back from the last strike (cannon-1 last)
+    const b = band(c), gi = group[b].indexOf(c);
+    const id = b === 'near' ? NEAR_SET[(group.near.length - 1 - gi) % NEAR_SET.length] : (b === 'mid' ? MID_SET : FAR_SET)[gi % (b === 'mid' ? MID_SET : FAR_SET).length];
+    const corr = gains[c.id] || 0;
+    const lvl = undb(-23 * Math.pow(d, 0.9) + corr);
     const dry = 1 - 0.78 * Math.pow(d, 0.8), wet = 0.10 + 0.95 * Math.pow(d, 0.8);
     const pre = 0.006 + 0.11 * d;
     const rate = 1 - 0.1 * d;
@@ -622,9 +661,10 @@ export function buildCannons(ctx, tl, samples) {
       const start = tc - S.info.onset / rate;      // transient lands exactly on the cue time
       starts.push(start);
       const src = ctx.createBufferSource(); src.buffer = S.buffer; src.playbackRate.value = rate;
-      // broadband attack, then the body closes down to a dark boom (removes the orchestral bleed in the tail)
+      // broadband attack, then the body closes down to a dark boom (removes the orchestral bleed in the tail);
+      // close cannons keep the crack open longer
       const tone = BQ(ctx, 'lowpass', 18000, 0.5);
-      const open = 0.025 + 0.035 * (1 - d);
+      const open = d <= 0.15 ? 0.06 + 0.04 * (1 - d) : 0.025 + 0.035 * (1 - d);
       tone.frequency.setValueAtTime(18000, start);
       tone.frequency.setValueAtTime(18000, tc + open);
       tone.frequency.exponentialRampToValueAtTime(meta.bodyHz * (0.8 + 0.4 * (1 - d)), tc + open + 0.07);
@@ -640,6 +680,15 @@ export function buildCannons(ctx, tl, samples) {
         return e * (1 - smooth(len - 0.12, len, x));
       }, 2000);
       node.connect(env).connect(G(ctx, L.gain * S.info.norm)).connect(dist);
+      // close cannons: parallel crack layer (400 Hz high-pass, +6 dB presence at 2.5 kHz), gated to the first
+      // ~35 ms, so the hit cuts through the tutti in the band the ear reads as impact
+      if (d <= 0.15) {
+        const on = S.info.onset / rate, gate = 0.035;
+        const ag = G(ctx, 0);
+        curveEnv(ag.gain, start, on + gate + 0.015, (x) => { const tau = x - on; return tau < gate ? 1 : Math.max(0, 1 - (tau - gate) / 0.012); }, 4000);
+        alive(ag);
+        chain(src, BQ(ctx, 'highpass', 400, 0.7), BQ(ctx, 'peaking', 2500, 0.8, 6), ag, G(ctx, (1 - d) * L.gain * S.info.norm), dist);
+      }
       src.start(start); src.stop(start + len + 0.01);
     }
     // synthesized sub thump for weight on the close strikes (sine 45 -> 28 Hz)
@@ -649,12 +698,12 @@ export function buildCannons(ctx, tl, samples) {
       const o = ctx.createOscillator(); o.type = 'sine';
       o.frequency.setValueAtTime(45, tc); o.frequency.exponentialRampToValueAtTime(28, tc + 0.45);
       const g = G(ctx, 0);
-      curveEnv(g.gain, tc, 1.2, (x) => Math.min(1, x / 0.003) * Math.exp(-x / 0.25) * (1 - smooth(1.0, 1.2, x)), 2000);
-      alive(g); o.connect(g).connect(G(ctx, 0.75 * thump * lvl)).connect(out);
-      o.start(tc); o.stop(tc + 1.25);
+      curveEnv(g.gain, tc, 1.0, (x) => Math.min(1, x / 0.003) * Math.exp(-x / 0.18) * (1 - smooth(0.8, 1.0, x)), 2000);
+      alive(g); o.connect(g).connect(G(ctx, 0.45 * thump * lvl)).connect(out);
+      o.start(tc); o.stop(tc + 1.05);
     }
-    table.push({ id: c.id, frame: c.frame, frameTime: +(c.frame / tl.fps).toFixed(4), t: +tcue.toFixed(4), basis, offsetMs: +((tcue - c.frame / tl.fps) * 1000).toFixed(1),
-      distance: d, sample: layers.map((l) => l.id).join('+'), rate: +rate.toFixed(3), levelDb: +db(lvl).toFixed(1), lowpassHz: Math.round(lpHz),
+    table.push({ id: c.id, frame: c.frame, frameTime: +(c.frame / tl.fps).toFixed(4), t: +tcue.toFixed(4), beat: +beat.toFixed(4), basis, offsetMs: +((tcue - c.frame / tl.fps) * 1000).toFixed(1),
+      distance: d, band: b, sample: layers.map((l) => l.id).join('+'), rate: +rate.toFixed(3), levelDb: +db(lvl).toFixed(1), corrDb: +corr.toFixed(2), lowpassHz: Math.round(lpHz),
       preDelayMs: Math.round(pre * 1000), dry: +dry.toFixed(2), wet: +wet.toFixed(2), pan: +pan.toFixed(2), thump: +thump.toFixed(2), sampleStart: +starts[0].toFixed(5) });
   });
   return table;
@@ -687,8 +736,10 @@ export function buildIgnition(ctx, tl) {
   const t = T.ignition - l4, hz = (m) => midiHz(m, a4); // scheduled early by the bus clipper's latency
   const tsh = t - l4;                                    // sub + saw stack also pass their own 4x saturator
   const clip = softClip(ctx, 0.6); clip.output.connect(out);
-  const bus = G(ctx, undb(-9)); bus.connect(clip.input);  // only the impact reaches the clipper knee
+  // only the impact reaches the clipper knee; 2nd-order 20 Hz high-pass keeps DC and infrasound out of the clipper
+  const bus = G(ctx, undb(-9)); bus.connect(BQ(ctx, 'highpass', 20, 0.707)).connect(clip.input);
   const alive = keepAlive(ctx);
+  alive(bus);
   // enormous reverb tail (seeded IR with a slow swell)
   const verb = ctx.createConvolver(); verb.normalize = false;
   verb.buffer = impulse(ctx, { seconds: 11, rt60: 8.0, seed: 2725, hiHz: 7000, loHz: 220, early: 20, earlyMs: 140, swell: 0.22 });
@@ -707,6 +758,12 @@ export function buildIgnition(ctx, tl) {
   const subSat = ctx.createWaveShaper(); subSat.curve = tanhCurve(1.8); subSat.oversample = '4x';
   alive(subEnv, sub2Env, subSat); sub.connect(subEnv).connect(subSat); sub2.connect(sub2Env).connect(G(ctx, 0.35)).connect(subSat);
   const subOut = subSat.connect(G(ctx, 0.95)); subOut.connect(bus); send(subOut, 0.06);
+  // parallel, hard-saturated copy band-limited to 80-250 Hz: its odd harmonics carry the impact on small speakers
+  // (same 4x shaper latency as subSat, so it is aligned by the same early start)
+  const subHard = ctx.createWaveShaper(); subHard.curve = tanhCurve(7.0); subHard.oversample = '4x';
+  alive(subHard);
+  const hardOut = chain(subEnv, G(ctx, 1.6), subHard, BQ(ctx, 'highpass', 80, 0.7), BQ(ctx, 'lowpass', 250, 0.7), G(ctx, 0.55));
+  hardOut.connect(bus); send(hardOut, 0.08);
   [sub, sub2].forEach((o) => { o.start(tsh); o.stop(tsh + 8.1); });
 
   // 2) crack: seeded noise burst, band-pass sweeping down
@@ -737,12 +794,17 @@ export function buildIgnition(ctx, tl) {
   const sat = ctx.createWaveShaper(); sat.curve = tanhCurve(3.0); sat.oversample = '4x';
   const sweep = BQ(ctx, 'lowpass', 55, 12);
   sweep.frequency.setValueAtTime(55, t);   // post-saturator: bus compensation only
-  sweep.frequency.exponentialRampToValueAtTime(7500, t + 0.33);
-  sweep.frequency.exponentialRampToValueAtTime(240, t + 5.5);
+  sweep.frequency.exponentialRampToValueAtTime(7500, t + 0.33);   // the front opens...
+  sweep.frequency.exponentialRampToValueAtTime(1200, t + 2.5);    // ...and holds bright through the blast
+  sweep.frequency.exponentialRampToValueAtTime(240, t + 6);
   sweep.frequency.exponentialRampToValueAtTime(110, t + 9);
   const sweep2 = BQ(ctx, 'lowpass', 9000, 0.6);
   const stackEnv = G(ctx, 0);
-  curveEnv(stackEnv.gain, t, 9.1, (x) => Math.min(1, x / 0.015) * (0.12 + 0.88 * Math.exp(-x / 0.8)) * (1 - smooth(2.5, 5.5, x)), 500);
+  // sustain floor 0.3 for the first 2 s (the blast keeps pushing), easing to 0.12 by 3.5 s
+  curveEnv(stackEnv.gain, t, 9.1, (x) => {
+    const floor = 0.12 + 0.18 * (1 - smooth(2.0, 3.5, x));
+    return Math.min(1, x / 0.015) * (floor + (1 - floor) * Math.exp(-x / 0.8)) * (1 - smooth(3.0, 7.0, x));
+  }, 500);
   const stackOut = chain(stack, sat, sweep, sweep2, stackEnv, G(ctx, 0.75)); stackOut.connect(bus); send(stackOut, 0.55);
 
   // 4) noise wall: stereo pink noise, closing low-pass, plus a low pressure rumble
@@ -757,8 +819,17 @@ export function buildIgnition(ctx, tl) {
   const rum = ctx.createBufferSource(); rum.buffer = wallBuf; // offset start for decorrelation
   const rEnv = G(ctx, 0);
   curveEnv(rEnv.gain, t, 10, (x) => smooth(0, 0.08, x) * Math.exp(-x / 2.0) * (1 - smooth(6, 9, x)), 500);
-  chain(rum, alive(BQ(ctx, 'lowpass', 90, 0.7)), BQ(ctx, 'lowpass', 90, 0.7), rEnv, G(ctx, 2.2), bus);
-  wall.start(t); wall.stop(t + 9.1); rum.start(t, 3.3); rum.stop(t + 10.1);
+  // 25 Hz high-pass: pink noise below it is only DC drift and infrasound
+  chain(rum, alive(BQ(ctx, 'highpass', 25, 0.707)), BQ(ctx, 'lowpass', 90, 0.7), BQ(ctx, 'lowpass', 90, 0.7), rEnv, G(ctx, 2.2), bus);
+  // mid wall: 300 Hz-3 kHz band of the blast, sustained ~1.5 s and darkening, the part a TV speaker can play
+  const mid = ctx.createBufferSource(); mid.buffer = wallBuf;
+  const mLp = BQ(ctx, 'lowpass', 3000, 0.7);
+  mLp.frequency.setValueAtTime(3200, t); mLp.frequency.exponentialRampToValueAtTime(1900, t + 1.5); mLp.frequency.exponentialRampToValueAtTime(800, t + 3.5);
+  const mEnv = G(ctx, 0);
+  curveEnv(mEnv.gain, t, 4, (x) => smooth(0, 0.012, x) * (x < 1.5 ? 0.6 + 0.4 * Math.exp(-x / 0.25) : 0.6 * Math.exp(-(x - 1.5) / 0.55)) * (1 - smooth(3.2, 4, x)), 500);
+  alive(mLp);
+  const midOut = chain(mid, BQ(ctx, 'highpass', 300, 0.7), mLp, mEnv, G(ctx, 1.5)); midOut.connect(bus); send(midOut, 0.45);
+  wall.start(t); wall.stop(t + 9.1); rum.start(t, 3.3); rum.stop(t + 10.1); mid.start(t, 6.7); mid.stop(t + 4.05);
 
   // 5) descending Doppler roar -> C drone resolving into bar 56
   const dop = dopplerModel(T);
@@ -814,7 +885,7 @@ export function buildIgnition(ctx, tl) {
     fBase.connect(G(ctx, fc / f0)).connect(bp.frequency);
     alive(bp); rn.connect(bp).connect(G(ctx, g)).connect(nSum);
   }
-  rn.connect(alive(BQ(ctx, 'lowpass', 110, 0.7))).connect(G(ctx, 1.4)).connect(nSum);
+  rn.connect(alive(BQ(ctx, 'highpass', 25, 0.707))).connect(BQ(ctx, 'lowpass', 110, 0.7)).connect(G(ctx, 1.4)).connect(nSum);
   alive(nSum);
   const nLp = BQ(ctx, 'lowpass', 1000, 0.7); curveEnv(nLp.frequency, r0, rd, (x) => 1.6 * cutCurve(x), rate);
   const nG = G(ctx, 0); curveEnv(nG.gain, r0, rd, noiseLevel, rate);
@@ -950,40 +1021,104 @@ function limit(L, R, ceilDb, lookMs = 1.5, relMs = 80) {
 
 function bandRMS(K, i0, i1) { let s = 0; for (let i = i0; i < i1; i++) s += K[i] * K[i]; return s / Math.max(1, i1 - i0); }
 
-// Per-bar auto-level of the synth against the orchestra (K-weighted), toward the authored offsets.
+// moving-average power envelope (both channels) in dB, sampled every `step` samples, window `win` s centred
+function powerEnvDb(X, win, step) {
+  const n = X[0].length, w = Math.max(1, Math.round(win * SR)), m = Math.ceil(n / step), out = new Float32Array(m);
+  const cs = new Float64Array(n + 1);
+  for (let i = 0; i < n; i++) { let v = 0; for (const c of X) v += c[i] * c[i]; cs[i + 1] = cs[i] + v / X.length; }
+  for (let j = 0; j < m; j++) {
+    const c = j * step, a = Math.max(0, c - (w >> 1)), b = Math.min(n, c + (w >> 1) + 1);
+    out[j] = 10 * Math.log10((cs[b] - cs[a]) / Math.max(1, b - a) + 1e-20);
+  }
+  return out;
+}
+// zero-phase one-pole smoothing (forward + backward) of a control series sampled every `dt` s
+function smoothSeries(x, dt, tau) {
+  const a = 1 - Math.exp(-dt / tau), y = Float32Array.from(x);
+  for (let i = 1; i < y.length; i++) y[i] = y[i - 1] + a * (y[i] - y[i - 1]);
+  for (let i = y.length - 2; i >= 0; i--) y[i] = y[i + 1] + a * (y[i] - y[i + 1]);
+  return y;
+}
+
+// Auto-level of the synth against the orchestra.
+//  * pulse sections: per bar, K-weighted, toward the authored offsets; smoothed only within a section (no kernel
+//    taps across a section boundary), piecewise linear between bar centres, 30 ms ramps at section boundaries;
+//  * drone (rubato solo): follows the orchestra's plain-RMS envelope (0.5 s, smoothed 0.3 s) offsetDb under it,
+//    and never closer than capDb to its faster (0.15 s) envelope.
 function autoLevelSynth(tl, orch, syn, synthInfo) {
   const { music } = tl;
   const kO = [kWeight(orch[0]), kWeight(orch[1])], kS = [kWeight(syn[0]), kWeight(syn[1])];
   const ms = (K, a, b) => (bandRMS(K[0], a, b) + bandRMS(K[1], a, b)) / 2;
-  const rows = [];
-  for (const sec of DESIGN.synth.sections) for (let bar = sec.from; bar <= sec.to; bar++) {
-    const at = (bb) => (tl.refined ? refinedAt(tl, tl.refined, bb, 0) : music.at(bb, 0));
-    const ta = at(bar), tb = Math.min(at(bar + 1) ?? tl.T.ignition, tl.T.ignition);
-    const a = Math.round(ta * SR), b = Math.round(tb * SR);
-    const u = sec.to > sec.from ? (bar - sec.from) / (sec.to - sec.from) : 0;
-    const target = sec.offset[0] + (sec.offset[1] - sec.offset[0]) * u;
-    const lo = 10 * Math.log10(ms(kO, a, b) + 1e-20), ls = 10 * Math.log10(ms(kS, a, b) + 1e-20);
-    rows.push({ bar, ta, tb, target, orchK: lo, synthK: ls, gainDb: clamp(target - (ls - lo), -30, 30) });
-  }
-  // smooth gains across neighbouring bars (keeps the authored internal shape, removes bar-to-bar jumps)
-  const W = [1, 2, 3, 2, 1];
-  const gs = rows.map((r, i) => {
-    let s = 0, w = 0;
-    for (let k = -2; k <= 2; k++) { const x = rows[i + k]; if (x) { s += W[k + 2] * x.gainDb; w += W[k + 2]; } }
-    return s / w;
-  });
-  rows.forEach((r, i) => { r.appliedDb = gs[i]; });
-  // gain curve: piecewise linear between bar centres
-  const n = syn[0].length, g = new Float32Array(n);
-  const cen = rows.map((r) => (r.ta + r.tb) / 2);
+  const at = (bb) => (tl.refined ? refinedAt(tl, tl.refined, bb, 0) : music.at(bb, 0));
   const tStop = tl.T.ignition, iStop = Math.round(tStop * SR);
-  for (let i = 0, j = 0; i < iStop; i++) {
-    const t = i / SR;
-    let d;
-    if (t <= cen[0]) d = gs[0]; else if (t >= cen[cen.length - 1]) d = gs[gs.length - 1];
-    else { while (cen[j + 1] < t) j++; const f = (t - cen[j]) / (cen[j + 1] - cen[j]); d = gs[j] + (gs[j + 1] - gs[j]) * f; }
-    g[i] = undb(d);
+  const rows = [], spans = [];
+  for (const sec of DESIGN.synth.sections) {
+    const t0 = at(sec.from), t1 = Math.min(at(sec.to + 1) ?? tStop, tStop);
+    spans.push({ sec, t0, t1 });
+    if (sec.mode !== 'pulse') continue;
+    const sr = [];
+    for (let bar = sec.from; bar <= sec.to; bar++) {
+      const ta = at(bar), tb = Math.min(at(bar + 1) ?? tStop, tStop);
+      if (!(tb > ta)) continue;
+      const a = Math.round(ta * SR), b = Math.round(tb * SR);
+      const u = sec.to > sec.from ? (bar - sec.from) / (sec.to - sec.from) : 0;
+      const target = sec.offset[0] + (sec.offset[1] - sec.offset[0]) * u;
+      const lo = 10 * Math.log10(ms(kO, a, b) + 1e-20), ls = 10 * Math.log10(ms(kS, a, b) + 1e-20);
+      sr.push({ bar, ta, tb, target, orchK: lo, synthK: ls, gainDb: clamp(target - (ls - lo), -30, 30), sec });
+    }
+    const W = [1, 2, 3, 2, 1];
+    sr.forEach((r, i) => {
+      let s = 0, w = 0;
+      for (let k = -2; k <= 2; k++) { const x = sr[i + k]; if (x) { s += W[k + 2] * x.gainDb; w += W[k + 2]; } }
+      r.appliedDb = s / w;
+    });
+    rows.push(...sr);
   }
+  const n = syn[0].length, gDb = new Float32Array(n);
+  // pulse sections
+  for (const sp of spans) {
+    if (sp.sec.mode !== 'pulse') continue;
+    const sr = rows.filter((r) => r.sec === sp.sec), cen = sr.map((r) => (r.ta + r.tb) / 2), gs = sr.map((r) => r.appliedDb);
+    const i0 = Math.max(0, Math.round(sp.t0 * SR)), i1 = Math.min(iStop, Math.round(sp.t1 * SR));
+    for (let i = i0, j = 0; i < i1; i++) {
+      const t = i / SR;
+      if (t <= cen[0]) gDb[i] = gs[0];
+      else if (t >= cen[cen.length - 1]) gDb[i] = gs[gs.length - 1];
+      else { while (cen[j + 1] < t) j++; gDb[i] = gs[j] + (gs[j + 1] - gs[j]) * ((t - cen[j]) / (cen[j + 1] - cen[j])); }
+    }
+    if (i0 > 0 && sp === spans[0]) for (let i = 0; i < i0; i++) gDb[i] = gs[0]; // pre-roll (silent anyway)
+  }
+  // drone section: envelope following (plain RMS)
+  const droneInfo = [];
+  const dc = DESIGN.synth.drone, STEP = 480, dt = STEP / SR;
+  for (const sp of spans) {
+    if (sp.sec.mode !== 'drone') continue;
+    const j0 = Math.floor(sp.t0 / dt), j1 = Math.ceil(sp.t1 / dt);
+    const sl = (X) => X.map((c) => c.subarray(j0 * STEP, Math.min(c.length, (j1 + 1) * STEP)));
+    const oS = smoothSeries(powerEnvDb(sl(orch), 0.5, STEP), dt, 0.3), oF = powerEnvDb(sl(orch), 0.15, STEP), sE = powerEnvDb(sl(syn), 0.5, STEP);
+    // the drone's own nominal level: its steady part (after the 0.6 s fade-in, before the 0.25 s fade-out)
+    const k0 = Math.round(0.8 / dt), k1 = sE.length - Math.round(0.5 / dt);
+    let acc = 0, cnt = 0; for (let k = k0; k < k1; k++) { acc += Math.pow(10, sE[k] / 10); cnt++; }
+    const sRef = 10 * Math.log10(acc / Math.max(1, cnt) + 1e-20);
+    const gser = new Float32Array(sE.length);
+    for (let k = 0; k < sE.length; k++) gser[k] = clamp(Math.min(oS[k] + dc.offsetDb - sRef, oF[k] + dc.capDb - sE[k]), -60, 40);
+    const gsm = smoothSeries(gser, dt, 0.12);
+    const i0 = Math.round(sp.t0 * SR), i1 = Math.min(iStop, Math.round(sp.t1 * SR));
+    for (let i = i0; i < i1; i++) {
+      const x = i / STEP - j0, k = Math.min(gsm.length - 2, Math.max(0, Math.floor(x))), f = clamp(x - k, 0, 1);
+      gDb[i] = gsm[k] + (gsm[k + 1] - gsm[k]) * f;
+    }
+    droneInfo.push({ t0: sp.t0, t1: sp.t1, synthRefDb: +sRef.toFixed(1), gainRangeDb: [+Math.min(...gsm).toFixed(1), +Math.max(...gsm).toFixed(1)] });
+  }
+  // 30 ms ramps (in dB) across each internal section boundary, so delay/room tails are never stepped
+  const R = Math.round(0.015 * SR);
+  for (let s = 1; s < spans.length; s++) {
+    const ib = Math.round(spans[s].t0 * SR); if (ib - R < 0 || ib + R >= iStop) continue;
+    const a = gDb[ib - R], b = gDb[ib + R];
+    for (let i = ib - R; i <= ib + R; i++) gDb[i] = a + (b - a) * smooth(ib - R, ib + R, i);
+  }
+  const g = new Float32Array(n);
+  for (let i = 0; i < iStop; i++) g[i] = undb(gDb[i]);
   // hard stop at the ignition cut also silences the synth's chorus/delay/room tails (4 ms ramp)
   const ramp = Math.round(0.004 * SR);
   for (let i = iStop - ramp; i < iStop; i++) g[i] *= (iStop - i) / ramp;
@@ -1001,7 +1136,44 @@ function autoLevelSynth(tl, orch, syn, synthInfo) {
     for (let i = Math.max(iStop, a - SR); i < n; i++) g[i] = undb(pg) * Math.min(1, env[i] / (ref || 1));
     pad = { gainDb: pg, orchK: lo, synthKraw: ls };
   }
-  return { rows, gain: g, pad };
+  return { rows, gain: g, pad, drone: droneInfo };
+}
+
+// Cannon approach law: measure each cue (K-weighted, 400 ms from its transient) against the orchestra (K-weighted,
+// +-1 s around it) on the bus, return the correction toward rel(d) and the per-cue table.
+function cannonLevels(tl, kO, gO, canStem, gC, table, prev = {}) {
+  const P = DESIGN.cannon;
+  const kC = [kWeight(canStem[0]), kWeight(canStem[1])];
+  const ms = (K, a, b) => bandRMS(K[0], a, b) + bandRMS(K[1], a, b);
+  const out = {}, rows = [];
+  for (const r of table) {
+    const a = Math.round(r.t * SR), b = Math.round((r.t + 0.4) * SR);
+    const lc = 10 * Math.log10(ms(kC, a, b) * gC * gC + 1e-20);
+    const lo = 10 * Math.log10(ms(kO, Math.round((r.t - 1) * SR), Math.round((r.t + 1) * SR)) * gO * gO + 1e-20);
+    const target = P.relFar + (P.relNear - P.relFar) * Math.pow(1 - r.distance, P.shape);
+    const err = target - (lc - lo);
+    out[r.id] = clamp((prev[r.id] || 0) + err, -P.maxCorrDb, P.maxCorrDb);
+    rows.push({ id: r.id, distance: r.distance, target: +target.toFixed(2), rel: +(lc - lo).toFixed(2), errDb: +err.toFixed(2) });
+  }
+  return { gains: out, rows, maxErr: Math.max(...rows.map((x) => Math.abs(x.errDb))) };
+}
+
+// Duck envelope (linear gain) for the orchestra/synth under the strike cannons.
+function duckGain(n, cannons) {
+  const P = DESIGN.duck, gdb = new Float32Array(n);
+  for (const c of cannons) {
+    if (c.distance > P.maxD) continue;
+    const depth = P.depthDb[0] + (P.depthDb[1] - P.depthDb[0]) * (1 - c.distance / P.maxD);
+    const i0 = Math.round((c.t - P.attack) * SR), i1 = Math.round((c.t + P.hold + 8 * P.tau) * SR);
+    for (let i = Math.max(0, i0); i < Math.min(n, i1); i++) {
+      const x = i / SR - c.t;
+      const s = x < 0 ? smooth(-P.attack, 0, x) : (x < P.hold ? 1 : Math.exp(-(x - P.hold) / P.tau));
+      gdb[i] = Math.min(gdb[i], -depth * s);
+    }
+  }
+  const g = new Float32Array(n);
+  for (let i = 0; i < n; i++) g[i] = gdb[i] === 0 ? 1 : undb(gdb[i]);
+  return g;
 }
 
 // ----------------------------------------------------------------------------------------------------------
@@ -1092,14 +1264,26 @@ export async function renderSoundtrack({ base = '/', log = console.log } = {}) {
   log(`grid check: leads ${tl.refined.report.sections.map((x) => `${x.bars.join('-')}: ${x.leadMs} ms`).join(', ')}; re-fits ${JSON.stringify(tl.refined.report.refits.map((r) => [r.bar, r.shiftMs, r.accepted]))} (${((performance.now() - t1r) / 1000).toFixed(1)} s)`);
   await render('orchestra', (ctx) => buildOrchestra(ctx, tl, winter));
   await render('synth', (ctx) => buildSynth(ctx, tl));
-  await render('cannons', (ctx) => buildCannons(ctx, tl, samples));
   await render('ignition', (ctx) => buildIgnition(ctx, tl));
+  const gO = undb(DESIGN.orchestraMakeupDb), gC = undb(DESIGN.cannonsDb), gI = undb(DESIGN.ignitionDb);
+  // cannons: render, measure every cue against the orchestra, correct toward the approach law, re-render
+  const kO = [kWeight(stems.orchestra[0]), kWeight(stems.orchestra[1])];
+  let cg = {}, cl = null;
+  const cannonPasses = [];
+  for (let pass = 0; pass < DESIGN.cannon.passes; pass++) {
+    await render('cannons', (ctx) => buildCannons(ctx, tl, samples, cg));
+    cl = cannonLevels(tl, kO, gO, stems.cannons, gC, info.cannons, cg);
+    cannonPasses.push(+cl.maxErr.toFixed(2));
+    log(`cannon approach law, pass ${pass}: max error ${cl.maxErr.toFixed(2)} dB`);
+    if (cl.maxErr <= DESIGN.cannon.tolDb || pass === DESIGN.cannon.passes - 1) break;
+    cg = cl.gains;
+  }
 
   // --- balance ---
-  const gO = undb(DESIGN.orchestraMakeupDb), gC = undb(DESIGN.cannonsDb), gI = undb(DESIGN.ignitionDb);
-  const orch = stems.orchestra.map((x) => { const y = new Float32Array(x.length); for (let i = 0; i < x.length; i++) y[i] = x[i] * gO; return y; });
-  const lev = autoLevelSynth(tl, orch, stems.synth, info.synth);
-  const syn = stems.synth.map((x) => { const y = new Float32Array(x.length); for (let i = 0; i < x.length; i++) y[i] = x[i] * lev.gain[i]; return y; });
+  const duck = duckGain(length, info.cannons);
+  const orch = stems.orchestra.map((x) => { const y = new Float32Array(x.length); for (let i = 0; i < x.length; i++) y[i] = x[i] * gO * duck[i]; return y; });
+  const lev = autoLevelSynth(tl, stems.orchestra.map((x) => x.map((v) => v * gO)), stems.synth, info.synth);
+  const syn = stems.synth.map((x) => { const y = new Float32Array(x.length); for (let i = 0; i < x.length; i++) y[i] = x[i] * lev.gain[i] * duck[i]; return y; });
   const can = stems.cannons.map((x) => (gC === 1 ? x : x.map((v) => v * gC)));
   const ign = stems.ignition.map((x) => (gI === 1 ? x : x.map((v) => v * gI)));
   const pre = [0, 1].map((c) => { const y = new Float32Array(length); const a = orch[c], b = syn[c], d = can[c], e = ign[c]; for (let i = 0; i < length; i++) y[i] = a[i] + b[i] + d[i] + e[i]; return y; });
@@ -1129,8 +1313,9 @@ export async function renderSoundtrack({ base = '/', log = console.log } = {}) {
   const report = {
     durationSeconds: tl.duration, sampleRate: SR, length,
     times: tl.T, tuningA4: tl.a4, gridCheck: tl.refined.report, shaperLatencySamples: { x2: Math.round(tl.lat['2x'] * SR), x4: Math.round(tl.lat['4x'] * SR) },
-    orchestra: info.orchestra, synth: { ...info.synth, steps: info.synth.steps.length, autoLevel: lev.rows.map((r) => ({ bar: r.bar, target: +r.target.toFixed(1), raw: +(r.synthK - r.orchK).toFixed(1), appliedDb: +r.appliedDb.toFixed(1) })), pad: lev.pad },
+    orchestra: info.orchestra, synth: { ...info.synth, steps: info.synth.steps.length, autoLevel: lev.rows.map((r) => ({ bar: r.bar, target: +r.target.toFixed(1), raw: +(r.synthK - r.orchK).toFixed(1), appliedDb: +r.appliedDb.toFixed(1) })), drone: lev.drone, pad: lev.pad },
     synthSteps: info.synth.steps,
+    cannonApproach: { law: DESIGN.cannon, passMaxErrDb: cannonPasses, cues: cl.rows }, duck: { ...DESIGN.duck, cues: info.cannons.filter((c) => c.distance <= DESIGN.duck.maxD).map((c) => c.id) },
     cannons: info.cannons, cannonSamples: Object.fromEntries(Object.entries(samples).map(([k, s]) => [k, { ...CANNON_SAMPLES[k], onsetMs: +(s.info.onset * 1000).toFixed(2), peakAtMs: +(s.info.peakAt * 1000).toFixed(1), peakDb: +db(s.info.peak).toFixed(1), boomDb: +db(s.info.boomRms).toFixed(1), matchGainDb: +db(s.info.norm).toFixed(1) }])),
     ignition: info.ignition,
     master: { targetLufs: DESIGN.targetLufs, ceilingDbtp: DESIGN.ceilingDbtp, preLufs: +preL.toFixed(2), masterGainDb: +db(gM).toFixed(2), lufs: +L.toFixed(2), compMaxGrDb: +comp.maxGrDb.toFixed(2), compMeanGrDb: +comp.meanGrDb.toFixed(2), limiterMaxGrDb: +lim.maxGrDb.toFixed(2), limiterActivePct: +lim.activePct.toFixed(3), stemLufs, orchestraMakeupDb: DESIGN.orchestraMakeupDb },

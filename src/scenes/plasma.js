@@ -192,7 +192,7 @@ export default {
     const D = dofAt(P, S);
     const k = A.w / 1920;
     const maxCoc = (D.max ?? 0) * k;
-    E.draw(this.pDof, { uSrc: A, uFocus: D.focus ?? 3, uAperture: (D.aperture ?? 0) * k, uMaxCoc: maxCoc, uTaps: maxCoc < 10 ? 24 : maxCoc < 16 ? 32 : 40 }, B);
+    E.draw(this.pDof, { uSrc: A, uFocus: D.focus ?? 3, uAperture: (D.aperture ?? 0) * k, uMaxCoc: maxCoc, uTaps: maxCoc < 10 ? 20 : maxCoc < 18 ? 26 : 32 }, B);
     // filaments / sparks as soft HDR geometry at full output resolution
     const strokes = P.kind === 'filaments' || P.kind === 'sparks';
     const Lt = strokes ? E.target('plasmaLines', 1) : null;

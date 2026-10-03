@@ -26,6 +26,7 @@ uniform float uFlare;        // strike flare of the inner disk (0..)
 uniform vec4 uHot;           // hot spot: x, z, strength, arc length along the rim (radians)
 uniform vec3 uBoxMin, uBoxMax;
 uniform float uPixAng;       // radians per volume-target pixel
+uniform float uCool;         // amount of cool absorbing veils in the stream (1 = default)
 uniform vec2 uClump;
 uniform vec2 uDiskBound;     // disk/ring bounding radius and half-height (0 = no disk), from JS         // bright knot riding the stream: arc length, strength
 
@@ -132,7 +133,7 @@ float streamSample(vec3 p, vec4 f, out vec3 j){
   float hot = (env * ((0.03 + 1.5 * core) * m + 1.2 * fl * (0.25 + sh) * headT * cut) * clump + knot * 2.0) * uStreamAmt;
   // cool, dense gas between the sheets: absorbing veils
   float cn = wn.g * 0.75 + 0.25 * (1.0 - sh);
-  float cool = env * smoothstep(0.42, 0.8, cn) * (1.0 - 0.7 * sat(sh)) * m * uStreamAmt * (0.4 + 0.6 * exp(-max(s, 0.0) / 0.25));
+  float cool = uCool * env * smoothstep(0.42, 0.8, cn) * (1.0 - 0.7 * sat(sh)) * m * uStreamAmt * (0.4 + 0.6 * exp(-max(s, 0.0) / 0.25));
   // temperature: gas heats as it falls into the dwarf's potential; sheets and threads hotter in their cores
   float rD = length(p.xz - uWD.xz);
   float T = 2000.0 * pow(0.56 / max(rD, 0.03), 0.72) * (0.72 + 0.42 * sh + 0.22 * fl);
