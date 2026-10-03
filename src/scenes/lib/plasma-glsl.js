@@ -2,7 +2,8 @@
 //   PLASMA_COMMON  heat -> emission palette (crimson -> ember -> gold -> white), noise helper
 //   BOIL           raymarched convecting plasma slab (heightfield surface + rising emissive/absorbing wisps)
 //   CORE           hot plasma core (boiling sphere + turbulent corona) with a cold-blue field haze
-//   DOF / COMP     depth-of-field gather (alpha = depth) and the final composite with the canvas overlay
+//   VOLBOIL        fully volumetric churning plasma (used as the defocused backdrop of the dense-sparks shot)
+//   DOF / COMP     depth-of-field gather (alpha = depth) and the final composite with the stroke layer
 // All passes write linear HDR radiance; nothing is clamped or tonemapped here.
 
 export const PLASMA_COMMON = `
@@ -228,7 +229,6 @@ uniform float uSpin;
 uniform vec3  uAxis;       // flux-rope axis (unit)
 uniform vec3  uHazeCol;    // cold field haze radiance
 uniform float uHazeR;      // haze radius around the axis
-uniform float uRopeR;      // wrap radius of the rope near the core (corona extent)
 uniform float uGain;
 
 vec3 coreShade(vec3 ro, vec3 rd, out float depth){

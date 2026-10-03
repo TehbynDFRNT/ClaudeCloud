@@ -47,7 +47,6 @@ void main(){
   vec2 uv = frameUV();
   vec3 rd = cameraRay(uv);
   vec3 o = uCamPos - uGiantPos;
-  float pixAngle = 2.0 * uTanHalfFov / uFull.y;
   // sparse, fine stars (sparser than the shared field: the giant owns the frame)
   float pa = 2.0 * uTanHalfFov / uRes.y;
   vec3 bg = (starLayer(rd, 70.0, 1.0, pa, 0.12) + starLayer(rd, 150.0, 2.0, pa, 0.035) * 0.7) * uStarGain;
@@ -80,14 +79,6 @@ function horizonCam(alt, pitchDeg, yawDeg = 0, x = 0) {
   const d = [Math.sin(yw) * Math.cos(pt), -Math.sin(pt), Math.cos(yw) * Math.cos(pt)];
   return [p, [p[0] + d[0], p[1] + d[1], p[2] + d[2]]];
 }
-// orbit camera around the origin: distance, azimuth/elevation (deg), look-at point (scene units).
-// azimuth 0 = camera on -Z looking toward +Z (screen right = -X).
-function orbitCam(dist, azDeg, elDeg, look = [0, 0, 0]) {
-  const az = azDeg * D2R, el = elDeg * D2R;
-  const p = [Math.sin(az) * Math.cos(el) * dist, Math.sin(el) * dist, -Math.cos(az) * Math.cos(el) * dist];
-  return [p, look];
-}
-
 // orbit camera that puts the giant centre at frame position (sx, sy) in [-1,1] (frameUV, y up).
 // returns [pos, target]; azimuth 0 = camera on -Z (screen right = -X).
 function aimCam(dist, azDeg, elDeg, sx, sy, fov, center = [0, 0, 0]) {
@@ -128,7 +119,7 @@ export default {
     'S01-abyss': {
       cam: [
         [0, ...horizonCam(0.033, -7, 0), 55],
-        [8, ...horizonCam(0.038, 2.5, 3), 55, 0, 'inOutSine'],
+        [1, ...horizonCam(0.038, 2.5, 3), 55, 0, 'inOutSine'],
       ],
       heroes: [
         { c: [-0.24, 0.86, 0.48], a: [1, 0, 0.15], span: 0.085, height: 0.11, width: 0.010, phase: 0.3 },
@@ -146,8 +137,8 @@ export default {
     'S02-goliath': {
       cam: [
         [0, ...aimCam(2.35, -22, 4, -0.02, 0.06, 40), 40],
-        [4.5, ...aimCam(3.4, -12, 7, -0.22, 0.07, 40), 40, 0, 'outCubic'],
-        [10, ...aimCam(3.9, -6, 9, -0.26, 0.07, 40), 40, 0, 'inOutSine'],
+        [0.42, ...aimCam(3.4, -12, 7, -0.22, 0.07, 40), 40, 0, 'outCubic'],
+        [1, ...aimCam(3.9, -6, 9, -0.26, 0.07, 40), 40, 0, 'inOutSine'],
       ],
       heroes: [
         { c: [-0.97, 0.12, -0.2], a: [0, 1, 0.1], span: 0.22, height: 0.22, width: 0.012, phase: 1.15 },
@@ -161,7 +152,7 @@ export default {
     'F28.2': {
       cam: [
         [0, ...horizonCam(0.30, 24, -6, 0.02), 50, -0.05],
-        [0.96, ...horizonCam(0.25, 27, -2, -0.02), 46, 0.03, 'outQuad'],
+        [1, ...horizonCam(0.25, 27, -2, -0.02), 46, 0.03, 'outQuad'],
       ],
       heroPlumes: [
         { c: [0.02, 0.70, 0.72], l: [0.4, 0.3, -0.6], height: 0.12, width: 0.045, lean: 0.8, phase: 0.3 },
@@ -178,7 +169,7 @@ export default {
     'S27-devastation': {
       cam: [
         [0, ...aimCam(2.75, 158, 7, -0.30, 0.02, 45), 45],
-        [7, ...aimCam(2.65, 168, 9, -0.20, 0.03, 45), 45, 0, 'linear'],
+        [1, ...aimCam(2.65, 168, 9, -0.20, 0.03, 45), 45, 0, 'linear'],
       ],
       spin: [2.0, 0.006], boil: 1.2, plumes: 0.7, scar: 1.0, scarDir: [1, 0, 0], relief: 0.006, limbDark: 0.55, starGain: 0.6,
       embers: { count: 2200, gain: 4.0, size: 2.2 }, volScale: 0.4,
@@ -189,7 +180,7 @@ export default {
         { c: [0.99, -0.02, 0.12], l: [0.3, 0.2, -1], height: 0.20, width: 0.05, lean: 0.8, phase: 0.33 },
       ],
     },
-    default: { cam: [[0, [0, 0, -3.2], [0, 0, 0], 40]] },
+    default: { cam: [[0, [0, 0, -3.2], [0, 0, 0], 40]] },   // cam key times are fractions of the shot (camAbs: seconds)
   },
   init(E) {
     this.vol = E.program(VOL, 'redgiant.vol');
@@ -198,7 +189,9 @@ export default {
   uniforms(E, S) {
     const P = S.params;
     const local = Math.max(0, Math.min(S.dur, S.local));
-    const cam = camFromKeys(P.cam || [[0, [0, 0, -3.2], [0, 0, 0], 40]], local);
+    // camera keys are in shot-normalised time (0..1) so presets survive timeline rebuilds
+    const keys = (P.cam || [[0, [0, 0, -3.2], [0, 0, 0], 40]]).map((k) => [k[0] * (P.camAbs ? 1 : S.dur), ...k.slice(1)]);
+    const cam = camFromKeys(keys, local);
     const spin = P.spin || [0, 0.004];
     return {
       cam,

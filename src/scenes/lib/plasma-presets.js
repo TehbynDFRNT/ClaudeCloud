@@ -4,7 +4,7 @@
 const S14B = {
   timeU: true,
   kind: 'boil',
-  rmScale: 0.8,
+  rmScale: 0.9,
   cam: [
     [0.0, [0.0, 2.4, -1.3], [0.25, -0.2, 0.35], 38, 0.0],
     [1, [0.1, 2.15, -1.0], [0.33, -0.22, 0.5], 37, 0.04, 'linear'],
@@ -14,8 +14,8 @@ const S14B = {
     cell: 2.8, evo: [3.2, 0.55], drift: [0, 0, 0.0, 0.0], warp: 1.0, relief: 0.06,
     heat: 0.0, heatGain: 1.0, gain: 1.0,
     plume: 3.0, plumeH: 0.1, rise: 0.35, absorb: 5.0,
-    tmax: 12, fog: 0.07, haze: [0.025, 0.0018, 0.0008], detail: 1.0, flowSpin: 0.0,
-    soft: 0.015, sigma: 70, skin: 0.08, flowRate: 1.6,
+    tmax: 12, fog: 0.07, haze: [0.025, 0.0018, 0.0008], detail: 1.35, flowSpin: 0.0,
+    soft: 0.012, sigma: 80, skin: 0.08, flowRate: 1.6,
   },
   dof: { focus: 3.0, aperture: 22, max: 24 },
   post: { bloomStrength: 0.05, halation: 0.04, vignette: 0.6, saturation: 1.1 },
@@ -36,7 +36,7 @@ const S14G = {
     events: [{ t: 0.33, i: 1, s: 0.9, type: 'snap' }, { t: 0.68, i: 2, j: 12, s: -0.7, type: 'reconnect' }],
   },
   dof: { focus: 4.0, aperture: 40, max: 30 },
-  overlay: { gain: 1, absorb: 2.5 },
+  lines: { gain: 1, absorb: 2.5 },
   flashes: [[0.33, 0.02, 0.05], [0.68, 0.015, 0.06]],
   flashCol: [0.4, 0.65, 1.0],
   post: { bloomStrength: 0.07, halation: 0.02, vignette: 0.6, streakStrength: 0.04 },
@@ -63,7 +63,7 @@ const F293 = {
     gravity: [0, -5.5, 0], drag: 0.9,
   },
   dof: { focus: 2.6, aperture: 26, max: 30 },
-  overlay: { gain: 1, absorb: 0 },
+  lines: { gain: 1, absorb: 0 },
   post: { bloomStrength: 0.08, halation: 0.05, vignette: 0.6, saturation: 1.1 },
 };
 
@@ -84,7 +84,7 @@ const F316 = {
     gravity: [0, -1.0, 0], drag: 0.6,
   },
   dof: { focus: 2.5, aperture: 30, max: 34 },
-  overlay: { gain: 1, absorb: 0 },
+  lines: { gain: 1, absorb: 0 },
   post: { bloomStrength: 0.09, halation: 0.05, vignette: 0.5, zoomBlur: 0.02 },
 };
 
@@ -166,7 +166,7 @@ const F283 = {
     events: [],
   },
   dof: { focus: 3.0, aperture: 34, max: 34 },
-  overlay: { gain: 1, absorb: 1.5 },
+  lines: { gain: 1, absorb: 1.5 },
   post: { bloomStrength: 0.07, halation: 0.02, vignette: 0.65, streakStrength: 0.04, zoomBlur: 0.015 },
 };
 
@@ -192,7 +192,7 @@ const F315 = {
     ],
   },
   dof: { focus: 2.4, aperture: 30, max: 30 },
-  overlay: { gain: 1, absorb: 0.5 },
+  lines: { gain: 1, absorb: 0.5 },
   flashes: [[0.04, 0.025, 0.035], [0.28, 0.025, 0.035], [0.52, 0.03, 0.035], [0.74, 0.035, 0.035]],
   flashCol: [0.5, 0.75, 1.0],
   post: { bloomStrength: 0.09, halation: 0.02, vignette: 0.55, streakStrength: 0.06 },

@@ -25,82 +25,111 @@ uniform vec2 uTileN;
 
 vec4 sprT(int i, int k){ return texelFetch(uSpr, ivec2(((i & 255) << 2) + k, i >> 8), 0); }
 
+// Nucleon look (kind = e.w): 0 nucleon, 1 whole distant nucleus (one lumpy sphere), 2 shutter ghost.
+//  * in focus: a dense, self-luminous ball of nuclear matter. Limb-darkened like a tiny star (white-hot
+//    centre -> saturated body -> deep ember / deep blue limb), boiling multi-scale granulation, three hot
+//    quark cores jittering inside, a wide soft subsurface rim on the side facing its neighbours, nearly
+//    opaque, and an absorbing contact skirt just outside the silhouette so pressed clusters separate.
+//  * defocused: a flat, uniform, energy-conserving disc of the sphere's mean colour, no texture, no
+//    limb, clipped to a cat's-eye toward the frame edges (mechanical vignetting).
 void shadeSprite(int id, float type, vec4 a, vec2 d, float dd, inout vec3 col, inout float T){
   vec4 b = sprT(id, 1);
   vec4 c = sprT(id, 2);
   vec4 e = sprT(id, 3);
   if (type < 0.5){
-    // ---- translucent glowing sphere (nucleon, or a whole distant nucleus when e.w = 1)
     float r = b.x, coc = b.y, R = r + coc;
     float dist = sqrt(dd);
+    float kind = e.w;
     float bl = coc / R;                                   // 0 sharp .. 1 pure bokeh
-    float aa = 0.7 + 0.04 * coc + 0.55 * min(coc, r);
+    float m = kind > 1.5 ? 1.0 : smoothstep(0.1, 0.4, bl);
+    float aa = 0.75 + 0.1 * coc;
     float edge = sat((R - dist) / aa + 0.5);
-    if (edge <= 0.0) return;
-    float rs = r + 0.8 * coc;
-    vec2 sp = d / rs;
-    float s2 = min(dot(sp, sp), 1.0);
-    float th = sqrt(1.0 - s2);                            // chord through the sphere / normal z
-    float wrap = sat(0.5 + 0.5 * dot(sp, e.xy));          // subsurface: lit from the cluster interior
-    float rr = sqrt(s2);
-    float fres = pow(1.0 - th, 4.0) * smoothstep(1.0, 0.95, rr);
-    float m = smoothstep(0.1, 0.62, bl);
-    vec3 cc = c.rgb;
-    float mx = max(cc.r, max(cc.g, cc.b)) + 1e-5;
-    vec3 hot = mix(cc, vec3(mx) * vec3(1.0, 0.94, 0.86), 0.22 + 0.5 * sat(e.z * 0.6));   // white-hot core
-    vec3 deep = cc * pow(cc / mx, vec3(0.7));                                         // saturated body
-    vec3 em;
-    if (m < 0.95){
-      // internally lit translucent sphere: white-hot core, saturated body falling off toward a darker
-      // band, a thin bright limb line (internal reflection), caustic filaments, a small glint
-      float body = 0.2 + 0.8 * pow(th, 1.3);
-      float core = pow(th, 4.0 + 3.0 * sat(e.z));
-      float lit = 0.35 + 0.95 * wrap;
-      vec3 np = vec3(sp * 1.3, th * 1.1) + vec3(b.w * 7.13, b.w * 3.71, b.w * 1.37);
-      float n = 0.0, caustic = 0.0;
-      if (e.w < 1.5){                                     // (e.w = 2: dim shutter ghost, no texture)
-        n = n3(np + vec3(0.0, 0.0, uTime * 2.2));
-        float cs = 1.0 - abs(n3(np * 2.4 + vec3(uTime * 1.3, 4.0, uTime * 0.9)));
-        caustic = pow(cs, 12.0) * th * 0.65;
-      }
-      float sh = 0.86 + 0.3 * n;
-      if (e.w > 0.5 && e.w < 1.5){                        // distant nucleus: lumpy cluster of cores
-        vec2 cl = cells3(vec3(sp * 2.1, th * 1.5) + b.w * 5.3);
-        sh = 0.4 + 1.25 * (1.0 - smoothstep(0.0, 0.75, cl.x)) * (0.75 + 0.25 * n);
-        caustic = 0.0;
-      }
-      float rw = max(0.02, 0.9 / r);                      // limb line at least ~1 px wide
-      float limb = exp(-pow((rr - (1.0 - rw * 1.2)) / rw, 2.0)) * (0.3 + 1.0 * wrap);
-      vec2 gl = sp + e.xy * 0.4 - 0.25 * vec2(fract(b.w * 0.618) - 0.5, fract(b.w * 0.382) - 0.3);
-      float gw = max(0.075, 1.2 / r);
-      float glint = exp(-dot(gl, gl) / (gw * gw)) * (0.5 + 0.5 * fract(b.w * 0.737));
-      vec3 se = deep * (body * 0.6 * lit * sh)
-              + hot * (core * (1.3 + 2.6 * e.z) * (0.55 + 0.6 * wrap) * sh + caustic * (0.5 + 0.6 * e.z) + glint * 1.8)
-              + mix(cc, hot, 0.3) * limb * 0.75;
-      float u = dist / R;
-      float bok = 0.55 + 0.2 * smoothstep(0.55, 0.97, u) + 0.03 * sin(u * 37.0 + b.w * 9.0);
-      em = mix(se, cc * bok, m);
-    } else {
-      float u = dist / R;
-      float bok = 0.55 + 0.2 * smoothstep(0.55, 0.97, u) + 0.03 * sin(u * 37.0 + b.w * 9.0);
-      em = cc * bok * mix(vec3(1.0), vec3(0.85 + 0.3 * u, 1.0, 1.12 - 0.25 * u), smoothstep(0.6, 1.0, u)); // bokeh fringe
+    float skW = kind < 0.5 ? (0.16 * r + 1.0) * (1.0 - m) : 0.0;
+    if (edge <= 0.0){
+      if (skW > 0.0){ float x = sat((dist - R - 0.5 * aa) / skW); T *= 1.0 - c.a * 0.62 * (1.0 - x) * (1.0 - x); }
+      return;
     }
-    float norm = mix(1.0, (r * r) / (R * R), bl);
-    col += T * em * (norm * edge);
-    T *= 1.0 - c.a * edge * norm * mix(0.12 + 0.88 * th, 0.85, m);
+    if (m > 0.0){                                         // cat's-eye: second aperture shifted toward the centre
+      vec2 fp = (a.xy - 0.5 * uFull) / (0.5 * uFull.y);
+      float dc = length(d + fp * 0.2 * R);
+      edge *= mix(1.0, sat((R - dc) / aa + 0.5), m);
+      if (edge <= 0.0) return;
+    }
+    float rs = r + 0.5 * coc;
+    vec2 sp = d / rs;
+    float rr2 = min(dot(sp, sp), 1.0);
+    float rr = sqrt(rr2);
+    float nz = sqrt(1.0 - rr2);
+    vec3 cc = c.rgb;
+    float mx = max(cc.r, max(cc.g, cc.b)) + 1e-6;
+    vec3 tint = cc / mx;
+    float heat = e.z;
+    vec3 sat1 = pow(tint, vec3(1.35));                     // saturated body colour
+    vec3 hotC = mix(tint, vec3(1.0, 0.95, 0.88), sat(0.3 + 0.3 * heat));
+    vec3 edgeC = pow(tint, vec3(3.2)) * 0.09;
+    float coreG = 1.7 + 2.2 * heat;
+    vec3 meanC = sat1 * 0.4 + hotC * (0.25 * coreG);       // mean radiance of the sharp profile
+    vec3 em;
+    if (m < 0.97){
+      float wrap = sat(0.5 + 0.5 * dot(sp, e.xy));
+      float body = smoothstep(-0.05, 0.95, nz);
+      vec3 base = mix(edgeC, sat1 * 0.62, body);
+      float core = pow(nz, 3.2 + 1.5 * sat(heat * 0.5));
+      float gm = 1.0, fil = 0.0, qs = 0.0;
+      if (kind < 0.5){
+        float s = b.w, ta = uTime;
+        vec3 P = vec3(sp, nz);
+        float g1 = n3(P * 2.3 + vec3(s * 7.13, s * 3.71, ta * 2.7));
+        float g2 = n3(P.yzx * 4.8 + vec3(ta * 3.3, s * 1.37, -ta * 2.3));
+        float g3 = n3(vec3(sp * 10.0, s * 5.3 + ta * 8.0));
+        float gr = 0.55 * g1 + 0.3 * g2 + 0.15 * g3;
+        gm = 0.45 + 1.05 * smoothstep(-0.4, 0.45, gr);
+        fil = pow(1.0 - abs(g2), 9.0) * nz;
+        for (int k = 0; k < 3; k++){                      // quark cores: orbiting + per-frame jitter
+          float ph = s * 2.39 + float(k) * 2.0944 + ta * (4.0 + 3.0 * fract(s * 0.618));
+          vec3 qp = vec3(cos(ph), sin(ph) * cos(s * 1.9), sin(ph) * sin(s * 1.9)) * 0.36;
+          qp += (hash33(vec3(s * 13.7, float(k) * 7.1, uFrame)) - 0.5) * 0.15;
+          float w = 0.17 + 0.12 * (0.4 - qp.z);
+          vec2 dq = sp - qp.xy;
+          qs += exp(-dot(dq, dq) / (w * w)) * (0.7 + 0.8 * qp.z);
+        }
+      } else if (kind < 1.5){                             // distant nucleus: lumpy cluster of cores
+        vec2 cl = cells3(vec3(sp * 2.1, nz * 1.5) + b.w * 5.3);
+        gm = 0.4 + 1.2 * (1.0 - smoothstep(0.0, 0.75, cl.x));
+      }
+      float lit = 0.7 + 0.6 * wrap;
+      float rim = smoothstep(0.72, 0.97, rr) * (1.0 - 0.6 * smoothstep(0.96, 1.0, rr)) * wrap;
+      vec3 se = base * gm * lit
+              + hotC * (core * coreG * (0.6 + 0.4 * gm) + qs * (0.55 + 0.6 * heat) * nz * nz + fil * 0.35)
+              + mix(sat1, hotC, 0.3) * rim * 0.34;
+      em = mix(se, meanC, m);
+    } else em = meanC;
+    float norm = mix(1.0, (r * r) / (R * R), bl);         // energy-conserving spread
+    col += T * mx * em * (norm * edge);
+    float op = c.a * mix(0.86 + 0.14 * nz, 0.9, m);
+    T *= 1.0 - op * edge * norm;
   } else if (type < 1.5){
-    // ---- streak / trail: head at a.xy, tail at a.xy + e.xy
+    // ---- streak / trail: head at a.xy, tail at a.xy + e.xy.  e.w = 1: seamless ends (abutting segments
+    // of a path sum to a uniform line instead of beading at the joints)
     vec2 tl = e.xy;
     float L2 = max(dot(tl, tl), 1e-4);
-    float h = sat(dot(d, tl) / L2);
-    vec2 v = d - tl * h;
+    float hr = dot(d, tl) / L2;
+    float h = sat(hr);
     float r0 = max(b.x, 0.65);
     float w = r0 + b.y;
+    float endW = 1.0;
+    vec2 v = d - tl * h;
+    if (e.w > 0.5){
+      float L = sqrt(L2);
+      v = d - tl * hr;
+      float s = hr * L;
+      endW = sat(0.5 + s / w) * sat(0.5 + (L - s) / w);
+    }
     float x2 = dot(v, v) / (w * w);
     if (x2 > 8.0) return;
     float prof = exp(-x2 * 1.7) + 0.06 * exp(-x2 * 0.25);
-    float fade = pow(1.0 - h, e.z);
-    col += T * c.rgb * (prof * fade * (r0 / w));
+    float fade = e.z > 0.0 ? pow(1.0 - h, e.z) : 1.0;
+    col += T * c.rgb * (prof * fade * endW * (r0 / w));
   } else {
     // ---- glow / flash: hot white core with a coloured falloff
     float r = b.x + b.y * 0.5;
@@ -209,14 +238,17 @@ export class SpriteBatch {
     return true;
   }
 
-  // translucent glowing sphere. lightC: world point the subsurface light comes from (or null).
-  sphere(p, r, rgb, inten, alpha, lightC, heat, seed, cluster = 0, pp = null) {
+  // glowing sphere. lightC: world point the subsurface light comes from (or null).
+  // kind: 0 nucleon (contact skirt when sharp), 1 whole distant nucleus, 2 shutter ghost (flat smear)
+  sphere(p, r, rgb, inten, alpha, lightC, heat, seed, kind = 0, pp = null) {
     const q = pp || this.proj(p);
     if (!q) return;
     const [x, y, z, pxs, coc] = q;
     const rp = Math.max(0.6, r * pxs);
-    const R = rp + coc + 1.0;
+    const skirt = kind === 0 && coc < 0.7 * rp ? 0.16 * rp + 1.0 : 0;
+    const R = rp + coc * 1.06 + 1.5 + skirt;
     if (!this.onScreen(x, y, R)) return;
+    const cluster = kind;
     let lx = 0, ly = 0;
     if (lightC) {
       const l = this.proj(lightC);
@@ -232,7 +264,7 @@ export class SpriteBatch {
   }
 
   // streak from tail (world) to head (world); brightest at the head
-  streak(head, tail, r, rgb, inten, fadeExp = 1.0, seed = 0) {
+  streak(head, tail, r, rgb, inten, fadeExp = 1.0, seed = 0, seam = 0) {
     const h = this.proj(head), t = this.proj(tail);
     if (!h || !t) return;
     const rp = Math.max(0.65, r * h[3]);
@@ -244,12 +276,13 @@ export class SpriteBatch {
     const miny = Math.min(h[1], t[1]) - pad, maxy = Math.max(h[1], t[1]) + pad;
     if (maxx < 0 || minx > this.W || maxy < this.H * this.lb || miny > this.H * (1 - this.lb)) return;
     inten *= this.fog(h[2]);
-    this._push([h[0], h[1], R, 1e5 + h[2], rp, h[4], h[2], seed, rgb[0] * inten, rgb[1] * inten, rgb[2] * inten, 0, tx, ty, fadeExp, 0],
+    this._push([h[0], h[1], R, 1e5 + h[2], rp, h[4], h[2], seed, rgb[0] * inten, rgb[1] * inten, rgb[2] * inten, 0, tx, ty, fadeExp, seam],
       minx, miny, maxx, maxy, 1);
   }
 
-  // additive glow (flash) at a world point; r = core radius (world)
-  glow(p, r, rgb, inten, reach = 3.5) {
+  // additive glow (flash) at a world point; r = core radius (world). zBias moves it forward in the
+  // depth sort (a flash bursting out between nuclei is not hidden by the ones in front of it).
+  glow(p, r, rgb, inten, reach = 3.5, zBias = 0) {
     const q = this.proj(p);
     if (!q) return;
     const [x, y, z, pxs, coc] = q;
@@ -257,7 +290,8 @@ export class SpriteBatch {
     const R = (rp + coc * 0.5) * reach;
     if (!this.onScreen(x, y, R)) return;
     inten *= this.fog(z);
-    this._push([x, y, R, 2e5 + z, rp, coc, z, 0, rgb[0], rgb[1], rgb[2], inten, 0, 0, 0, 0], x - R, y - R, x + R, y + R, 0);
+    const zs = Math.max(0.3, z - zBias);
+    this._push([x, y, R, 2e5 + zs, rp, coc, zs, 0, rgb[0], rgb[1], rgb[2], inten, 0, 0, 0, 0], x - R, y - R, x + R, y + R, 0);
   }
 
   finish() {

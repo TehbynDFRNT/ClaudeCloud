@@ -25,7 +25,7 @@ const midiHz = (m, a4) => a4 * Math.pow(2, (m - 69) / 12);
 // ----------------------------------------------------------------------------------------------------------
 export const DESIGN = {
   orchestraMakeupDb: 7.0,          // clean make-up gain on the (quiet, ~-24 LUFS) recording
-  cannonsDb: 0.0,
+  cannonsDb: -1.5,
   ignitionDb: 1.5,
   synthTrimDb: -24.0,            // source trim so the per-bar auto-level works around 0 dB
   targetLufs: -15.0,

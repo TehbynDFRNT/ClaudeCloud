@@ -477,9 +477,9 @@ vec3 wdThread(vec3 ro, vec3 rd, float tMax, float pixA, float t){
 vec3 wdDust(vec3 ro, vec3 rd, float tMax, float t){
   if (uDust <= 0.0) return vec3(0.0);
   vec3 acc = vec3(0.0);
-  for (int k = 0; k < 5; k++){
+  for (int k = 0; k < 4; k++){
     float fk = float(k);
-    float R = 9.0 * pow(3.1, fk);
+    float R = 11.0 * pow(4.0, fk);
     vec2 h = sphereHit(ro, rd, vec3(0.0), R);
     if (h.y <= 0.0) continue;
     for (int s = 0; s < 2; s++){
@@ -488,7 +488,7 @@ vec3 wdDust(vec3 ro, vec3 rd, float tMax, float t){
       vec3 p = ro + rd * tt;
       vec3 n = p / R;
       float mu = abs(dot(n, rd));
-      float d = fbm3(n * (3.0 + fk * 0.7) + vec3(fk * 13.1, 2.0, t * 0.01), 4) * 0.5 + 0.5;
+      float d = fbm3(n * (3.0 + fk * 0.7) + vec3(fk * 13.1, 2.0, t * 0.01), 3) * 0.5 + 0.5;
       float wisp = smoothstep(0.52, 0.85, d);
       float giant = 0.5 + 0.5 * dot(n, uGiantDir);
       vec3 lit = wdIce() * (6.0 / R) + C_CRIMSON * uCrimson * giant * giant * 0.6;

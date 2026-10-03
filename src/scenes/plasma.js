@@ -1,9 +1,11 @@
 // PLASMA: macro inserts of matter under extreme conditions (Oppenheimer-style tactile fire).
-// Three families, all with real depth (raymarched volume + depth-of-field gather + canvas strokes in 3D):
+// Three families, all with real depth (raymarched volume + depth-of-field gather + soft HDR strokes in 3D):
 //   boil       convecting emissive plasma slab, cellular, crimson -> gold, cores clipping white
 //   filaments  cold-blue magnetic field lines twisting/tightening around a hot core, snapping & reconnecting
 //   sparks     incandescent particle showers (motion-blurred 3D streaks) over glowing plasma
-// Passes: volume (alpha = depth, reduced scale) -> DOF gather -> composite with the canvas overlay (HDR decode).
+// Passes: plate (alpha = depth, reduced scale) -> DOF gather -> filament/spark geometry (lib/plasma-lines.js,
+// float target, per-vertex depth-of-field widening) -> composite (strokes absorb against the plate).
+// No canvas overlay is used. Presets live in lib/plasma-presets.js.
 import { frag } from '../engine/glsl.js';
 import { PLASMA_COMMON, BOIL, VOLBOIL, CORE, DOF, COMP } from './lib/plasma-glsl.js';
 import { camFromKeys, camera, keys, v3 as E3 } from './lib/util.js';
@@ -132,7 +134,6 @@ function coreUniforms(P, t) {
     uAxis: E3.norm(C.axis || [1, 0, 0]),
     uHazeCol: C.haze || [0.004, 0.012, 0.04],
     uHazeR: C.hazeR ?? 1.2,
-    uRopeR: C.ropeR ?? 1,
     uGain: C.gain ?? 1,
   };
 }
@@ -192,7 +193,7 @@ export default {
       else drawSparks(this.lines, cam, t, Pd, Lt.w, Lt.h, S);
       this.lines.flush(Lt);
     }
-    const ov = P.overlay || {};
+    const ov = P.lines || {};
     E.draw(this.pComp, {
       uSrc: B, uLines: Lt || B, uHasLines: strokes ? 1 : 0,
       uLineGain: ov.gain ?? 1, uLineAbsorb: ov.absorb ?? 0,
@@ -201,7 +202,6 @@ export default {
   },
   post(E, S) {
     const P = S.params;
-    const t = lt(S);
     const out = { ...(P.post || {}) };
     if (P.postKeys) for (const [k, list] of Object.entries(P.postKeys)) out[k] = E.math.keys(list, kt(P, S));
     // plan / sandbox post overrides win over the preset

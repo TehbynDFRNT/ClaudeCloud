@@ -125,14 +125,14 @@ const presets = {
   'S16-ladder': D({
     vol: 0.6,
     cam: [
-      [0, [0.0, 1.85, 0.30], [0, 0, 0.02], 38, 0.0],
-      [3.6, [0.0, 1.30, 0.16], [0, 0, 0.01], 38, -0.22, 'inOutSine'],
+      [0, [0.0, 1.90, 0.30], [0, 0, 0.02], 38, 0.0],
+      [3.6, [0.0, 1.50, 0.18], [0, 0, 0.01], 38, -0.22, 'inOutSine'],
     ],
     tau: [40, 0.5, 0.42],
-    heatRamp: [0.95, 1.22], lum: [0.8, 3.0],
+    heatRamp: [0.95, 1.12], lum: [0.8, 2.6],
     disk: { omega: 0.3, arms: 0.85, armM: 2, armPitch: 0.33, armFloor: 0.1, sheet: 0.9, sheetHeat: 0.6, sheetMask: -0.25,
       maxSteps: 40, armSpeed: 0.08 },
-    post: { bloomStrength: 0.1, streakStrength: 0.03 },
+    post: { bloomStrength: 0.09, streakStrength: 0.012 },
   }),
   // Strike 2: medium, closer and more compressed; the inner disk flares white-hot on the strike, then pulses/decays.
   'S18-strike2': D({

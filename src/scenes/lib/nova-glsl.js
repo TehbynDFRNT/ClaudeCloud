@@ -151,6 +151,8 @@ uniform float uShSeed;
 uniform float uShEvo;    // slow morphing clock
 uniform float uEquator;  // equatorial enhancement (orbital plane)
 uniform float uSheetW;   // continuous sheet weight multiplier
+uniform float uSheetWid; // sheet radial width (fraction of R): thinner = stronger limb brightening
+uniform float uKnotGain; // knot (heads + tails) brightness multiplier
 uniform int uShSteps;    // max steps per segment
 uniform float uShStep;   // target step length (fraction of R)
 // palette, precomputed on the CPU with the same ramp (novaColor in nova-*.js)
@@ -197,14 +199,16 @@ vec3 shellCrossing(vec3 oc, vec3 rd, vec3 warp, float ts, float obl, float sc, f
   float kn2 = 1.0 - smoothstep(0.0, 0.22 * obl, C.g * 1.1);
   float xh2 = 0.975 - 0.03 * (C.r - 0.5) * 2.0;
   float head2 = min(shellCross(p, xh2 * sc, 0.009 * sc), 1.7725 * 0.02 * sc) * kn2 * kn2 * 0.8 / (obl * obl);
-  vec3 heads = (mix(uCHead0, uCHead1, pk) * head * amp * mix(0.1, 1.0, fr) * 13.0 + uCHead2 * head2 * fr * 4.0) * clump * eq;
-  float sheet = shellCross(p, (0.965 + 0.025 * (A.r - 0.5)) * sc, 0.026 * sc) * max(0.0, 0.6 + 0.3 * net + 0.7 * (A.r - 0.5) + 0.4 * (pat - 0.5));
+  vec3 heads = (mix(uCHead0, uCHead1, pk) * head * amp * mix(0.02, 1.0, fr * fr) * 13.0 + uCHead2 * head2 * fr * 4.0) * clump * eq * uKnotGain;
+  float smod = max(0.0, 0.6 + 0.3 * net + 0.7 * (A.r - 0.5) + 0.4 * (pat - 0.5) + 0.3 * (B.g - 0.4));
+  // fracturing: holes open in the sheet as the fracture grows, leaving the filaments
+  float sheet = shellCross(p, (0.965 + 0.025 * (A.r - 0.5)) * sc, uSheetWid * sc) * smod * mix(smoothstep(0.75 * fr - 0.05, 0.75 * fr + 0.2, smod), 0.8, fr * fr);
   float walls = shellCross(p, (0.96 + 0.04 * (pat - 0.5)) * sc, 0.03 * sc) * net * eq;
   float skinPatch = smoothstep(0.4, 0.85, pat + 0.35 * (A.r - 0.5));
   float skin = shellCross(p, (1.022 + 0.015 * (A.r - 0.5)) * sc, 0.012 * sc) * (0.12 + 0.88 * skinPatch);
   vec3 c = heads;
   c += uCWall * walls * (0.07 + 0.3 * (1.0 - fr));
-  c += uCSheet * sheet * mix(1.4, 0.42, fr) * uSheetW;
+  c += uCSheet * sheet * mix(0.5, 0.42, fr) * uSheetW;
   c += uCSkin * skin * uSkin;
   return c / sc;
 }
@@ -221,7 +225,7 @@ vec3 shellBody(vec3 nw, vec4 A, float sc, float r0, float r1, float dt){
   float tail = tailStep(x0, x1, shXh(pk, A) - 0.01, L, dt);
   float xm = 0.5 * (x0 + x1) - 0.8;
   float haze = exp(-xm * xm / 0.029) * dt;
-  return (mix(uCTail0, uCTail1, pk) * tail * amp * fr * 1.6 + uCHaze * haze * 0.07) / sc;
+  return (mix(uCTail0, uCTail1, pk) * tail * amp * fr * 1.6 * uKnotGain + uCHaze * haze * 0.07) / sc;
 }
 
 // march the shell: front and back crossings of the [rIn, rOut] annulus (or the two halves of a limb chord)

@@ -30,7 +30,7 @@ function shellPalette(H, frac) {
   return {
     uCHead0: novaEmit(H - 0.06), uCHead1: novaEmit(H + 0.06), uCHead2: novaEmit(H - 0.05),
     uCTail0: novaEmit(H - 0.19), uCTail1: novaEmit(H - 0.09), uCWall: novaEmit(H - 0.2),
-    uCSheet: novaEmit(H + 0.06 + (-0.24) * fr), uCHaze: novaEmit(H - 0.46), uCSkin: [0.2, 0.5, 1.0],
+    uCSheet: novaEmit(H - 0.02 + (-0.16) * fr), uCHaze: novaEmit(H - 0.46), uCSkin: [0.2, 0.5, 1.0],
   };
 }
 
@@ -308,7 +308,7 @@ export default {
     'S25-shell': {
       mode: 'shell', volScale: 0.6, dur: 2.88,
       cam: [[0, [1.2, 1.0, 5.6], [1.7, 1.2, 0.0], 36], [2.9, [1.45, 1.05, 5.9], [1.85, 1.25, 0.0], 36, 0, 'outCubic']],
-      shR: [[0, 3.0], [2.9, 3.25, 'outQuad']], frac: [[0, 0.1], [2.9, 0.9, 'inOutSine']], shHeat: [[0, 0.8], [2.9, 0.68]],
+      shR: [[0, 3.0], [2.88, 3.25, 'outQuad']], frac: [[0, 0.05], [2.88, 0.92, 'inOutSine']], shHeat: [[0, 0.74], [2.88, 0.64]],
       gain: 1.0, skin: 0.5, knotK: 13, prolate: 0.1, equator: 0.5, sheetW: 1, steps: 14, giant: true, giantGlow: 0.8, scar: 0.8, dwarfLum: 1,
       post: { bloomStrength: 0.1 },
     },
@@ -324,8 +324,8 @@ export default {
     'S29a-ring': {
       mode: 'shell', volScale: 0.6, dur: 3.33,
       cam: [[0, [0.0, 58.0, 10.2], [0, 0, 0], 30], [5.5, [0.0, 58.0, 10.2], [0, 0, 0], 30]],
-      shR: [[0, 10.0], [5.5, 10.15, 'linear']], frac: 1, shHeat: 0.55,
-      gain: 1.0, skin: 1.0, knotK: 13, prolate: 0.0, equator: 0.8, sheetW: 1, steps: 12, giant: true, giantGlow: 0.5, scar: 0.85, dwarfLum: 0.8,
+      shR: [[0, 10.0], [5.5, 10.15, 'linear']], frac: 1, shHeat: 0.6,
+      gain: 1.0, skin: 1.0, knotK: 11, prolate: 0.0, equator: 0.6, sheetW: 3.0, sheetWid: 0.012, knotGain: 0.32, steps: 24, giant: true, giantGlow: 0.55, scar: 0.6, dwarfLum: 0.5,
       post: { bloomStrength: 0.08 },
     },
     default: { mode: 'fire', fbR: 0.6 },
@@ -379,7 +379,7 @@ export default {
         ...cam.uniforms, uShC: [0, 0, 0], uShR: kv(P.shR, t, 5), uShAxis: [0, 1, 0], uProlate: kv(P.prolate, t, 0.1), uFrac: kv(P.frac, t, 1),
         ...shellPalette(kv(P.shHeat, t, 0.65), kv(P.frac, t, 1)),
         uShHeat: kv(P.shHeat, t, 0.65), uShGain: kv(P.gain, t, 1), uSkin: kv(P.skin, t, 0.6), uKnotK: kv(P.knotK, t, 13), uShSeed: P.seed ?? 5.0,
-        uShEvo: S.t, uEquator: kv(P.equator, t, 0.5), uSheetW: kv(P.sheetW, t, 1), uShSteps: P.steps ?? 32, uShStep: kv(P.stepLen, t, 0.035),
+        uShEvo: S.t, uEquator: kv(P.equator, t, 0.5), uSheetW: kv(P.sheetW, t, 1), uSheetWid: kv(P.sheetWid, t, 0.026), uKnotGain: kv(P.knotGain, t, 1), uShSteps: P.steps ?? 32, uShStep: kv(P.stepLen, t, 0.035),
         uOccC: GIANT_POS, uOccR: 0.31,
       }, vol);
       if (P.giant) Object.assign(comp, giantU(kv(P.giantGlow, t, 0.6), kv(P.scar, t, 0.8)), { uUseGiant: 1, uGiantFar: 1, uNovaLight: 0, uContact: 0 });
