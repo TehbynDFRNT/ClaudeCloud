@@ -333,6 +333,7 @@ vec3 vxMarch(vec3 ro, vec3 rd, float tMax, float jit, float pixAngle, float tD, 
   }
   float t = t0, tPrev = t0;
   bool hasPrev = false;
+  float rhoPrev = 0.0;
   vec4 xs = vec4(0.0); vec2 xf = vec2(0.0);
   const int N = 64;
   for (int i = 0; i < N; i++){
@@ -342,11 +343,13 @@ vec3 vxMarch(vec3 ro, vec3 rd, float tMax, float jit, float pixAngle, float tD, 
     float gap = gasGap(p, r);
     float lodStep = t * uLod + pixAngle * t;
     float budget = max(t1 - t, 0.0) / max(uMaxSteps - float(i), 1.0);
-    if (gap > 0.0){ t += max(gap * 0.85, max(lodStep, max(budget * mix(0.35, 1.0, smoothstep(0.15, 0.4, r)), 0.002))); hasPrev = false; continue; }
+    if (gap > 0.0){ t += max(gap * 0.85, max(lodStep, max(budget * mix(0.35, 1.0, smoothstep(0.15, 0.4, r)), 0.002))); hasPrev = false; rhoPrev = 0.0; continue; }
     float H = diskH(r);
-    float dt = clamp(max(uStepK * H, lodStep), 0.0015, 0.12);
+    float dt = clamp(max(uStepK * H, lodStep), 0.0012, 0.12);
     // the reach-the-exit budget is waived in the thin inner disk: resolving the opaque rim matters more there
-    dt = max(dt, budget * mix(0.35, 1.0, smoothstep(0.15, 0.4, r)));
+    dt = max(dt, budget * mix(0.15, 1.0, smoothstep(uRin * 1.6, 0.4, r)));
+    // optical-depth limit: no step may swallow more than ~1.5 e-folds of the gas just sampled
+    dt = min(dt, max(1.5 / max(rhoPrev, 1e-3), 0.0012));
     if (uHot > 0.0){
       float dh = length(p - hotPos() - hotDown() * 0.1);
       // near the impact the step budget is waived: the hot trail is the subject
@@ -368,6 +371,7 @@ vec3 vxMarch(vec3 ro, vec3 rd, float tMax, float jit, float pixAngle, float tD, 
     float scat;
     vec4 f = vxField(p, rd, uTau, seg, xs, xf, true, scat);
     float a = 1.0 - exp(-f.a * seg);
+    rhoPrev = f.a;
     // scattered light: cool white dwarf light on the inner rim (a saturated blue added to gold emission would read
     // pink), ember (reprocessed through red gas) further out
     vec3 sc = mix(vec3(0.75, 0.8, 0.9), vec3(1.0, 0.3, 0.06), smoothstep(uRin * 1.3, uRin * 3.5, r));
@@ -483,8 +487,10 @@ vec3 vxDwarfGlow(vec3 ro, vec3 rd, float pixAngle){
   float angR = max(uDwarfR / dist, pixAngle * 0.8);
   float resolved = smoothstep(1.2, 3.0, uDwarfR / dist / pixAngle);
   float core = exp(-pow(ang / angR, 2.0)) * 220.0 * (1.0 - resolved);
-  float halo = 1.0 / (1.0 + pow(ang / max(pixAngle * 6.0, angR * 1.6), 2.0)) * 2.2 * (1.0 - 0.75 * resolved);
-  float wide = 1.0 / (1.0 + pow(ang / max(pixAngle * 60.0, angR * 12.0), 2.0)) * 0.12;
+  // once resolved, the halo is a corona measured from the limb (it must not wash over the shaded sphere)
+  float al = max(ang - (uDwarfR / dist) * resolved, 0.0);
+  float halo = 1.0 / (1.0 + pow(al / max(pixAngle * 6.0, angR * (1.6 - 1.2 * resolved)), 2.0)) * 2.2 * (1.0 - 0.5 * resolved);
+  float wide = 1.0 / (1.0 + pow(al / max(pixAngle * 60.0, angR * 12.0), 2.0)) * 0.12;
   return dwarfColor() * (core + (halo + wide) * uGlowK) * uDwarfLum * front;
 }
 `;
