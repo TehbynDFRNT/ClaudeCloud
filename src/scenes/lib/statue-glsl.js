@@ -145,9 +145,9 @@ void main(){
   float aoR = ao * ao * edge;
   float r1 = dot(N, uRimDir), r2 = dot(N, uRim2Dir);
   E += uRimCol * (wrapD(r1, 0.12) * aoR + tT * sat(0.45 - 0.55 * r1) * 0.55 * uMarble.w * ao);
-  S += uRimCol * specGGX(N, V, uRimDir, rough * 0.85) * aoR;
+  S += uRimCol * specGGX(N, V, uRimDir, min(rough * 1.25, 0.9)) * aoR * 0.45;
   E += uRim2Col * (wrapD(r2, 0.12) * aoR + tT * sat(0.45 - 0.55 * r2) * 0.55 * uMarble.w * ao);
-  S += uRim2Col * specGGX(N, V, uRim2Dir, rough * 0.85) * aoR;
+  S += uRim2Col * specGGX(N, V, uRim2Dir, min(rough * 1.25, 0.9)) * aoR * 0.45;
   // ---- under light (Prometheus: the stolen fire below)
   float ul = dot(N, uUnderDir);
   E += uUnderCol * (wrapD(ul, 0.3) * ao + tT * sat(0.4 - 0.6 * ul) * 0.4 * uMarble.w);

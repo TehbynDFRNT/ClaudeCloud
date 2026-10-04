@@ -163,6 +163,17 @@ const shown = (pg) => pg.evaluate(async () => {
     sub: document.getElementById('tcsub').textContent, src: v.dataset.file || v.currentSrc, k: v.dataset.k };
 });
 const frameOfSub = (s) => +s.sub.match(/frame (\d+)/)[1];
+// picture-vs-sound drift while playing, sampled a few times (a single sample can land on the few frames
+// where a clip boundary is being crossed); returns the smallest drift seen and whether it kept playing
+const driftNow = async (pg) => {
+  let best = Infinity, playing = true;
+  for (let i = 0; i < 4; i++) {
+    const r = await pg.evaluate(() => { const a = document.getElementById('aud'), v = document.querySelector('video.show'); return { p: !a.paused, d: Math.abs(+v.dataset.k * 240 + v.currentTime * 24 - a.currentTime * 24) }; });
+    best = Math.min(best, r.d); playing = playing && r.p;
+    await pg.waitForTimeout(150);
+  }
+  return { playing, d: best };
+};
 const seek = (pg, f) => pg.evaluate((fr) => { const a = document.getElementById('aud'); a.pause(); a.currentTime = (fr + 0.5) / 24; }, f);
 // a pin's centre against the picture: must sit at exactly (x, y) of the video's box
 const pinGeom = (pg, noteId) => pg.evaluate((id) => {
@@ -270,7 +281,7 @@ try {
   await page.waitForTimeout(500);
   await page.keyboard.press('2');
   await page.waitForTimeout(900);
-  const ps = await page.evaluate(() => { const a = document.getElementById('aud'), v = document.querySelector('video.show'); return { playing: !a.paused, d: Math.abs(+v.dataset.k * 240 + v.currentTime * 24 - a.currentTime * 24) }; });
+  const ps = await driftNow(page);
   await page.keyboard.press('Space');
   check(ps.playing && ps.d < 3, `switching cut during playback keeps playing in sync (drift ${ps.d.toFixed(2)} frames)`);
   // onto a cut with a different soundtrack: the sound reloads, then picture and sound resume together
@@ -280,7 +291,7 @@ try {
   await page.keyboard.press('3');
   await page.waitForFunction(() => !document.getElementById('aud').paused && (document.getElementById('aud').dataset.file || '').includes('prometheus'), null, { timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(700);
-  const pq = await page.evaluate(() => { const a = document.getElementById('aud'), v = document.querySelector('video.show'); return { playing: !a.paused, src: (a.dataset.file || '').split('/').pop(), f: a.currentTime * 24, d: Math.abs(+v.dataset.k * 240 + v.currentTime * 24 - a.currentTime * 24) }; });
+  const pq = { ...(await page.evaluate(() => { const a = document.getElementById('aud'); return { src: (a.dataset.file || '').split('/').pop(), f: a.currentTime * 24 }; })), ...(await driftNow(page)) };
   await page.keyboard.press('Space');
   check(pq.playing && /prometheus/.test(pq.src) && pq.d < 3 && pq.f >= fBefore && pq.f < fBefore + 60, `switching to a cut with its own soundtrack during playback: ${pq.src} resumes at the same point (frame ${fBefore} -> ${pq.f.toFixed(1)}), in sync (drift ${pq.d.toFixed(2)} frames)`);
   await page.keyboard.press('1');

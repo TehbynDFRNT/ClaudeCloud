@@ -1377,6 +1377,60 @@ export function buildIgnition(ctx, tl, samples) {
 }
 
 // ----------------------------------------------------------------------------------------------------------
+// stem: the cannon salvos with the returning tutti (1812 finale). On the plan's 'cannon-salvo' cues (the beats of
+// bars 56-57, the half-bars of 58-59), each on the recording-checked beat: a point-blank battery, its guns fired
+// ragged within ~50 ms and alternating sides, three per salvo in bars 56-57, fewer and farther in 58-59 as the salvos
+// thin out and fade (DESIGN.salvo). The salvo on the explosion's downbeat is the explosion's own cluster.
+// ----------------------------------------------------------------------------------------------------------
+export function salvoTimes(tl) {
+  return tl.plan.cues.filter((c) => c.kind === 'cannon-salvo').sort((a, b) => a.frame - b.frame).map((c) => {
+    const m = /^salvo-(\d+)\./.exec(c.id), r = cannonTime(c, tl);
+    return { id: c.id, frame: c.frame, bar: m ? +m[1] : null, distance: clamp(c.distance ?? 0.1, 0, 1), ...r, merged: Math.abs(r.t - tl.T.explosion) < DESIGN.salvo.mergeS };
+  });
+}
+
+export function buildSalvos(ctx, tl, samples) {
+  const P = DESIGN.salvo;
+  const out = G(ctx, 1); out.connect(BQ(ctx, 'highpass', 28, 0.707)).connect(ctx.destination);
+  const alive = keepAlive(ctx); alive(out);
+  // open air at point-blank range: a short bright slap and a tail that clears before the next beat's salvo
+  const verb = ctx.createConvolver(); verb.normalize = false;
+  verb.buffer = impulse(ctx, { seconds: 3.5, rt60: 2.2, seed: 1880, hiHz: 6500, loHz: 300, early: 14, earlyMs: 60 });
+  verb.connect(G(ctx, 1)).connect(out); alive(verb);
+  const table = [];
+  let i = 0;
+  for (const s of salvoTimes(tl)) {
+    if (s.merged) { table.push({ id: s.id, frame: s.frame, t: +s.t.toFixed(4), merged: 'the explosion cluster' }); continue; }
+    const d = s.distance, bar = s.bar, guns = P.guns[bar] ?? 1, lvl = undb(P.levelDb[bar] ?? -9);
+    const side = i % 2 ? -1 : 1;
+    const lpHz = 350 * Math.pow(18000 / 350, Math.pow(1 - d, 1.6));
+    const dry = 1 - 0.78 * Math.pow(d, 0.8), wet = 0.10 + 0.95 * Math.pow(d, 0.8);
+    const fired = [];
+    for (let j = 0; j < guns; j++) {
+      const id = NEAR_SET[(i + j) % NEAR_SET.length], S = samples[id];
+      if (!S) continue;
+      const tc = s.t + P.spreadS[j % P.spreadS.length];
+      const rate = (1 - 0.1 * d) * (1 - 0.025 * j);
+      const g = lvl * [1, 0.78, 0.62][j % 3];
+      const dist = BQ(ctx, 'lowpass', lpHz, 0.6);
+      const p = ctx.createStereoPanner(); p.pan.value = side * [-0.5, 0.55, -0.1][j % 3];
+      alive(dist); dist.connect(p); p.connect(G(ctx, dry * g)).connect(out); p.connect(G(ctx, wet * g)).connect(verb);
+      cannonLayer(ctx, alive, S, CANNON_SAMPLES[id], { tc, d, rate, gain: 1, dest: dist });
+      fired.push({ id, t: +tc.toFixed(4), rate: +rate.toFixed(3) });
+    }
+    // the main gun's sub thump (sine 48 -> 28 Hz): weight under the battery
+    const o = ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(48, s.t); o.frequency.exponentialRampToValueAtTime(28, s.t + 0.4);
+    const og = G(ctx, 0);
+    curveEnv(og.gain, s.t, 0.9, (x) => Math.min(1, x / 0.003) * Math.exp(-x / 0.16) * (1 - smooth(0.7, 0.9, x)), 2000);
+    alive(og); o.connect(og).connect(G(ctx, 0.45 * lvl * (1 - d))).connect(out); o.start(s.t); o.stop(s.t + 0.95);
+    table.push({ id: s.id, frame: s.frame, t: +s.t.toFixed(4), basis: s.basis, offsetMs: +((s.t - s.frame / tl.fps) * 1000).toFixed(1), bar, distance: d, levelDb: +db(lvl).toFixed(1), guns: fired });
+    i++;
+  }
+  return table;
+}
+
+// ----------------------------------------------------------------------------------------------------------
 // stem 6: the coda. The same event seen from Earth: night air (soft wind, a distant very low drone on the fermata's
 // root) and, as the new star appears, a delicate high shimmer (F major partials, each twinkling): from here the
 // cataclysm arrives as silent light. Fades up and down with the picture; silent on the last frame.
@@ -1399,8 +1453,9 @@ export function buildCoda(ctx, tl) {
   const c0 = T.coda, len = T.end - c0, lastFrame = 1 / tl.fps;
   const alive = keepAlive(ctx);
   const master = G(ctx, 0); master.connect(ctx.destination);
-  // up with the picture's fade from black; down with its fade to black, silent through the last frame
-  curveEnv(master.gain, c0, len, (x) => { const tt = c0 + x; return smooth(c0, T.codaUp, tt) * (1 - smooth(T.pictureOut, T.end - lastFrame, tt)); }, 400);
+  // up with the picture's fade from black; down with its fade to black (into the final stare, or the film's last
+  // fade, silent through the last frame)
+  curveEnv(master.gain, c0, len, (x) => { const tt = c0 + x; return smooth(c0, T.codaUp, tt) * (1 - smooth(T.codaOut[0], T.codaOut[1], tt)); }, 400);
   const verb = ctx.createConvolver(); verb.normalize = false;
   verb.buffer = impulse(ctx, { seconds: 8, rt60: 6.0, seed: 3650, hiHz: 9000, loHz: 1200, early: 6, earlyMs: 120, swell: 0.12 });
   verb.connect(G(ctx, 1)).connect(master); alive(verb);
@@ -1455,7 +1510,57 @@ export function buildCoda(ctx, tl) {
   air.start(s0, 7.0); air.stop(T.end + 0.01);
   const sAmt = undb(C.shimmerDb);
   shim.connect(G(ctx, 0.3 * sAmt)).connect(master); shim.connect(G(ctx, 0.9 * sAmt)).connect(verb);
-  return { active: true, start: c0, fadeUpEnd: T.codaUp, star: [T.star, T.starFull], fadeOut: [T.pictureOut, T.end - lastFrame], droneMidi: [r1, r1 + 12, r1 + 19], shimmerMidi: PART.map((p) => p[0]) };
+  return { active: true, start: c0, fadeUpEnd: T.codaUp, star: [T.star, T.starFull], fadeOut: T.codaOut, droneMidi: [r1, r1 + 12, r1 + 19], shimmerMidi: PART.map((p) => p[0]) };
+}
+
+// ----------------------------------------------------------------------------------------------------------
+// stem: the final stare. After the night sky the marble figure looks straight into the lens: a deep, quiet, resonant
+// tone on the fermata's root (F1 and F2, and a slowly beating upper set: the fifth, the octave, a major third),
+// heard largely through a big hall, breathing slowly; it swells (DESIGN.stare.swellDb, the low-pass opening a little)
+// as the title NOVA: <figure> fades in, with a faint gold glint (F5, C6), then fades with the picture to silence on
+// the last frame.
+// ----------------------------------------------------------------------------------------------------------
+export function buildStare(ctx, tl) {
+  const { T, a4, grid } = tl;
+  if (T.stare == null) return { active: false };
+  const C = DESIGN.stare, hz = (m) => midiHz(m, a4), lastFrame = 1 / tl.fps;
+  const t0 = T.stare - C.leadS, len = T.end - t0;
+  const alive = keepAlive(ctx);
+  const master = G(ctx, 0); master.connect(ctx.destination);
+  const swell = undb(C.swellDb) - 1;
+  const tTitle = T.title ?? T.stareUp + 1, tFull = T.titleFull ?? tTitle + 1.25;
+  curveEnv(master.gain, t0, len, (x) => {
+    const tt = t0 + x;
+    return smooth(t0, T.stareUp + 0.4, tt) * (1 + swell * smooth(tTitle - 0.2, tFull + 0.6, tt)) * (1 - smooth(T.pictureOut, T.end - lastFrame, tt));
+  }, 400);
+  const verb = ctx.createConvolver(); verb.normalize = false;
+  verb.buffer = impulse(ctx, { seconds: 9, rt60: 7.0, seed: 3761, hiHz: 5000, loHz: 260, early: 8, earlyMs: 90, swell: 0.25 });
+  verb.connect(G(ctx, 1)).connect(master); alive(verb);
+  const bar63 = grid.bars.find((b) => b.bar === 63);
+  const root = (bar63 && bar63.bassMidi.find((m) => m != null)) ?? 41;
+  const r1 = 29 + ((((root - 29) % 12) + 12) % 12);   // F1 (bar 63's F2 an octave down)
+  // the body: [midi, beat offset Hz, gain, type]; a low-pass that opens a little with the swell; a slow breath
+  const PART = [[r1, 0, 0.55, 'sine'], [r1 + 12, 0, 0.42, 'sine'], [r1 + 12, 0.17, 0.2, 'sine'], [r1 + 19, -0.11, 0.16, 'triangle'],
+    [r1 + 24, 0, 0.12, 'sine'], [r1 + 24, 0.29, 0.07, 'sine'], [r1 + 28, 0.13, 0.05, 'sine'], [r1 + 31, -0.21, 0.045, 'sine']];
+  const body = G(ctx, 1);
+  for (const [m, df, g, type] of PART) {
+    const o = ctx.createOscillator(); o.type = type; o.frequency.value = hz(m) + df;
+    o.connect(G(ctx, g)).connect(body); o.start(t0); o.stop(T.end + 0.01);
+  }
+  const lp = BQ(ctx, 'lowpass', 420, 0.8);
+  curveEnv(lp.frequency, t0, len, (x) => 420 + 480 * smooth(tTitle - 0.2, tFull + 0.8, t0 + x), 100);
+  const breath = driftCurve(3762, 0.35), bG = G(ctx, 0);
+  curveEnv(bG.gain, t0, len, (x) => 0.85 + 0.15 * breath(x), 50);
+  alive(body); chain(body, lp, bG); bG.connect(G(ctx, 0.55)).connect(master); bG.connect(G(ctx, 0.45)).connect(verb);
+  // the glint of the gold title: F5 and C6, slowly in with the title, mostly hall
+  const gl = G(ctx, 0);
+  curveEnv(gl.gain, tTitle, T.end - tTitle, (x) => smooth(0, tFull - tTitle + 0.6, x) * Math.exp(-Math.max(0, x - (tFull - tTitle + 0.6)) / 2.5), 100);
+  for (const [m, df, g] of [[r1 + 48, 0, 0.5], [r1 + 48, 0.23, 0.3], [r1 + 55, -0.17, 0.25]]) {
+    const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = hz(m) + df;
+    o.connect(G(ctx, g)).connect(gl); o.start(tTitle); o.stop(T.end + 0.01);
+  }
+  gl.connect(G(ctx, 0.012)).connect(master); gl.connect(G(ctx, 0.04)).connect(verb);
+  return { active: true, start: +t0.toFixed(3), pictureUp: +T.stareUp.toFixed(3), title: [+tTitle.toFixed(3), +tFull.toFixed(3)], fadeOut: [+T.pictureOut.toFixed(3), +(T.end - lastFrame).toFixed(3)], midi: PART.map((p) => p[0]), glintMidi: [r1 + 48, r1 + 55] };
 }
 
 // ----------------------------------------------------------------------------------------------------------
@@ -1626,15 +1731,17 @@ function segLufs(X, t0, t1) {
 // ride is then smoothed as a centred moving average of its centred sliding minimum (radius `rad` hops, so it never
 // rides less than required and ramps over ~1 s); repeated on the residual. Only the loudest passages move, by a
 // slowly varying gain: transients and internal dynamics are untouched.
-function loudnessCap(L, R, capLufs, { W = 30, rad = 5, iters = 6 } = {}) {
+// until (s): only windows ending before it are capped (v3: the music before the ignition; the return rides free).
+function loudnessCap(L, R, capLufs, { W = 30, rad = 5, iters = 6, until = Infinity } = {}) {
   const e = hopEnergy(L, R), nh = e.length, g = new Float32Array(nh);
   const ridden = new Float64Array(nh);
+  const jEnd = Math.min(nh, Math.floor(until / 0.1));
   let excess = 0;
   for (let it = 0; it < iters; it++) {
     for (let h = 0; h < nh; h++) ridden[h] = e[h] * Math.pow(10, g[h] / 10);
     const S = stFromHops(ridden, W);
     const need = new Float32Array(nh); excess = 0;
-    for (let j = 0; j < nh; j++) {
+    for (let j = 0; j < jEnd; j++) {
       const r = S[j] - capLufs; if (r <= 0) continue;
       if (r > excess) excess = r;
       for (let h = Math.max(0, j - W + 1); h <= j; h++) if (r > need[h]) need[h] = r;
@@ -1654,6 +1761,36 @@ function loudnessCap(L, R, capLufs, { W = 30, rad = 5, iters = 6 } = {}) {
     out[i] = undb(g[h] + (g[h + 1] - g[h]) * f);
   }
   return { gain: out, maxRideDb: maxRide, ridePct: (100 * ridePct) / nh, residualLu: excess };
+}
+
+// Fold X under M: a slow ride (per-sample linear gain, 1 outside [t0, t1]) that keeps X's momentary loudness (400 ms,
+// K-weighted, 100 ms hops) at least belowLu under M's. The required reduction per window is taken off every hop in
+// it, then smoothed as a centred moving average of its centred sliding maximum (radius rad hops: never less than
+// required, ramps over ~0.6 s), capped at maxDb, and ramped in over rampS from t0 (the hit before t0 is untouched).
+function foldUnder(X, M, t0, t1, { belowLu = 3, maxDb = 14, rampS = 0.5, rad = 3 } = {}) {
+  const n = X[0].length, a = Math.max(0, Math.round((t0 - 1) * SR)), b = Math.min(n, Math.round((t1 + 1) * SR));
+  const sub = (Y) => [Y[0].subarray(a, b), Y[1].subarray(a, b)];
+  const ex = hopEnergy(...sub(X)), em = hopEnergy(...sub(M)), nh = ex.length, W = 4;
+  const need = new Float32Array(nh), ta = a / SR;
+  for (let j = W - 1; j < nh; j++) {
+    const tEnd = ta + (j + 1) * 0.1;
+    if (tEnd < t0 || tEnd - 0.4 > t1) continue;
+    let sx = 0, sm = 0; for (let h = j - W + 1; h <= j; h++) { sx += ex[h]; sm += em[h]; }
+    const over = 10 * Math.log10((sx + 1e-20) / (sm + 1e-20)) + belowLu;
+    if (over > 0) for (let h = j - W + 1; h <= j; h++) need[h] = Math.max(need[h], Math.min(maxDb, over));
+  }
+  const mx = new Float32Array(nh), rDb = new Float32Array(nh);
+  for (let h = 0; h < nh; h++) { let m = 0; for (let k = Math.max(0, h - rad); k <= Math.min(nh - 1, h + rad); k++) m = Math.max(m, need[k]); mx[h] = m; }
+  for (let h = 0; h < nh; h++) { let s = 0; for (let k = h - rad; k <= h + rad; k++) s += k >= 0 && k < nh ? mx[k] : 0; rDb[h] = s / (2 * rad + 1); }
+  const g = new Float32Array(n).fill(1);
+  let maxRide = 0, sumRide = 0, cnt = 0;
+  for (let i = a; i < b; i++) {
+    const tt = i / SR, x = (i - a) / HOP - 0.5, h = Math.max(0, Math.min(nh - 2, Math.floor(x))), f = clamp(x - h, 0, 1);
+    const r = (rDb[h] + (rDb[h + 1] - rDb[h]) * f) * smooth(t0, t0 + rampS, tt) * (1 - smooth(t1, t1 + 0.5, tt));
+    g[i] = undb(-r);
+    if (r > maxRide) maxRide = r; if (tt >= t0 && tt <= t1) { sumRide += r; cnt++; }
+  }
+  return { gain: g, maxRideDb: maxRide, meanRideDb: cnt ? sumRide / cnt : 0 };
 }
 
 // Auto-level of the synth against the orchestra.
@@ -1769,7 +1906,8 @@ function cannonLevels(tl, kO, gO, canStem, gC, table, prev = {}) {
     const a = Math.round(r.t * SR), b = Math.round((r.t + 0.4) * SR);
     const lc = 10 * Math.log10(ms(kC, a, b) * gC * gC + 1e-20);
     const lo = 10 * Math.log10(ms(kO, Math.round((r.t - 0.5) * SR), a) * gO * gO + 1e-20);
-    const target = P.relFar + (P.relNear - P.relFar) * Math.pow(1 - r.distance, P.shape);
+    const hb = /^cannon-(\d+)h$/.exec(r.id);   // half-bar cue: under the law, more so over the solo violin runs
+    const target = P.relFar + (P.relNear - P.relFar) * Math.pow(1 - r.distance, P.shape) + (hb ? (+hb[1] >= P.soloFrom ? P.halfBarSoloDb : P.halfBarDb) : 0);
     const err = target - (lc - lo);
     // close cues stop at nearMaxCorrDb: beyond it the stem limiter would flatten the boom's decay into a roar
     const cap = r.distance <= DESIGN.duck.maxD ? P.nearMaxCorrDb : P.maxCorrDb;
