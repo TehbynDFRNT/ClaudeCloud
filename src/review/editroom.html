@@ -381,9 +381,10 @@ details.card[open] summary { margin-bottom: 8px; }
     useBlobs = true;
     blobSwitch = (async () => {
       if (S.playing) pause();
+      const f = S.frame;
       await loadSound(C.audio);
       for (const v of vids) { const k = kOf(v); if (k >= 0 && k < clips.length) { v._file = null; v._ready = null; loadInto(v, k); } }
-      seekFrame(S.frame);
+      seekFrame(f);
     })();
     return blobSwitch;
   }
@@ -445,7 +446,13 @@ details.card[open] summary { margin-bottom: 8px; }
       showGate(SND.failed ? 'error' : 'blocked'); updateSound();
     });
   }
-  function pause() { aud.pause(); for (const v of vids) v.pause(); }
+  // paused state is set synchronously: a src change (cut with another soundtrack, blob fallback) runs the media
+  // load algorithm, which DROPS the queued 'pause' event, and the playback loop would follow the reset clock
+  function markPaused() {
+    S.playing = false; stage.classList.remove('playing'); for (const v of vids) v.pause();
+    $('playIcon').innerHTML = '<path d="M4 2l10 6-10 6z"/>'; $('kPlay').setAttribute('aria-label', 'Play');
+  }
+  function pause() { aud.pause(); markPaused(); }
   function isPaused() { return aud.paused; }
   function toggle() { isPaused() ? play() : (pause(), seekFrame(frameOf(aud.currentTime))); }
   aud.addEventListener('play', () => {
@@ -454,7 +461,7 @@ details.card[open] summary { margin-bottom: 8px; }
     const f = frameOf(aud.currentTime), k = clipIdx(f); showClip(k, aud.currentTime - clips[k].start / FPS, true);
     tick();
   });
-  aud.addEventListener('pause', () => { S.playing = false; stage.classList.remove('playing'); for (const v of vids) v.pause(); $('playIcon').innerHTML = '<path d="M4 2l10 6-10 6z"/>'; $('kPlay').setAttribute('aria-label', 'Play'); updateSound(); onFrame(true); });
+  aud.addEventListener('pause', () => { markPaused(); updateSound(); onFrame(true); });
   aud.addEventListener('seeked', () => {
     if (S.playing) return;
     const f = frameOf(aud.currentTime);
@@ -599,9 +606,9 @@ details.card[open] summary { margin-bottom: 8px; }
     $('buildmeta').textContent = `${D.build.label} · render ${D.build.render} · ${(FRAMES / FPS).toFixed(1)} s · ${FPS} fps`;
     legend(); renderCuts();
     if (soundChanged) {
-      const f = S.frame;
+      const f = S.frame;   // the new soundtrack starts at 0: resume from the frame we were on
       showClip(clipIdx(f), (f - clips[clipIdx(f)].start + 0.5) / FPS, false);
-      loadSound(C.audio).then((ok) => { if (C !== next) return; seekFrame(S.frame); if (ok && was) play(); });
+      loadSound(C.audio).then((ok) => { if (C !== next) return; seekFrame(f); if (ok && was) play(); });
       onFrame(true);
     } else { seekFrame(S.frame); if (was) play(); }
     renderAll();

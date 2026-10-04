@@ -267,7 +267,7 @@ try {
   await page.waitForTimeout(700);
   const pq = await page.evaluate(() => { const a = document.getElementById('aud'), v = document.querySelector('video.show'); return { playing: !a.paused, src: a.currentSrc.split('/').pop(), f: a.currentTime * 24, d: Math.abs(+v.dataset.k * 240 + v.currentTime * 24 - a.currentTime * 24) }; });
   await page.keyboard.press('Space');
-  check(pq.playing && /prometheus/.test(pq.src) && pq.d < 3 && pq.f >= fBefore && pq.f < fBefore + 60, `switching to a cut with its own soundtrack during playback: ${pq.src} resumes at the same point, in sync (drift ${pq.d.toFixed(2)} frames)`);
+  check(pq.playing && /prometheus/.test(pq.src) && pq.d < 3 && pq.f >= fBefore && pq.f < fBefore + 60, `switching to a cut with its own soundtrack during playback: ${pq.src} resumes at the same point (frame ${fBefore} -> ${pq.f.toFixed(1)}), in sync (drift ${pq.d.toFixed(2)} frames)`);
   await page.keyboard.press('1');
   await seek(page, 360); s = await shown(page);
   check(s.variant === 'base' && /david:true/.test(await pressed()), 'key 1 -> back to David & Goliath');
