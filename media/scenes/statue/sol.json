@@ -214,14 +214,14 @@
    0.0
   ],
   "shoulderL": [
-   0.43581,
-   -0.38729,
-   -0.00049
+   0.50959,
+   -0.69089,
+   0.04
   ],
   "shoulderR": [
-   -0.28663,
-   -0.38004,
-   -0.35117
+   -0.20863,
+   -0.39857,
+   -0.47427
   ],
   "neckBase": [
    0.05977,
@@ -347,7 +347,11 @@
    0.21784
   ],
   "neckAxisFit": "line fitted through 7 smooth-skin slab centroids under the jaw",
-  "note": "forward/left: horizontal directions the chest faces / its own left (from the cross-section above the cut); neckAxisUp: line through the neck's smooth-skin cross-section centroids under the jaw (see neckAxisFit). shoulderL/R: highest smooth-skin vertex outside the head (0.55 from its centre), 0.28-0.50 to either side of the turn axis along torso.left and below chin + 0.12; neckBase: the neck axis at the mean shoulder height (at most chin - 0.12) (approximate, +-0.05; on the bearded giant the throat is hidden by the beard, so it sits slightly back)."
+  "shoulders": {
+   "shoulderL": "top of the shoulder 0.06 inside its outer edge",
+   "shoulderR": "top of the shoulder 0.06 inside its outer edge"
+  },
+  "note": "forward/left: horizontal directions the chest faces / its own left (principal axis of the cross-section above the cut); neckAxisUp: line through the neck's smooth-skin cross-section centroids under the jaw (see neckAxisFit). shoulderL/R: from the torso's lateral extremes in the cross-section 0.25 below the chin, the top of the shoulder 0.06 inside each (see shoulders; the casts are cut well inside the real acromion, so this marks the edge of what exists). neckBase: the neck axis at the mean shoulder height, at most chin - 0.12 (approximate, +-0.05; on the bearded giant the throat is hidden by the beard)."
  },
  "bake": {
   "ao": "channel 0: ambient visibility, 48 cosine-weighted rays per vertex, mean normalised free distance up to 0.25 head units (1 = open, 0 = enclosed)",

@@ -647,17 +647,14 @@ def hull_centroid(P2):
     return np.array([((x + np.roll(x, -1)) * a).sum() / (6 * A), ((z + np.roll(z, -1)) * a).sum() / (6 * A)])
 
 
-SHOULDER_BAND = (0.40, 0.46)   # lateral distance from the turn axis along torso.left (head units)
-
-
 def body_anchors(m, caster, an, cfg, rough16):
     """Shoulders, neck axis and neck base on the dense head-space surface (approximate, for framing).
     Torso axes: principal axis of the cross-section just above the cut.
-    Shoulders: top of the shoulder slope at a fixed lateral distance: highest SMOOTH (carved skin, not hair/beard)
-    vertex outside the head ball (0.55 around the head centre) in a band SHOULDER_BAND to either side of the turn
-    axis along the torso's lateral axis. (The casts are cut well inside the real acromion.)
-    Neck: convex-hull centroids of thin horizontal slabs of smooth vertices within 0.30 of the turn axis, under the
-    jaw (neckTop) and at the mean shoulder height (neckBase); neckAxisUp joins them."""
+    Shoulders: the torso's lateral extremes (along torso.left) in the cross-section 0.25 below the chin; a ray cast
+    straight down 0.06 inside each extreme finds the top of the shoulder there (accepted on smooth skin, otherwise
+    the extreme itself). The casts are cut well inside the real acromion, so this is the edge of what exists.
+    Neck: a line through the convex-hull centroids of thin horizontal slabs of smooth vertices within 0.30 of the
+    turn axis under the jaw; neckBase = that line at the mean shoulder height (at most chin - 0.12)."""
     V = np.asarray(m.vertices)
     up = np.array([0, 1.0, 0])
     y_s = cfg['crop_y'] + 0.06
@@ -671,16 +668,19 @@ def body_anchors(m, caster, an, cfg, rough16):
         fwd_t = -fwd_t
     left_t = np.cross(up, fwd_t)
     smooth = rough16 < 0.9
-    head_c = np.array([0.0, -0.05, 0.05])
-    outside = np.linalg.norm(V - head_c, axis=1) > 0.55
-    lt, ft = V @ left_t, V @ fwd_t
+    lt = V @ left_t
     out = {}
+    y_s = max(an['chin'][1] - 0.25, cfg['crop_y'] + 0.05)
+    slab = np.abs(V[:, 1] - y_s) < 0.01
+    nn_tree = cKDTree(V)
     for lab, sgn in (('shoulderL', 1), ('shoulderR', -1)):
-        sel = (smooth & outside & (sgn * lt > SHOULDER_BAND[0]) & (sgn * lt < SHOULDER_BAND[1]) & (np.abs(ft) < 0.25)
-               & (V[:, 1] > cfg['crop_y'] + 0.03) & (V[:, 1] < an['chin'][1] + 0.12))
-        if sel.any():
-            out[lab] = V[np.argmax(np.where(sel, V[:, 1], -1e9))]
-
+        ii = np.where(slab)[0]
+        ext = V[ii[np.argmax(sgn * lt[ii])]]
+        p_in = ext - sgn * left_t * 0.06
+        q = caster.hit_point(np.array([p_in[0], an['chin'][1] + 0.12, p_in[2]]), np.array([0, -1.0, 0]))
+        ok = q is not None and rough16[nn_tree.query(q)[1]] < 0.9 and q[1] > y_s
+        out[lab] = q if ok else ext
+        out['_' + lab] = 'top of the shoulder 0.06 inside its outer edge' if ok else 'outer edge of the torso at y = %.2f' % y_s
     def slab_centre(y):
         k = smooth & (np.abs(V[:, 1] - y) < 0.01) & (np.hypot(V[:, 0], V[:, 2]) < 0.30)
         if k.sum() < 30:
@@ -883,6 +883,7 @@ def process(name, args):
     neck_top = body.pop('_neckTop')
     torso['neckAxis'] = body.pop('_neckAxis')
     torso['neckAxisNote'] = body.pop('_neckAxisNote', 'line fitted through 7 smooth-skin slab centroids under the jaw')
+    torso['shoulderNote'] = {k: body.pop('_' + k) for k in ('shoulderL', 'shoulderR')}
     an.update(body)
     extra = {}
     if name == 'sol':
@@ -1074,11 +1075,12 @@ def write_outputs(res):
         anchors=anchors,
         torso=dict(forward=r5(res['torso']['forward']), left=r5(res['torso']['left']),
                    neckAxisUp=r5(res['torso']['neckAxis']), neckAxisFit=res['torso']['neckAxisNote'],
+                   shoulders=res['torso']['shoulderNote'],
                    note='forward/left: horizontal directions the chest faces / its own left (principal axis of the '
                         'cross-section above the cut); neckAxisUp: line through the neck\'s smooth-skin cross-section '
-                        'centroids under the jaw (see neckAxisFit). shoulderL/R: top of the shoulder slope 0.40-0.46 to '
-                        'either side of the turn axis along torso.left (highest smooth-skin vertex there, outside the '
-                        'head, below chin + 0.12; the casts are cut well inside the real acromion). neckBase: the neck '
+                        'centroids under the jaw (see neckAxisFit). shoulderL/R: from the torso\'s lateral extremes in '
+                        'the cross-section 0.25 below the chin, the top of the shoulder 0.06 inside each (see shoulders; '
+                        'the casts are cut well inside the real acromion, so this marks the edge of what exists). neckBase: the neck '
                         'axis at the mean shoulder height, at most chin - 0.12 (approximate, +-0.05; on the bearded giant '
                         'the throat is hidden by the beard).'),
         bake=dict(

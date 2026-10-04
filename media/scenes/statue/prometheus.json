@@ -245,19 +245,19 @@
    0.0
   ],
   "shoulderL": [
-   0.06821,
-   -0.42792,
-   0.44396
+   0.3714,
+   -0.70337,
+   0.42949
   ],
   "shoulderR": [
-   -0.21505,
-   -0.38038,
-   -0.33464
+   -0.3987,
+   -0.56021,
+   -0.65146
   ],
   "neckBase": [
-   -0.05667,
-   -0.62,
-   -0.01624
+   -0.04997,
+   -0.63179,
+   -0.01407
   ]
  },
  "torso": {
@@ -277,7 +277,11 @@
    0.0
   ],
   "neckAxisFit": "fit unreliable (tilt > 40 deg), vertical used",
-  "note": "forward/left: horizontal directions the chest faces / its own left (from the cross-section above the cut); neckAxisUp: line through the neck's smooth-skin cross-section centroids under the jaw (see neckAxisFit). shoulderL/R: highest smooth-skin vertex outside the head (0.55 from its centre), 0.28-0.50 to either side of the turn axis along torso.left and below chin + 0.12; neckBase: the neck axis at the mean shoulder height (at most chin - 0.12) (approximate, +-0.05; on the bearded giant the throat is hidden by the beard, so it sits slightly back)."
+  "shoulders": {
+   "shoulderL": "top of the shoulder 0.06 inside its outer edge",
+   "shoulderR": "top of the shoulder 0.06 inside its outer edge"
+  },
+  "note": "forward/left: horizontal directions the chest faces / its own left (principal axis of the cross-section above the cut); neckAxisUp: line through the neck's smooth-skin cross-section centroids under the jaw (see neckAxisFit). shoulderL/R: from the torso's lateral extremes in the cross-section 0.25 below the chin, the top of the shoulder 0.06 inside each (see shoulders; the casts are cut well inside the real acromion, so this marks the edge of what exists). neckBase: the neck axis at the mean shoulder height, at most chin - 0.12 (approximate, +-0.05; on the bearded giant the throat is hidden by the beard)."
  },
  "bake": {
   "ao": "channel 0: ambient visibility, 48 cosine-weighted rays per vertex, mean normalised free distance up to 0.25 head units (1 = open, 0 = enclosed)",
@@ -293,8 +297,10 @@
   "Ears: earL ESTIMATED: ear hidden by hair/beard; outer surface point beside the ear position estimated 0.318 behind the eyeball midpoint along the facial axis (ratio measured on david); earR ESTIMATED: ear hidden by hair/beard; outer surface point beside the ear position estimated 0.318 behind the eyeball midpoint along the facial axis (ratio measured on david)",
   "Head units: 1.0 = 39.047 source units (raw STL units).",
   "Mouth anchor (stomion): parted lips: centre of the opening at the depth of the lip fronts.",
+  "relief ground slab (source z = 7) cap (outward normal [0.89427, 0.04678, -0.44507]) faces the camera on the turn arc: never",
+  "slab return on the +X edge (source x = 62) cap (outward normal [0.44752, -0.09348, 0.88937]) faces the camera on the turn arc: yaw 0-63",
   "STAND-IN: the giant (Klytios?) from the Pergamon Altar Gigantomachy; no freely licensed scan of a marble Prometheus exists. Same Hellenistic pathos face family as Laocoon and Adam's Prometheus.",
-  "Relief slab removed: cut at source z = 7 (relief ground) and x = 62 (its return), both capped. The big flat cap at the back faces head-space +X/-Z: approach the profile ONLY from the -X side (the turn arc -X -> +Z never sees it; from +X it is a flat wall). The arms are broken off at the shoulders (no hands).",
+  "Relief slab removed: cut at source z = 7 (relief ground, a big flat cap behind the head and back) and x = 62 (its return, which cuts through the figure's left shoulder: a slanted flat face beside the beard, lower right of frame at yaw 0). Approach the profile ONLY from the -X side (see the cap visibility notes and frame.cuts); keep the shoulder cap out of frame or in shadow in the last, frontal inserts. The arms are broken off (no hands).",
   "Blank eyes. Yaw = mean of the two eyeball caps (0.2 deg); pitch 6.0 deg chosen visually (renders at camera pitch -15..+25); head space is levelled.",
   "The chin is hidden in the beard: anchors.chin is an ESTIMATE (see frame); anchors.beardTip is the lowest point of the beard. Head units therefore use an anatomical chin, not the beard."
  ]
