@@ -1,8 +1,8 @@
 {
- "id": "david-916-v3",
+ "id": "david-916-v4",
  "cut": "david",
  "title": "David & Goliath — a nova in two voices",
- "version": 3,
+ "version": 4,
  "fps": "24/1",
  "frames": 3917,
  "width": 1080,
@@ -54,7 +54,8 @@
    "scene": "statue",
    "purpose": "First sight: the figure in profile, looking away; perpendicular to us",
    "action": "Marble figure on black, slowly turning its gaze toward us (see INSERTS)",
-   "framing": "See the statue preset",
+   "framing": "Locked: the M03 shot (whole head, aura behind); only the turn changes",
+   "preset": "M03",
    "params": {
     "turn": [
      508,
@@ -62,6 +63,8 @@
      90,
      0
     ],
+    "drift": 0,
+    "height": 2.1,
     "figure": "david"
    }
   },
@@ -104,7 +107,8 @@
    "scene": "statue",
    "purpose": "The profile again, closer: lips and jaw in hard light",
    "action": "Marble figure on black, slowly turning its gaze toward us (see INSERTS)",
-   "framing": "See the statue preset",
+   "framing": "Locked: the M03 shot (whole head, aura behind); only the turn changes",
+   "preset": "M03",
    "params": {
     "turn": [
      508,
@@ -112,6 +116,8 @@
      90,
      0
     ],
+    "drift": 0,
+    "height": 2.1,
     "figure": "david"
    }
   },
@@ -145,7 +151,8 @@
    "scene": "statue",
    "purpose": "Head and neck against the void, the aura behind",
    "action": "Marble figure on black, slowly turning its gaze toward us (see INSERTS)",
-   "framing": "See the statue preset",
+   "framing": "Locked: the M03 shot (whole head, aura behind); only the turn changes",
+   "preset": "M03",
    "params": {
     "turn": [
      508,
@@ -153,6 +160,8 @@
      90,
      0
     ],
+    "drift": 0,
+    "height": 2.1,
     "figure": "david"
    }
   },
@@ -186,7 +195,8 @@
    "scene": "statue",
    "purpose": "The carved eye, beginning to come round",
    "action": "Marble figure on black, slowly turning its gaze toward us (see INSERTS)",
-   "framing": "See the statue preset",
+   "framing": "Locked: the M03 shot (whole head, aura behind); only the turn changes",
+   "preset": "M03",
    "params": {
     "turn": [
      508,
@@ -194,6 +204,8 @@
      90,
      0
     ],
+    "drift": 0,
+    "height": 2.1,
     "figure": "david"
    }
   },
@@ -227,7 +239,8 @@
    "scene": "statue",
    "purpose": "Small in the black: head and shoulders, light from above",
    "action": "Marble figure on black, slowly turning its gaze toward us (see INSERTS)",
-   "framing": "See the statue preset",
+   "framing": "Locked: the M03 shot (whole head, aura behind); only the turn changes",
+   "preset": "M03",
    "params": {
     "turn": [
      508,
@@ -235,6 +248,8 @@
      90,
      0
     ],
+    "drift": 0,
+    "height": 2.1,
     "figure": "david"
    }
   },
@@ -331,7 +346,8 @@
    "scene": "statue",
    "purpose": "Brow and eye from below",
    "action": "Marble figure on black, slowly turning its gaze toward us (see INSERTS)",
-   "framing": "See the statue preset",
+   "framing": "Locked: the M03 shot (whole head, aura behind); only the turn changes",
+   "preset": "M03",
    "params": {
     "turn": [
      508,
@@ -339,6 +355,8 @@
      90,
      0
     ],
+    "drift": 0,
+    "height": 2.1,
     "figure": "david"
    }
   },
@@ -412,7 +430,8 @@
    "scene": "statue",
    "purpose": "Frenzy beat: the eye",
    "action": "Marble figure on black, slowly turning its gaze toward us (see INSERTS)",
-   "framing": "See the statue preset",
+   "framing": "Locked: the M03 shot (whole head, aura behind); only the turn changes",
+   "preset": "M03",
    "params": {
     "turn": [
      508,
@@ -420,6 +439,8 @@
      90,
      0
     ],
+    "drift": 0,
+    "height": 2.1,
     "figure": "david"
    }
   },
@@ -494,7 +515,8 @@
    "scene": "statue",
    "purpose": "Frenzy beat: the lips",
    "action": "Marble figure on black, slowly turning its gaze toward us (see INSERTS)",
-   "framing": "See the statue preset",
+   "framing": "Locked: the M03 shot (whole head, aura behind); only the turn changes",
+   "preset": "M03",
    "params": {
     "turn": [
      508,
@@ -502,6 +524,8 @@
      90,
      0
     ],
+    "drift": 0,
+    "height": 2.1,
     "figure": "david"
    }
   },
@@ -566,7 +590,8 @@
    "scene": "statue",
    "purpose": "Frenzy flash: the gaze",
    "action": "Marble figure on black, slowly turning its gaze toward us (see INSERTS)",
-   "framing": "See the statue preset",
+   "framing": "Locked: the M03 shot (whole head, aura behind); only the turn changes",
+   "preset": "M03",
    "params": {
     "turn": [
      508,
@@ -574,6 +599,8 @@
      90,
      0
     ],
+    "drift": 0,
+    "height": 2.1,
     "figure": "david"
    }
   },
@@ -607,7 +634,8 @@
    "scene": "statue",
    "purpose": "The held breath: a slow push on the three-quarter face",
    "action": "Marble figure on black, slowly turning its gaze toward us (see INSERTS)",
-   "framing": "See the statue preset",
+   "framing": "Locked: the M03 shot (whole head, aura behind); only the turn changes",
+   "preset": "M03",
    "params": {
     "turn": [
      508,
@@ -615,6 +643,8 @@
      90,
      0
     ],
+    "drift": 0,
+    "height": 2.1,
     "figure": "david"
    }
   },
@@ -660,7 +690,8 @@
    "scene": "statue",
    "purpose": "Between strikes: the face, hard light",
    "action": "Marble figure on black, slowly turning its gaze toward us (see INSERTS)",
-   "framing": "See the statue preset",
+   "framing": "Locked: the M03 shot (whole head, aura behind); only the turn changes",
+   "preset": "M03",
    "params": {
     "turn": [
      508,
@@ -668,6 +699,8 @@
      90,
      0
     ],
+    "drift": 0,
+    "height": 2.1,
     "figure": "david"
    }
   },
@@ -713,7 +746,8 @@
    "scene": "statue",
    "purpose": "Both eyes now, almost upon us",
    "action": "Marble figure on black, slowly turning its gaze toward us (see INSERTS)",
-   "framing": "See the statue preset",
+   "framing": "Locked: the M03 shot (whole head, aura behind); only the turn changes",
+   "preset": "M03",
    "params": {
     "turn": [
      508,
@@ -721,6 +755,8 @@
      90,
      0
     ],
+    "drift": 0,
+    "height": 2.1,
     "figure": "david"
    }
   },
@@ -858,9 +894,12 @@
      90,
      0
     ],
+    "drift": 0,
+    "height": 2.1,
     "figure": "david"
    },
-   "end": 3917
+   "end": 3917,
+   "preset": "M03"
   }
  ],
  "overlays": [

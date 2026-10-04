@@ -20,7 +20,12 @@ const OUT_DIR = process.env.PLAN_OUT || '.';     // PLAN_OUT=out/plan-test to dr
 // explosion on the frame the eruption appears; Winter's bar-56 tutti restarts ON the explosion (louder, with
 // cannon salvos); no statue after the explosion until after the Milky Way; the film ends on the statue's
 // gaze and NOVA: <figure>.
-const V3 = (process.env.PLAN_VERSION || '3') === '3';   // v3 is the delivered version; PLAN_VERSION=2 rebuilds the earlier cut
+// PLAN_VERSION=4: v3 plus the director's statue note: every insert is the M03 shot (the whole head on black, the
+// aura behind), the camera locked (no push, no drift); only the figure's turn changes from insert to insert.
+const VERSION = +(process.env.PLAN_VERSION || '4');   // 4 is the version in progress; 3 and 2 rebuild the delivered cuts
+const V3 = VERSION >= 3;
+const V4 = VERSION >= 4;
+const STATUE_LOCK = V4 ? { preset: 'M03', params: { drift: 0, height: 2.1 } } : null;
 
 // ---- audio placements (frames) -------------------------------------------------------------
 // Recording: The United States Air Force Band, Vivaldi 'Winter' I (supplied by the director; public domain).
@@ -238,7 +243,10 @@ const INSERTS_ALL = [
 ];
 const INSERTS = V3 ? INSERTS_ALL.filter(([, a]) => a < IGNITION) : INSERTS_ALL;
 const TURN = [INSERTS[0][1], GAZE_FRAME, 90, 0];   // [from frame, to frame, from deg, to deg]
-for (const s of shots) if (s.scene === 'statue') s.params = { ...s.params, turn: TURN };
+for (const s of shots) if (s.scene === 'statue') {
+  s.params = { ...s.params, turn: TURN, ...(STATUE_LOCK ? STATUE_LOCK.params : {}) };
+  if (STATUE_LOCK) s.preset = STATUE_LOCK.preset;
+}
 {
   const out = [];
   for (const s of shots) {
@@ -248,7 +256,9 @@ for (const s of shots) if (s.scene === 'statue') s.params = { ...s.params, turn:
     for (const [id, a, b, purpose] of cuts) {
       if (a > cursor) out.push({ ...s, id: part ? `${s.id}·${part + 1}` : s.id, preset: s.preset || s.id, start: cursor, end: a, span: [s.start, s.end] });
       if (a > cursor) part++;
-      if (!out.some((o) => o.id === id)) out.push({ id, start: a, end: b, scene: 'statue', purpose, action: 'Marble figure on black, slowly turning its gaze toward us (see INSERTS)', framing: 'See the statue preset', params: { turn: TURN } });
+      if (!out.some((o) => o.id === id)) out.push({ id, start: a, end: b, scene: 'statue', purpose, action: 'Marble figure on black, slowly turning its gaze toward us (see INSERTS)', framing: 'See the statue preset',
+        ...(STATUE_LOCK ? { preset: STATUE_LOCK.preset, framing: 'Locked: the M03 shot (whole head, aura behind); only the turn changes' } : {}),
+        params: { turn: TURN, ...(STATUE_LOCK ? STATUE_LOCK.params : {}) } });
       cursor = Math.max(cursor, b);
     }
     if (cursor < s.end) out.push({ ...s, id: part ? `${s.id}·${part + 1}` : s.id, preset: s.preset || s.id, start: cursor, end: s.end, span: [s.start, s.end] });
@@ -340,7 +350,7 @@ for (const [cut, C] of Object.entries(CUTS)) {
     return o;
   });
   const plan = {
-    id: V3 ? `${C.id}-v3` : C.id, cut, title: C.title, version: V3 ? 3 : 2,
+    id: V3 ? `${C.id}-v${VERSION}` : C.id, cut, title: C.title, version: VERSION,
     fps: `${FPS}/1`, frames: FRAMES, width: 1080, height: 1920, backend: 'webgl2-canvas (headless Chromium, SwiftShader)',
     timingMode: 'original-score',
     format: { letterbox: 0.128, note: '9:16. A 3:4 window (bars top and bottom) until ignition; the frame opens to the full 9:16 in the dark' },
