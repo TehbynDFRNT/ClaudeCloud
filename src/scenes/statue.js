@@ -15,24 +15,28 @@
 //   3. marble lighting, once per pixel: PCF hard key + translucent-shadow-map light bleed, wrapped diffuse, low-gloss
 //      GGX, faint object-space veining, dim fill, lens-axis fill, coloured rims with light through thin edges,
 //      ember under-light (Prometheus), the crown's own light on the curls (Sol)
-//   4. FXAA (tonemapped space)  5. quarter-res coverage -> blurred glows (the aura)  6. Sol: the radiate crown
-//   7. composite into the scene target: marble + aura (silhouette glow + corona with slow streamers) + crown
+//   4. quarter-res coverage -> blurred glows (the aura)  5. Sol: the radiate crown
+//   6. composite into the scene target: FXAA'd marble + aura (silhouette glow + corona with slow streamers) + crown
 //
 // Preset params (keyframes [[u, value, easing?], ...] with u = 0 first .. 1 last frame of the insert):
 //   aim (head-space point: anchor name | [x,y,z] | {name: weight} | {at, off}), height (visible FULL-frame height at the
 //   aim point, head units), fov (deg), az / el (camera direction from the aim point; az from the viewer axis toward
 //   screen-right), screen [sx, sy] (frameUV of the aim point), roll, drift,
-//   key / fill / rim / rim2 / under: [az, el, intensity] in the studio frame (az 90 = screen-right), front (lens fill),
+//   key / fill / rim / rim2 / under: [az, el, intensity, 'face'?] in the studio frame (az 90 = screen-right; 'face':
+//   az from the figure's face axis), front (lens fill),
 //   aura: { glow, wide, corona, streaks, at (head-space centre), r (corona radius, head units) }, gain, grad, shadowR,
-//   rays (Sol: intensity multiplier), post {...}
+//   spot / spotR (where the light falls away below the neck / around the head), dof (lens aperture, head units; focus on
+//   the aim point), rays (Sol: intensity multiplier), byFigure { david|sol|prometheus: {...} }, post {...},
+//   debug (lighting channel views: 1 key visibility, 2 thickness, 3 ao, 4 normal, 5 cavity/thickness/skin, 6 veins,
+//   7 diffused visibility, 10 key terms, 11 irradiance)
 import { v3, clamp, ease } from '../engine/math.js';
 import { meshProgram, bindUniforms, drawFullscreen, depthTarget, depthSamplers, saveState, restoreState } from './lib/statue-gl.js';
-import { loadFigure, getFigure, gpuFigure, resolvePoint } from './lib/statue-mesh.js';
+import { loadFigure, getFigure, gpuFigure, resolvePoint, drawClusters } from './lib/statue-mesh.js';
 import { turnYaw, rotY, dirAzEl, kv, statueCamera, viewProj, yawMat4, mul4, shadowMatrix, letterboxAt } from './lib/statue-rig.js';
-import { GBUF_VS, GBUF_FS, SHADOW_VS, SHADOW_FS, LIGHT_FS, FXAA_FS, DOWN4_FS, BLUR_FS, RAYS_FS, COMP_FS } from './lib/statue-glsl.js';
+import { GBUF_VS, GBUF_FS, SHADOW_VS, SHADOW_FS, LIGHT_FS, MOMENTS_FS, VBLUR_FS, DOWN4_FS, BLUR_FS, RAYS_FS, COMP_FS } from './lib/statue-glsl.js';
 
 const TURN = [508, 3590, 90, 0];
-const SHADOW_SIZE = 2048;
+const SHADOW_SIZE = 1536;
 
 // Per-figure light and stone. Colours linear; intensities scale the preset light intensities.
 const FIGURES = {
@@ -40,130 +44,153 @@ const FIGURES = {
   david: {
     key: [1.0, 0.99, 1.02], fill: [0.05, 0.075, 0.13], rim: [0.42, 0.66, 1.0], rim2: [0.62, 0.74, 0.95], front: [0.85, 0.9, 1.0],
     under: [0, 0, 0], amb: [0.0012, 0.0018, 0.0032],
-    aura: [0.24, 0.46, 1.0], aura2: [0.62, 0.78, 1.0], tint: [1.0, 1.0, 1.0], mfp: [0.018, 0.0165, 0.015],
+    aura: [0.24, 0.46, 1.0], aura2: [0.62, 0.78, 1.0], tint: [1.0, 0.975, 0.94], sss: [1.0, 0.9, 0.78], mfp: [0.02, 0.017, 0.015],
   },
   // molten gold radiance; the crown of rays
   sol: {
     key: [1.04, 0.95, 0.82], fill: [0.07, 0.05, 0.035], rim: [1.0, 0.6, 0.2], rim2: [1.0, 0.76, 0.42], front: [1.0, 0.92, 0.8],
     under: [0, 0, 0], amb: [0.0024, 0.0015, 0.0006],
-    aura: [1.0, 0.5, 0.12], aura2: [1.0, 0.78, 0.42], tint: [1.0, 0.985, 0.96], mfp: [0.019, 0.0165, 0.0145],
-    rays: { col: [1.0, 0.62, 0.22], core: [1.0, 0.9, 0.7], I: 2.4, len: 0.62, w0: 0.012, w1: 0.05, fall: 1.8, lift: 38 },
-    holes: { col: [1.0, 0.6, 0.22], I: 0.55, r: 0.075 },
+    aura: [1.0, 0.5, 0.12], aura2: [1.0, 0.78, 0.42], tint: [1.0, 0.965, 0.91], sss: [1.0, 0.86, 0.68], mfp: [0.021, 0.017, 0.0145],
+    rays: { col: [1.0, 0.6, 0.2], core: [1.0, 0.88, 0.66], I: 1.5, len: 0.72, w0: 0.016, w1: 0.085, fall: 1.6, lift: 38 },
+    holes: { col: [1.0, 0.6, 0.22], I: 0.3, r: 0.07 },
   },
   // ember gold-crimson firelight from below (the stolen fire), a faint flicker
   prometheus: {
-    key: [1.0, 0.95, 0.88], fill: [0.06, 0.035, 0.03], rim: [1.0, 0.36, 0.09], rim2: [1.0, 0.55, 0.2], front: [1.0, 0.9, 0.82],
-    under: [1.0, 0.3, 0.07], amb: [0.0024, 0.0009, 0.0006],
-    aura: [0.95, 0.26, 0.05], aura2: [1.0, 0.6, 0.2], tint: [1.0, 0.98, 0.95], mfp: [0.019, 0.016, 0.014],
+    key: [0.92, 0.92, 0.94], fill: [0.045, 0.03, 0.028], rim: [0.85, 0.3, 0.09], rim2: [0.85, 0.42, 0.15], front: [1.0, 0.94, 0.9],
+    under: [1.0, 0.34, 0.09], amb: [0.0024, 0.0009, 0.0006], marble: { gloss: 0.42, veins: 0.3 },
+    aura: [0.9, 0.22, 0.04], aura2: [1.0, 0.55, 0.16], tint: [1.0, 0.985, 0.965], sss: [1.0, 0.9, 0.8], mfp: [0.021, 0.0165, 0.014],
   },
 };
 
 // shot-start defaults shared by all inserts
 const BASE = {
   turn: TURN, aim: 'eyes', height: 1.0, fov: 20, az: 0, el: 0, screen: [0, 0], roll: 0, drift: 0.6,
-  key: [40, 38, 1.39], fill: [-70, -5, 0.1], rim: [-165, 14, 0.9], rim2: [165, 8, 0.7], under: [0, -60, 0], front: 0.006,
+  key: [40, 38, 1.4], fill: [-70, -5, 0.1], rim: [-165, 14, 0.9], rim2: [165, 8, 0.7], under: [10, -45, 0], front: 0.006,
   aura: { glow: 0.25, wide: 0.12, corona: 0.06, streaks: 0.6, at: { at: 'head', off: [0, 0.04, -0.05] }, r: 0.75 },
-  gain: 1.0, grad: null, rays: 1.0, shadowR: null,
-  marble: { veins: 0.32, veinScale: 2.2, gloss: 0.55, sss: 1.0 },
+  gain: 1.0, grad: null, rays: 1.0, shadowR: null, spot: [-0.8, -0.38], dof: 0,
+  marble: { veins: 0.42, veinScale: 2.0, gloss: 0.7, sss: 1.0 },
 };
 
+// The inserts. Yaw (deg, 90 = profile facing screen-right, 0 = into the lens) at each shot is noted; the camera stays
+// within a few degrees of the viewer axis so the turn of the gaze reads continuously from cut to cut.
 const PRESETS = {
-  // First sight: pure profile, ECU of the eye and brow; the profile line is a silhouette drawn by the rim and the aura.
+  // yaw 90. First sight: pure profile, ECU of the eye and brow; the profile line is a silhouette drawn by a grazing rim
+  // and the aura, the eye only just modelled by a faint top light.
   M01: {
-    aim: { at: 'eyeR', off: [0, 0.02, 0.02] }, height: [[0, 0.46], [1, 0.42]], fov: 13, el: 2, screen: [-0.28, 0.02],
-    key: [70, 48, 0.3], rim: [160, 10, 1.8], rim2: [-165, 15, 0.4], fill: [-70, -5, 0.07], front: 0.0036,
-    aura: { glow: 0.55, wide: 0.25, corona: 0.0 },
+    dof: 0.018,
+    aim: { at: 'eyeR', off: [0, 0.04, 0.09] }, height: [[0, 0.66], [1, 0.6]], fov: 14, el: 2, screen: [-0.3, 0.04],
+    key: [60, 55, 0.5], rim: [165, 12, 2.4], rim2: [-160, 20, 0.5], fill: [-70, -5, 0.05], front: 0.002,
+    aura: { glow: 0.6, wide: 0.3, corona: 0.0 },
+    byFigure: { prometheus: { rim: [165, 12, 1.5], key: [60, 55, 0.4] } },
   },
-  // The profile again, closer: lips and jaw raked by hard light.
+  // yaw 81. The profile again, closer: lips and jaw raked by hard light.
   M02: {
-    aim: { mouth: 0.6, chin: 0.4 }, height: [[0, 0.62], [1, 0.58]], fov: 16, el: -4, screen: [-0.16, 0.0],
-    key: [60, 28, 1.6], rim: [-165, 12, 0.8], rim2: [165, 7, 0.6],
+    dof: 0.018,
+    aim: { mouth: 0.55, chin: 0.45 }, height: [[0, 0.72], [1, 0.66]], fov: 16, el: -5, screen: [-0.2, 0.0],
+    key: [62, 30, 1.6], rim: [-165, 12, 0.8], rim2: [165, 7, 0.9],
   },
-  // Head and neck against the void, the aura behind.
+  // yaw 72. Head and neck against the void, the aura behind.
   M03: {
     aim: { at: 'head', off: [0, -0.18, 0] }, height: [[0, 2.15], [1, 2.05]], fov: 22, el: 3, screen: [0.04, 0.0],
-    key: [25, 50, 1.17], rim: [-165, 15, 1.2], rim2: [165, 9, 0.9],
-    aura: { glow: 0.55, wide: 0.3, corona: 0.32, r: 0.8 },
+    key: [25, 50, 1.2], rim: [-165, 15, 1.2], rim2: [165, 9, 0.9],
+    aura: { glow: 0.42, wide: 0.12, corona: 0.16, r: 0.8 },
   },
-  // The carved eye, beginning to come round.
+  // yaw 66. The carved eye, beginning to come round.
   M04: {
-    aim: 'eyeR', height: [[0, 0.38], [1, 0.345]], fov: 13, el: 1, screen: [-0.12, 0.0],
-    key: [22, 34, 1.5], rim: [-165, 12, 0.6], rim2: [165, 7, 0.7],
+    dof: 0.022,
+    aim: 'eyeR', height: [[0, 0.54], [1, 0.49]], fov: 14, el: 1, screen: [-0.1, 0.0],
+    key: [22, 38, 1.35, 'face'], rim: [-165, 12, 0.6], rim2: [165, 7, 0.7],
+    byFigure: { prometheus: { key: [18, 20, 1.25, 'face'] } },   // reach into the deep-set socket
   },
-  // Small in the black: head and shoulders, light from above.
+  // yaw 60. Small in the black: head and shoulders, light from above.
   M05: {
     aim: { at: 'head', off: [0, -0.32, 0] }, height: [[0, 3.7], [1, 3.55]], fov: 26, el: 8, screen: [0, -0.02],
-    key: [10, 76, 1.6], rim: [-165, 17, 0.8], rim2: [165, 15, 0.6], fill: [-70, -5, 0.09],
-    aura: { glow: 0.6, wide: 0.35, corona: 0.4, r: 0.85 },
+    key: [10, 66, 1.6], rim: [-165, 17, 0.8], rim2: [165, 15, 0.6], fill: [-70, -5, 0.09], spot: [-0.8, -0.35],
+    aura: { glow: 0.45, wide: 0.15, corona: 0.2, r: 0.85 },
   },
-  // Brow and eye from below.
+  // yaw 49. Brow and eye from below.
   M06: {
-    aim: { at: { eyeR: 0.7, eyeL: 0.3 }, off: [0, 0.05, 0] }, height: [[0, 0.66], [1, 0.62]], fov: 17, el: -24, az: 6, screen: [-0.05, 0.08],
-    key: [20, 62, 1.6], rim: [-165, 10, 0.7], rim2: [165, 6, 0.7],
+    dof: 0.02,
+    aim: { at: { eyeR: 0.7, eyeL: 0.3 }, off: [0, 0.06, 0] }, height: [[0, 0.82], [1, 0.76]], fov: 17, el: -24, az: 0, screen: [-0.05, 0.08],
+    key: [35, 58, 1.6, 'face'], rim: [-165, 10, 0.7], rim2: [165, 6, 0.7],
   },
-  // Frenzy beat: the eye.
+  // yaw 44. Frenzy beat: the eye.
   M07: {
-    aim: 'eyeR', height: [[0, 0.30], [1, 0.255, 'outQuad']], fov: 12, el: 2, screen: [-0.06, 0.02],
-    key: [8, 32, 1.71], rim: [-165, 12, 0.75], rim2: [165, 7, 0.8], drift: 1.0,
+    dof: 0.022,
+    aim: 'eyeR', height: [[0, 0.46], [1, 0.4, 'outQuad']], fov: 12, el: 2, screen: [-0.06, 0.02],
+    key: [26, 34, 1.45, 'face'], rim: [-165, 12, 0.75], rim2: [165, 7, 0.8], drift: 1.0,
+    byFigure: { prometheus: { key: [20, 18, 1.3, 'face'] } },
   },
-  // Frenzy beat: the lips.
+  // yaw 40. Frenzy beat: the lips.
   M08: {
-    aim: 'lips', height: [[0, 0.36], [1, 0.31, 'outQuad']], fov: 13, el: -3, screen: [-0.04, 0.0],
-    key: [-5, 30, 1.6], rim: [-165, 10, 0.7], rim2: [165, 6, 0.9], drift: 1.0,
+    dof: 0.022,
+    aim: 'lips', height: [[0, 0.5], [1, 0.44, 'outQuad']], fov: 13, el: -3, screen: [-0.04, 0.0],
+    key: [38, 26, 1.6, 'face'], rim: [-165, 10, 0.7], rim2: [165, 6, 0.9], drift: 1.0,
   },
-  // Frenzy flash: the gaze. A surge of the rim and aura that dies over the nine frames (no white flash).
+  // yaw 38. Frenzy flash: the gaze. A surge of the rim and aura that dies over the nine frames (no white flash).
   M09: {
-    aim: 'eyes', height: [[0, 0.58], [1, 0.54]], fov: 15, el: 1, screen: [0, 0.03],
-    key: [0, 36, 1.6], rim: [-165, 12, [[0, 2.4], [1, 0.8, 'outQuad']]], rim2: [165, 7, [[0, 2.1], [1, 0.7, 'outQuad']]],
+    dof: 0.016,
+    aim: 'eyes', height: [[0, 0.68], [1, 0.63]], fov: 15, el: 1, screen: [0, 0.03],
+    key: [35, 40, 1.6, 'face'], rim: [-165, 12, [[0, 2.4], [1, 0.8, 'outQuad']]], rim2: [165, 7, [[0, 2.1], [1, 0.7, 'outQuad']]],
     aura: { glow: [[0, 1.2], [1, 0.4, 'outQuad']], wide: [[0, 0.6], [1, 0.2, 'outQuad']], corona: 0.0 },
   },
-  // The held breath: a slow push on the three-quarter face.
+  // yaw 36 -> 35. The held breath: a slow push on the three-quarter face.
   M10: {
-    aim: 'face', height: [[0, 1.3], [1, 1.06, 'inOutSine']], fov: 19, el: 2, az: -4, screen: [0, 0.04],
-    key: [55, 36, 1.45], rim: [-165, 14, 0.9], rim2: [165, 7, 0.65], fill: [-60, 0, 0.12],
+    dof: 0.01,
+    aim: 'face', height: [[0, 1.3], [1, 1.06, 'inOutSine']], fov: 19, el: 2, az: 0, screen: [0, 0.04],
+    key: [30, 36, 1.45, 'face'], rim: [-165, 14, 0.9], rim2: [165, 7, 0.65], fill: [-60, 0, 0.12],
   },
-  // Between strikes: the face, hard light.
+  // yaw 31. Between strikes: the face, hard light.
   M11: {
     aim: 'face', height: [[0, 1.02], [1, 0.97]], fov: 17, el: 0, screen: [0, 0.02],
-    key: [78, 18, 1.82], rim: [-165, 10, 0.8], rim2: [165, 6, 0.3], fill: [-70, 0, 0.06], front: 0.006,
+    key: [55, 18, 1.8, 'face'], rim: [-165, 10, 0.8], rim2: [165, 6, 0.3], fill: [-70, 0, 0.06],
   },
-  // Both eyes now, almost upon us.
+  // yaw 27. Both eyes now, almost upon us.
   M12: {
+    dof: 0.014,
     aim: 'eyes', height: [[0, 0.98], [1, 0.92]], fov: 17, el: 1, screen: [0, 0.05],
-    key: [-35, 40, 1.5], rim: [-165, 14, 0.7], rim2: [165, 9, 0.7],
+    key: [-55, 40, 1.5, 'face'], rim: [-165, 14, 0.7], rim2: [165, 9, 0.7],
   },
-  // Amid the eruption: the face, still, in its aura (full 9:16 from here).
+  // yaw 18. Amid the eruption: the face, still, in its aura (full 9:16 from here).
   M13: {
     aim: { at: 'head', off: [0, 0.0, 0] }, height: [[0, 2.1], [1, 2.0]], fov: 22, el: 2, screen: [0, 0.05],
-    key: [-30, 45, 1.28], rim: [-165, 15, 1.3], rim2: [165, 12, 1.1],
-    aura: { glow: 0.7, wide: 0.42, corona: 0.55, r: 0.85 },
+    key: [-46, 45, 1.3, 'face'], rim: [-165, 15, 1.3], rim2: [165, 12, 1.1],
+    aura: { glow: 0.5, wide: 0.18, corona: 0.3, r: 0.85 },
   },
-  // Expansion: the face nearly turned to us.
+  // yaw 12. Expansion: the face nearly turned to us.
   M14: {
     aim: 'face', height: [[0, 1.35], [1, 1.27]], fov: 19, el: 1, screen: [0, 0.08],
-    key: [-32, 38, 1.45], rim: [-165, 14, 0.8], rim2: [165, 7, 0.7],
+    key: [-44, 38, 1.45, 'face'], rim: [-165, 14, 0.8], rim2: [165, 7, 0.7],
   },
-  // A breath from direct.
+  // yaw 6.5. A breath from direct.
   M15: {
+    dof: 0.012,
     aim: 'eyes', height: [[0, 0.9], [1, 0.84]], fov: 17, el: 0, screen: [0, 0.04],
-    key: [-28, 36, 1.5], rim: [-165, 12, 0.7], rim2: [165, 7, 0.7],
+    key: [-38, 36, 1.5, 'face'], rim: [-165, 12, 0.7], rim2: [165, 7, 0.7],
   },
-  // THE GAZE: straight down the lens, a slow push from the close-up toward the eyes, staring into you. The end title
-  // sits at ~0.84H: the chest falls away into black under it.
+  // yaw 0. THE GAZE: straight down the lens, a slow push from the close-up toward the eyes, staring into you. The end
+  // title sits at ~0.84H: the neck falls away into black under it.
   M16: {
-    aim: 'eyes', height: [[0, 1.55], [1, 0.82, 'inOutSine']], fov: [[0, 17], [1, 15]], el: 0, screen: [[0, [0, 0.26]], [1, [0, 0.14]]], drift: 0.35,
-    key: [-30, 36, 1.5], rim: [-165, 14, 0.8], rim2: [165, 9, 0.75],
-    aura: { glow: 0.45, wide: 0.25, corona: 0.3, r: 0.8 },
-    grad: [-0.3, -0.62, 0.92],
+    dof: [[0, 0.008], [1, 0.016]],
+    aim: 'eyes', height: [[0, 1.45], [1, 0.86, 'inOutSine']], fov: [[0, 17], [1, 15]], el: 0, screen: [[0, [0, 0.3]], [1, [0, 0.17]]], drift: 0.35,
+    key: [-34, 36, 1.5, 'face'], rim: [-165, 14, 0.8], rim2: [165, 9, 0.75], spot: [-0.85, -0.45],
+    aura: { glow: 0.38, wide: 0.12, corona: 0.16, r: 0.8 },
+    grad: [-0.26, -0.6, 0.95],
+    // Sol: open on the whole radiate crown, then push into the eyes
+    byFigure: { sol: { height: [[0, 2.3], [1, 0.86, 'inOutSine']], screen: [[0, [0, 0.12]], [1, [0, 0.17]]], aura: { glow: 0.45, wide: 0.15, corona: 0.28, r: 0.8 } } },
   },
   default: {},
 };
 
 // merge BASE <- preset <- plan params (aura and marble merge one level deep)
-function params(S) {
-  const P = { ...BASE, ...S.params };
-  P.aura = { ...BASE.aura, ...(S.params.aura || {}) };
-  P.marble = { ...BASE.marble, ...(S.params.marble || {}) };
+// a preset may carry byFigure: { david|sol|prometheus: {...} } overrides for one figure
+function params(S, plan) {
+  const fig = S.params.figure || defaultFigure(plan);
+  const F = (S.params.byFigure && S.params.byFigure[fig]) || {};
+  const P = { ...BASE, ...S.params, ...F };
+  P.aura = { ...BASE.aura, ...(S.params.aura || {}), ...(F.aura || {}) };
+  P.marble = { ...BASE.marble, ...(FIGURES[fig] && FIGURES[fig].marble || {}), ...(S.params.marble || {}), ...(F.marble || {}) };
+  P.figure = fig;
   return P;
 }
 
@@ -174,10 +201,18 @@ function defaultFigure(plan) {
   return 'david';
 }
 
-// light spec [az, el, I] (I may be keyframed) -> { dir (world), I }
-function light(spec, u) {
+// light spec [az, el, I, 'face'?] (I may be keyframed) -> { dir (world), I }. With 'face' the azimuth is measured from
+// the figure's own face axis (meta.frame.facialForward at the given yaw) instead of the viewer axis, so one preset
+// models every face alike (David's face is turned ~15 deg from his gaze; Sol and Prometheus look along theirs).
+function light(spec, u, faceAz = 0) {
   if (!spec) return { dir: [0, 1, 0], I: 0 };
-  return { dir: dirAzEl(kv(spec[0], u, 0), kv(spec[1], u, 0)), I: kv(spec[2], u, 1) };
+  const az = kv(spec[0], u, 0) + (spec[3] === 'face' ? faceAz : 0);
+  return { dir: dirAzEl(az, kv(spec[1], u, 0)), I: kv(spec[2], u, 1) };
+}
+// azimuth (deg, studio frame) the face points along at head yaw `yaw`
+function faceAzimuth(meta, yaw) {
+  const f = (meta.frame && meta.frame.facialForward) || [0, 0, 1];
+  return yaw + (Math.atan2(f[0], f[2]) * 180) / Math.PI;
 }
 const scl = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
 
@@ -198,7 +233,8 @@ export default {
     this.gbufProg = meshProgram(gl, GBUF_VS, GBUF_FS, 'statue.gbuf');
     this.shadowProg = meshProgram(gl, SHADOW_VS, SHADOW_FS, 'statue.shadow');
     this.lightProg = G.program(LIGHT_FS, 'statue.light');
-    this.fxaaProg = G.program(FXAA_FS, 'statue.fxaa');
+    this.momentsProg = G.program(MOMENTS_FS, 'statue.moments');
+    this.vblurProg = G.program(VBLUR_FS, 'statue.vblur');
     this.down4Prog = G.program(DOWN4_FS, 'statue.down4');
     this.blurProg = G.program(BLUR_FS, 'statue.blur');
     this.raysProg = G.program(RAYS_FS, 'statue.rays');
@@ -206,7 +242,7 @@ export default {
     this.samplers = depthSamplers(gl);
     this.fbos = new Map();
     this.shadowKey = null;
-    this.shadow = null;
+    this.vsm = null;
   },
 
   _u(S) { return clamp(S.local / Math.max(S.dur - 1 / S.fps, 1e-3)); },
@@ -219,8 +255,8 @@ export default {
 
   _render(E, S, target) {
     const G = E.G, gl = G.gl;
-    const P = params(S);
-    const figId = P.figure || defaultFigure(E.plan);
+    const P = params(S, E.plan);
+    const figId = P.figure;
     const FIG = FIGURES[figId];
     const fig = getFigure(figId);
     const meta = fig.meta;
@@ -231,10 +267,6 @@ export default {
     const yaw = turnYaw(turn, S.f);
     const yawRef = turnYaw(turn, S.shot.start);       // the key is locked to the head at the shot's first frame
     const t = S.t;
-    const prof = (typeof window !== 'undefined' && window.__statueProf) ? [] : null;
-    const px = new Uint8Array(4);
-    const mark = (name) => { if (!prof) return; gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); prof.push([name, performance.now()]); };
-    mark('start');
 
     // ---- camera
     const C = statueCamera(E, meta, P, yaw, u, t);
@@ -245,12 +277,13 @@ export default {
     const camH = rotY(cam.pos, -yaw), fwdH = rotY(cam.fwd, -yaw);
 
     // ---- lights (studio frame -> head space)
-    const key = light(P.key, u), fill = light(P.fill, u), rim = light(P.rim, u), rim2 = light(P.rim2, u), under = light(P.under, u);
-    let underI = under.I;
+    const key = light(P.key, u, faceAzimuth(meta, yawRef)), fill = light(P.fill, u), rim = light(P.rim, u), rim2 = light(P.rim2, u), under = light(P.under, u);
+    let underI = under.I, auraFl = 1;
     if (figId === 'prometheus') {
-      // the stolen fire below: a faint, deterministic flicker
+      // the stolen fire below: a faint, deterministic flicker (film time), also breathing in the ember aura
       const fl = 1 + 0.10 * Math.sin(t * 7.3) + 0.07 * Math.sin(t * 12.9 + 1.3) + 0.05 * Math.sin(t * 23.1 + 2.1) + 0.03 * Math.sin(t * 37.7 + 0.4);
-      underI = (P.under && P.under[2] ? underI : 1.3) * fl;
+      underI = (P.under && P.under[2] ? underI : 0.22) * fl;
+      auraFl = 0.55 + 0.45 * fl;
     }
     const keyH = rotY(key.dir, -yawRef);
     const toH = (d) => rotY(d, -yaw);
@@ -261,7 +294,7 @@ export default {
     const shR = P.shadowR || clamp(kv(P.height, 0, 1) * 0.62 + 0.12, 0.28, 1.15);
     const bc = [0, -0.2, -0.05], br = 1.25;
     const SM = shadowMatrix(keyH, shC, shR, bc, br);
-    const skey = `${figId}|${keyH.map((x) => x.toFixed(6))}|${shC}|${shR}`;
+    const skey = `${figId}|${keyH.map((x) => x.toFixed(6))}|${shC}|${shR}|${P.diffusion ?? 0.008}`;
     const sh = depthTarget(gl, this.fbos, 'shadow', SHADOW_SIZE, SHADOW_SIZE, [], { depthTexture: true });
     if (this.shadowKey !== skey) {
       gl.bindFramebuffer(gl.FRAMEBUFFER, sh.fbo);
@@ -273,11 +306,28 @@ export default {
       gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(1.5, 3.0);
       bindUniforms(G, this.shadowProg, { uLMat: SM.m });
       gl.bindVertexArray(mesh.vao);
-      gl.drawElements(gl.TRIANGLES, mesh.count, gl.UNSIGNED_INT, 0);
+      // only casters inside the light's footprint can shadow what the map covers (orthographic along the light)
+      const Lm = SM.m;
+      drawClusters(gl, mesh, (cl) => {
+        const x = Lm[0] * cl.c[0] + Lm[4] * cl.c[1] + Lm[8] * cl.c[2] + Lm[12];
+        const y = Lm[1] * cl.c[0] + Lm[5] * cl.c[1] + Lm[9] * cl.c[2] + Lm[13];
+        const rr = cl.r / shR;
+        return Math.abs(x) <= 1 + rr && Math.abs(y) <= 1 + rr;
+      });
       gl.disable(gl.POLYGON_OFFSET_FILL);
+      gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.disable(gl.CULL_FACE);
+      // variance map: moments at half resolution, blurred to the diffusion length (separable)
+      const vs = SHADOW_SIZE / 2;
+      const va = depthTarget(gl, this.fbos, 'vsmA', vs, vs, ['rgba32f']), vb = depthTarget(gl, this.fbos, 'vsmB', vs, vs, ['rgba32f']);
+      for (const rt of [va, vb]) for (const tex of rt.colors) { gl.bindTexture(gl.TEXTURE_2D, tex.tex); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); }
+      drawFullscreen(G, this.momentsProg, { uDepth: { tex: sh.depth.tex, sampler: this.samplers.raw } }, va);
+      // blur step in texels (4 taps each side, sigma ~2 steps): sigma ~ the diffusion length
+      const rad = clamp(((P.diffusion ?? 0.008) / (2 * shR)) * vs / 1.75, 0.5, 16);
+      drawFullscreen(G, this.vblurProg, { uSrc: { tex: va.colors[0].tex }, uDir: [rad, 0] }, vb);
+      drawFullscreen(G, this.vblurProg, { uSrc: { tex: vb.colors[0].tex }, uDir: [0, rad] }, va);
+      this.vsm = va;
       this.shadowKey = skey;
     }
-    mark('shadow');
 
     // ---- G-buffer
     const gb = depthTarget(gl, this.fbos, 'gbuf', w, h, ['rgba32f', 'rgba16f', 'rgba8']);
@@ -296,16 +346,37 @@ export default {
     gl.enable(gl.CULL_FACE); gl.cullFace(gl.BACK);
     bindUniforms(G, this.gbufProg, { uMVP: mvp });
     gl.bindVertexArray(mesh.vao);
-    gl.drawElements(gl.TRIANGLES, mesh.count, gl.UNSIGNED_INT, 0);
+    {
+      // frustum (the visible window only) and back-facing cluster culling, in head space
+      const tx = cam.tanH * aspect, ty = cam.tanH * (scissor ? (h - 2 * m) / h : 1);
+      const kx = Math.sqrt(1 + tx * tx), ky = Math.sqrt(1 + ty * ty);
+      const R = rotY(cam.right, -yaw), U = rotY(cam.up, -yaw);
+      drawClusters(gl, mesh, (cl) => {
+        const d = [cl.c[0] - camH[0], cl.c[1] - camH[1], cl.c[2] - camH[2]];
+        const z = v3.dot(d, fwdH), x = v3.dot(d, R), y = v3.dot(d, U);
+        if (z < near - cl.r) return false;
+        if (Math.abs(x) - z * tx > cl.r * kx || Math.abs(y) - z * ty > cl.r * ky) return false;
+        // all normals within 54.7 deg of the bin axis: hidden if the axis points away from the camera by more than
+        // 35.3 deg plus the cluster's angular radius
+        const dl = Math.hypot(d[0], d[1], d[2]);
+        if (dl > cl.r * 1.05) {
+          const ang = Math.acos(Math.min(1, v3.dot(d, cl.axis) / dl)) + Math.asin(Math.min(1, cl.r / dl));
+          if (ang < (35.26 * Math.PI) / 180) return false;
+        }
+        return true;
+      });
+    }
     gl.disable(gl.DEPTH_TEST); gl.depthMask(false);
     gl.disable(gl.CULL_FACE);
     gl.disable(gl.SCISSOR_TEST);
-    mark('gbuf');
 
     // ---- marble lighting
-    const lit = G.target('statue.lit', w, h, 'rgba16f');
-    const aa = G.target('statue.aa', w, h, 'rgba16f');
-    G.clear(lit); G.clear(aa);
+    const litT = depthTarget(gl, this.fbos, 'lit', w, h, ['rgba16f', 'rgba8']);
+    const lit = { fbo: litT.fbo, w, h, tex: litT.colors[0].tex };
+    const aux = { tex: litT.colors[1].tex };
+    gl.bindFramebuffer(gl.FRAMEBUFFER, litT.fbo);
+    gl.clearBufferfv(gl.COLOR, 0, [0, 0, 0, 0]);
+    gl.clearBufferfv(gl.COLOR, 1, [0, 0, 0, 0]);
     const holes = new Float32Array(21);
     let holeR = 0;
     let rayData = null;
@@ -318,7 +389,7 @@ export default {
     const front = kv(P.front, u, 0.006);
     drawFullscreen(G, this.lightProg, {
       uGP: { tex: gb.colors[0].tex }, uGN: { tex: gb.colors[1].tex }, uGB: { tex: gb.colors[2].tex },
-      uSh: { tex: sh.depth.tex, sampler: this.samplers.cmp }, uShRaw: { tex: sh.depth.tex, sampler: this.samplers.raw },
+      uSh: { tex: sh.depth.tex, sampler: this.samplers.cmp }, uVsm: { tex: this.vsm.colors[0].tex },
       uLMat: SM.m, uShDepth: SM.depthRange, uShTexel: (2 * shR) / SHADOW_SIZE, uPenUV: (P.penumbra ?? 0.0035) / (2 * shR),
       uCamH: camH, uFwdH: fwdH,
       uKeyDir: keyH, uKeyCol: scl(FIG.key, key.I),
@@ -328,13 +399,9 @@ export default {
       uUnderDir: toH(under.dir), uUnderCol: scl(FIG.under, underI),
       uFrontCol: scl(FIG.front, front), uAmb: FIG.amb,
       uHoles: holes, uHoleCol: scl(FIG.holes ? FIG.holes.col : [0, 0, 0], FIG.holes ? FIG.holes.I * kv(P.rays, u, 1) * this._breath(t, 0) : 0), uHoleR: holeR,
-      uMarble: [mb.veins, mb.veinScale, mb.gloss, mb.sss], uMfp: FIG.mfp, uTint: FIG.tint, uDebug: P.debug | 0,
+      uMarble: [mb.veins, mb.veinScale, mb.gloss, mb.sss], uMfp: FIG.mfp, uTint: FIG.tint, uSssTint: FIG.sss, uDebug: P.debug | 0, uSpot: kv(P.spot, u, [-0.8, -0.38]), uSpotR: kv(P.spotR, u, [0.66, 0.92]), uCut: this._cuts(meta),
     }, lit, scissor);
-    mark('light');
 
-    // ---- antialiasing
-    drawFullscreen(G, this.fxaaProg, { uSrc: lit }, aa, scissor);
-    mark('fxaa');
 
     // ---- aura: quarter-res coverage, two blurred glows
     const w4 = Math.max(2, Math.round(w / 4)), h4 = Math.max(2, Math.round(h / 4));
@@ -344,7 +411,7 @@ export default {
     const g1 = G.target('statue.g1', w4, h4, 'rgba16f');
     const b8 = G.target('statue.b8', w8, h8, 'rgba16f');
     const g2 = G.target('statue.g2', w8, h8, 'rgba16f');
-    drawFullscreen(G, this.down4Prog, { uSrc: aa, uSrcRes: [w, h] }, m4);
+    drawFullscreen(G, this.down4Prog, { uSrc: lit, uAux: aux, uSrcRes: [w, h] }, m4);
     // radii in quarter / eighth-res texels, so they scale with the render size
     drawFullscreen(G, this.blurProg, { uSrc: m4, uSrcRes: [w4, h4], uDir: [1.6, 0] }, b4);
     drawFullscreen(G, this.blurProg, { uSrc: b4, uSrcRes: [w4, h4], uDir: [0, 1.6] }, g1);
@@ -353,7 +420,6 @@ export default {
     drawFullscreen(G, this.blurProg, { uSrc: g2, uSrcRes: [w8, h8], uDir: [2.6, 0] }, b8);
     drawFullscreen(G, this.blurProg, { uSrc: b8, uSrcRes: [w8, h8], uDir: [0, 2.6] }, g2);
 
-    mark('aura');
     // ---- Sol: the radiate crown
     let rays = null;
     if (rayData) {
@@ -368,9 +434,24 @@ export default {
         I[i] = R.I * rk * rayData.weight[i] * this._breath(t, i);
       });
       drawFullscreen(G, this.raysProg, {
-        ...cam.uniforms, uLit: aa, uRayP: pos, uRayD: dirs, uRayI: I, uRayShape: [R.len, R.w0, R.w1, R.fall],
+        ...cam.uniforms, uLit: lit, uRayP: pos, uRayD: dirs, uRayI: I, uRayShape: [R.len, R.w0, R.w1, R.fall],
         uRayCol: R.col, uRayCore: R.core, uRayT: t,
       }, rays);
+    }
+
+    // ---- depth of field (close-ups): the lit marble blurred at half and quarter resolution
+    const dofA = kv(P.dof, u, 0);
+    let dofT = null;
+    if (dofA > 0) {
+      const k = E.k;
+      const w2 = Math.max(2, Math.round(w / 2)), h2 = Math.max(2, Math.round(h / 2));
+      const ha = G.target('statue.dofHa', w2, h2, 'rgba16f'), hb = G.target('statue.dofHb', w2, h2, 'rgba16f');
+      const qa = G.target('statue.dofQa', w4, h4, 'rgba16f'), qb = G.target('statue.dofQb', w4, h4, 'rgba16f');
+      drawFullscreen(G, this.blurProg, { uSrc: lit, uSrcRes: [w, h], uDir: [1.6 * k, 0] }, ha);
+      drawFullscreen(G, this.blurProg, { uSrc: ha, uSrcRes: [w2, h2], uDir: [0, 0.8 * k] }, hb);
+      drawFullscreen(G, this.blurProg, { uSrc: hb, uSrcRes: [w2, h2], uDir: [2.2 * k, 0] }, qa);
+      drawFullscreen(G, this.blurProg, { uSrc: qa, uSrcRes: [w4, h4], uDir: [0, 1.1 * k] }, qb);
+      dofT = { a: hb, b: qb };
     }
 
     // ---- composite into the scene target
@@ -380,15 +461,34 @@ export default {
     const corona = pr ? [(pr.x / E.W) * 2 - 1, 1 - (pr.y / E.H) * 2] : [0, 0];
     const coronaR = pr ? cam.pixelRadius(ac, A.r ?? 0.75, E.H) / (E.H / 2) : 1;
     const grad = P.grad;
+    // the engine's draw skips the letterbox rows; clear them so nothing from a previous frame reaches post's bloom
+    // (frames must not depend on render order)
+    G.clear(target);
     E.draw(this.compProg, {
-      uLit: aa, uM4: m4, uG1: g1, uG2: g2, uRays: rays || aa, uHasRays: rays ? 1 : 0,
-      uAuraCol: FIG.aura, uAuraCol2: FIG.aura2,
+      uLit: lit, uM4: m4, uG1: g1, uG2: g2, uRays: rays || m4, uHasRays: rays ? 1 : 0,
+      uAuraCol: scl(FIG.aura, auraFl), uAuraCol2: scl(FIG.aura2, auraFl),
       uAura: [kv(A.glow, u, 0), kv(A.wide, u, 0), kv(A.corona, u, 0), kv(A.streaks, u, 0.6)],
       uCorona: corona, uCoronaR: coronaR, uGain: kv(P.gain, u, 1), uGrad: grad ? [grad[0], grad[1], grad[2], 0] : [0, -1, 0, 0],
       uAuraT: t,
+      // CoC in 1080-px units: aperture (head units) x |d - s| / (d s) x (frame height in 1080-px units) / (2 tan(fov/2))
+      uDof: dofT ? [dofA * (h / E.k) / (2 * cam.tanH), C.dist] : [0, 1], uDofA: dofT ? dofT.a : m4, uDofB: dofT ? dofT.b : m4,
     }, target);
-    mark('comp');
-    if (prof) window.__statueProf.push(prof.slice(1).map((p, i) => p[0] + ' ' + Math.round(p[1] - prof[i][1])).join(', '));
+  },
+
+  // cut planes (other than the horizontal base) as vec4(normal, offset); unused slots get offset 99
+  _cuts(meta) {
+    if (meta._cutU) return meta._cutU;
+    const out = new Float32Array(12).fill(0);
+    for (let i = 0; i < 3; i++) out[i * 4 + 3] = 99;
+    let k = 0;
+    for (const c of (meta.frame && meta.frame.cuts) || []) {
+      if (c.normal[1] < -0.99 || k >= 3) continue;
+      const n = v3.norm(c.normal);
+      out.set([n[0], n[1], n[2], v3.dot(n, c.point)], k * 4);
+      k++;
+    }
+    meta._cutU = out;
+    return out;
   },
 
   // slow breathing of the crown, per ray (film time, so it is continuous across inserts)
@@ -417,7 +517,7 @@ export default {
   post(E, S) {
     const P = S.params;
     const u = this._u(S);
-    const out = { vignette: 0.42, bloomStrength: 0.1, bloomThreshold: 0.95, halation: 0.02, lift: 0.0 };
+    const out = { vignette: 0.42, bloomStrength: 0.1, bloomThreshold: 0.95, halation: 0.006, lift: 0.0 };
     for (const [k, v] of Object.entries(P.post || {})) out[k] = kv(v, u);
     return out;
   },

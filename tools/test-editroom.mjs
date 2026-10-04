@@ -3,7 +3,8 @@
 // Generates frame-coded PORTRAIT test cards (720x1280, one per fake cut; the cuts share most 10 s clips),
 // packages them as three cuts (+ a single-cut package), then checks in the local Chromium:
 //   portrait layout (desktop: picture beside timeline/notes, no giant scroll; phone: full width), pins exactly
-//   on the picture in both, frame-exact stepping/seeks, sync across clip boundaries, the cut switcher (same
+//   on the picture in both, note bubbles readable and inside the picture for pins anywhere (left/centre/right
+//   border, top/bottom, long text scrolls), frame-exact stepping/seeks, sync across clip boundaries, the cut switcher (same
 //   frame, cut-specific picture, shared clips stored once, per-cut shot data), notes per cut (+ legacy notes
 //   without `cut` under David & Goliath), and the sound UI (unmuted at 80%, mute/volume, failed soundtrack,
 //   play() rejected -> "Tap for sound", never picture without sound).
@@ -182,6 +183,30 @@ const pinGeom = (pg, noteId) => pg.evaluate((id) => {
   const r = p.getBoundingClientRect();
   return { cx: r.left + r.width / 2, cy: r.top + r.height / 2, v: { left: v.left, top: v.top, width: v.width, height: v.height }, st: { left: st.left, top: st.top, width: st.width, height: st.height }, iw: innerWidth };
 }, noteId);
+// note bubbles for pins at the picture's left border, centre and right border, at the top and the bottom, and
+// a very long one; every text is wider than a bubble's 300 px cap, so each bubble should take its full width
+const BL = 'The rim light clips on this edge and the haze reads too flat; pull the exposure down half a stop and warm it.';
+const BUBBLE_NOTES = [[0.05, 0.08], [0.5, 0.5], [0.95, 0.05], [0.95, 0.9], [0.05, 0.92], [0.8, 0.55, 14]].map(([x, y, rep], i) => ({
+  id: `bubble${i}`, cut: 'david', frame: 2000, x, y, text: `Bubble ${i}: ` + Array(rep || 1).fill(BL).join(' '), shot: '', status: 'open', createdAt: `2026-10-04T00:00:0${i}.000Z`, render: 9, tags: [] }));
+async function bubbleChecks(pg, label) {
+  await pg.click('[data-filter="all"]');
+  for (const n of BUBBLE_NOTES) {
+    await pg.click(`.note[data-note="${n.id}"]`);
+    await pg.waitForSelector('.bubble', { timeout: 5000 }).catch(() => {});
+    const b = await pg.evaluate(() => {
+      const el = document.querySelector('.bubble'); if (!el) return null;
+      const r = el.getBoundingClientRect(), st = document.getElementById('stage').getBoundingClientRect();
+      return { l: r.left - st.left, t: r.top - st.top, r: st.right - r.right, b: st.bottom - r.bottom, w: r.width, h: r.height, sw: st.width, sh: st.height, scroll: el.scrollHeight > el.clientHeight + 1 };
+    });
+    const cap = b ? Math.min(300, 0.72 * b.sw) : 0, long = n.text.length > 1000;
+    check(b && b.w >= 200 && b.w >= cap - 1 && Math.min(b.l, b.t, b.r, b.b) >= -0.5 && (!long || b.scroll),
+      `${label}: bubble for a pin at (${n.x}, ${n.y}) is ${b ? `${b.w.toFixed(0)}x${b.h.toFixed(0)} px, inside the ${b.sw.toFixed(0)}x${b.sh.toFixed(0)} picture (margins l${b.l.toFixed(0)} t${b.t.toFixed(0)} r${b.r.toFixed(0)} b${b.b.toFixed(0)})${long ? (b.scroll ? ', long text scrolls inside it' : ', LONG TEXT NOT SCROLLABLE') : ''}` : 'missing'}`);
+  }
+  // reading a bubble (a click on it) must not open the note composer
+  await pg.click('.bubble', { position: { x: 20, y: 10 } });
+  check(await pg.locator('.composer').count() === 0 && await pg.locator('.bubble').count() === 1, `${label}: clicking a bubble keeps it open and does not start a new note`);
+  await pg.click(`.note[data-note="${BUBBLE_NOTES[2].id}"]`);   // leave the (0.95, 0.05) one open for the screenshot
+}
 const legacy = { id: 'legacy1', frame: 1500, x: 0.8, y: 0.15, text: 'Legacy note from render 1 (saved before cuts existed).', shot: 'S12-engulf', status: 'open', createdAt: '2026-10-03T12:00:00.000Z', render: 1, tags: [] };
 const shots = path.join(dir, 'shots'); fs.mkdirSync(shots, { recursive: true });
 
@@ -339,6 +364,12 @@ try {
   check(await listCount() === 2 && !(await page.textContent('#notelist')).includes('Sol note'), 'back on David & Goliath: its 2 notes, not the Sol note');
   const allNotes = notes;
 
+  // ----- note bubbles: readable and inside the picture wherever the pin is (left / centre / right, top / bottom) -----
+  await page.evaluate((bn) => localStorage.setItem('editroom-notes-v1', JSON.stringify([...JSON.parse(localStorage.getItem('editroom-notes-v1')), ...bn])), BUBBLE_NOTES);
+  await page.reload(); await ready(page);
+  await bubbleChecks(page, 'desktop');
+  await page.screenshot({ path: path.join(shots, 'bubble-right-desktop.png') });
+
   // ===== phone =====
   const pctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
   await pctx.addInitScript((n) => { if (localStorage.getItem('editroom-notes-v1') === null) localStorage.setItem('editroom-notes-v1', JSON.stringify(n)); localStorage.setItem('editroom-cut', 'david'); }, allNotes);
@@ -347,7 +378,7 @@ try {
   await ready(phone);
   const P = await phone.evaluate(() => { const st = document.getElementById('stage').getBoundingClientRect(); return { l: st.left, w: st.width, h: st.height, sw: document.documentElement.scrollWidth, iw: innerWidth }; });
   check(Math.abs(P.w - P.iw) < 1 && Math.abs(P.l) < 0.5 && Math.abs(P.w / P.h - 9 / 16) < 0.004, `phone: picture full width (${P.w.toFixed(1)} of ${P.iw}px), 9:16`);
-  check(P.sw <= 390, `no horizontal page scroll at phone width (${P.sw}px)`);
+  check(P.sw <= 390 && P.iw === 390, `no horizontal page scroll or zoom-out at phone width (page ${P.sw}px, layout viewport ${P.iw}px)`);
   await phone.click('[data-filter="all"]');
   await phone.click(`.note[data-note="${nd.id}"]`);
   await shown(phone);
@@ -357,6 +388,14 @@ try {
   check(ph.code === 1000 % 576, `phone: note click seeks to its frame (code ${ph.code})`);
   await phone.screenshot({ path: path.join(shots, 'phone.png'), fullPage: true });
   await phone.screenshot({ path: path.join(shots, 'phone-viewport.png') });
+  await phone.evaluate((bn) => localStorage.setItem('editroom-notes-v1', JSON.stringify([...JSON.parse(localStorage.getItem('editroom-notes-v1')), ...bn])), BUBBLE_NOTES);
+  await phone.reload(); await ready(phone);
+  await bubbleChecks(phone, 'phone');
+  await phone.evaluate(() => scrollTo(0, 0)); await phone.waitForTimeout(150);
+  await phone.screenshot({ path: path.join(shots, 'bubble-right-phone.png') });
+  await phone.click(`.note[data-note="${BUBBLE_NOTES[5].id}"]`);
+  await phone.evaluate(() => scrollTo(0, 0)); await phone.waitForTimeout(150);
+  await phone.screenshot({ path: path.join(shots, 'bubble-long-phone.png') });
 
   // ===== soundtrack fails to load =====
   const fctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
@@ -379,6 +418,17 @@ try {
   const fs2 = await fp.evaluate(() => ({ playing: !document.getElementById('aud').paused, state: document.getElementById('sound').dataset.state }));
   check(fs2.playing && ['on', 'buffering'].includes(fs2.state), `after retry the soundtrack loads and plays (${fs2.state})`);
   await fp.evaluate(() => document.getElementById('aud').pause());
+  // the same failure on a phone: the long label must wrap inside the sound control, not widen the page
+  // (a page wider than the screen makes mobile browsers zoom the whole Edit Room out)
+  const fpc = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+  await fpc.route('**/media/soundtrack*', (r) => r.fulfill({ status: 404, body: '' }));
+  const fph = await fpc.newPage(); watch(fph);
+  await fph.goto(url);
+  await fph.waitForFunction(() => document.getElementById('sound').dataset.state === 'error', null, { timeout: 30000 });
+  const fw = await fph.evaluate(() => { const s = document.getElementById('sound').getBoundingClientRect(); return { iw: innerWidth, sw: document.documentElement.scrollWidth, sr: s.right, label: document.getElementById('soundLabel').textContent }; });
+  check(fw.iw === 390 && fw.sw <= 390 && fw.sr <= 390, `phone, soundtrack failed: "${fw.label}" fits the screen (page ${fw.sw}px, layout viewport ${fw.iw}px, sound control ends at ${fw.sr.toFixed(0)}px)`);
+  await fph.screenshot({ path: path.join(shots, 'sound-failed-phone.png') });
+  await fpc.close();
 
   // ===== play() rejected by the browser's autoplay policy =====
   const bctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
