@@ -122,8 +122,10 @@ a{color:inherit}
 .vw-btn{position:absolute;top:12px;right:12px;z-index:3;width:44px;height:44px;border-radius:50%;display:none;place-items:center;border:1px solid var(--nv-border-strong);background:rgba(var(--nv-0-rgb),.42);color:var(--nv-text);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:.8;transition:opacity .25s var(--out),border-color .2s var(--out),background .2s var(--out)}
 .vw-btn:hover,.vw-btn:focus-visible{opacity:1;border-color:var(--nv-text);background:rgba(var(--nv-0-rgb),.6)}
 .js .vw-btn{display:grid}
-.vw-btn .vw-close,.film.viewer .vw-btn .vw-open{display:none}
-.film.viewer .vw-btn .vw-close{display:block}
+/* the viewer's close sits top left, only in the viewer; the full-screen button stays top right */
+.vw-btn.vw-x{left:12px;right:auto}
+.js .vw-btn.vw-x{display:none}
+.js .film.viewer .vw-btn.vw-x{display:grid}
 html.viewing{overflow:hidden}
 .film.viewer{position:fixed;inset:0;z-index:90;margin:0;padding:16px;background:var(--nv-0);--sh:calc(100vh - 32px);animation:vwin .35s var(--out)}
 @supports (height:100dvh){.film.viewer{--sh:calc(100dvh - 32px)}}
