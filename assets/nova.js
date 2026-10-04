@@ -31,8 +31,22 @@ $$('[data-r],[data-split]:not(#h1)').forEach(function(el){var p=el.parentElement
  el.style.transitionDelay=(grid?Math.min((sib%4)*90,270):0)+'ms';io.observe(el)});
 
 /* ---------------- the film ---------------- */
-var film=$('#film'),video=$('#video'),play=$('#play'),amb=$('#ambient'),actx=amb&&amb.getContext('2d'),ambT=0,filmOn=false;
-function paintAmbient(src){if(!actx)return;try{actx.drawImage(src,0,0,amb.width,amb.height)}catch(e){}}
+/* the film's light around the screen: the picture drawn into a 24 x 42 canvas. On a desktop a CSS blur
+   softens it; a phone's graphics chip falls behind re-blurring the whole screen every frame (the light lagged
+   the cuts), so on touch screens the script blurs and saturates those 1,008 pixels itself and the canvas is
+   shown as it is, with no CSS filter */
+var film=$('#film'),video=$('#video'),play=$('#play'),amb=$('#ambient'),SOFT=matchMedia('(pointer: coarse)').matches,
+ actx=amb&&amb.getContext('2d',SOFT?{willReadFrequently:true}:undefined),ambT=0,filmOn=false;
+if(SOFT&&amb)amb.classList.add('soft');
+function paintAmbient(src){if(!actx)return;try{actx.drawImage(src,0,0,amb.width,amb.height);if(SOFT)soften()}catch(e){}}
+function soften(){var w=amb.width,h=amb.height,im=actx.getImageData(0,0,w,h),a=im.data,t=new Float32Array(w*h*3),u=new Float32Array(w*h*3),R=4,x,y,c,i,k,s,n,q;
+ for(i=0;i<w*h;i++){t[i*3]=a[i*4];t[i*3+1]=a[i*4+1];t[i*3+2]=a[i*4+2]}
+ /* three box passes each way approach a gaussian (sigma about 4.5 canvas pixels, the CSS blur's reach) */
+ for(q=0;q<3;q++){
+  for(y=0;y<h;y++)for(c=0;c<3;c++)for(x=0;x<w;x++){s=0;n=0;for(k=-R;k<=R;k++){i=x+k;if(i<0)i=0;else if(i>=w)i=w-1;s+=t[(y*w+i)*3+c];n++}u[(y*w+x)*3+c]=s/n}
+  for(x=0;x<w;x++)for(c=0;c<3;c++)for(y=0;y<h;y++){s=0;n=0;for(k=-R;k<=R;k++){i=y+k;if(i<0)i=0;else if(i>=h)i=h-1;s+=u[(i*w+x)*3+c];n++}t[(y*w+x)*3+c]=s/n}}
+ for(i=0;i<w*h;i++){var r=t[i*3],g=t[i*3+1],b=t[i*3+2],l=.2126*r+.7152*g+.0722*b;a[i*4]=l+(r-l)*1.4;a[i*4+1]=l+(g-l)*1.4;a[i*4+2]=l+(b-l)*1.4;a[i*4+3]=255}
+ actx.putImageData(im,0,0)}
 if(video){
  video.controls=false;
  var poster=new Image();poster.onload=function(){paintAmbient(poster)};poster.src=video.getAttribute('poster');
@@ -63,10 +77,11 @@ if(video){
  /* back to the progressive file, from where the stream stopped */
  function mp4(){var t=video.currentTime||0,was=!video.paused&&!video.ended;
   if(hls){try{hls.destroy()}catch(e){}hls=null}
-  if(native){native=false;video.removeAttribute('src')}
+  native=false;video.src='assets/nova-ep1-david-goliath.mp4';   /* explicit: hls.js can leave a revoked blob: behind */
   opts.hidden=true;film.classList.remove('has-opts');video.preload='metadata';try{video.load()}catch(e){}
   if(t>0||was)video.addEventListener('loadedmetadata',function f(){video.removeEventListener('loadedmetadata',f);if(t>0){try{video.currentTime=t}catch(e){}}if(was){var p=video.play();if(p&&p.catch)p.catch(function(){})}})}
- function useHls(){var E=Hls.Events;
+ function useHls(){var E=Hls.Events,dying=false;
+  function bail(){if(dying)return;dying=true;setTimeout(mp4,0)}
   hls=new Hls({autoStartLoad:false,capLevelToPlayerSize:true,abrEwmaDefaultEstimate:8e6,maxBufferLength:30,maxMaxBufferLength:60,backBufferLength:30});
   hls.on(E.MANIFEST_PARSED,function(){
    var ls=hls.levels.slice().sort(function(a,b){return side(b)-side(a)});
@@ -77,10 +92,12 @@ if(video){
    setQ(Q);setS(SND);ready()});
   hls.on(E.AUDIO_TRACKS_UPDATED,function(){setS(SND)});
   hls.on(E.LEVEL_SWITCHED,function(e,x){var l=hls.levels[x.level];autoAt=l?qName(side(l)):'';label()});
-  hls.on(E.ERROR,function(e,x){if(!x.fatal)return;
+  hls.on(E.ERROR,function(e,x){if(!x.fatal||dying)return;
+   /* 2: a browser that cannot play the stream's codecs at all goes straight to the MP4 */
+   if(x.details===Hls.ErrorDetails.MANIFEST_INCOMPATIBLE_CODECS_ERROR){bail();return}
    if(x.type===Hls.ErrorTypes.MEDIA_ERROR&&fixes++<2){if(Q==='2160')drop4k();hls.recoverMediaError();return}
    if(x.type===Hls.ErrorTypes.NETWORK_ERROR&&loaded&&fixes++<3){hls.startLoad();return}
-   mp4()});
+   bail()});
   hls.loadSource(SRC);hls.attachMedia(video)}
  function useNative(){native=true;video.src=SRC;$('#qOpt').hidden=true;
   video.addEventListener('loadedmetadata',function(){if(native)setS(SND)});
@@ -93,7 +110,8 @@ if(video){
   /* a look at the playlist first, so a missing stream never costs a click */
   fetch(SRC,{cache:'no-cache'}).then(function(r){if(!r.ok)throw 0;return r.text()}).then(function(t){
    if(t.indexOf('#EXTM3U')!==0||film.classList.contains('started'))return;
-   if(window.Hls&&Hls.isSupported())useHls();else if(video.canPlayType('application/vnd.apple.mpegurl'))useNative()}).catch(function(){})}
+   var MS=window.ManagedMediaSource||window.MediaSource,H264=MS&&MS.isTypeSupported&&MS.isTypeSupported('video/mp4; codecs="avc1.640028,mp4a.40.2"');
+   if(window.Hls&&Hls.isSupported()&&H264)useHls();else if(video.canPlayType('application/vnd.apple.mpegurl'))useNative()}).catch(function(){})}
  video.addEventListener('play',function(){load(video.currentTime||null)});
  function start(at){
   if(load(at))at=null;
@@ -136,27 +154,41 @@ if(video){
 }
 
 /* ---------------- sharing ---------------- */
-/* Instagram takes pictures, not links, from the web: its button hands the phone's share sheet the 1080 x 1920
-   story card (pick Instagram, then Stories), fetched ahead as the buttons come near so the share stays inside
-   the tap. Where a browser cannot share files (most desktops), the link's own download saves the card and the
-   address is copied. X is a plain link to a prefilled post, so it works without the script too. */
-var shIg=$('#shareIg'),shMsg=$('#shareMsg'),cardFile=null,cardP=null;
+/* A web page cannot post to an Instagram story: only the app can. So Share to Instagram opens three steps
+   beside the story card: save it (on a phone, the share sheet's Save Image puts it in Photos; on Android,
+   Instagram Stories is right there in the sheet), open the story camera (instagram://story-camera on iPhone,
+   an intent on Android; inside Instagram's own browser, close the page and tap +), and copy the address for
+   the link sticker. The card is fetched ahead as the buttons come near, so the share stays inside the tap.
+   Without the script the button simply downloads the card. X is a plain link to a prefilled post. */
+var shIg=$('#shareIg'),shMsg=$('#shareMsg'),igs=$('#igs'),cardFile=null,cardP=null,UA=navigator.userAgent,
+ IN_IG=/Instagram/i.test(UA),IOS=/iP(hone|ad|od)/.test(UA)||(/Macintosh/.test(UA)&&navigator.maxTouchPoints>1),ANDROID=/Android/i.test(UA),SITE='https://nova.tehbyn.com/';
 function say(t){if(!shMsg)return;shMsg.textContent=t;clearTimeout(say.t);say.t=setTimeout(function(){shMsg.textContent=''},8000)}
 function getCard(){if(!cardP&&window.fetch&&window.File)cardP=fetch(shIg.getAttribute('href')).then(function(r){if(!r.ok)throw 0;return r.blob()}).then(function(b){cardFile=new File([b],'nova-ep1-david-goliath-story.jpg',{type:'image/jpeg'});return cardFile}).catch(function(){cardP=null});return cardP}
-function copyLink(){var u='https://nova.tehbyn.com/';try{if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(u).then(function(){return true},function(){return false})}catch(e){}return Promise.resolve(false)}
+function copyLink(){try{if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(SITE).then(function(){return true},function(){return false})}catch(e){}return Promise.resolve(false)}
+function saveFile(){var a=d.createElement('a');a.href=shIg.getAttribute('href');a.download=shIg.getAttribute('download');d.body.appendChild(a);a.click();a.remove()}
+function canShareCard(){return !!(cardFile&&navigator.canShare&&navigator.share&&navigator.canShare({files:[cardFile]}))}
 if(shIg){
  if('IntersectionObserver' in window)new IntersectionObserver(function(es,o){if(es[0].isIntersecting){o.disconnect();getCard()}},{rootMargin:'400px 0px'}).observe(shIg);
- shIg.addEventListener('click',function(e){
-  var files=cardFile?[cardFile]:null;
-  if(files&&navigator.canShare&&navigator.share&&navigator.canShare({files:files})){e.preventDefault();
-   navigator.share({files:files}).then(function(){say('Shared. Add a link sticker to nova.tehbyn.com in your story.')},function(err){
-    if(err&&err.name==='AbortError')return;
-    /* the share sheet refused: save the card the plain way instead */
-    var a=d.createElement('a');a.href=shIg.getAttribute('href');a.download=shIg.getAttribute('download');d.body.appendChild(a);a.click();a.remove();
-    copyLink().then(function(ok){say('Story card saved'+(ok?' and link copied':'')+'. Post it to your Instagram story with a link sticker.')})});
-   return}
-  /* no file sharing here: the download goes ahead (the link's default), and the address is copied */
-  getCard();copyLink().then(function(ok){say('Story card saved'+(ok?' and link copied':'')+'. Post it to your Instagram story with a link sticker.')})})}
+ if(igs&&igs.showModal){
+  var stp=function(n){return $('#igs'+n)},open=$('#igsOpen'),saveTip=$('#igsSaveTip'),openTip=$('#igsOpenTip');
+  /* the steps, worded for where the visitor is */
+  if(IN_IG){open.hidden=true;openTip.textContent='Close this page, tap + and choose Story, then pick the card from your photos.'}
+  else if(IOS){open.href='instagram://story-camera';open.removeAttribute('target');openTip.textContent='Then pick the card from your photos.'}
+  else if(ANDROID){open.href='intent://story-camera#Intent;scheme=instagram;package=com.instagram.android;S.browser_fallback_url='+encodeURIComponent('https://www.instagram.com/')+';end';open.removeAttribute('target');openTip.textContent='Then pick the card from your gallery.'}
+  else{openTip.textContent='Stories are posted from the Instagram app, so send the card to your phone first.'}
+  saveTip.textContent=IOS?'Choose Save Image in the sheet that opens.':ANDROID?'Choose Instagram Stories to post it straight away, or save it.':'It saves to your downloads.';
+  shIg.addEventListener('click',function(e){e.preventDefault();getCard();igs.showModal();root.classList.add('lb-open')});
+  igs.addEventListener('close',function(){root.classList.remove('lb-open')});
+  $('[data-close]',igs).addEventListener('click',function(){igs.close()});
+  igs.addEventListener('click',function(e){if(e.target===igs)igs.close()});
+  $('#igsSave').addEventListener('click',function(){
+   if(canShareCard()){navigator.share({files:[cardFile]}).then(function(){stp(1).classList.add('done')},function(err){if(err&&err.name!=='AbortError'){saveFile();stp(1).classList.add('done')}});return}
+   saveFile();stp(1).classList.add('done')});
+  open.addEventListener('click',function(){stp(2).classList.add('done')});
+  $('#igsCopy').addEventListener('click',function(){var b=this;copyLink().then(function(ok){b.textContent=ok?'Copied':'nova.tehbyn.com';if(ok)stp(3).classList.add('done');setTimeout(function(){b.textContent='Copy link'},2500)})});
+ }else{
+  /* no <dialog>: the download goes ahead (the link's default) and the address is copied */
+  shIg.addEventListener('click',function(){copyLink().then(function(ok){say('Story card saved'+(ok?' and link copied':'')+'. Post it to your Instagram story with a link sticker.')})})}}
 
 /* ---------------- stills lightbox ---------------- */
 var lb=$('#lb'),stills=$$('.still'),cur=0;
