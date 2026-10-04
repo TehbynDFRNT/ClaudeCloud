@@ -11,9 +11,11 @@
 //   node tools/build-review.mjs --cuts film-plan.json,film-plan-sol.json,film-plan-prometheus.json \
 //        --videos dist/david-916-interim.mp4,dist/sol-916-interim.mp4,dist/prometheus-916-interim.mp4 \
 //        [--out out/editroom] [--label "Render 2"] [--render 2] [--note "..."] [--names "A,B,C"]
-//        [--codec h264|vp9] [--size 720x1280] [--crf 23] [--maxrate 3000k] [--abr 192k]
+//        [--codec h264|vp9] [--size 720x1280] [--crf 23] [--maxrate 3000k] [--abr 192k] [--allow-trim]
 //   node tools/build-review.mjs --video dist/david-916.mp4 [--plan film-plan.json]          (one cut)
 // --codec vp9 is only for local tests in the open-source Chromium (no H.264); publish h264.
+// Each video must have exactly its plan's frame count (a render of another plan version would put the wrong
+// timeline over the picture); --allow-trim accepts a longer video and uses its first plan.frames frames.
 // Re-runs reuse the frame analysis and any media already encoded with identical settings
 // (cache: out/.editroom-cache/<out dir name>/), so a page-only change rebuilds in seconds.
 import { spawnSync } from 'node:child_process';
@@ -85,7 +87,7 @@ function analyse(cut) {
   const st = fs.statSync(cut.video);
   const frames = cut.frames, dur = frames / FPS;
   const thumbFile = cuts.length > 1 ? `thumbs.${cut.id}.jpg` : 'thumbs.jpg';
-  const key = JSON.stringify({ v: 3, video: cut.video, size: st.size, mtime: st.mtimeMs, frames, FPS, TW, TH });
+  const key = JSON.stringify({ v: 4, trim: argv.includes('--allow-trim'), video: cut.video, size: st.size, mtime: st.mtimeMs, frames, FPS, TW, TH });
   const cf = path.join(cacheDir, cut.id + '.analysis.json');
   if (fs.existsSync(cf) && fs.existsSync(path.join(out, thumbFile))) {
     const c = JSON.parse(fs.readFileSync(cf, 'utf8'));
@@ -97,12 +99,14 @@ function analyse(cut) {
   const hasAudio = probe(['-select_streams', 'a', '-show_entries', 'stream=index', '-of', 'csv=p=0', cut.video]) !== '';
   if (!hasAudio) throw new Error(`${cut.video} has no soundtrack (the Edit Room plays picture only against sound)`);
   const pcm = ff(['-i', cut.video,
-    '-map', '0:v:0', '-frames:v', String(frames), '-f', 'framehash', '-hash', 'md5', vh,
+    '-map', '0:v:0', '-f', 'framehash', '-hash', 'md5', vh,
     '-map', '0:v:0', '-vf', `fps=1,scale=${TW}:${TH}:flags=bicubic,tile=${cols}x${rows}`, '-frames:v', '1', '-q:v', '5', path.join(out, thumbFile),
     '-map', '0:a:0', '-t', dur.toFixed(6), '-ac', '2', '-ar', '48000', '-c:a', 'pcm_s16le', '-f', 'hash', '-hash', 'md5', ah,
     '-map', '0:a:0', '-t', dur.toFixed(6), '-ac', '1', '-ar', '4000', '-f', 's16le', 'pipe:1']);
   const fh = fs.readFileSync(vh, 'utf8').split('\n').filter((l) => l && l[0] !== '#').map((l) => l.split(',').pop().trim());
-  if (fh.length < frames) throw new Error(`${cut.video}: ${fh.length} frames, the plan needs ${frames}`);
+  if (fh.length < frames || (fh.length > frames && !argv.includes('--allow-trim'))) {
+    throw new Error(`${path.relative(ROOT, cut.video)} has ${fh.length} frames but its plan has ${frames}: it was not rendered from this plan version (pass the matching plan, or --allow-trim to cut a longer video)`);
+  }
   const clipHashes = [];
   for (let a = 0; a < frames; a += CLIP) clipHashes.push(sha1(fh.slice(a, Math.min(frames, a + CLIP)).join('')) + ':' + (Math.min(frames, a + CLIP) - a));
   const audioHash = fs.readFileSync(ah, 'utf8').trim();

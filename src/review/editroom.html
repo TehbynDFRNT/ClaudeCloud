@@ -399,7 +399,7 @@ details.card[open] summary { margin-bottom: 8px; }
     const file = clips[k].file;
     el.dataset.k = String(k);
     if (el._file === file && el._ready) return el._ready;
-    el._file = file;
+    el._file = file; el.dataset.file = file;
     el._ready = (async () => {
       let src = file;
       if (useBlobs) { try { src = await blobUrl(file); } catch { return false; } }
@@ -500,7 +500,7 @@ details.card[open] summary { margin-bottom: 8px; }
         const bad = () => { aud.removeEventListener('loadedmetadata', ok); resolve(false); };
         aud.addEventListener('loadedmetadata', ok, { once: true });
         aud.addEventListener('error', bad, { once: true });
-        aud.src = src; aud.load();
+        aud.src = src; aud.load(); aud.dataset.file = file;
         aud.defaultPlaybackRate = S.rate; aud.playbackRate = S.rate;
         if (!useBlobs) checkSeekable(aud);
         updateSound();

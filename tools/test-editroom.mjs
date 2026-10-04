@@ -92,12 +92,27 @@ check(files.length === 26 && files.every((f) => fs.existsSync(path.join(dir, f))
 const [cd, cs, cp] = D.cuts;
 check(cs.clips[14].file === cd.clips[14].file && cp.clips[8].file === cd.clips[8].file && cs.clips[0].file === cd.clips[0].file, 'identical clips are referenced, not duplicated');
 check(cs.clips[1].file !== cd.clips[1].file && cp.clips[1].file !== cs.clips[1].file && cs.clips[8].file !== cd.clips[8].file && cp.clips[14].file !== cd.clips[14].file, 'cut-specific clips get their own file');
-const actStart = (c, n) => (c.acts.find((a) => a.name === n) || {}).start;
-check(actStart(cd, 'III · Ignition') === 2725 && actStart(cd, 'IV · Aftermath') === 2990 && actStart(cd, 'Coda') === 3650 && actStart(cd, 'II · Frenzy') === 1873,
-  `acts anchor on shot numbers (Ignition ${actStart(cd, 'III · Ignition')}, Aftermath ${actStart(cd, 'IV · Aftermath')}, Coda ${actStart(cd, 'Coda')})`);
+// acts are derived from the live plans, so check invariants rather than frame numbers: anchored on shot NUMBERS
+// (S22-dark/S22-ignition -> S22, 'S26-expansion·2' -> S26, statue inserts M.. never anchor), contiguous, and
+// every shot (statue inserts and split shots included) lies in the act containing its start
+const plans = CUTS.map((c) => JSON.parse(fs.readFileSync(path.join(ROOT, c.plan), 'utf8')));
+const shotNo = (id) => (/^([A-Za-z]+\d+)/.exec(id.split('·')[0]) || [, id])[1];
+const ANCHOR = { 'I · Attraction': 'S01', 'II · Resistance': 'S07', 'II · Compression': 'S12', 'II · Frenzy': 'F27', 'II · Ladder': 'S16', 'III · Ignition': 'S22', 'IV · Aftermath': 'S26', Coda: 'S31' };
+const actBad = cd.acts.filter((a, i) => {
+  const hits = plans[0].shots.filter((s) => shotNo(s.id) === ANCHOR[a.name]);
+  return (i > 0 && a.start !== Math.min(...hits.map((s) => s.start))) || (i > 0 && a.start !== cd.acts[i - 1].end) || a.end <= a.start;
+});
+check(cd.acts.length === 8 && cd.acts[0].start === 0 && cd.acts[7].end === cd.frames && actBad.length === 0,
+  `8 acts anchored on shot numbers, contiguous over the cut (${cd.acts.map((a) => `${a.short}@${a.start}`).join(' ')})`);
+const actAt = (f) => cd.acts.find((a) => f >= a.start && f < a.end).name;
+const inserts = cd.shots.filter((s) => s.scene === 'statue' || s.id.includes('·'));
+check(cd.shots.every((s) => s.act === actAt(s.start)) && inserts.length > 0, `every shot sits in its act, incl. ${inserts.length} statue inserts / split shots (${inserts.slice(0, 4).map((s) => `${s.id}:${s.act.split(' ')[0]}`).join(', ')}...)`);
 const shot = (c, id) => c.shots.find((s) => s.id === id) || {};
-check(shot(cd, 'S26-expansion·2').act === 'IV · Aftermath' && shot(cd, 'M14').act === 'IV · Aftermath' && shot(cd, 'M01').act === 'I · Attraction', 'split shot and statue inserts fall in the right acts');
-check(shot(cd, 'M01').diff && shot(cd, 'F29.1').diff && shot(cd, 'S02-goliath').diff && !shot(cd, 'S04-scale').diff, 'shots that differ by cut are flagged (statue figure, frenzy preset, name card), others not');
+const pic = (p, id) => { const s = p.shots.find((x) => x.id === id); return s ? JSON.stringify([s.scene, s.preset || null, s.params || null, s.start, s.end, (p.text || []).filter((t) => t.start < s.end && t.end > s.start).map((t) => t.content)]) : 'none'; };
+const mustFlag = cd.shots.filter((s) => new Set(plans.map((p) => pic(p, s.id))).size > 1).map((s) => s.id);
+const mustNot = cd.shots.filter((s) => !mustFlag.includes(s.id)).map((s) => s.id);
+check(mustFlag.length > 0 && mustFlag.every((id) => shot(cd, id).diff) && mustNot.every((id) => !shot(cd, id).diff),
+  `shots that differ by cut are flagged (${mustFlag.length}: ${mustFlag.slice(0, 6).join(', ')}...), the ${mustNot.length} identical ones are not`);
 check(shot(cs, 'S02-goliath').purpose !== shot(cd, 'S02-goliath').purpose && cs.text.find((t) => t.id === 'name-giant').content.startsWith('HIEMS'), 'per-cut purposes and on-screen text');
 check(cd.thumbs.w === 90 && cd.thumbs.h === 160 && cd.thumbs.file !== cs.thumbs.file, 'portrait thumbnail sprite per cut');
 
@@ -145,7 +160,7 @@ const shown = (pg) => pg.evaluate(async () => {
   const lvl = (r) => Math.max(0, Math.min(23, Math.round((r - 10) / 10)));
   const V = at(0.5, 0.25);
   return { code: lvl(at(0.5, 0.70)) * 24 + lvl(at(0.5, 0.55)), variant: V < 70 ? 'base' : V < 180 ? 'sol' : 'prometheus', tc: document.getElementById('tc').textContent,
-    sub: document.getElementById('tcsub').textContent, src: v.currentSrc, k: v.dataset.k };
+    sub: document.getElementById('tcsub').textContent, src: v.dataset.file || v.currentSrc, k: v.dataset.k };
 });
 const frameOfSub = (s) => +s.sub.match(/frame (\d+)/)[1];
 const seek = (pg, f) => pg.evaluate((fr) => { const a = document.getElementById('aud'); a.pause(); a.currentTime = (fr + 0.5) / 24; }, f);
@@ -263,9 +278,9 @@ try {
   await page.waitForTimeout(400);
   const fBefore = await page.evaluate(() => Math.floor(document.getElementById('aud').currentTime * 24));
   await page.keyboard.press('3');
-  await page.waitForFunction(() => !document.getElementById('aud').paused && document.getElementById('aud').currentSrc.includes('prometheus'), null, { timeout: 15000 }).catch(() => {});
+  await page.waitForFunction(() => !document.getElementById('aud').paused && (document.getElementById('aud').dataset.file || '').includes('prometheus'), null, { timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(700);
-  const pq = await page.evaluate(() => { const a = document.getElementById('aud'), v = document.querySelector('video.show'); return { playing: !a.paused, src: a.currentSrc.split('/').pop(), f: a.currentTime * 24, d: Math.abs(+v.dataset.k * 240 + v.currentTime * 24 - a.currentTime * 24) }; });
+  const pq = await page.evaluate(() => { const a = document.getElementById('aud'), v = document.querySelector('video.show'); return { playing: !a.paused, src: (a.dataset.file || '').split('/').pop(), f: a.currentTime * 24, d: Math.abs(+v.dataset.k * 240 + v.currentTime * 24 - a.currentTime * 24) }; });
   await page.keyboard.press('Space');
   check(pq.playing && /prometheus/.test(pq.src) && pq.d < 3 && pq.f >= fBefore && pq.f < fBefore + 60, `switching to a cut with its own soundtrack during playback: ${pq.src} resumes at the same point (frame ${fBefore} -> ${pq.f.toFixed(1)}), in sync (drift ${pq.d.toFixed(2)} frames)`);
   await page.keyboard.press('1');

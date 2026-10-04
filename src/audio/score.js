@@ -1,22 +1,30 @@
-// Soundtrack renderer for "David & Goliath" / "Prometheus" (both 9:16 cuts share one timeline and this score):
-// orchestra (USAF Band, Vivaldi "Winter" I), an eighties synth pulse, approaching cannon strikes (US Army Band 1812
-// samples) with a building undertow, the climax in the dark (vacuum suck-in, detonation, pressure wave, Doppler roar
-// into bar 56), the night of the coda (wind, distant drone, the new star's shimmer), and the master.
+// Soundtrack renderer for "David & Goliath" / "Prometheus" / "Sol Invictus" (the cuts of a version share one timeline
+// and this score): orchestra (USAF Band, Vivaldi "Winter" I), an eighties synth pulse, approaching cannon strikes (US
+// Army Band 1812 samples, tightening to half-bar shots from bar 20) with a building undertow; at the ignition cut the
+// music stops and THE BUILD carries the dark (it starts as S21 implodes: pressure swelling, a sub rumble crescendo,
+// risers on C, a pulse train converging on the explosion, the vacuum); THE EXPLOSION on the frame the eruption appears
+// (detonation, sub body, stacked close cannon cluster) restarts the music: the bar-56 tutti, hotter than anything
+// before it, with point-blank cannon salvos on its beats (1812 finale) and the Doppler roar folded under it; the night
+// of the coda (wind, distant drone, the new star's shimmer); under the final stare at the marble figure a deep
+// resonant tone that swells with the NOVA title and fades to silence; and the master.
 //
-// Everything is derived from film-plan.json (fps, audio placements, cues, shots, effects, assets) and
-// analysis/grid.json (bar/eighth grid in source seconds, bassMidi per eighth, tuning). The only authored numbers are
-// sound-design constants (levels, filter shapes, envelopes) and the section structure in bars given by the director.
+// Everything is derived from the plan (film-plan.json, or the one named by renderSoundtrack({ plan }): fps, audio
+// placements, cues, shots, effects, text, assets) and analysis/grid.json (bar/eighth grid in source seconds, bassMidi
+// per eighth, tuning). The only authored numbers are sound-design constants (levels, filter shapes, envelopes) and
+// the section structure in bars given by the director.
 //
 // Determinism: no Math.random / Date. All noise and impulse responses come from seeded mulberry32 generators, every
 // measured quantity (shaper latency, grid check) is derived robustly, so the output is a function of (plan, grid,
 // media). Chrome's native Web Audio kernels still differ between runs at float-rounding level (SIMD paths): two
 // renders agree to about -104 dBFS peak / -125 dB RMS in the mix, not bit for bit.
-// Each stem is rendered in its own OfflineAudioContext(2, 48000 * plan duration, 48000); the mix/master stage runs
-// in plain JS on the rendered buffers: cannon approach law (measure each cue against the orchestra, correct,
-// re-render) and cannon-stem limiter, synth + undertow auto-level, duck + ladder ride + vacuum of the music under the
-// strikes and into the ignition, then three buses: music (glue compression, short-term loudness cap), climax (own
-// transient-preserving true-peak limiter, set to a short-term loudness target) and coda (set to a loudness target),
-// summed into a final true-peak limiter; the music gain is iterated to the programme loudness target.
+// Each stem is rendered in its own OfflineAudioContext(2, 48000 * plan duration, 48000), all of them side by side
+// (independent contexts render concurrently); the mix/master stage runs in plain JS on the rendered buffers: cannon
+// approach law (measure each cue against the orchestra, correct, re-render) and cannon-stem limiter, synth + undertow
+// auto-level, duck + ladder ride of the music under the strikes, the hotter return, the salvos set against the
+// tutti, then the buses: music (glue compression, short-term loudness cap before the ignition), build (set against
+// the explosion), climax (own transient-preserving true-peak limiter, set to a short-term loudness target, its
+// sustain folded under the returning music), coda and stare (set to loudness targets), summed into a final true-peak
+// limiter; the music gain is iterated to the programme loudness target.
 import { Music, evalFps } from '../engine/music.js';
 import { mulberry32 } from '../engine/rng.js';
 
