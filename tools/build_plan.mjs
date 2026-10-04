@@ -16,6 +16,11 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const grid = JSON.parse(fs.readFileSync(path.join(ROOT, 'analysis/grid.json'), 'utf8'));
 const FPS = 24;
 const OUT_DIR = process.env.PLAN_OUT || '.';     // PLAN_OUT=out/plan-test to dry-run without touching the live plans
+// PLAN_VERSION=3: the director's next notes (docs/NEXT-VERSION.md): an audible build into the black with the
+// explosion on the frame the eruption appears; Winter's bar-56 tutti restarts ON the explosion (louder, with
+// cannon salvos); no statue after the explosion until after the Milky Way; the film ends on the statue's
+// gaze and NOVA: <figure>.
+const V3 = (process.env.PLAN_VERSION || '2') === '3';
 
 // ---- audio placements (frames) -------------------------------------------------------------
 // Recording: The United States Air Force Band, Vivaldi 'Winter' I (supplied by the director; public domain).
@@ -24,18 +29,24 @@ const OUT_DIR = process.env.PLAN_OUT || '.';     // PLAN_OUT=out/plan-test to dr
 // B: bars 56-63 (closing tutti + fermata), entering on the bar-56 downbeat.
 const IGNITION = 2725;                         // film frame of the cut (source 113.5417 s, end of the tremolo)
 const A = { id: 'winter-a', timelineStart: 0, timelineEnd: IGNITION, sourceInSeconds: 0 };
-const B_START = IGNITION + 264;                // 11 s of electronic pressure wave and Doppler roar
-const BAR56_SRC = 166.65;                      // bar-56 downbeat onset (dominant C-major chord)
-const B = { id: 'winter-b', timelineStart: B_START, timelineEnd: 3646, sourceInSeconds: +(BAR56_SRC - 1 / FPS).toFixed(4) };
-const DECAY_END = 3646;                        // fermata has decayed below -65 dB (source ~193.4 s)
 // The dark: at ignition the picture is swallowed whole; the pressure wave hits in blackness.
 const DARK = 54;                               // 2.25 s of black before the eruption is seen
+const EXPLOSION = IGNITION + DARK;             // the eruption is first seen (v3: the explosion hit and the music's return)
+// v2: 11 s of electronic pressure wave and Doppler roar, Winter returns on bar 56 at 2990.
+// v3: bar 56's tutti lands ON the explosion frame.
+const B_START = V3 ? EXPLOSION - 1 : IGNITION + 264;
+const BAR56_SRC = 166.65;                      // bar-56 downbeat onset (dominant C-major chord)
+const B_SRC_IN = +(BAR56_SRC - 1 / FPS).toFixed(4);
+const DECAY_END = V3 ? B_START + Math.round((193.4 - B_SRC_IN) * FPS) : 3646;   // fermata decayed below -65 dB (source ~193.4 s)
+const B = { id: 'winter-b', timelineStart: B_START, timelineEnd: DECAY_END, sourceInSeconds: B_SRC_IN };
 // Coda: the same event seen from Earth. The Milky Way over a dark-sky horizon; a new star appears.
-const CODA = 3650;
+const CODA = DECAY_END + 4;
 const CODA_STAR = CODA + 132;                  // the new star begins to appear (5.5 s in) ...
 const CODA_STAR_FULL = CODA + 168;             // ... and has fully arrived (7 s in)
 const CODA_LINE1 = CODA + 192, CODA_LINE2 = CODA + 228;
-const FRAMES = CODA + 336;                     // 14 s coda; the film ends on the line
+const CODA_END = CODA + 336;                   // 14 s coda
+const GAZE = 156;                              // v3: the final stare (6.5 s) after the Milky Way, under NOVA: <figure>
+const FRAMES = V3 ? CODA_END + GAZE : CODA_END;
 
 function srcToFrame(s) {
   for (const p of [A, B]) {
@@ -95,17 +106,18 @@ const SB = [
   { id: 'S21-strike5', start: strike(37), scene: 'whitedwarf', purpose: 'Strike 5 and the final tremolo: inevitability', action: 'Extreme close on the surface; light bends; the glow climbs, then the whole image is drawn inward to a single point and swallowed; nothing is left but black at the cut', framing: 'Extreme close, converging', sync: 'strike-37' },
   // ACT III — IGNITION (music cut; the screen goes dark and the pressure wave hits in blackness)
   { id: 'S22-dark', start: IGNITION, scene: 'void', purpose: 'Ignition: thermonuclear runaway, felt not seen', action: 'Black. No flash: the picture is gone and the pressure wave and the roar carry the climax. At most a dying afterimage of the point', framing: 'Black (frame opens to full 9:16 unseen)', sync: 'ignition' },
-  { id: 'S22-ignition', start: IGNITION + DARK, scene: 'nova', purpose: 'The eruption emerges from the dark', action: 'Out of black a white-gold point swells into a seething spherical eruption, the surrounding space still black; never a full-frame white-out', framing: 'Close, centred' },
-  { id: 'S23-eruption', start: IGNITION + DARK + 50, scene: 'nova', purpose: 'The eruption overwhelms the system', action: 'Wide: the incandescent sphere swallows the disk and races toward the giant, whose facing hemisphere flares gold', framing: 'Wide system' },
-  { id: 'S24-shockfront', start: IGNITION + DARK + 106, scene: 'nova', purpose: 'The pressure wave passes us', action: 'The shock front sweeps through camera; refraction, debris streaks; peak of the Doppler roar', framing: 'Inside the wave' },
-  { id: 'S25-shell', start: IGNITION + DARK + 160, scene: 'nova', purpose: 'Fracture', action: 'The decelerating shell fractures into golden filaments as the roar descends', framing: 'Medium-wide, slowing' },
+  { id: 'S22-ignition', start: EXPLOSION, scene: 'nova', purpose: 'The eruption emerges from the dark', action: 'Out of black a white-gold point swells into a seething spherical eruption, the surrounding space still black; never a full-frame white-out', framing: 'Close, centred' },
+  { id: 'S23-eruption', start: V3 ? at(56, 5) : EXPLOSION + 50, scene: 'nova', purpose: 'The eruption overwhelms the system', action: 'Wide: the incandescent sphere swallows the disk and races toward the giant, whose facing hemisphere flares gold', framing: 'Wide system' },
+  { id: 'S24-shockfront', start: V3 ? at(57, 3) : EXPLOSION + 106, scene: 'nova', purpose: 'The pressure wave passes us', action: 'The shock front sweeps through camera; refraction, debris streaks; peak of the Doppler roar', framing: 'Inside the wave' },
+  { id: 'S25-shell', start: V3 ? at(58) : EXPLOSION + 160, scene: 'nova', purpose: 'Fracture', action: 'The decelerating shell fractures into golden filaments as the roar descends', framing: 'Medium-wide, slowing' },
   // ACT IV — AFTERMATH (bars 56-63)
-  { id: 'S26-expansion', start: srcToFrame(BAR56_SRC), scene: 'nova', purpose: 'Expansion', action: 'The fractured golden shell, immense, expanding; Rayleigh-Taylor fingers and knots; the pair small inside', framing: 'Wide, slow pull back' },
-  { id: 'S27-devastation', start: at(58), scene: 'redgiant', purpose: 'Devastation', action: 'Goliath scarred: facing hemisphere stripped and burning, embers drifting, envelope torn', framing: 'Medium, slow lateral drift' },
-  { id: 'S28-survival', start: at(60), scene: 'whitedwarf', purpose: 'Survival', action: 'The tiny core endures, still blazing; the shell recedes; a thin thread of matter begins to flow again', framing: 'Medium close, steady' },
+  { id: 'S26-expansion', start: V3 ? at(59) : srcToFrame(BAR56_SRC), scene: 'nova', purpose: 'Expansion', action: 'The fractured golden shell, immense, expanding; Rayleigh-Taylor fingers and knots; the pair small inside', framing: 'Wide, slow pull back' },
+  { id: 'S27-devastation', start: V3 ? at(60) : at(58), scene: 'redgiant', purpose: 'Devastation', action: 'Goliath scarred: facing hemisphere stripped and burning, embers drifting, envelope torn', framing: 'Medium, slow lateral drift' },
+  { id: 'S28-survival', start: V3 ? at(61) : at(60), scene: 'whitedwarf', purpose: 'Survival', action: 'The tiny core endures, still blazing; the shell recedes; a thin thread of matter begins to flow again', framing: 'Medium close, steady' },
   { id: 'S29a-ring', start: at(62), scene: 'nova', purpose: 'Cosmic order', action: 'Final wide: the system inside a perfect ring of the shell', framing: 'Wide, centred, still' },
   { id: 'S29b-drawing', start: at(63), scene: 'studies', purpose: 'Understanding endures', action: 'Dissolve to an ink drawing of the same rings with the tiny centre point; mirror script: il sole nõ si move', framing: 'Flat lay, centred' },
   // CODA — the same event, seen from Earth
+  ...(V3 ? [{ id: 'M16', start: CODA_END, scene: 'statue', purpose: 'The gaze: after the night sky, the figure looks straight into the lens, staring into you', action: 'Marble figure on black, the 90-degree turn complete; NOVA: <figure> beneath', framing: 'See the statue preset', params: { turn: [508, CODA - 60, 90, 0] } }] : []),
   { id: 'S31-newstar', start: CODA, scene: 'earthsky', purpose: 'Seen from Earth: a new star', action: 'The Milky Way arches up from a dark, unlit horizon (no light pollution: the galactic core, dust lanes, airglow); stillness; then, silently, a new star appears where there was none. The film ends on it', framing: 'Locked-off night sky, 9:16, horizon low, galactic core rising vertically' },
 ];
 
@@ -115,13 +127,13 @@ const SB = [
 const CUTS = {
   david: {
     file: 'film-plan.json', id: 'david-916', title: 'David & Goliath — a nova in two voices', figure: 'david',
-    names: [['GOLIATH', 'a red giant'], ['DAVID', 'a white dwarf']], endTitle: 'DAVID & GOLIATH',
+    names: [['GOLIATH', 'a red giant'], ['DAVID', 'a white dwarf']], endTitle: 'DAVID & GOLIATH', novaName: 'David',
     presets: { 'F29.1': 'F29.1-sling' },
     purposes: {},
   },
   sol: {
     file: 'film-plan-sol.json', id: 'sol-916', title: 'Sol Invictus — the unconquered sun', figure: 'sol',
-    names: [['HIEMS', 'a red giant'], ['SOL INVICTUS', 'a white dwarf']], endTitle: 'SOL INVICTUS',
+    names: [['HIEMS', 'a red giant'], ['SOL INVICTUS', 'a white dwarf']], endTitle: 'SOL INVICTUS', novaName: 'Sol Invictus',
     presets: { 'F29.1': 'F29.1-sol', 'F30.3': 'F30.3-solstice' },
     purposes: {
       'S02-goliath': 'Introduce HIEMS: Winter, the old light swollen and dying',
@@ -140,7 +152,7 @@ const CUTS = {
   },
   prometheus: {
     file: 'film-plan-prometheus.json', id: 'prometheus-916', title: 'Prometheus — the stolen fire', figure: 'prometheus',
-    names: [['ZEUS', 'a red giant'], ['PROMETHEUS', 'a white dwarf']], endTitle: 'PROMETHEUS',
+    names: [['ZEUS', 'a red giant'], ['PROMETHEUS', 'a white dwarf']], endTitle: 'PROMETHEUS', novaName: 'Prometheus',
     presets: { 'F29.1': 'F29.1-eagle', 'F30.3': 'F30.3-chains' },
     purposes: {
       'S02-goliath': 'Introduce ZEUS: the fire of the gods, overwhelming mass and heat',
@@ -203,8 +215,10 @@ for (const s of shots) if (s.end <= s.start) throw new Error(`empty shot ${s.id}
 // the turn is a function of film frame, so every glimpse shows the gaze a little further round.
 // An insert cuts into the shot it lands on; that shot keeps its own clock (`span`), so its motion is
 // never compressed, and resumes (`·2`) if the insert falls mid-shot.
-const GAZE_FRAME = CODA - 60;                  // the turn completes here, inside the final stare
-const INSERTS = [
+// v2: the turn completes inside the final stare under the end title (M16, before the coda).
+// v3: no statue after the explosion; the turn completes in the final shot, after the Milky Way.
+const GAZE_FRAME = V3 ? CODA_END + 40 : CODA - 60;
+const INSERTS_ALL = [
   ['M01', at(8) - 27, at(8), 'First sight: the figure in profile, looking away; perpendicular to us'],
   ['M02', at(12) - 18, at(12), 'The profile again, closer: lips and jaw in hard light'],
   ['M03', at(16) - 18, at(16), 'Head and neck against the void, the aura behind'],
@@ -222,7 +236,9 @@ const INSERTS = [
   ['M15', at(60) - 24, at(60), 'Devastation gives way: the gaze a breath from direct'],
   ['M16', at(63) + 55, CODA, 'The gaze: directly into the lens, staring into you'],
 ];
+const INSERTS = V3 ? INSERTS_ALL.filter(([, a]) => a < IGNITION) : INSERTS_ALL;
 const TURN = [INSERTS[0][1], GAZE_FRAME, 90, 0];   // [from frame, to frame, from deg, to deg]
+for (const s of shots) if (s.scene === 'statue') s.params = { ...s.params, turn: TURN };
 {
   const out = [];
   for (const s of shots) {
@@ -270,7 +286,13 @@ const effects = [
   { type: 'shake', start: IGNITION + DARK, end: IGNITION + DARK + 160, amp: 9, env: 'decay' },
   { type: 'fade', start: CODA - 24, end: CODA, from: 0, to: 1 },                         // the stare goes to black
   { type: 'fade', start: CODA, end: CODA + 60, from: 1, to: 0 },                         // the night fades up
-  { type: 'fade', start: FRAMES - 36, end: FRAMES, from: 0, to: 1 },                     // and the film goes out
+  ...(V3 ? [
+    { type: 'fade', start: CODA_END - 36, end: CODA_END, from: 0, to: 1 },               // the night goes to black ...
+    { type: 'fade', start: CODA_END, end: CODA_END + 24, from: 1, to: 0 },               // ... the figure rises out of it
+    { type: 'fade', start: FRAMES - 30, end: FRAMES, from: 0, to: 1 },                   // and the film goes out on the stare
+  ] : [
+    { type: 'fade', start: FRAMES - 36, end: FRAMES, from: 0, to: 1 },                   // and the film goes out
+  ]),
 ];
 [[33, 0.35], [34, 0.45], [35, 0.55], [36, 0.65], [37, 0.75]].forEach(([bar, a], i) => {
   effects.push({ type: 'dip', frame: strike(bar), amount: a, attack: 1, decay: 4 + i });
@@ -279,6 +301,15 @@ const effects = [
 for (const c of cannons) if (c.distance < 0.75 && c.distance > 0.12) effects.push({ type: 'shake', start: c.frame, end: c.frame + 10, amp: 2.4 * (1 - c.distance), env: 'decay' });
 
 cues.push({ id: 'dark-end', kind: 'edit-cut', frame: IGNITION + DARK, status: 'verified', confidence: 'authored', evidence: 'End of the dark hold: the eruption is first seen' });
+if (V3) {
+  cues.push({ id: 'explosion', kind: 'edit-cut', frame: EXPLOSION, status: 'verified', confidence: 'authored', evidence: 'v3: the explosion hit lands with the first frame of the eruption; Winter bar 56 tutti restarts here, louder; a build runs from the S21 implosion through the dark into this frame' });
+  cues.push({ id: 'return-bar56-v3', kind: 'music-reentry', frame: srcToFrame(BAR56_SRC), sourceAudioId: 'winter-b', sourceSeconds: BAR56_SRC, status: 'candidate', confidence: 'signal', evidence: 'bar-56 downbeat placed on the explosion frame' });
+  // the approaching cannons tighten their tempo: half-bar shots from bar 20, closing in
+  for (let bar = 20; bar <= 31; bar++) cues.push({ id: `cannon-${bar}h`, kind: 'cannon', frame: at(bar, 4), distance: +(0.6 - (bar - 20) * 0.04).toFixed(2), status: 'verified', confidence: 'authored', evidence: 'v3: faster cannon tempo into the strikes (half-bar shots)' });
+  // salvos with the returning tutti (1812-finale style): every beat of bars 56-57, every half bar of 58-59
+  for (const [bar, eighths] of [[56, [0, 2, 4, 6]], [57, [0, 2, 4, 6]], [58, [0, 4]], [59, [0, 4]]]) for (const e of eighths)
+    cues.push({ id: `salvo-${bar}.${e}`, kind: 'cannon-salvo', frame: at(bar, e), distance: bar < 58 ? 0.05 : 0.2, status: 'verified', confidence: 'authored', evidence: 'v3: cannon salvo with the restarted music' });
+}
 cues.push({ id: 'coda', kind: 'edit-cut', frame: CODA, status: 'verified', confidence: 'authored', evidence: 'Coda: the night sky seen from Earth fades up from black' });
 cues.push({ id: 'coda-star', kind: 'edit-cut', frame: CODA_STAR, status: 'verified', confidence: 'authored', evidence: `The new star begins to appear; fully arrived at frame ${CODA_STAR_FULL}` });
 
@@ -292,11 +323,13 @@ for (const [cut, C] of Object.entries(CUTS)) {
   const text = [
     { id: 'name-giant', start: at(3) + 40, end: at(5) + 20, content: C.names[0].join('\n'), style: 'name', maxCps: 12, minFrames: 60 },
     { id: 'name-dwarf', start: at(6) + 30, end: at(8) - 33, content: C.names[1].join('\n'), style: 'name', maxCps: 12, minFrames: 60 },
-    // the end title sits under the figure's direct stare
-    { id: 'end-title', start: at(63) + 70, end: CODA - 26, content: C.endTitle, style: 'title', y: 0.84, fadeIn: 24, fadeOut: 20, minFrames: 48 },
+    // v2: the end title sits under the figure's direct stare, before the coda
+    ...(V3 ? [] : [{ id: 'end-title', start: at(63) + 70, end: CODA - 26, content: C.endTitle, style: 'title', y: 0.84, fadeIn: 24, fadeOut: 20, minFrames: 48 }]),
     // the closing line, in two breaths, over the dark ground below the horizon
-    { id: 'coda-line-1', start: CODA_LINE1, end: FRAMES - 2, content: 'The birth of a new star;', style: 'line', font: 'cormorant', size: 44, y: 0.815, fadeIn: 30, fadeOut: 34, minFrames: 60 },
-    { id: 'coda-line-2', start: CODA_LINE2, end: FRAMES - 2, content: 'the Nova.', style: 'line', font: 'cinzel', size: 50, y: 0.875, fadeIn: 30, fadeOut: 34, minFrames: 60 },
+    { id: 'coda-line-1', start: CODA_LINE1, end: CODA_END - 2, content: 'The birth of a new star;', style: 'line', font: 'cormorant', size: 44, y: 0.815, fadeIn: 30, fadeOut: 34, minFrames: 60 },
+    { id: 'coda-line-2', start: CODA_LINE2, end: CODA_END - 2, content: 'the Nova.', style: 'line', font: 'cinzel', size: 50, y: 0.875, fadeIn: 30, fadeOut: 34, minFrames: 60 },
+    // v3: the film ends on the figure's stare and its name
+    ...(V3 ? [{ id: 'end-title', start: CODA_END + 48, end: FRAMES - 2, content: `Nova: ${C.novaName}`, style: 'nova', y: 0.865, fadeIn: 30, fadeOut: 28, minFrames: 60 }] : []),
   ];
   const cutShots = shots.map((s) => {
     const o = { ...s };
@@ -306,7 +339,7 @@ for (const [cut, C] of Object.entries(CUTS)) {
     return o;
   });
   const plan = {
-    id: C.id, cut, title: C.title,
+    id: V3 ? `${C.id}-v3` : C.id, cut, title: C.title, version: V3 ? 3 : 2,
     fps: `${FPS}/1`, frames: FRAMES, width: 1080, height: 1920, backend: 'webgl2-canvas (headless Chromium, SwiftShader)',
     timingMode: 'original-score',
     format: { letterbox: 0.128, note: '9:16. A 3:4 window (bars top and bottom) until ignition; the frame opens to the full 9:16 in the dark' },
