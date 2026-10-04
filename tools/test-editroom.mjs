@@ -29,7 +29,7 @@ const FRAMES = plan0.frames, FPS = 24;
 const CUTS = [
   { id: 'david', plan: 'film-plan.json', variants: [] },
   { id: 'sol', plan: 'film-plan-sol.json', level: 128, label: 'SOL', variants: [[300, 420], [2022, 2041]] },          // clips 1 and 8 differ
-  { id: 'prometheus', plan: 'film-plan-prometheus.json', level: 224, label: 'PROM', variants: [[300, 420], [3575, 3624]] }, // clips 1 and 14 differ
+  { id: 'prometheus', plan: 'film-plan-prometheus.json', level: 224, label: 'PROM', variants: [[300, 420], [3400, 3450]], tone: 440 }, // clips 1 and 14 differ; its own soundtrack
 ];
 
 // ---------- 1. test cards ----------
@@ -63,7 +63,7 @@ function makeCard(cut) {
   console.log(`making test card ${cut.id} (${FRAMES} frames, 720x1280)`);
   run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error',
     '-f', 'lavfi', '-i', 'color=c=0x202020:s=720x1280:r=24',
-    '-f', 'lavfi', '-i', `aevalsrc=0.25*sin(2*PI*330*t)*(0.6+0.4*lt(mod(t\\,1)\\,0.12))|0.25*sin(2*PI*330*t)*(0.6+0.4*lt(mod(t\\,1)\\,0.12)):s=48000`,
+    '-f', 'lavfi', '-i', `aevalsrc=${Array(2).fill(`0.25*sin(2*PI*${cut.tone || 330}*t)*(0.6+0.4*lt(mod(t\\,1)\\,0.12))`).join('|')}:s=48000`,
     '-vf', f.join(','), '-frames:v', String(FRAMES), '-t', dur,
     // lossless picture: frames outside the variant ranges decode bit-identical in every cut
     '-c:v', 'libx264', '-preset', 'veryfast', '-qp', '0', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '128k', file]);
@@ -86,8 +86,9 @@ const files = JSON.parse(fs.readFileSync(path.join(dir, 'files.json'), 'utf8'));
 const clipFiles = files.filter((f) => /clip_/.test(f));
 check(D.cuts.length === 3 && D.width === 720 && D.height === 1280, `3 cuts, picture ${D.width}x${D.height}`);
 check(clipFiles.length === 21, `51 clip slots stored as 21 clips (17 + 2 Sol-only + 2 Prometheus-only): ${clipFiles.length}`);
-check(files.filter((f) => /soundtrack/.test(f)).length === 1 && new Set(D.cuts.map((c) => c.audio)).size === 1, 'identical audio -> one shared soundtrack');
-check(files.length === 25 && files.every((f) => fs.existsSync(path.join(dir, f))), `files.json lists 21 clips + 1 soundtrack + 3 thumb sprites, all present (${files.length})`);
+check(files.filter((f) => /soundtrack/.test(f)).length === 2 && D.cuts[0].audio === D.cuts[1].audio && D.cuts[2].audio !== D.cuts[0].audio,
+  'identical audio (David, Sol) -> one shared soundtrack; different audio (Prometheus) -> its own');
+check(files.length === 26 && files.every((f) => fs.existsSync(path.join(dir, f))), `files.json lists 21 clips + 2 soundtracks + 3 thumb sprites, all present (${files.length})`);
 const [cd, cs, cp] = D.cuts;
 check(cs.clips[14].file === cd.clips[14].file && cp.clips[8].file === cd.clips[8].file && cs.clips[0].file === cd.clips[0].file, 'identical clips are referenced, not duplicated');
 check(cs.clips[1].file !== cd.clips[1].file && cp.clips[1].file !== cs.clips[1].file && cs.clips[8].file !== cd.clips[8].file && cp.clips[14].file !== cd.clips[14].file, 'cut-specific clips get their own file');
@@ -233,18 +234,18 @@ try {
   check(/sol:true/.test(await pressed()), 'switcher shows Sol Invictus pressed');
   const purpose = await page.textContent('#shotPurpose');
   check(purpose === shot(cs, 'S02-goliath').purpose, `shot card shows the Sol plan's purpose ("${purpose.slice(0, 40)}...")`);
-  check((await page.textContent('#shotText')).startsWith('HIEMS'), 'on-screen words come from the Sol plan');
-  for (const [f, want] of [[2030, 'sol'], [3600, 'base'], [239, 'base'], [240, 'base']]) {
+  await seek(page, 300); await shown(page);
+  check((await page.textContent('#shotText')).startsWith('HIEMS'), `on-screen words come from the Sol plan ("${(await page.textContent('#shotText')).split('\n')[0]}")`);
+  for (const [f, want] of [[2030, 'sol'], [3420, 'base'], [3600, 'base'], [239, 'base'], [240, 'base']]) {
     await seek(page, f); s = await shown(page);
     check(s.variant === want && s.code === f % 576, `Sol frame ${f}: ${s.variant} picture, code ${s.code}`);
   }
-  check(s.src.endsWith(cs.clips[1].file) === false || true, 'ok');
-  await seek(page, 3600); s = await shown(page);
+  await seek(page, 3420); s = await shown(page);
   check(s.src.endsWith(cd.clips[14].file), `Sol plays David's stored clip 14 (${s.src.split('/').pop()})`);
   await page.keyboard.press('3');
   s = await shown(page);
-  check(s.variant === 'prometheus' && s.code === 3600 % 576 && /prometheus:true/.test(await pressed()), `key 3 -> Prometheus at frame 3600: ${s.variant}`);
-  for (const [f, want] of [[2030, 'base'], [360, 'prometheus']]) {
+  check(s.variant === 'prometheus' && s.code === 3420 % 576 && /prometheus:true/.test(await pressed()), `key 3 -> Prometheus at frame 3420: ${s.variant}`);
+  for (const [f, want] of [[2030, 'base'], [3600, 'base'], [360, 'prometheus']]) {
     await seek(page, f); s = await shown(page);
     check(s.variant === want && s.code === f % 576, `Prometheus frame ${f}: ${s.variant} picture`);
   }
@@ -257,6 +258,16 @@ try {
   const ps = await page.evaluate(() => { const a = document.getElementById('aud'), v = document.querySelector('video.show'); return { playing: !a.paused, d: Math.abs(+v.dataset.k * 240 + v.currentTime * 24 - a.currentTime * 24) }; });
   await page.keyboard.press('Space');
   check(ps.playing && ps.d < 3, `switching cut during playback keeps playing in sync (drift ${ps.d.toFixed(2)} frames)`);
+  // onto a cut with a different soundtrack: the sound reloads, then picture and sound resume together
+  await page.keyboard.press('Space');
+  await page.waitForTimeout(400);
+  const fBefore = await page.evaluate(() => Math.floor(document.getElementById('aud').currentTime * 24));
+  await page.keyboard.press('3');
+  await page.waitForFunction(() => !document.getElementById('aud').paused && document.getElementById('aud').currentSrc.includes('prometheus'), null, { timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(700);
+  const pq = await page.evaluate(() => { const a = document.getElementById('aud'), v = document.querySelector('video.show'); return { playing: !a.paused, src: a.currentSrc.split('/').pop(), f: a.currentTime * 24, d: Math.abs(+v.dataset.k * 240 + v.currentTime * 24 - a.currentTime * 24) }; });
+  await page.keyboard.press('Space');
+  check(pq.playing && /prometheus/.test(pq.src) && pq.d < 3 && pq.f >= fBefore && pq.f < fBefore + 60, `switching to a cut with its own soundtrack during playback: ${pq.src} resumes at the same point, in sync (drift ${pq.d.toFixed(2)} frames)`);
   await page.keyboard.press('1');
   await seek(page, 360); s = await shown(page);
   check(s.variant === 'base' && /david:true/.test(await pressed()), 'key 1 -> back to David & Goliath');

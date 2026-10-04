@@ -47,7 +47,8 @@ button { font: inherit; color: inherit; }
 .cuts .cs { font: 10px/1.2 var(--mono); letter-spacing: 0.04em; color: var(--dim); white-space: nowrap; }
 .cuts button[aria-pressed="true"] { background: var(--gold); color: #1a1408; }
 .cuts button[aria-pressed="true"] .cs { color: rgba(26, 20, 8, 0.72); }
-.cuts .cb { position: absolute; top: -7px; right: -5px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--crimson); color: #fff; font: 600 10px/18px var(--mono); text-align: center; box-shadow: 0 0 0 2px var(--bg); }
+.cuts button.has-cb { padding-right: 20px; }
+.cuts .cb { position: absolute; top: -8px; right: -6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--crimson); color: #fff; font: 600 10px/18px var(--mono); text-align: center; box-shadow: 0 0 0 2px var(--bg); }
 
 .suite { --sw: clamp(240px, min(calc((100vh - var(--chrome)) * var(--arn)), 46vw), 760px);
   display: grid; grid-template-columns: var(--sw) minmax(0, 1fr); gap: 16px; padding-top: 14px; align-items: start; }
@@ -542,6 +543,7 @@ details.card[open] summary { margin-bottom: 8px; }
     $('gateText').textContent = kind === 'error' ? 'The soundtrack failed to load, so the picture is held. Check the connection, then tap.' : 'The browser held back the soundtrack until you tap. Picture and sound start together.';
     $('soundGate').hidden = false;
   }
+  function toggleMute() { aud.muted = !aud.muted; if (!aud.muted && aud.volume === 0) aud.volume = 0.8; updateSound(); }
   function soundAction() {   // runs inside a tap, so the browser lets sound start
     aud.muted = false; if (aud.volume === 0) aud.volume = 0.8;
     $('soundGate').hidden = true;
@@ -557,8 +559,8 @@ details.card[open] summary { margin-bottom: 8px; }
     aud.addEventListener('volumechange', updateSound);
     aud.addEventListener('error', () => { if (!aud.getAttribute('src')) return; SND.failed = true; updateSound(); });
     ['loadedmetadata', 'canplay', 'waiting', 'playing', 'stalled', 'emptied'].forEach((ev) => aud.addEventListener(ev, () => { if (ev === 'playing') { SND.blocked = false; $('soundGate').hidden = true; } updateSound(); }));
-    $('kMute').addEventListener('click', () => { aud.muted = !aud.muted; if (!aud.muted && aud.volume === 0) aud.volume = 0.8; });
-    $('vol').addEventListener('input', (e) => { const x = +e.target.value; aud.volume = x; aud.muted = x === 0; if (x >= 0.2) store.set(LSVOL, String(x)); });
+    $('kMute').addEventListener('click', toggleMute);
+    $('vol').addEventListener('input', (e) => { const x = +e.target.value; aud.volume = x; aud.muted = x === 0; if (x >= 0.2) store.set(LSVOL, String(x)); updateSound(); });
     $('vol').addEventListener('change', updateSound);
     $('soundBadge').addEventListener('click', (e) => { e.stopPropagation(); soundAction(); });
     $('soundBadge').addEventListener('pointerdown', (e) => e.stopPropagation());
@@ -578,7 +580,7 @@ details.card[open] summary { margin-bottom: 8px; }
       b.appendChild(n);
       if (c.sub) { const s = document.createElement('span'); s.className = 'cs'; s.textContent = c.sub; b.appendChild(s); }
       const open = cutNotes(c.id).filter((x) => x.status !== 'done').length;
-      if (open) { const d = document.createElement('span'); d.className = 'cb'; d.textContent = open; d.setAttribute('aria-label', `${open} open notes`); b.appendChild(d); }
+      if (open) { b.classList.add('has-cb'); const d = document.createElement('span'); d.className = 'cb'; d.textContent = open; d.setAttribute('aria-label', `${open} open notes`); b.appendChild(d); }
       b.addEventListener('click', () => setCut(c.id));
       return b;
     }));
@@ -594,7 +596,7 @@ details.card[open] summary { margin-bottom: 8px; }
     S.selected = null; lastShot = null; S.frame = clampF(S.frame);
     if (S.zoom !== 1) S.viewStart = Math.max(0, Math.min(FRAMES - span(), S.viewStart));
     store.set(LSCUT, C.id);
-    $('buildmeta').textContent = `${C.title || C.name} · ${D.build.label} · ${(FRAMES / FPS).toFixed(1)} s · ${FPS} fps`;
+    $('buildmeta').textContent = `${D.build.label} · render ${D.build.render} · ${(FRAMES / FPS).toFixed(1)} s · ${FPS} fps`;
     legend(); renderCuts();
     if (soundChanged) {
       const f = S.frame;
@@ -1026,7 +1028,7 @@ details.card[open] summary { margin-bottom: 8px; }
       case 'ArrowDown': e.preventDefault(); shotStep(1); break;
       case '[': noteStep(-1); break;
       case ']': noteStep(1); break;
-      case 'm': case 'M': aud.muted = !aud.muted; if (!aud.muted && aud.volume === 0) aud.volume = 0.8; break;
+      case 'm': case 'M': toggleMute(); break;
       case 'n': case 'N': e.preventDefault(); pause(); openComposer(0.5, 0.5); break;
       case 'Escape': closeComposer(); S.selected = null; renderAll(); break;
       default:

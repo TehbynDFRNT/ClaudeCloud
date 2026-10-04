@@ -1341,7 +1341,8 @@ def _notes_david(res):
         'stare is horizontal. frame.restoreCastPosture undoes it (then place the camera below eye level).' % -fr['pitch'],
         'Thin plaster mould-seam ridges (cheek, neck, nose bridge) softened with a masked Taubin smooth on broad skin only.',
         'Profile side: the right (-X) side shows the broad chest frontally with the head in profile (the classic view '
-        'of the SMK photograph). The bust back is hollow (visible from behind and from the far +X side).',
+        'of the SMK photograph): the head is turned about 75 deg to its left relative to the chest (torso.forward). '
+        'Head and neck are fully carved all round; the chest piece is cut irregularly at the figure\'s left shoulder.',
     ]
 
 
@@ -1359,8 +1360,8 @@ def _notes_sol(res):
         'anchors.rayHoles along rayHoleNormals tilted outward/upward off the ring (radial = hole - ring centre).',
         'Scanner orange-peel removed from broad, low-curvature skin (cheeks, brow, neck) by a masked Taubin smooth; '
         'lids, lips, nostrils and curls are masked out and stay crisp.',
-        'The bust and nose tip are restorations (SMK). The bust back is hollow with a support post inside (only seen '
-        'from behind).',
+        'The bust and nose tip are restorations (SMK). The back of the skull is summarily carved (low-relief hair '
+        'inside the fillet); the turn arc (-X -> +Z) only grazes it.',
     ]
 
 
