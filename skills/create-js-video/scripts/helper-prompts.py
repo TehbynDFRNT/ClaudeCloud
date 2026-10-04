@@ -12,7 +12,13 @@ Costs per frame (ms), first match wins: --costs (shot id -> ms, from `chunk.mjs 
 the median per scene of render-log.jsonl files (--log, repeatable; render.mjs writes them), --default-ms.
 Frames inside a dissolve or bleed count x1.9 (two shots render). With --status-json (`chunk.mjs status --json`) the
 frames of final pieces cost nothing; with --only-scenes the other scenes' frames cost nothing. The ranges are a
-linear partition of the fixed block grid (--block, default 240) minimising the costliest helper.
+linear partition of the fixed block grid minimising the costliest helper. The block length is the plan's own
+(plan.block, as chunk.mjs reads it), else 240; --block may only restate it, because chunk.mjs render refuses range
+edges that are not multiples of the plan's block ('--from/--to must be multiples of 72').
+
+Measure --default-ms for a new frame size: with no cost data every frame counts --default-ms (1000). A 4K render in
+SwiftShader costs about 9-10 s per frame on a 4-core container, about 3x a 1080p frame, so Nova's 2160x3840 master
+used --default-ms 9500 (14 parts of 288 frames, about 46 min each).
 
 The prompt is written for a helper that only ever follows its first message: everything it needs is in it, it
 stops and reports instead of improvising, and it never edits code. Ranges run 25-30 minutes, longer than a
@@ -41,7 +47,7 @@ PROMPT = """You are render helper {tag} for "{title}" ({plan_file}, plan id {pla
 2. If `node_modules` is missing, run `npm ci` (or `npm install` when there is no lockfile).
 3. Start the render IN THE BACKGROUND. It needs about {minutes} min, longer than one foreground command may run (a foreground command is cut off after 10 minutes). From the repository root:
    `mkdir -p out && nohup sh -c '{cmd}; echo "RENDER exit=$?"' > {log} 2>&1 &`
-   It renders frames {start}-{end}{scene_note}, encodes each 10 s block's pieces, commits them with `git add -f` (dist/ is git-ignored) and pushes them to {branch}.
+   It renders frames {start}-{end}{scene_note}, encodes the pieces of each {block_words} block, commits them with `git add -f` (dist/ is git-ignored) and pushes them to {branch}.
 4. Wait for it: every 3-5 minutes run `tail -n 3 {log}` (or watch {log} with the Monitor tool). A tool call that times out is NOT a failure: the render keeps running in the background, so check the log again. The run is over when the log's last line is `RENDER exit=<n>`.
 5. Run `{status_cmd}`. {done_rule} Otherwise run the command of step 3 again (it resumes where it stopped and skips finished pieces), wait as in step 4 and check again: at most 3 runs in all.
 6. Reply with the status lines for blocks {start}-{end} and the summary line.
@@ -76,7 +82,8 @@ def main():
     ap.add_argument('--overhead-ms', type=float, default=120, help='capture + encode per frame')
     ap.add_argument('--status-json', help='chunk.mjs status --json output: final pieces cost nothing')
     ap.add_argument('--only-scenes', default='', help='helpers render only these scenes (adds --only-scenes to the command)')
-    ap.add_argument('--block', type=int, default=240)
+    ap.add_argument('--block', type=int, default=0, help="block length in frames (default: the plan's `block`, else 240); must equal the plan's")
+    ap.add_argument('--fps', type=float, default=0, help='frames per second for the prompt wording (default: the plan fps)')
     ap.add_argument('--rev', default='HEAD', help='commit to render (resolved to the full SHA)')
     ap.add_argument('--allow-unpushed', action='store_true')
     ap.add_argument('--branch-base', help='outcome branch prefix (default: the current branch)')
@@ -94,6 +101,15 @@ def main():
 
     plan = json.load(open(a.plan))
     frames = plan['frames']
+    plan_block = int(plan.get('block') or 240)
+    if a.block and a.block != plan_block:
+        raise SystemExit(f"--block {a.block} differs from the plan's block length ({plan_block}): chunk.mjs render would refuse "
+                         f"range edges that are not multiples of {plan_block}")
+    a.block = plan_block
+    num, _, den = str(plan.get('fps', 24)).partition('/')
+    fps = a.fps or (float(num) / float(den or 1))
+    secs = a.block / fps
+    block_words = f"{a.block}-frame ({secs:g} s)" if secs != int(secs) else f"{a.block}-frame ({int(secs)} s)"
     sha = git('rev-parse', '--verify', f'{a.rev}^{{commit}}')
     if len(sha) != 40:
         raise SystemExit(f'not a full SHA: {sha}')
@@ -186,16 +202,16 @@ def main():
         prompt = PROMPT.format(tag=tag, title=plan.get('title', plan.get('id', 'the film')), plan_file=a.plan, plan_id=plan.get('id'),
                                sha=sha, branch=branch, cmd=cmd, start=s, end=e, minutes=round(cost / 60000, 1),
                                scene_note=f" ({', '.join(sorted(only))} only)" if only else '', status_cmd=a.status_cmd.format(plan=a.plan),
-                               log=f'out/render-{tag}.log', done_rule=done_rule)
+                               log=f'out/render-{tag}.log', done_rule=done_rule, block_words=block_words)
         args = {'title': f'Render {tag}: {plan.get("id", "film")} {s}-{e}', 'source_url': repo,
                 'source_revision': sha, 'outcome_branch': branch, 'prompt': prompt}
         if a.permission_mode:
             args['permission_mode'] = a.permission_mode
         helpers.append({'tag': tag, 'range': [s, e], 'estMinutes': round(cost / 60000, 1), 'create_session': args})
     if a.json:
-        print(json.dumps({'sha': sha, 'plan': a.plan, 'helpers': helpers}, indent=1))
+        print(json.dumps({'sha': sha, 'plan': a.plan, 'block': a.block, 'helpers': helpers}, indent=1))
         return 0
-    print(f'# {len(helpers)} helpers at {sha} ({a.plan}); est. minutes: ' + ', '.join(f"{h['tag']} {h['estMinutes']}" for h in helpers))
+    print(f'# {len(helpers)} helpers at {sha} ({a.plan}, {a.block}-frame blocks); est. minutes: ' + ', '.join(f"{h['tag']} {h['estMinutes']}" for h in helpers))
     print(f'# watch: watch-render.sh --branches \'{base}-{a.tag_prefix}*\' --plan {a.plan}\n')
     for h in helpers:
         c = h['create_session']

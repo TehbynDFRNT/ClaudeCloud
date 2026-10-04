@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 // Distributed final render. Every frame is a pure function of its index, so ranges rendered on different machines
-// join seamlessly. The film is cut into fixed blocks (config.block, default 240 frames = 10 s at 24 fps, aligned to
-// frame 0); a block splits at every shot boundary into PIECES. Each piece is encoded on its own from a keyframe with
+// join seamlessly. The film is cut into fixed blocks (plan.block, else config.block, default 240 frames = 10 s at
+// 24 fps, aligned to frame 0); a block splits at every shot boundary into PIECES. Each piece is encoded on its own from a keyframe with
 // the final settings and records the fingerprint its frames were rendered under, so a changed shot re-renders only
 // its own pieces and assembly stream-copies the pieces without re-encoding.
 //
 // Provenance: tools/chunk.mjs of the "Nova, Episode 1" project (ClaudeCloud repo, Oct 2026), generalised: layout and
 // credits from config.mjs, `status --json` (feeds restore-from-branches.py --want), `plan --pending`, the concat list
-// kept out of the cut folder, the dead per-piece push helper removed. Same block/piece/record format as the original.
+// kept out of the cut folder, the dead per-piece push helper removed. Same block/piece/record format as the original,
+// including its HD-master changes (commit ae04f4d): the block length can come from the plan (plan.block: Nova's 4K
+// plan uses 72 frames so every piece stays under GitHub's 100 MB), and the H.264 level follows the frame size (5.1
+// above 2048x1088, else 4.1; 2160x3840 is 32,400 macroblocks, over level 4.1's frame limit).
 // Copy it into the project's tools/ with fingerprint.mjs, render.mjs and config.mjs, and commit them.
 //
 //   node chunk.mjs costs    [--plan P]                       one full-size frame per shot, timed -> out/costs.json (ms per shot id)
@@ -59,7 +62,7 @@ const PREVIEW = flag('preview');
 const W = PREVIEW ? plan.width / 2 : plan.width, H = PREVIEW ? plan.height / 2 : plan.height;
 const DIST = path.join(ROOT, C.distDir);
 const CHUNKS = path.join(DIST, plan.id ? `${plan.id}${PREVIEW ? '-preview' : ''}` : (PREVIEW ? 'preview' : 'chunks'));
-const BLOCK = C.block;
+const BLOCK = +plan.block || C.block;   // a plan may set its own block length (a 4K plan: shorter, so pieces stay under 100 MB)
 const blocks = () => { const out = []; for (let a = 0; a < plan.frames; a += BLOCK) out.push([a, Math.min(plan.frames, a + BLOCK)]); return out; };
 const blockName = (a, b) => `chunk_${pad(a)}_${pad(b)}`;
 const shotsSorted = [...plan.shots].sort((x, y) => x.start - y.start);
@@ -91,7 +94,7 @@ const blockStateOf = (ps) => {
 };
 // final video settings, shared by every piece so they can be stream-copied together
 const X264 = ['-c:v', 'libx264', '-preset', 'slow', '-crf', opt('crf', PREVIEW ? '22' : '17'), '-tune', 'grain', '-pix_fmt', 'yuv420p',
-  '-profile:v', 'high', '-level', '4.1', '-x264-params', 'keyint=48:min-keyint=24:scenecut=40', '-r', String(plan.fps)];
+  '-profile:v', 'high', '-level', plan.width * plan.height > 2048 * 1088 ? '5.1' : '4.1', '-x264-params', 'keyint=48:min-keyint=24:scenecut=40', '-r', String(plan.fps)];
 
 function run(cmd, args, opts = {}) {
   const r = spawnSync(cmd, args, { stdio: 'inherit', cwd: ROOT, ...opts });

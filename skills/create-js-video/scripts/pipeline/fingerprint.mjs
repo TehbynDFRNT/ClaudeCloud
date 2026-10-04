@@ -1,15 +1,20 @@
 // Content fingerprints for rendered frames: a frame's fingerprint covers everything that can change its pixels, so
 // a frame (or a piece of video) whose fingerprint still matches is final and is never re-rendered.
 //
-// Provenance: tools/fingerprint.mjs of the "Nova, Episode 1" project (ClaudeCloud repo, Oct 2026), generalised:
-// paths come from config.mjs (film.config.json), the global inputs are a list, and extra plan fields can be made
-// global. With the default config the fingerprints are byte-identical to the original's.
+// Provenance: tools/fingerprint.mjs of the "Nova, Episode 1" project (ClaudeCloud repo, Oct 2026, as of commit
+// e8fe683 with the HD master's masterGrade key), generalised: paths come from config.mjs (film.config.json), the
+// global inputs are a list, and extra plan fields can be made global. With the default config the fingerprints are
+// byte-identical to the original's, for 1080p plans and for the 4K master plan (which carries a masterGrade).
 //
 // A fingerprint is sha1(JSON) truncated to 16 hex characters, over:
 //   engine  every file in config.engine (main.js, index.html, src/engine/*, fonts): one change invalidates EVERY frame
 //   grid    the config.globalInputs files (the bar grid): also global (the key name is kept for cache compatibility)
-//   global  the plan's fps, width, height, format, defaultPost (+ config.planFieldsInGlobal, if any): keep prose
-//           (a format.note) out of these, or editing a sentence re-renders every frame
+//   global  the plan's fps, width, height, format, defaultPost, masterGrade (+ config.planFieldsInGlobal, if any):
+//           keep prose (a format.note) out of these, or editing a sentence re-renders every frame.
+//           OPTIONAL plan-global fields go in as direct keys whose value is undefined when the plan lacks them:
+//           JSON.stringify drops undefined keys, so plans without the field keep their fingerprints and plans with it
+//           get their own (masterGrade is such a key). planFieldsInGlobal adds its `extra` object only when at least
+//           one listed field is defined, for the same reason.
 //   W, H    the render size
 //   shot    the shot entry minus its descriptive fields (purpose, action, framing, note), so cuts can share frames
 //   scene   the scene module <scenesDir>/<scene>.js + every relative import/export-from it pulls in, recursively,
@@ -70,8 +75,12 @@ export function makeFingerprinter(plan) {
     return sceneHashes.get(id);
   };
   const shotAt = (f) => shots.find((s) => f >= s.start && f < s.end) || shots[shots.length - 1];
-  const g = { fps: plan.fps, w: plan.width, h: plan.height, format: plan.format, defaultPost: plan.defaultPost };
-  if (C.planFieldsInGlobal.length) g.extra = Object.fromEntries(C.planFieldsInGlobal.map((k) => [k, plan[k]]));
+  // masterGrade (a whole-film grade only master plans carry) is undefined for delivered plans: JSON drops the key,
+  // so their fingerprints are unchanged by its presence here, and a master plan's pieces get their own
+  const g = { fps: plan.fps, w: plan.width, h: plan.height, format: plan.format, defaultPost: plan.defaultPost, masterGrade: plan.masterGrade };
+  // extra only when a listed field is defined: an `extra: {}` would change every fingerprint, even of plans without it
+  const extra = C.planFieldsInGlobal.filter((k) => plan[k] !== undefined);
+  if (extra.length) g.extra = Object.fromEntries(extra.map((k) => [k, plan[k]]));
   const global = sha(JSON.stringify(g));
   return function fingerprint(f, W = plan.width, H = plan.height) {
     const shot = shotAt(f);
