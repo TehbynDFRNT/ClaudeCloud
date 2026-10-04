@@ -98,14 +98,22 @@ var so=new IntersectionObserver(function(es){es.forEach(function(e){var s=STORY[
  else{clear('k'+e.target.dataset.story);s.reset();e.target.classList.remove('live')}})},{threshold:.45});
 $$('[data-story]').forEach(function(c){so.observe(c)});
 
+/* the new star's glint sits on the star wherever background-size:cover puts it (wide or tall plate) */
+var glint=$('#glint'),plate=glint&&glint.parentElement;
+var PLATES={wide:{w:2400,h:1350,px:.62,py:1,sx:.60,sy:.24},tall:{w:1080,h:1920,px:.5,py:1,sx:.30,sy:.73}};
+function placeGlint(){if(!glint)return;var P=matchMedia('(max-aspect-ratio: 4/5)').matches?PLATES.tall:PLATES.wide,W=plate.offsetWidth,H=plate.offsetHeight,k=Math.max(W/P.w,H/P.h);
+ glint.style.setProperty('--gx',((W-P.w*k)*P.px+P.sx*P.w*k).toFixed(1)+'px');glint.style.setProperty('--gy',((H-P.h*k)*P.py+P.sy*P.h*k).toFixed(1)+'px')}
+placeGlint();addEventListener('resize',placeGlint);
+if(glint)new IntersectionObserver(function(es){es.forEach(function(e){glint.classList.toggle('off',!e.isIntersecting)})}).observe(plate);
+
 /* pointer depth in the hero */
 var hero=$('#top');
 if(hero&&!RM&&matchMedia('(pointer:fine)').matches){hero.addEventListener('pointermove',function(e){var b=hero.getBoundingClientRect();hero.style.setProperty('--mx',((e.clientX-b.left)/b.width-.5).toFixed(3));hero.style.setProperty('--my',((e.clientY-b.top)/b.height-.5).toFixed(3))});hero.addEventListener('pointerleave',function(){hero.style.setProperty('--mx',0);hero.style.setProperty('--my',0)})}
 
-/* scroll-linked: progress bar, hero parallax, band and footer plates climb as they arrive */
-var band=$('#band'),foot=$('#foot'),prog=$('#prog'),pending=false;
+/* scroll-linked: hero parallax, band and footer plates climb as they arrive */
+var band=$('#band'),foot=$('#foot'),pending=false;
 function arrive(el){var r=el.getBoundingClientRect();return Math.max(0,Math.min(1,(innerHeight-r.top)/(innerHeight*.9)))}
-function tick(){pending=false;var max=root.scrollHeight-innerHeight;if(prog)prog.style.setProperty('--sp',max>0?(scrollY/max).toFixed(4):0);if(RM)return;
+function tick(){pending=false;if(RM)return;
  if(hero){var rc=hero.getBoundingClientRect();hero.style.setProperty('--p',Math.max(0,Math.min(1,-rc.top/rc.height)).toFixed(3))}
  if(band)band.style.setProperty('--bp',arrive(band).toFixed(3));if(foot)foot.style.setProperty('--bp',arrive(foot).toFixed(3))}
 addEventListener('scroll',function(){if(!pending){pending=true;requestAnimationFrame(tick)}},{passive:true});addEventListener('resize',tick);tick();

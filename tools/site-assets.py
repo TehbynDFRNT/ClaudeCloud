@@ -83,14 +83,19 @@ for i, f in enumerate(TURN_FRAMES):
     data['turn'].append({'f': f, 'tc': tc(f), 'deg': round(angles[i])})
 save(sprite, OUT / 'turn.jpg', 80)
 
-# the pieces: the film rendered as 17 blocks of 240 frames; one thumbnail per block
+# the pieces: the film rendered as 17 blocks of 240 frames; one thumbnail per block (its middle frame, or the
+# nearest frame that is not near-black: the ignition and the sign-off are dark), at 2x the 48x64 tile drawn
 blocks = list(range(0, plan['frames'], 240))
-TW, TH = 120, 159
+TW, TH = 96, 128
+def lum(f):
+    g = active(f).convert('L').resize((27, 36)); return sum(g.getdata()) / (27 * 36)
 pieces = Image.new('RGB', (TW * len(blocks), TH))
 for i, b in enumerate(blocks):
-    mid = min(b + 120, plan['frames'] - 1)
-    pieces.paste(active(mid).resize((TW, TH), Image.LANCZOS), (i * TW, 0))
-save(pieces, OUT / 'pieces.jpg', 78)
+    e = min(b + 240, plan['frames']); mid = (b + e) // 2
+    order = sorted(range(b + 4, e - 4, 12), key=lambda f: abs(f - mid))
+    pick = next((f for f in order if lum(f) > 20), mid)
+    pieces.paste(active(pick).resize((TW, TH), Image.LANCZOS), (i * TW, 0))
+save(pieces, OUT / 'pieces.jpg', 80)
 data['pieces'] = len(blocks)
 
 # plates: wide for landscape viewports, tall for portrait, each with and without the new star
