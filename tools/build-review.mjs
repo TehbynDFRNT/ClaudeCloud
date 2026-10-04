@@ -251,6 +251,32 @@ const data = {
 const json = JSON.stringify(data).replace(/</g, '\\u003c');
 const tpl = fs.readFileSync(path.join(ROOT, 'src/review/editroom.html'), 'utf8');
 fs.writeFileSync(path.join(out, 'editroom.html'), tpl.replace('__FILM_DATA__', () => json));
+// the localhost edit room: a zero-dependency server (notes -> notes.json / notes.md), a double-click starter for
+// macOS, and how to run it. An existing notes.json in the folder is never touched.
+fs.copyFileSync(path.join(ROOT, 'tools/editroom-serve.mjs'), path.join(out, 'serve.mjs'));
+fs.writeFileSync(path.join(out, 'Start Edit Room.command'), '#!/bin/bash\ncd "$(dirname "$0")" && exec node serve.mjs\n', { mode: 0o755 });
+fs.chmodSync(path.join(out, 'Start Edit Room.command'), 0o755);
+fs.writeFileSync(path.join(out, 'README.md'), `# Nova Edit Room (localhost)
+
+${cuts.map((c) => `- ${c.name}`).join('\n')}
+
+## Run it
+1. You need Node 18 or newer (https://nodejs.org). Check with \`node -v\`.
+2. In this folder run:
+
+       node serve.mjs
+
+   On a Mac you can instead double-click **Start Edit Room.command**. The first time, right-click it and choose Open.
+3. It opens http://localhost:4321/ in your browser. If that port is busy it takes the next free one. Ctrl+C stops it.
+
+## Notes
+- Click the paused picture to pin a note on it. Notes save straight away to **notes.json** in this folder.
+- **notes.md** is a readable copy, grouped by cut and ordered by time.
+- Each note records the cut, the frame, the timecode, the shot, where the pin sits on the picture, and its text.
+- To hand notes back, commit and push \`notes.json\` (or paste \`notes.md\`).
+
+Render ${data.build.render} · ${data.build.label} · built ${data.build.built} from commit ${data.build.commit}.
+`);
 
 // ---------- 5. file list, stale cleanup, size math ----------
 const files = [...new Set([...cuts.flatMap((c) => c.clips.map((x) => x.file)), ...sounds.values(), ...cuts.map((c) => c.an.thumbs.file)])];

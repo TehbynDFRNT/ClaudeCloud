@@ -352,7 +352,7 @@ details.card[open] summary { margin-bottom: 8px; }
   }
   const S = {
     frame: 0, playing: false, notes: [], filter: 'open', thisShot: false, zoom: 1, viewStart: 0, rate: 1,
-    selected: null, composer: null, db: null, user: null, me: null, canWrite: true, local: false, hover: null,
+    selected: null, composer: null, db: null, server: false, user: null, me: null, canWrite: true, local: false, hover: null,
   };
   const SND = { failed: false, blocked: false, fixedVolume: false };
 
@@ -738,22 +738,32 @@ details.card[open] summary { margin-bottom: 8px; }
   // ---------- notes store (db when available, else this browser) ----------
   function loadLocal() { try { return JSON.parse(localStorage.getItem(LS) || '[]'); } catch { return []; } }
   function saveLocal() { store.set(LS, JSON.stringify(S.notes)); }
+  // the local server (serve.mjs): notes live in notes.json (+ notes.md) beside the page
+  async function api(method, path, body) {
+    const r = await fetch('api/notes' + (path || ''), { method, headers: body ? { 'content-type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined, cache: 'no-store' });
+    if (!r.ok) throw new Error('local server: ' + r.status);
+    return r.json();
+  }
+  async function pullServer() { const list = await api('GET'); if (JSON.stringify(list) !== JSON.stringify(S.notes)) { S.notes = list; renderAll(); } }
   async function createNote(n) {
-    const body = { ...n, shot: (C.shots.find((s) => n.frame >= s.start && n.frame < s.end) || shotAt(n.frame)).id, timecode: tc(n.frame), status: 'open', author: S.me ? S.me.id : null, createdAt: new Date().toISOString(), render: D.build.render };
+    const body = { ...n, cutName: C.name, shot: (C.shots.find((s) => n.frame >= s.start && n.frame < s.end) || shotAt(n.frame)).id, timecode: tc(n.frame), status: 'open', author: S.me ? S.me.id : null, createdAt: new Date().toISOString(), render: D.build.render };
     if (S.db) { await S.db.collection('notes').add(body); }
+    else if (S.server) { S.notes = await api('POST', '', body); renderAll(); }
     else { S.notes.push({ id: 'l' + Date.now().toString(36), ...body }); saveLocal(); renderAll(); }
   }
   async function updateNote(id, patch) {
     if (S.db) await S.db.doc('notes/' + id).update({ ...patch, updatedAt: new Date().toISOString() });
+    else if (S.server) { S.notes = await api('PATCH', '/' + encodeURIComponent(id), { ...patch, updatedAt: new Date().toISOString() }); renderAll(); }
     else { const n = S.notes.find((x) => x.id === id); Object.assign(n, patch); saveLocal(); renderAll(); }
   }
   async function deleteNote(id) {
     if (S.db) await S.db.doc('notes/' + id).delete();
+    else if (S.server) { S.notes = await api('DELETE', '/' + encodeURIComponent(id)); renderAll(); }
     else { S.notes = S.notes.filter((x) => x.id !== id); saveLocal(); renderAll(); }
     if (S.selected === id) S.selected = null;
   }
   let profiles = {};
-  function authorName(id) { if (!id) return 'Someone'; if (S.me && id === S.me.id) return 'You'; return (profiles[id] && profiles[id].name) || 'Someone'; }
+  function authorName(id) { if (!id) return S.server ? 'You' : 'Someone'; if (S.me && id === S.me.id) return 'You'; return (profiles[id] && profiles[id].name) || 'Someone'; }
   async function refreshProfiles() {
     if (!S.user) return;
     const ids = [...new Set(S.notes.map((n) => n.author).filter(Boolean))];
@@ -768,6 +778,23 @@ details.card[open] summary { margin-bottom: 8px; }
     } catch { db = null; }
     S.user = user;
     if (user) { try { S.me = await user.me(); } catch { S.me = null; } }
+    // no claude.ai runtime: the local server, when the page is served by serve.mjs
+    if (!db && location.protocol.startsWith('http')) {
+      try {
+        const list = await api('GET');
+        if (Array.isArray(list)) {
+          S.server = true; S.notes = list; S.me = { id: 'local' };
+          const browserOnly = loadLocal().filter((x) => !list.some((y) => y.id === x.id));   // notes made before the server was used
+          for (const n of browserOnly) { try { S.notes = await api('POST', '', n); } catch { /* keep going */ } }
+          if (browserOnly.length) store.set(LS, '[]');
+          banner.hidden = true;
+          setInterval(() => { if (!document.hidden) pullServer().catch(() => { banner.hidden = false; banner.textContent = 'The local edit room server stopped. Start it again with: node serve.mjs'; }); }, 4000);
+          renderAll();
+          $('addNote').disabled = !S.canWrite;
+          return;
+        }
+      } catch { /* not served by serve.mjs */ }
+    }
     if (db) {
       S.db = db;
       try { const can = user ? await user.can('data.write') : null; if (can === false) { S.canWrite = false; banner.hidden = false; banner.textContent = 'You can read these notes. Ask the owner for Contributor access to add your own.'; } } catch { /* keep inputs */ }
@@ -777,7 +804,7 @@ details.card[open] summary { margin-bottom: 8px; }
       }, (err) => { banner.hidden = false; banner.textContent = 'Notes stopped syncing (' + err.code + '). Reload the page to reconnect.'; });
     } else {
       S.local = true; S.notes = loadLocal();
-      banner.hidden = false; banner.textContent = 'Notes are being kept in this browser only. Open the edit room from claude.ai while signed in to share them.';
+      banner.hidden = false; banner.textContent = 'Notes are being kept in this browser only. Start the edit room with "node serve.mjs" to save them to notes.json.';
       renderAll();
     }
     $('addNote').disabled = !S.canWrite;
