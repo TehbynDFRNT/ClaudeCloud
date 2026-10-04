@@ -172,16 +172,27 @@ html.viewing{overflow:hidden}
 
 /* downloadables: phone wallpapers rendered at 2160 x 4680, one anatomy per card */
 .dls{display:grid;grid-template-columns:repeat(5,1fr);gap:clamp(10px,1.4vw,18px);margin-top:clamp(28px,4vw,48px)}
-.dl{display:block;text-decoration:none;color:inherit}
+.dl{display:block;margin:0;color:inherit}
 .dl .ph{display:block;aspect-ratio:540/1170;border-radius:14px;overflow:hidden;background:var(--nv-2);box-shadow:0 0 0 1px var(--nv-rule);transition:box-shadow .3s var(--out)}
 .dl img{width:100%;height:100%;object-fit:cover;transition:transform .6s var(--out)}
-.dl:hover img,.dl:focus-visible img{transform:scale(1.03)}
-.dl:hover .ph,.dl:focus-visible .ph{box-shadow:0 0 0 1px var(--nv-border-strong)}
+.dl .ph:hover img,.dl:focus-within .ph img{transform:scale(1.03)}
+.dl .ph:hover,.dl:focus-within .ph{box-shadow:0 0 0 1px var(--nv-border-strong)}
 .dl .cap{display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:12px 2px 0;font-size:14px;color:var(--nv-text)}
 .dl .cap em{font:400 11px/1 var(--mono);font-style:normal;color:var(--nv-mute);white-space:nowrap}
-.dl .get{display:inline-flex;align-items:center;gap:6px;margin:8px 2px 0;font-size:13px;color:var(--lp-300)}
-.dl:hover .get{text-decoration:underline;text-underline-offset:3px}
+.dl .acts{display:flex;flex-wrap:wrap;gap:4px 16px;margin:2px 2px 0}
+.dl .get{display:inline-flex;align-items:center;gap:6px;min-height:36px;font-size:13px;color:var(--lp-300);text-decoration:none}
+.dl .get:hover{text-decoration:underline;text-underline-offset:3px}
 .film-dl{margin-top:clamp(24px,3vw,36px)}
+/* the wallpaper preview: the full picture in a phone, with the viewer's own time over it as a lock screen */
+.wp-fig{position:relative;margin:0;display:grid;place-items:center;min-height:0;padding:0 72px}
+.phone{position:relative;container-type:inline-size;height:min(calc(100vh - 190px),860px);aspect-ratio:2160/4680;border-radius:13cqw;overflow:hidden;background:var(--nv-2);box-shadow:0 0 0 1px var(--nv-border-strong),0 0 0 7px var(--nv-1),0 0 0 8px var(--nv-border),0 40px 90px -30px rgba(0,0,0,.9)}
+@supports (height:100dvh){.phone{height:min(calc(100dvh - 190px),860px)}}
+.phone img{display:block;width:100%;height:100%;object-fit:cover}
+.lock{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;padding-top:15cqw;color:#fff;text-shadow:0 1px 12px rgba(0,0,0,.35);pointer-events:none;transition:opacity .3s var(--out)}
+.lk-date{font:500 5.2cqw/1 var(--font)}
+.lk-time{margin-top:1.5cqw;font:600 23cqw/1 var(--font);letter-spacing:-.04em}
+.phone.bare .lock{opacity:0}
+.wp .lb-bar .btn.line[aria-pressed="false"]{color:var(--nv-mute)}
 
 /* lightbox */
 .lb{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;background:rgba(var(--nv-0-rgb),.94);color:var(--nv-text)}
@@ -312,7 +323,8 @@ html.lb-open{overflow:hidden}
   .credits{grid-template-columns:1fr}
   .credits dt{padding-bottom:0;border-bottom:0}
   .credits dd{padding-top:6px}
-  .lb-fig{padding:0 12px}
+  .lb-fig,.wp-fig{padding:0 12px}
+  .phone{height:min(calc(100vh - 210px),860px)}
   .lb-prev,.lb-next{top:-62px;translate:none}
   .lb-prev{left:16px}.lb-next{left:72px;right:auto}
 }
