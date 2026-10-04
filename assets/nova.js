@@ -190,7 +190,9 @@ function copyLink(){try{if(navigator.clipboard&&navigator.clipboard.writeText)re
 function saveFile(){var a=d.createElement('a');a.href=shIg.getAttribute('href');a.download=shIg.getAttribute('download');d.body.appendChild(a);a.click();a.remove()}
 function canShareCard(){return !!(cardFile&&navigator.canShare&&navigator.share&&navigator.canShare({files:[cardFile]}))}
 if(shIg){
- if('IntersectionObserver' in window)new IntersectionObserver(function(es,o){if(es[0].isIntersecting){o.disconnect();getCard()}},{rootMargin:'400px 0px'}).observe(shIg);
+ /* only phones hand the card to a share sheet; desktops download it, so only phones fetch it ahead */
+ var SHARE=(IOS||ANDROID)&&!!navigator.canShare;
+ if(SHARE&&'IntersectionObserver' in window)new IntersectionObserver(function(es,o){if(es[0].isIntersecting){o.disconnect();getCard()}},{rootMargin:'400px 0px'}).observe(shIg);
  if(igs&&igs.showModal){
   var stp=function(n){return $('#igs'+n)},open=$('#igsOpen'),saveTip=$('#igsSaveTip'),openTip=$('#igsOpenTip');
   /* the steps, worded for where the visitor is */
@@ -199,12 +201,12 @@ if(shIg){
   else if(ANDROID){open.href='intent://story-camera#Intent;scheme=instagram;package=com.instagram.android;S.browser_fallback_url='+encodeURIComponent('https://www.instagram.com/')+';end';open.removeAttribute('target');openTip.textContent='Then pick the card from your gallery.'}
   else{openTip.textContent='Stories are posted from the Instagram app, so send the card to your phone first.'}
   saveTip.textContent=IOS?'Choose Save Image in the sheet that opens.':ANDROID?'Choose Instagram Stories to post it straight away, or save it.':'It saves to your downloads.';
-  shIg.addEventListener('click',function(e){e.preventDefault();getCard();igs.showModal();root.classList.add('lb-open')});
+  shIg.addEventListener('click',function(e){e.preventDefault();if(SHARE)getCard();igs.showModal();root.classList.add('lb-open')});
   igs.addEventListener('close',function(){root.classList.remove('lb-open')});
   $('[data-close]',igs).addEventListener('click',function(){igs.close()});
   igs.addEventListener('click',function(e){if(e.target===igs)igs.close()});
   $('#igsSave').addEventListener('click',function(){
-   if(canShareCard()){navigator.share({files:[cardFile]}).then(function(){stp(1).classList.add('done')},function(err){if(err&&err.name!=='AbortError'){saveFile();stp(1).classList.add('done')}});return}
+   if(SHARE&&canShareCard()){navigator.share({files:[cardFile]}).then(function(){stp(1).classList.add('done')},function(err){if(err&&err.name!=='AbortError'){saveFile();stp(1).classList.add('done')}});return}
    saveFile();stp(1).classList.add('done')});
   open.addEventListener('click',function(){stp(2).classList.add('done')});
   $('#igsCopy').addEventListener('click',function(){var b=this;copyLink().then(function(ok){b.textContent=ok?'Copied':'nova.tehbyn.com';if(ok)stp(3).classList.add('done');setTimeout(function(){b.textContent='Copy link'},2500)})});
@@ -232,13 +234,17 @@ if(lb&&lb.showModal){
 /* opens from the card's picture or its Preview link (both plain links to the full JPEG without the script);
    the thumbnail shows at once and the full 2160 x 4680 picture replaces it when it has loaded */
 var wp=$('#wp'),wcards=$$('.dl'),wcur=0;
-var WP=wcards.map(function(f){var im=$('.ph img',f),dl=$('a[download]',f);return{thumb:im.getAttribute('src'),full:dl.getAttribute('href'),file:dl.getAttribute('download'),alt:im.alt,name:$('.cap',f).firstChild.textContent,meta:$('.cap em',f).textContent}});
-function clock(){var n=new Date();try{$('#wpTime').textContent=n.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}).replace(/\s?[AP]M$/i,'');$('#wpDate').textContent=n.toLocaleDateString([],{weekday:'long',day:'numeric',month:'long'})}catch(e){}}
+var WP=wcards.map(function(f){var im=$('.ph img',f),dl=$('a[download]',f);return{thumb:im.getAttribute('src'),view:im.getAttribute('src').replace('-t.jpg','-p.jpg'),full:dl.getAttribute('href'),file:dl.getAttribute('download'),alt:im.alt,name:$('.cap',f).firstChild.textContent,meta:$('.cap em',f).textContent}});
+function clock(){var n=new Date();try{$('#wpTime').textContent=new Intl.DateTimeFormat([],{hour:'numeric',minute:'2-digit'}).formatToParts(n).filter(function(p){return p.type!=='dayPeriod'}).map(function(p){return p.value}).join('').trim();$('#wpDate').textContent=n.toLocaleDateString([],{weekday:'long',day:'numeric',month:'long'})}catch(e){}}
 function wshow(i){wcur=(i+WP.length)%WP.length;var w=WP[wcur],im=$('#wpImg');im.src=w.thumb;im.alt=w.alt;
- var full=new Image();full.onload=function(){if(WP[wcur]===w)im.src=w.full};full.src=w.full;
+ /* the 1080 x 2340 preview file (a tenth of the full one) replaces the thumbnail once the viewer settles on it */
+ clearTimeout(wshow.t);wshow.t=setTimeout(function(){if(WP[wcur]!==w)return;var big=new Image();big.onload=function(){if(WP[wcur]===w)im.src=w.view};big.src=w.view},250);
  $('#wpName').textContent=w.name;$('#wpMeta').textContent=w.meta;var g=$('#wpGet');g.href=w.full;g.download=w.file;clock()}
 if(wp&&wp.showModal&&WP.length){
- $$('[data-wp]').forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();wshow(+a.dataset.wp);wp.showModal();root.classList.add('lb-open')})});
+ $$('[data-wp]').forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();
+  /* opened from the picture (hidden from assistive tech): focus the card's Preview link, so closing returns there */
+  if(a.classList.contains('ph')){var t=a.closest('.dl').querySelector('.acts a[data-wp]');if(t)t.focus({preventScroll:true})}
+  wshow(+a.dataset.wp);wp.showModal();root.classList.add('lb-open')})});
  wp.addEventListener('close',function(){root.classList.remove('lb-open')});
  $$('[data-step]',wp).forEach(function(b){b.addEventListener('click',function(){wshow(wcur+ +b.dataset.step)})});
  $('[data-close]',wp).addEventListener('click',function(){wp.close()});

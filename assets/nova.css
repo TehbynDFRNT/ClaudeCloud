@@ -143,6 +143,7 @@ html.viewing{overflow:hidden}
 .opt{position:relative;display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 12px 0 13px;border-radius:999px;border:1px solid var(--nv-border-strong);background:rgba(var(--nv-0-rgb),.42);color:var(--nv-text);font-size:13px;line-height:1;white-space:nowrap;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:border-color .2s var(--out),background .2s var(--out)}
 .opt:hover{border-color:var(--nv-text);background:rgba(var(--nv-0-rgb),.6)}
 .opt:focus-within{outline:2px solid var(--lp-300);outline-offset:3px}
+.opt.sh:focus:not(:focus-visible){outline:none}
 .opt>svg{flex:none;color:var(--lp-300)}
 .opt .chev{color:var(--nv-mute);margin-left:-2px}
 .opt-k{color:var(--nv-mute)}
@@ -188,7 +189,7 @@ html.viewing{overflow:hidden}
 .dl .cap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;align-items:baseline;padding:12px 2px 0;font-size:14px;color:var(--nv-text)}
 .dl .cap em{font:400 11px/1 var(--mono);font-style:normal;color:var(--nv-mute);white-space:nowrap}
 .dl .acts{display:flex;flex-wrap:wrap;gap:4px 16px;margin:2px 2px 0}
-.dl .get{display:inline-flex;align-items:center;gap:6px;min-height:36px;font-size:13px;color:var(--lp-300);text-decoration:none}
+.dl .get{display:inline-flex;align-items:center;gap:6px;min-height:44px;font-size:13px;color:var(--lp-300);text-decoration:none}
 .dl .get:hover{text-decoration:underline;text-underline-offset:3px}
 .film-dl{margin-top:clamp(24px,3vw,36px);max-width:100%;white-space:normal;line-height:1.3}
 /* the wallpaper preview: the full picture in a phone, with the viewer's own time over it as a lock screen */
@@ -196,9 +197,9 @@ html.viewing{overflow:hidden}
 .phone{position:relative;container-type:inline-size;height:min(calc(100vh - 190px),860px);aspect-ratio:2160/4680;border-radius:13%/6%;overflow:hidden;background:var(--nv-2);box-shadow:0 0 0 1px var(--nv-border-strong),0 0 0 7px var(--nv-1),0 0 0 8px var(--nv-border),0 40px 90px -30px rgba(0,0,0,.9)}
 @supports (height:100dvh){.phone{height:min(calc(100dvh - 190px),860px)}}
 .phone img{display:block;width:100%;height:100%;object-fit:cover}
-.lock{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;padding-top:15cqw;color:#fff;text-shadow:0 1px 12px rgba(0,0,0,.35);pointer-events:none;transition:opacity .3s var(--out)}
-.lk-date{font:500 5.2cqw/1 var(--font)}
-.lk-time{margin-top:1.5cqw;font:600 23cqw/1 var(--font);letter-spacing:-.04em}
+.lock{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;padding-top:44px;padding-top:15cqw;color:#fff;text-shadow:0 1px 12px rgba(0,0,0,.35);pointer-events:none;transition:opacity .3s var(--out)}
+.lk-date{font:500 15px/1 var(--font);font-size:5.2cqw}
+.lk-time{margin-top:4px;margin-top:1.5cqw;font:600 64px/1 var(--font);font-size:23cqw;letter-spacing:-.04em;white-space:nowrap}
 .phone.bare .lock{opacity:0}
 .wp .lb-bar .btn.line[aria-pressed="false"]{color:var(--nv-mute)}
 /* Instagram: three steps beside the story card (a web page cannot post to a story itself) */
@@ -346,6 +347,7 @@ html.lb-open{overflow:hidden}
   .credits dt{padding-bottom:0;border-bottom:0}
   .credits dd{padding-top:6px}
   .lb-fig,.wp-fig{padding:0 12px}
+  .wp .lb-cap{flex-basis:100%;justify-content:center}
   .igs-body{grid-template-columns:minmax(0,1fr);justify-items:center;gap:14px;padding:0 16px 20px}
   .igs-card{height:min(calc(var(--vh,1vh)*30),300px)}
   .igs-steps{width:100%;max-width:460px}
