@@ -29,6 +29,26 @@ import { Music, evalFps } from '../engine/music.js';
 import { mulberry32 } from '../engine/rng.js';
 
 export const SR = 48000;
+
+// ---- spatial mode (plan.spatial = { mode: 'binaural', trimDb: { stem: dB } }): the sound design's panners become HRTF
+// panners at matching angles, so on headphones the guns and the fly-by sit around the listener (behind included) and
+// the new star's shimmer above; the music stays a stereo image in front. Absent: plain stereo panners (the approved mix).
+let SPATIAL = null;
+export function setSpatial(sp) { SPATIAL = sp && sp.mode === 'binaural' ? sp : null; }
+const D2R = Math.PI / 180;
+// az: degrees, 0 = front, + = right, +-180 = behind; el: degrees up
+function headPos(az, el = 0) { const a = az * D2R, e = el * D2R; return [Math.sin(a) * Math.cos(e), Math.sin(e), -Math.cos(a) * Math.cos(e)]; }
+function hrtf(ctx, az, el = 0) {
+  const [x, y, z] = headPos(az, el);
+  const p = new PannerNode(ctx, { panningModel: 'HRTF', distanceModel: 'linear', refDistance: 1, maxDistance: 1e4, rolloffFactor: 0,
+    coneInnerAngle: 360, coneOuterAngle: 360, positionX: x, positionY: y, positionZ: z, channelCount: 1, channelCountMode: 'explicit' });
+  return p;
+}
+// a stereo pan (-1..1) in stereo mode, or the HRTF angle given for it in spatial mode
+function panNode(ctx, pan, az, el = 0) {
+  if (SPATIAL) return hrtf(ctx, az, el);
+  const p = ctx.createStereoPanner(); p.pan.value = pan; return p;
+}
 const TAU = Math.PI * 2;
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
@@ -887,7 +907,7 @@ export function buildCannons(ctx, tl, samples, gains = {}) {
     // strikes: a second sample layered under the first, thicker as d -> 0 (-6 dB at d = 0.12 to -2 dB at d = 0)
     if (d <= 0.12) layers.push({ id: NEAR_SET[(NEAR_SET.indexOf(id) + 1) % NEAR_SET.length], gain: undb(-2 - 4 * d / 0.12) });
     const dist = BQ(ctx, 'lowpass', lpHz, 0.6);
-    const p = ctx.createStereoPanner(); p.pan.value = pn;
+    const p = panNode(ctx, pn, pan.get(c.id) * (35 + 95 * d), 4 + 6 * d);
     const gDry = G(ctx, dry * lvl), gWet = G(ctx, wet * lvl), dPre = ctx.createDelay(1); dPre.delayTime.value = pre;
     alive(dist, dPre); dist.connect(p); p.connect(gDry).connect(out); p.connect(dPre).connect(gWet).connect(verb);
     const starts = layers.map((L) => cannonLayer(ctx, alive, samples[L.id], CANNON_SAMPLES[L.id], { tc, d, rate, gain: L.gain, dest: dist }));
@@ -1276,7 +1296,7 @@ export function buildIgnition(ctx, tl, samples) {
       if (tau < 0.05) return 1;
       return Math.exp(-(tau - 0.05) / (meta.tau * 1.3 / rate)) * (1 - smooth(len - 0.15, len, x));
     }, 2000);
-    const p = ctx.createStereoPanner(); p.pan.value = sp.pan;
+    const p = panNode(ctx, sp.pan, sp.pan * 100, 0);
     node.connect(env).connect(G(ctx, sp.gain * S.info.norm)).connect(p).connect(clIn);
     src.start(start); src.stop(start + len + 0.01);
     clusterLog.push({ id: sp.id, t: +(audible + sp.dt).toFixed(4), rate: sp.rate, gainDb: +db(sp.gain).toFixed(1) });
@@ -1381,7 +1401,12 @@ export function buildIgnition(ctx, tl, samples) {
   const tSat = ctx.createWaveShaper(); tSat.curve = tanhCurve(2.6); tSat.oversample = '2x';
   const tLp = BQ(ctx, 'lowpass', 1000, 6); curveEnv(tLp.frequency, r0, rd, cutCurve, rate);
   const tG = G(ctx, 0); curveEnv(tG.gain, r0, rd, toneLevel, rate);
-  const pan = ctx.createStereoPanner(); curveEnv(pan.pan, r0, rd, panCurve, rate);
+  let pan;
+  if (SPATIAL) {
+    pan = hrtf(ctx, 0, 0);
+    curveEnv(pan.positionX, r0, rd, (x) => headPos(panCurve(x) * 115)[0], rate);
+    curveEnv(pan.positionZ, r0, rd, (x) => headPos(panCurve(x) * 115)[2], rate);
+  } else { pan = ctx.createStereoPanner(); curveEnv(pan.pan, r0, rd, panCurve, rate); }
   chain(tone, tSat, tLp, tG, G(ctx, 0.6), pan);
   // noise roar: band-passes that ride the Doppler factor, plus low rumble
   const roarBuf = noiseBuffer(ctx, rd + 0.2, 2881, { channels: 2, pink: true });
@@ -1469,7 +1494,7 @@ export function buildSalvos(ctx, tl, samples) {
       const rate = (1 - 0.1 * d) * (1 - 0.025 * j);
       const g = lvl * [1, 0.78, 0.62][j % 3];
       const dist = BQ(ctx, 'lowpass', lpHz, 0.6);
-      const p = ctx.createStereoPanner(); p.pan.value = side * [-0.5, 0.55, -0.1][j % 3];
+      const p = panNode(ctx, side * [-0.5, 0.55, -0.1][j % 3], side * [-65, 125, -150][j % 3], 6);
       alive(dist); dist.connect(p); p.connect(G(ctx, dry * g)).connect(out); p.connect(G(ctx, wet * g)).connect(verb);
       cannonLayer(ctx, alive, S, CANNON_SAMPLES[id], { tc, d, rate, gain: 1, dest: dist });
       fired.push({ id, t: +tc.toFixed(4), rate: +rate.toFixed(3) });
@@ -1523,7 +1548,7 @@ export function buildCoda(ctx, tl) {
     const src = ctx.createBufferSource(); src.buffer = windBuf;
     const bp = BQ(ctx, 'bandpass', 400, 0.6); curveEnv(bp.frequency, c0, len, (x) => 220 + 600 * gust(x), 50);
     const wg = G(ctx, 0); curveEnv(wg.gain, c0, len, (x) => 0.3 + 0.7 * gust(x), 50);
-    const p = ctx.createStereoPanner(); p.pan.value = pan;
+    const p = panNode(ctx, pan, pan * 140, 0);
     chain(src, BQ(ctx, 'highpass', 110, 0.7), bp, wg, p, master); p.connect(G(ctx, 0.2)).connect(verb);
     const hi = G(ctx, 0); curveEnv(hi.gain, c0, len, (x) => 0.1 * Math.pow(gust(x), 2), 50);
     chain(src, BQ(ctx, 'highpass', 2500, 0.7), BQ(ctx, 'lowpass', 7000, 0.7), hi, p);
@@ -1556,7 +1581,7 @@ export function buildCoda(ctx, tl) {
       const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = hz(m) + df;
       o.connect(G(ctx, g * 0.5)).connect(a); o.start(s0); o.stop(T.end + 0.01);
     }
-    const p = ctx.createStereoPanner(); p.pan.value = pn;
+    const p = panNode(ctx, pn, pn * 70, 38);
     a.connect(p).connect(shim);
   });
   const air = ctx.createBufferSource(); air.buffer = windBuf;
@@ -2066,6 +2091,7 @@ export async function renderSoundtrack({ base = '/', plan: planPath = 'film-plan
   const t00 = performance.now();
   const tl = await loadTimeline(base, planPath);
   const { plan, length, T } = tl;
+  setSpatial(plan.spatial);
   const newCtx = () => new OfflineAudioContext(2, length, SR);
   const dec = newCtx();
   const winterAsset = plan.audio.find((a) => a.path && a.path.includes('winter'));
