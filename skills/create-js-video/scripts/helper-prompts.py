@@ -12,9 +12,10 @@ Costs per frame (ms), first match wins: --costs (shot id -> ms, from `chunk.mjs 
 the median per scene of render-log.jsonl files (--log, repeatable; render.mjs writes them), --default-ms.
 Frames inside a dissolve or bleed count x1.9 (two shots render). With --status-json (`chunk.mjs status --json`) the
 frames of final pieces cost nothing; with --only-scenes the other scenes' frames cost nothing. The ranges are a
-linear partition of the fixed block grid minimising the costliest helper. The block length is the plan's own
-(plan.block, as chunk.mjs reads it), else 240; --block may only restate it, because chunk.mjs render refuses range
-edges that are not multiples of the plan's block ('--from/--to must be multiples of 72').
+linear partition of the fixed block grid minimising the costliest helper. The block length is the one chunk.mjs
+uses: plan.block, else film.config.json "block", else 240. --block may only restate it, because chunk.mjs render
+refuses range edges that are not multiples of it ('--from/--to must be multiples of 72'); the prompt words the
+block length from it ("each 72-frame (3 s) block").
 
 Measure --default-ms for a new frame size: with no cost data every frame counts --default-ms (1000). A 4K render in
 SwiftShader costs about 9-10 s per frame on a 4-core container, about 3x a 1080p frame, so Nova's 2160x3840 master
@@ -37,6 +38,7 @@ archive the moot one); git-ignored dist/ needs `git add -f` (chunk.mjs --push do
 import argparse
 import glob
 import json
+import os
 import statistics
 import subprocess
 import sys
@@ -82,7 +84,7 @@ def main():
     ap.add_argument('--overhead-ms', type=float, default=120, help='capture + encode per frame')
     ap.add_argument('--status-json', help='chunk.mjs status --json output: final pieces cost nothing')
     ap.add_argument('--only-scenes', default='', help='helpers render only these scenes (adds --only-scenes to the command)')
-    ap.add_argument('--block', type=int, default=0, help="block length in frames (default: the plan's `block`, else 240); must equal the plan's")
+    ap.add_argument('--block', type=int, default=0, help="block length in frames (default: the plan's `block`, else film.config.json's, else 240); only restates it")
     ap.add_argument('--fps', type=float, default=0, help='frames per second for the prompt wording (default: the plan fps)')
     ap.add_argument('--rev', default='HEAD', help='commit to render (resolved to the full SHA)')
     ap.add_argument('--allow-unpushed', action='store_true')
@@ -101,15 +103,17 @@ def main():
 
     plan = json.load(open(a.plan))
     frames = plan['frames']
-    plan_block = int(plan.get('block') or 240)
-    if a.block and a.block != plan_block:
-        raise SystemExit(f"--block {a.block} differs from the plan's block length ({plan_block}): chunk.mjs render would refuse "
-                         f"range edges that are not multiples of {plan_block}")
-    a.block = plan_block
+    # the block length chunk.mjs will use: plan.block, else film.config.json "block", else 240
+    cfg_file = f"{git('rev-parse', '--show-toplevel')}/film.config.json"
+    cfg_block = json.load(open(cfg_file)).get('block') if os.path.exists(cfg_file) else None
+    use_block = int(plan.get('block') or cfg_block or 240)
+    if a.block and a.block != use_block:
+        raise SystemExit(f"--block {a.block} differs from the block length chunk.mjs uses for this plan ({use_block}): "
+                         f"chunk.mjs render refuses range edges that are not multiples of {use_block}")
+    a.block = use_block
     num, _, den = str(plan.get('fps', 24)).partition('/')
     fps = a.fps or (float(num) / float(den or 1))
-    secs = a.block / fps
-    block_words = f"{a.block}-frame ({secs:g} s)" if secs != int(secs) else f"{a.block}-frame ({int(secs)} s)"
+    block_words = f"{a.block}-frame ({a.block / fps:g} s)"
     sha = git('rev-parse', '--verify', f'{a.rev}^{{commit}}')
     if len(sha) != 40:
         raise SystemExit(f'not a full SHA: {sha}')

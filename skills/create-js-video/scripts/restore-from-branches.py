@@ -18,7 +18,7 @@ Then run `chunk.mjs status` and require every block final: stale pieces mean a h
 Pass --want or --plan (or both). Branches keep pieces of OLDER block layouts (a v3 block chunk_03840_03917 on a
 branch of a 4025-frame v4 film); without the current grid they would be restored, never cleaned (chunk.mjs render
 only cleans files under the current block names), and committed by the next `git add -A -f`. --plan computes each
-plan's current piece names (block size from film.config.json, else 240; --block overrides) and skips the rest as
+plan's current piece names (block size: plan.block, else film.config.json, else 240; --block overrides) and skips the rest as
 obsolete. With --plan or --want and no --dirs, only the dist/<plan.id>/ folders they cover are restored.
 --any-layout restores everything (the old behaviour).
 
@@ -112,7 +112,7 @@ def main():
     ap.add_argument('--dist', default='dist', help='the dist folder inside the repo (default dist)')
     ap.add_argument('--want', default='', help='status --json file(s) of chunk.mjs: prefer the candidates with the wanted fp')
     ap.add_argument('--plan', default='', help='plan file(s), comma-separated: restore only pieces of their current block grid')
-    ap.add_argument('--block', type=int, default=0, help='block size in frames (default: film.config.json "block", else 240)')
+    ap.add_argument('--block', type=int, default=0, help='block size in frames (default: the plan\'s block, else film.config.json "block", else 240)')
     ap.add_argument('--any-layout', action='store_true', help='restore pieces of any block layout (no --want/--plan needed)')
     ap.add_argument('--dest', default='', help='write into this root instead of the repo (testing)')
     ap.add_argument('--dry-run', action='store_true')
@@ -141,10 +141,12 @@ def main():
     # cut at every shot start inside a block)
     cfg_file = os.path.join(root, 'film.config.json')
     cfg = json.load(open(cfg_file)) if os.path.exists(cfg_file) else {}
-    block = a.block or int(cfg.get('block', 240))
     grid = {}
     for pf in [x.strip() for x in a.plan.split(',') if x.strip()]:
         plan = json.load(open(pf))
+        # the block length chunk.mjs uses for this plan: plan.block (a 4K plan: 72), else film.config.json, else 240.
+        # Without plan.block a 72-frame plan's pieces would all be skipped as 'obsolete' (watch-render passes no --block)
+        block = a.block or int(plan.get('block') or cfg.get('block') or 240)
         starts = sorted(s['start'] for s in plan['shots'])
         names = set()
         for b0 in range(0, plan['frames'], block):
