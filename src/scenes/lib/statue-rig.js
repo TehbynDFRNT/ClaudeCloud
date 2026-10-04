@@ -10,10 +10,13 @@ export const D2R = Math.PI / 180;
 
 // Head yaw (deg) from params.turn = [fromFrame, toFrame, fromDeg, toDeg] as a function of the FILM frame: linear,
 // with a gentle settle over the last 8% (C1: the speed eases to zero exactly at toFrame, then holds).
+// turn = [f0, f1, a0, a1, k?]: constant angular speed from f0, settling into a1 over the last (1 - k) of the span
+// (k defaults to 0.92; k = 1 is a plain linear turn, used for the steady per-insert rotation)
 export function turnYaw(turn, f) {
-  const [f0, f1, a0, a1] = turn;
+  const [f0, f1, a0, a1, k = 0.92] = turn;
   const u = clamp((f - f0) / Math.max(1, f1 - f0));
-  const k = 0.92, s = 1 / (1 - (1 - k) / 2);
+  if (k >= 1) return a0 + (a1 - a0) * u;
+  const s = 1 / (1 - (1 - k) / 2);
   const g = u < k ? s * u : s * u - (s * (u - k) * (u - k)) / (2 * (1 - k));
   return a0 + (a1 - a0) * Math.min(1, g);
 }

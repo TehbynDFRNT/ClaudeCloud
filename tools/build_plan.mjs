@@ -20,12 +20,21 @@ const OUT_DIR = process.env.PLAN_OUT || '.';     // PLAN_OUT=out/plan-test to dr
 // explosion on the frame the eruption appears; Winter's bar-56 tutti restarts ON the explosion (louder, with
 // cannon salvos); no statue after the explosion until after the Milky Way; the film ends on the statue's
 // gaze and NOVA: <figure>.
-// PLAN_VERSION=4: v3 plus the director's statue note: every insert is the M03 shot (the whole head on black, the
-// aura behind), the camera locked (no push, no drift); only the figure's turn changes from insert to insert.
+// PLAN_VERSION=4: the director's notes on v3:
+// - the statue: ONE shot, the whole statue piece small in the black with dead space round it (the M05 composition,
+//   light from above), camera locked: no movement, no zoom. The figure only turns while it is on screen, at one slow
+//   steady speed across all its inserts (its 90 degrees spread over the insert time), so every glimpse shows it
+//   creeping round. M06 stays the one rare cinematic angle.
+// - the ending keeps v3's order (the ink rings, the Milky Way and the new star, then the figure's stare and
+//   NOVA: <figure>); the stare is longer, so the figure settles into the lens before the title.
+// - David is framed closer (head and neck with room round them: up close he is more interesting), still zoomed out
+//   from the old close-ups; Sol and Prometheus show the whole statue piece.
+// - the explosion 15% lower, the returning music and cannons 20% higher (src/audio/score.js, DESIGN.v4).
 const VERSION = +(process.env.PLAN_VERSION || '4');   // 4 is the version in progress; 3 and 2 rebuild the delivered cuts
 const V3 = VERSION >= 3;
 const V4 = VERSION >= 4;
-const STATUE_LOCK = V4 ? { preset: 'M03', params: { drift: 0, height: 2.1 } } : null;
+const STATUE_LOCK = V4 ? { preset: 'M05', params: { drift: 0, height: 3.6 }, except: ['M06'], height: { david: 2.5, sol: 3.6, prometheus: 3.6 } } : null;
+const STARE4 = { rot: 72 };   // v4 final stare: the turn settles into the lens over its first 3 s, then the title
 
 // ---- audio placements (frames) -------------------------------------------------------------
 // Recording: The United States Air Force Band, Vivaldi 'Winter' I (supplied by the director; public domain).
@@ -50,7 +59,7 @@ const CODA_STAR = CODA + 132;                  // the new star begins to appear 
 const CODA_STAR_FULL = CODA + 168;             // ... and has fully arrived (7 s in)
 const CODA_LINE1 = CODA + 192, CODA_LINE2 = CODA + 228;
 const CODA_END = CODA + 336;                   // 14 s coda
-const GAZE = 156;                              // v3: the final stare (6.5 s) after the Milky Way, under NOVA: <figure>
+const GAZE = V4 ? 192 : 156;                   // the final stare after the Milky Way, under NOVA: <figure> (v3 6.5 s; v4 8 s)
 const FRAMES = V3 ? CODA_END + GAZE : CODA_END;
 
 function srcToFrame(s) {
@@ -243,9 +252,10 @@ const INSERTS_ALL = [
 ];
 const INSERTS = V3 ? INSERTS_ALL.filter(([, a]) => a < IGNITION) : INSERTS_ALL;
 const TURN = [INSERTS[0][1], GAZE_FRAME, 90, 0];   // [from frame, to frame, from deg, to deg]
+const locked = (id) => STATUE_LOCK && !STATUE_LOCK.except.includes(id);
 for (const s of shots) if (s.scene === 'statue') {
-  s.params = { ...s.params, turn: TURN, ...(STATUE_LOCK ? STATUE_LOCK.params : {}) };
-  if (STATUE_LOCK) s.preset = STATUE_LOCK.preset;
+  s.params = { ...s.params, turn: TURN, ...(locked(s.id) ? STATUE_LOCK.params : {}) };
+  if (locked(s.id)) s.preset = STATUE_LOCK.preset;
 }
 {
   const out = [];
@@ -257,8 +267,8 @@ for (const s of shots) if (s.scene === 'statue') {
       if (a > cursor) out.push({ ...s, id: part ? `${s.id}·${part + 1}` : s.id, preset: s.preset || s.id, start: cursor, end: a, span: [s.start, s.end] });
       if (a > cursor) part++;
       if (!out.some((o) => o.id === id)) out.push({ id, start: a, end: b, scene: 'statue', purpose, action: 'Marble figure on black, slowly turning its gaze toward us (see INSERTS)', framing: 'See the statue preset',
-        ...(STATUE_LOCK ? { preset: STATUE_LOCK.preset, framing: 'Locked: the M03 shot (whole head, aura behind); only the turn changes' } : {}),
-        params: { turn: TURN, ...(STATUE_LOCK ? STATUE_LOCK.params : {}) } });
+        ...(locked(id) ? { preset: STATUE_LOCK.preset, framing: 'Locked: the whole statue piece small in the black (M05 composition); only the figure turns' } : {}),
+        params: { turn: TURN, ...(locked(id) ? STATUE_LOCK.params : {}) } });
       cursor = Math.max(cursor, b);
     }
     if (cursor < s.end) out.push({ ...s, id: part ? `${s.id}·${part + 1}` : s.id, preset: s.preset || s.id, start: cursor, end: s.end, span: [s.start, s.end] });
@@ -266,6 +276,20 @@ for (const s of shots) if (s.scene === 'statue') {
   for (const o of out) if (o.span && o.span[0] === o.start && o.span[1] === o.end) delete o.span;
   shots.splice(0, shots.length, ...out.sort((x, y) => x.start - y.start));
   for (let i = 1; i < shots.length; i++) if (shots[i].start !== shots[i - 1].end) throw new Error(`gap/overlap at ${shots[i].id}`);
+}
+// v4: the figure turns only while it is seen, at one steady speed: 90 degrees over the inserts' frames plus the final
+// stare's settle (STARE4.rot); each insert gets its own linear segment of the turn, the stare settles into 0
+if (V4) {
+  const st = shots.filter((s) => s.scene === 'statue').sort((a, b) => a.start - b.start);
+  const last = st[st.length - 1];
+  const total = st.reduce((n, s) => n + (s === last ? STARE4.rot : s.end - s.start), 0);
+  const yawAt = (n) => 90 * (1 - n / total);
+  let n = 0;
+  for (const s of st) {
+    const len = s === last ? STARE4.rot : s.end - s.start;
+    s.params = { ...s.params, turn: s === last ? [s.start, s.start + len, +yawAt(n).toFixed(4), 0, 0.55] : [s.start, s.end, +yawAt(n).toFixed(4), +yawAt(n + len).toFixed(4), 1] };
+    n += len;
+  }
 }
 
 // ---- cues -----------------------------------------------------------------------------------
@@ -340,13 +364,14 @@ for (const [cut, C] of Object.entries(CUTS)) {
     { id: 'coda-line-2', start: CODA_LINE2, end: CODA_END - 2, content: 'the Nova.', style: 'line', font: 'cinzel', size: 50, y: 0.875, fadeIn: 30, fadeOut: 34, minFrames: 60 },
     // v3: the film ends on the figure's stare and its name
     // Cinzel Roman capitals (lowercase sets as small caps: NOVA: SOL INVICTUS), molten gold
-    ...(V3 ? [{ id: 'end-title', start: CODA_END + 48, end: FRAMES - 2, content: `Nova: ${C.novaName}`, style: 'title', color: 'rgba(236,204,148,1)', y: 0.865, fadeIn: 30, fadeOut: 28, minFrames: 60 }] : []),
+    // (v4: once the stare has settled into the lens)
+    ...(V3 ? [{ id: 'end-title', start: CODA_END + (V4 ? STARE4.rot + 6 : 48), end: FRAMES - 2, content: `Nova: ${C.novaName}`, style: 'title', color: 'rgba(236,204,148,1)', y: 0.865, fadeIn: 30, fadeOut: 28, minFrames: 60 }] : []),
   ];
   const cutShots = shots.map((s) => {
     const o = { ...s };
     if (C.presets[s.id]) o.preset = C.presets[s.id];
     if (C.purposes[s.id]) o.purpose = C.purposes[s.id];
-    if (o.scene === 'statue') o.params = { ...o.params, figure: C.figure };
+    if (o.scene === 'statue') o.params = { ...o.params, figure: C.figure, ...(locked(o.id) ? { height: STATUE_LOCK.height[C.figure] } : {}) };
     return o;
   });
   const plan = {

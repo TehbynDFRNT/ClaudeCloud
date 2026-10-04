@@ -275,7 +275,11 @@ export default {
     const w = target.w, h = target.h;
     const turn = P.turn || TURN;
     const yaw = turnYaw(turn, S.f);
-    const yawRef = turnYaw(turn, S.shot.start);       // the key is locked to the head at the shot's first frame
+    // the key is locked to the head at the shot's first frame while the head barely moves within the shot (one cached
+    // shadow map per shot); when the figure visibly turns inside the shot the head turns under the studio's lights, so
+    // the shadows follow it frame by frame
+    const turning = Math.abs(turnYaw(turn, S.shot.end - 1) - turnYaw(turn, S.shot.start)) > 0.5;
+    const yawRef = turning ? yaw : turnYaw(turn, S.shot.start);
     const t = S.t;
 
     // ---- camera

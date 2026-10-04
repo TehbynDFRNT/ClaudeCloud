@@ -93,6 +93,10 @@ export const DESIGN = {
   // then only catches what the climax adds); at the explosion the music is ducked hitDuckDb (held hitHoldS, released
   // with time constant hitTau), so the detonation keeps its transient and the tutti rises out of it within a second.
   ret: { db: 0.0, musicCeilDb: -2.5, hitDuckDb: 9, hitHoldS: 0.12, hitTau: 0.35 },
+  // v4 (the director's note on v3): the explosion 15% lower and the returning music and cannons 20% higher, as
+  // amplitude: the climax bus gain found for the v3 balance x explosionGain; the return's ride x returnGain (the
+  // salvos are set against the orchestra as heard, so they rise with it)
+  v4: { explosionGain: 0.85, returnGain: 1.2 },
   // the fold compares loudness over winS windows (the roar follows the music's phrase level, not its notes)
   // salvoDuckDb: the climax bus also ducks under each salvo (3 ms attack, 40 ms hold, 80 ms release), so the guns
   // cut through the explosion's body on the beat instead of piling onto the master limiter
@@ -2120,11 +2124,12 @@ export async function renderSoundtrack({ base = '/', plan: planPath = 'film-plan
   // --- music bus balance: strike duck, ladder ride (easing up across the strikes), the hotter return ---
   const duck = duckGain(length, info.cannons);
   const LR = DESIGN.ladderRide, tRide = refinedAt(tl, tl.refined, LR.fromBar, 0);
+  const V4 = (plan.version || 0) >= 4, V4RET = V4 ? db(DESIGN.v4.returnGain) : 0;
   const strikes = strikeTimes(tl), tS1 = strikes.length ? strikes[0].t : T.ignition;
   for (let i = Math.max(0, Math.round((tRide - LR.rampS) * SR)); i < length; i++) {
     const tt = i / SR;
     // after the cut: the return (winter-b) rides DESIGN.ret.db (v2 kept the ladder's level here)
-    const rideDb = tt < T.ignition ? LR.db * smooth(tRide - LR.rampS, tRide, tt) + (LR.endDb - LR.db) * clamp((tt - tS1) / (T.ignition - tS1), 0, 1) : DESIGN.ret.db;
+    const rideDb = tt < T.ignition ? LR.db * smooth(tRide - LR.rampS, tRide, tt) + (LR.endDb - LR.db) * clamp((tt - tS1) / (T.ignition - tS1), 0, 1) : DESIGN.ret.db + V4RET;
     duck[i] *= undb(rideDb);
   }
   // winter-b's pre-roll (the bar-56 attack before the explosion frame) is held down until the hit, so the vacuum stays
@@ -2191,6 +2196,12 @@ export async function renderSoundtrack({ base = '/', plan: planPath = 'film-plan
     headroomBound = cxMax.lufs < CX.targetST - 0.1 && over > -0.3;
     if (Math.abs(cxMax.lufs - CX.targetST) < 0.1 || headroomBound) break;
     gX *= undb(Math.min(CX.targetST - cxMax.lufs, -over));      // never step past the transient's headroom
+  }
+  if (V4) {   // the v3 balance, then the explosion 15% lower (amplitude)
+    gX *= DESIGN.v4.explosionGain;
+    cx = limit(...scale(stems.ignition, () => gX), CX.ceilDb, CX.lookMs, CX.relMs);
+    cxMax = stMax(shortTerm(cx.L, cx.R), cw0, cw1);
+    log(`climax v4: x${DESIGN.v4.explosionGain} -> gain ${db(gX).toFixed(2)} dB, short-term max ${cxMax.lufs} LUFS (limiter max ${cx.maxGrDb.toFixed(1)} dB)`);
   }
   const cxSustainGrDb = segLufs(scale(stems.ignition, () => gX), cw0 + 0.25, cw1) - segLufs([cx.L, cx.R], cw0 + 0.25, cw1);
   // the climax bus ducks under each salvo (the guns cut through the explosion's body on the beat)
