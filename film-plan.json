@@ -921,7 +921,16 @@
    "purpose": "Understanding endures",
    "action": "Dissolve to an ink drawing of the same rings with the tiny centre point; mirror script: il sole nõ si move",
    "framing": "Flat lay, centred",
-   "end": 3425
+   "end": 3425,
+   "params": {
+    "crown": true,
+    "shadeY": [
+     0.44,
+     0.66,
+     0.92,
+     0
+    ]
+   }
   },
   {
    "id": "S31-newstar",

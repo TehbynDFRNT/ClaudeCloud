@@ -392,6 +392,7 @@ for (const [cut, C] of Object.entries(CUTS)) {
     const o = { ...s };
     if (C.presets[s.id]) o.preset = C.presets[s.id];
     if (C.purposes[s.id]) o.purpose = C.purposes[s.id];
+    if (V4 && o.id === 'S29b-drawing' && C.figure === 'david') o.params = { ...o.params, crown: true, shadeY: [0.44, 0.66, 0.92, 0] };   // v4.2: 'A king is crowned', the lower page lit for it
     if (o.scene === 'statue') o.params = { ...o.params, figure: C.figure, ...(locked(o.id) ? { height: STATUE_LOCK.height[C.figure], ...(STATUE_LOCK.key[C.figure] ? { key: STATUE_LOCK.key[C.figure] } : {}) } : {}) };
     return o;
   });

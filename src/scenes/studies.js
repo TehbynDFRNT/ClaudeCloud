@@ -109,6 +109,8 @@ const BUILD = {
   collapse: DR.collapse,
   rings: DR.rings,
   ringsV: () => DR.rings({ vertical: true }),
+  ringsCrown: () => DR.rings({ crown: 'A king is crowned' }),
+  ringsVCrown: () => DR.rings({ vertical: true, crown: 'A king is crowned' }),
   sling: CU.sling,
   chains: CU.chains,
   eagle: CU.eagle,
@@ -271,7 +273,7 @@ export default {
   paint(E, S, ctx) {
     const P = S.params;
     if (P.black) return;
-    const D = this.drawing(P.drawing || 'blank');
+    const D = this.drawing((P.drawing || 'blank') + (P.crown ? 'Crown' : ''));
     renderDrawing(ctx, D, this.tLocal(S), this.view(P, this.vTime(S)), E.W, E.H, { gain: P.inkGain ?? 1, wetTau: P.wetTau, wetGain: P.wetGain });
   },
   overlay(E, S, ctx) {

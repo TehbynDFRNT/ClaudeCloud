@@ -452,6 +452,13 @@ export function rings(o = {}) {
   const last = arcPts(C[0], C[1], R * 1.07, -1.9, -1.9 + TAU * 1.01, { step: 1.6 * PX, wob: 0.3 * PX, seed: 77 });
   // already under way through the dissolve, the pen closes the outer circle as the title settles
   D.stroke(last, { w: 1.7, d: 0.75, t0: -1.2, dur: 4.0, taper: [10, 14], press: 0.2 });
+  // o.crown (David): the last words, written plainly (not mirrored) under the rings, finished before the cut
+  if (o.crown) {
+    // 'A king is crowned' sets 407 px wide in IM Fell English italic at the renderer's 64 px base (measured in
+    // Chromium); a constant, so every render worker centres it identically whatever its font-load timing
+    const size = V ? 46 : 40, w = 407 / 64 * size * PX;
+    D.text(o.crown, -w / 2, V ? 0.415 : 0.43, { size, d: 0.95, mirror: false, t0: 1.7, dur: 1.6 });
+  }
   return D;
 }
 
