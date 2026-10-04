@@ -138,6 +138,9 @@ if (mode === 'costs') {
     }
   };
   const skip = new Set((opt('skip-scenes', '') || '').split(',').filter(Boolean));
+  // --only-scenes statue: render just those scenes' pieces (e.g. on a helper that has none of the others);
+  // the block record then lists only the pieces this machine wrote, and the collector merges records
+  const only = new Set((opt('only-scenes', '') || '').split(',').filter(Boolean));
   const others = () => (fs.existsSync(path.join(ROOT, 'dist')) ? fs.readdirSync(path.join(ROOT, 'dist'), { withFileTypes: true }) : [])
     .filter((d) => d.isDirectory() && path.join(ROOT, 'dist', d.name) !== CHUNKS).map((d) => path.join(ROOT, 'dist', d.name));
   for (const [a, b] of blocks().filter(([a]) => a >= from && a < to)) {
@@ -151,6 +154,7 @@ if (mode === 'costs') {
     for (const pc of pieceStates(a, b)) {
       if (pc.state === 'final') continue;
       if (skip.has(pc.scene)) { console.log(`${pc.name}: ${pc.scene} skipped (--skip-scenes)`); continue; }
+      if (only.size && !only.has(pc.scene)) continue;
       // the same picture already encoded for another cut -> copy it
       const twin = others().find((dir) => { const m = readMeta(dir, a, b); const r = m && m.pieces && m.pieces.find((x) => x.from === pc.from && x.to === pc.to); return r && r.fp === pc.want && fs.existsSync(path.join(dir, pc.name + '.mp4')); });
       if (twin) {
