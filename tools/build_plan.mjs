@@ -22,11 +22,11 @@ const OUT_DIR = process.env.PLAN_OUT || '.';     // PLAN_OUT=out/plan-test to dr
 // gaze and NOVA: <figure>.
 // PLAN_VERSION=4: the director's notes on v3:
 // - the statue: ONE shot, the whole statue piece small in the black with dead space round it (the M05 composition,
-//   light from above), camera locked: no movement, no zoom. The figure only turns while it is on screen, at one slow
-//   steady speed across all its inserts (its 90 degrees spread over the insert time), so every glimpse shows it
-//   creeping round. M06 stays the one rare cinematic angle.
+//   light from above), camera locked: no movement, no zoom. The turn runs on the FILM's clock, as in v3: 90 degrees
+//   over the whole film, so inside each short insert it is barely moving, and the angle at each glimpse is where the
+//   film's timestamp has it; it lands in dead eye contact in the last shot. M06 stays the one rare cinematic angle.
 // - the ending keeps v3's order (the ink rings, the Milky Way and the new star, then the figure's stare and
-//   NOVA: <figure>); the stare is longer, so the figure settles into the lens before the title.
+//   NOVA: <figure>); the stare holds 8 s (v3: 6.5 s).
 // - David is framed closer (head and neck with room round them: up close he is more interesting), still zoomed out
 //   from the old close-ups; Sol and Prometheus show the whole statue piece.
 // - the explosion 15% lower, the returning music and cannons 20% higher (src/audio/score.js, DESIGN.v4).
@@ -36,7 +36,7 @@ const V4 = VERSION >= 4;
 const STATUE_LOCK = V4 ? { preset: 'M05', params: { drift: 0, height: 3.6 }, except: ['M06'], height: { david: 2.5, sol: 3.6, prometheus: 3.6 },
   // David's curls overhang his face: under the M05 top light it drowns, so he keeps the M03 key (lower, from the right)
   key: { david: [25, 50, 1.3] } } : null;
-const STARE4 = { rot: 72 };   // v4 final stare: the turn settles into the lens over its first 3 s, then the title
+
 
 // ---- audio placements (frames) -------------------------------------------------------------
 // Recording: The United States Air Force Band, Vivaldi 'Winter' I (supplied by the director; public domain).
@@ -279,17 +279,16 @@ for (const s of shots) if (s.scene === 'statue') {
   shots.splice(0, shots.length, ...out.sort((x, y) => x.start - y.start));
   for (let i = 1; i < shots.length; i++) if (shots[i].start !== shots[i - 1].end) throw new Error(`gap/overlap at ${shots[i].id}`);
 }
-// v4: the figure turns only while it is seen, at one steady speed: 90 degrees over the inserts' frames plus the final
-// stare's settle (STARE4.rot); each insert gets its own linear segment of the turn, the stare settles into 0
-if (V4) {
+// (an abandoned v4 idea, kept off: the figure turning only while seen, one linear segment per insert)
+if (false) {
   const st = shots.filter((s) => s.scene === 'statue').sort((a, b) => a.start - b.start);
   const last = st[st.length - 1];
-  const total = st.reduce((n, s) => n + (s === last ? STARE4.rot : s.end - s.start), 0);
+  const total = st.reduce((n, s) => n + (s.end - s.start), 0);
   const yawAt = (n) => 90 * (1 - n / total);
   let n = 0;
   for (const s of st) {
-    const len = s === last ? STARE4.rot : s.end - s.start;
-    s.params = { ...s.params, turn: s === last ? [s.start, s.start + len, +yawAt(n).toFixed(4), 0, 0.55] : [s.start, s.end, +yawAt(n).toFixed(4), +yawAt(n + len).toFixed(4), 1] };
+    const len = s.end - s.start;
+    s.params = { ...s.params, turn: s === last ? [s.start, s.end, +yawAt(n).toFixed(4), 0, 0.55] : [s.start, s.end, +yawAt(n).toFixed(4), +yawAt(n + len).toFixed(4), 1] };
     n += len;
   }
 }
@@ -366,8 +365,7 @@ for (const [cut, C] of Object.entries(CUTS)) {
     { id: 'coda-line-2', start: CODA_LINE2, end: CODA_END - 2, content: 'the Nova.', style: 'line', font: 'cinzel', size: 50, y: 0.875, fadeIn: 30, fadeOut: 34, minFrames: 60 },
     // v3: the film ends on the figure's stare and its name
     // Cinzel Roman capitals (lowercase sets as small caps: NOVA: SOL INVICTUS), molten gold
-    // (v4: once the stare has settled into the lens)
-    ...(V3 ? [{ id: 'end-title', start: CODA_END + (V4 ? STARE4.rot + 6 : 48), end: FRAMES - 2, content: `Nova: ${C.novaName}`, style: 'title', color: 'rgba(236,204,148,1)', y: 0.865, fadeIn: 30, fadeOut: 28, minFrames: 60 }] : []),
+    ...(V3 ? [{ id: 'end-title', start: CODA_END + 48, end: FRAMES - 2, content: `Nova: ${C.novaName}`, style: 'title', color: 'rgba(236,204,148,1)', y: 0.865, fadeIn: 30, fadeOut: 28, minFrames: 60 }] : []),
   ];
   const cutShots = shots.map((s) => {
     const o = { ...s };
