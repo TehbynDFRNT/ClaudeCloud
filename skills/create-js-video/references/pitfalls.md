@@ -80,6 +80,12 @@ bites.
   versions' blocks (a v3 `chunk_03840_03917` beside a 4025-frame v4 film whose last block is `03840_04025`).
   `chunk.mjs render` cleans only files under current block names, so they stay and get committed by the next
   `git add -A -f`. The restore now requires `--want` (from `status --json`) or `--plan`.
+- **A branch glob git can't use as a refspec fetched nothing, and nobody noticed.** `--branches '<base>-hd[0-9]*'`
+  became `+refs/heads/<base>-hd[0-9]*:...`. Git rejects `[...]`, `?` and a second `*` in refspecs. The old restore
+  only warned, then restored from the 2 branches already fetched by hand. Nova's 4K finisher showed "2/56 blocks
+  final" while all 14 helper branches were on origin. The restore now resolves such globs with
+  `git ls-remote --heads` plus fnmatch, and treats a failed fetch as an error. Check a stuck collector with
+  `git ls-remote` against `git branch -r`.
 - **A local `render --push` commits about 1 GB per cut and version** to whatever branch is checked out, the PR branch
   included. Render locally from a worktree on a dedicated `<base>-local` branch.
 - **The old ad-hoc restore** kept the local `.mp4` while merging a branch's record entry, which can pair a picture with

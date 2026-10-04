@@ -19,7 +19,7 @@ tools/watch-render.sh --branches 'claude/my-film-st*' --plan plans-v3/film-plan.
 | Last line | Exit | Meaning |
 |---|---|---|
 | `DONE ...` | 0 | nothing missing or stale |
-| `FAIL ...` | 1 | restore or status failed; the reason is on the line |
+| `FAIL ...` | 1 | restore or status failed, including a fetch that still fails after 3 tries; the reason is on the line |
 | `REARM n left` | 3 | `--max-minutes` (default 28) reached: start a new watcher. Monitors stop at 30 minutes. |
 
 Give the Monitor a filter that matches all three words. A watcher whose filter only matches success sits silent on

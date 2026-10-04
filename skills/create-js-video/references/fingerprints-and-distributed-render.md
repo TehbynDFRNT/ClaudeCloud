@@ -168,6 +168,17 @@ names) and be committed by the next `git add -A -f`. Both options skip them as o
 restrict the restore to the folders of the plans they cover. Run `status` afterwards. A stale piece after a restore
 means no helper rendered it under the current sources: render it again.
 
+`--fetch` and branch globs: a git refspec takes at most one `*` and no `?` or `[...]`.
+- Plain globs (`'<base>-h*'`) are passed to git as refspecs.
+- Other globs (`'<base>-hd[0-9]*'`) are resolved with `git ls-remote --heads` plus fnmatch and fetched by exact
+  name. A comma list of exact names also works.
+- A failed fetch is an error (exit 1), so the watcher stops with `FAIL restore` instead of quietly restoring
+  nothing.
+
+On Nova's 4K master the old script only warned about the invalid refspec `hd[0-9]*`. The finisher then reported
+"2/56 blocks final" for 20 minutes while all 14 helper branches were on origin. If a collector's count stops moving,
+compare `git ls-remote origin 'refs/heads/<base>-*'` with `git branch -r`.
+
 `watch-render.sh` loops fetch → restore (with `--plan` and, when the status tool supports `--json`, `--want`) →
 status, and exits `DONE`, `FAIL ...` or `REARM`. Give the Monitor a filter that matches failures as well as success.
 It runs `restore-from-branches.py` from its own folder: copy both into `tools/` and commit them.
