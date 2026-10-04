@@ -165,7 +165,7 @@ a{color:inherit}
 .series>div{max-width:34em}
 .series p{margin:0 0 1.1em;font-size:17px;line-height:1.65;color:var(--nv-text-2);max-width:34em}
 .series p:last-child{margin-bottom:0}
-.series .statement{font-size:clamp(40px,6vw,88px);font-weight:600;letter-spacing:-.045em;line-height:1;color:var(--lp-300);margin:clamp(48px,6vw,88px) 0 0;max-width:none}
+.series .statement{font-size:clamp(40px,6vw,88px);font-weight:600;letter-spacing:-.04em;line-height:1;color:var(--lp-300);margin:clamp(48px,6vw,88px) 0 0;max-width:none}
 
 /* ================= made in code ================= */
 .cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:clamp(28px,4vw,48px)}

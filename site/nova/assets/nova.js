@@ -77,7 +77,7 @@ if(beats.length){var bo=new IntersectionObserver(function(es){es.forEach(functio
 var tiles=$('#tiles'),frames=$('#frames'),turn=$('#turn'),deg=$('#deg'),degtc=$('#degtc');
 var TURN=[[90,'0:21'],[81,'0:33'],[73,'0:45'],[67,'0:54'],[62,'1:02'],[47,'1:23'],[43,'1:30'],[41,'1:32'],[39,'1:35'],[35,'1:42'],[30,'1:48'],[0,'2:37']];
 var ORDER=[3,11,0,7,14,5,9,1,16,12,4,8,15,2,10,6,13];  /* the order 17 render pieces might finish in, side by side */
-if(tiles){for(var k=0;k<17;k++){var t=d.createElement('i');t.className='tile';t.style.backgroundPosition=(-30*k)+'px 0';tiles.appendChild(t)}}
+if(tiles){for(var k=0;k<17;k++){var t=d.createElement('i');t.className='tile';t.style.backgroundPosition=(k/16*100)+'% 0';tiles.appendChild(t)}}
 var timers={};
 function later(key,fn,ms){(timers[key]=timers[key]||[]).push(setTimeout(fn,ms))}
 function clear(key){(timers[key]||[]).forEach(clearTimeout);timers[key]=[]}
