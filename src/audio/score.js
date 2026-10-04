@@ -2005,9 +2005,9 @@ export async function measureShaperLatency() {
 // ----------------------------------------------------------------------------------------------------------
 // main entry
 // ----------------------------------------------------------------------------------------------------------
-export async function renderSoundtrack({ base = '/', log = console.log, only = null } = {}) {
+export async function renderSoundtrack({ base = '/', plan: planPath = 'film-plan.json', log = console.log, only = null } = {}) {
   const t00 = performance.now();
-  const tl = await loadTimeline(base);
+  const tl = await loadTimeline(base, planPath);
   const { plan, length, T } = tl;
   const newCtx = () => new OfflineAudioContext(2, length, SR);
   const dec = newCtx();
@@ -2022,43 +2022,55 @@ export async function renderSoundtrack({ base = '/', log = console.log, only = n
   const booms = Object.values(samples).map((x) => x.info.boomRms).sort((x, y) => x - y);
   const refBoom = booms[booms.length >> 1];
   for (const x of Object.values(samples)) x.info.norm = refBoom / x.info.boomRms;
-  log(`loaded: winter ${winter.duration.toFixed(2)} s @ ${winter.sampleRate} Hz; ${Object.keys(samples).length} cannon samples; length ${length} samples (${tl.duration} s)`);
+  log(`loaded ${planPath}: winter ${winter.duration.toFixed(2)} s @ ${winter.sampleRate} Hz; ${Object.keys(samples).length} cannon samples; length ${length} samples (${tl.duration} s)`);
 
-  const stems = {}, info = {};
+  const stems = {}, info = {}, stemSeconds = {};
+  // each stem renders in its own context; started together, the contexts render side by side
   const render = async (name, build) => {
     const t0 = performance.now(), ctx = newCtx();
     info[name] = build(ctx);
     const buf = await ctx.startRendering();
     stems[name] = [buf.getChannelData(0), buf.getChannelData(1)];
-    log(`stem ${name}: rendered in ${((performance.now() - t0) / 1000).toFixed(1)} s`);
+    stemSeconds[name] = +((performance.now() - t0) / 1000).toFixed(1);
+    log(`stem ${name}: rendered in ${stemSeconds[name]} s`);
   };
   tl.lat = await measureShaperLatency();
   log(`waveshaper latency: 2x ${(tl.lat['2x'] * 1000).toFixed(2)} ms, 4x ${(tl.lat['4x'] * 1000).toFixed(2)} ms (compensated)`);
   const t1r = performance.now();
   tl.refined = refineGrid(tl, winter);
-  log(`grid check: leads ${tl.refined.report.sections.map((x) => `${x.bars.join('-')}: ${x.leadMs} ms`).join(', ')}; re-fits ${JSON.stringify(tl.refined.report.refits.map((r) => [r.bar, r.shiftMs, r.accepted]))} (${((performance.now() - t1r) / 1000).toFixed(1)} s)`);
+  tl.refinedReturn = refineReturn(tl, winter);
+  log(`grid check: leads ${tl.refined.report.sections.map((x) => `${x.bars.join('-')}: ${x.leadMs} ms`).join(', ')}; re-fits ${JSON.stringify(tl.refined.report.refits.map((r) => [r.bar, r.shiftMs, r.accepted]))}; return (bars 56-59) lead ${tl.refinedReturn ? `${tl.refinedReturn.leadMs} ms (${tl.refinedReturn.eighthsUsed} eighths)` : 'n/a'} (${((performance.now() - t1r) / 1000).toFixed(1)} s)`);
+  log(`times: build ${T.buildStart.toFixed(3)} s, ignition cut ${T.ignition.toFixed(3)} s, explosion ${T.explosion.toFixed(4)} s, bar 56 ${T.return56.toFixed(4)} s, pass ${T.pass.toFixed(3)} s, coda ${T.coda?.toFixed(3)} s, stare ${T.stare?.toFixed(3)} s, title ${T.title?.toFixed(3)} s`);
   const builders = {
     orchestra: (ctx) => buildOrchestra(ctx, tl, winter),
     synth: (ctx) => buildSynth(ctx, tl),
     tension: (ctx) => buildTension(ctx, tl),
+    build: (ctx) => buildBuild(ctx, tl),
     ignition: (ctx) => buildIgnition(ctx, tl, samples),
+    salvos: (ctx) => buildSalvos(ctx, tl, samples),
     coda: (ctx) => buildCoda(ctx, tl),
+    stare: (ctx) => buildStare(ctx, tl),
   };
   // development: render only the named stems, raw (no balance, no master); the "mix" is their plain sum
   if (only) {
-    for (const name of only) if (builders[name]) await render(name, builders[name]);
+    const all = { ...builders, cannons: (ctx) => buildCannons(ctx, tl, samples, {}) };
+    await Promise.all(only.filter((name) => all[name]).map((name) => render(name, all[name])));
     const sum = [0, 1].map((c) => { const y = new Float32Array(length); for (const k of Object.keys(stems)) { const x = stems[k][c]; for (let i = 0; i < length; i++) y[i] += x[i]; } return y; });
-    return { mix: sum, stems, report: { only, times: T, info, renderSeconds: (performance.now() - t00) / 1000 } };
+    return { mix: sum, stems, report: { only, times: T, info, stemSeconds, renderSeconds: (performance.now() - t00) / 1000 } };
   }
-  for (const name of Object.keys(builders)) await render(name, builders[name]);
+  // every stem and the first cannon pass at once (none depends on another)
+  const tStems = performance.now();
+  await Promise.all([...Object.entries(builders).map(([name, b]) => render(name, b)), render('cannons', (ctx) => buildCannons(ctx, tl, samples, {}))]);
+  const stemsWallSeconds = +((performance.now() - tStems) / 1000).toFixed(1);
+  log(`stems rendered side by side in ${stemsWallSeconds} s (sum of their own times ${Object.values(stemSeconds).reduce((a, b) => a + b, 0).toFixed(1)} s)`);
   const gO = undb(DESIGN.orchestraMakeupDb), gC = undb(DESIGN.cannonsDb);
-  // cannons: render, measure every cue against the orchestra, correct toward the approach law, re-render
+  // cannons: measure every cue against the orchestra, correct toward the approach law, re-render
   const kO = [kWeight(stems.orchestra[0]), kWeight(stems.orchestra[1])];
   let cg = {}, cl = null;
   const cannonPasses = [];
   let cLim = null;
   for (let pass = 0; pass < DESIGN.cannon.passes; pass++) {
-    await render('cannons', (ctx) => buildCannons(ctx, tl, samples, cg));
+    if (pass > 0) await render('cannons', (ctx) => buildCannons(ctx, tl, samples, cg));
     const CL = DESIGN.cannonLimiter;
     cLim = limit(stems.cannons[0], stems.cannons[1], cannonCeiling(length, info.cannons), CL.lookMs, CL.relMs);
     stems.cannons = [cLim.L, cLim.R];
@@ -2069,36 +2081,53 @@ export async function renderSoundtrack({ base = '/', log = console.log, only = n
     cg = cl.gains;
   }
 
-  // --- music bus balance: strike duck, ladder ride (easing up across the strikes), vacuum before the cut ---
+  // --- music bus balance: strike duck, ladder ride (easing up across the strikes), the hotter return ---
   const duck = duckGain(length, info.cannons);
   const LR = DESIGN.ladderRide, tRide = refinedAt(tl, tl.refined, LR.fromBar, 0);
   const strikes = strikeTimes(tl), tS1 = strikes.length ? strikes[0].t : T.ignition;
   for (let i = Math.max(0, Math.round((tRide - LR.rampS) * SR)); i < length; i++) {
     const tt = i / SR;
-    // the aftermath (after the cut) keeps the ladder's level
-    const rideDb = tt < T.ignition ? LR.db * smooth(tRide - LR.rampS, tRide, tt) + (LR.endDb - LR.db) * clamp((tt - tS1) / (T.ignition - tS1), 0, 1) : LR.db;
+    // after the cut: the return (winter-b) rides DESIGN.ret.db (v2 kept the ladder's level here)
+    const rideDb = tt < T.ignition ? LR.db * smooth(tRide - LR.rampS, tRide, tt) + (LR.endDb - LR.db) * clamp((tt - tS1) / (T.ignition - tS1), 0, 1) : DESIGN.ret.db;
     duck[i] *= undb(rideDb);
   }
-  const V = DESIGN.vacuum, tv0 = T.ignition - V.leadS, tg = T.ignition - V.gapMs / 1000;
-  const vac = new Float32Array(length).fill(1);
-  for (let i = Math.round(tv0 * SR); i < Math.round(T.ignition * SR); i++) {
-    const tt = i / SR;
-    vac[i] = undb(tt < tg ? V.depthDb * Math.pow(smooth(tv0, tg, tt), 1.3) : V.depthDb + (V.gapDb - V.depthDb) * smooth(tg, tg + 0.008, tt));
+  // winter-b's pre-roll (the bar-56 attack before the explosion frame) is held down until the hit, so the vacuum stays
+  // empty and the tutti lands with the detonation
+  const V = DESIGN.vacuum, gate = new Float32Array(length).fill(1), wb = plan.audio.find((a) => a.id === 'winter-b');
+  let preRoll = null;
+  if (wb && Math.abs(T.return56 - T.explosion) < 0.1) {
+    const p0 = wb.timelineStart / tl.fps;
+    for (let i = Math.max(0, Math.round((p0 - 0.01) * SR)); i < Math.round(T.explosion * SR); i++) gate[i] = undb(V.preDb * (1 - smooth(T.explosion - 0.004, T.explosion, i / SR)));
+    preRoll = { from: +p0.toFixed(4), to: +T.explosion.toFixed(4), db: V.preDb };
   }
   const scale = (X, f) => X.map((x) => { const y = new Float32Array(length); for (let i = 0; i < length; i++) y[i] = x[i] * f(i); return y; });
-  const orch = scale(stems.orchestra, (i) => gO * duck[i] * vac[i]);
+  const orch = scale(stems.orchestra, (i) => gO * duck[i] * gate[i]);
   const lev = autoLevelSynth(tl, scale(stems.orchestra, () => gO), stems.synth, info.synth);
-  const syn = scale(stems.synth, (i) => lev.gain[i] * duck[i] * vac[i]);
-  const can = scale(stems.cannons, (i) => gC * vac[i]);
-  // undertow: one gain against the orchestra as heard (ducked, ridden) over the strikes, before the vacuum
-  const tw0 = tS1 - 0.6, tw1 = tv0;
+  const syn = scale(stems.synth, (i) => lev.gain[i] * duck[i]);
+  const can = scale(stems.cannons, (i) => gC * gate[i]);
+  // undertow: one gain against the orchestra as heard (ducked, ridden) over the strikes, before the build
+  const tw0 = tS1 - 0.6, tw1 = T.buildStart;
   const tenRaw = segLufs(stems.tension, tw0, tw1), orchRef = segLufs(orch, tw0, tw1);
   const gT = undb(DESIGN.tension.relLu - (tenRaw - orchRef));
-  const ten = scale(stems.tension, (i) => gT * vac[i]);
-  const music = [0, 1].map((c) => { const y = new Float32Array(length); const a = orch[c], b = syn[c], d = can[c], e = ten[c]; for (let i = 0; i < length; i++) y[i] = a[i] + b[i] + d[i] + e[i]; return y; });
+  const ten = scale(stems.tension, () => gT);
+  // salvos: own limiter, then one gain so the loudest bar-56 salvo sits relDb over the orchestra (each salvo
+  // measured as the cannons: 400 ms from its transient against the orchestra's 500 ms before it)
+  const SV = DESIGN.salvo, live = info.salvos.filter((s) => !s.merged);
+  let sal = null, salvoReport = null;
+  if (live.length) {
+    const sLim = limit(stems.salvos[0], stems.salvos[1], SV.ceilDb, 2.0, 90);
+    const kS = [kWeight(sLim.L), kWeight(sLim.R)], kOr = [kWeight(orch[0]), kWeight(orch[1])];
+    const ms = (K, a, b) => bandRMS(K[0], a, b) + bandRMS(K[1], a, b);
+    const rel = live.map((s) => { const a = Math.round(s.t * SR); return 10 * Math.log10((ms(kS, a, a + Math.round(0.4 * SR)) + 1e-20) / (ms(kOr, a - Math.round(0.5 * SR), a) + 1e-20)); });
+    const ref = Math.max(...live.map((s, k) => (s.bar === live[0].bar ? rel[k] : -Infinity)));
+    const gS = undb(SV.relDb - ref);
+    sal = [sLim.L, sLim.R].map((x) => { const y = new Float32Array(length); for (let i = 0; i < length; i++) y[i] = x[i] * gS; return y; });
+    salvoReport = { gainDb: +db(gS).toFixed(2), limiterMaxGrDb: +sLim.maxGrDb.toFixed(2), relDb: Object.fromEntries(live.map((s, k) => [s.id, +(rel[k] + db(gS)).toFixed(1)])) };
+  }
+  const music = [0, 1].map((c) => { const y = new Float32Array(length); const a = orch[c], b = syn[c], d = can[c], e = ten[c], s = sal && sal[c]; for (let i = 0; i < length; i++) y[i] = a[i] + b[i] + d[i] + e[i] + (s ? s[i] : 0); return y; });
 
   // --- climax bus: set to its short-term loudness target in the director's window, own true-peak limiter ---
-  const CX = DESIGN.climax, cw0 = T.ignition, cw1 = T.ignition + CX.windowFrames / tl.fps;
+  const CX = DESIGN.climax, cw0 = T.explosion, cw1 = T.explosion + CX.windowFrames / tl.fps;
   let gX = undb(CX.targetST - segLufs(stems.ignition, cw0, cw0 + 3)), cx = null, cxMax = null;
   let headroomBound = false;
   for (let it = 0; it < 8; it++) {
@@ -2113,29 +2142,62 @@ export async function renderSoundtrack({ base = '/', log = console.log, only = n
   }
   const cxSustainGrDb = segLufs(scale(stems.ignition, () => gX), cw0 + 0.25, cw1) - segLufs([cx.L, cx.R], cw0 + 0.25, cw1);
 
+  // --- build bus: its short-term loudness at its end (the 3 s window ending at the gap) belowHitLu under the
+  //     explosion's short-term peak; own look-ahead limiter ---
+  const B = DESIGN.build, gsEnd = T.explosion - V.gapMs / 1000;
+  let bld = null, buildReport = null;
+  if (info.build && info.build.active) {
+    const raw = stMax(shortTerm(...stems.build), gsEnd - 0.1, gsEnd).lufs;
+    let gB = undb(cxMax.lufs - B.belowHitLu - raw), bl = null, end = null;
+    for (let it = 0; it < 4; it++) {
+      bl = limit(...scale(stems.build, () => gB), B.ceilDb, 2.0, 60);
+      end = stMax(shortTerm(bl.L, bl.R), gsEnd - 0.1, gsEnd).lufs;
+      if (Math.abs(end - (cxMax.lufs - B.belowHitLu)) < 0.1) break;
+      gB *= undb(cxMax.lufs - B.belowHitLu - end);
+    }
+    bld = [bl.L, bl.R];
+    const S = shortTerm(bl.L, bl.R);
+    buildReport = { ...info.build, gainDb: +db(gB).toFixed(2), limiterMaxGrDb: +bl.maxGrDb.toFixed(2), shortTermAtEnd: +end.toFixed(2), target: +(cxMax.lufs - B.belowHitLu).toFixed(2),
+      shortTermAtCut: stMax(S, T.ignition - 0.05, T.ignition + 0.05).lufs };
+  }
+
   // --- coda bus: set by the loudness of the wind before the star ---
   let coda = null, codaReport = null;
   if (info.coda && info.coda.active) {
     const raw = segLufs(stems.coda, T.codaUp, T.star);
     const gK = undb(DESIGN.coda.windLufs - raw);
     coda = scale(stems.coda, () => gK);
-    codaReport = { ...info.coda, gainDb: +db(gK).toFixed(2), windLufs: +segLufs(coda, T.codaUp, T.star).toFixed(2), starLufs: +segLufs(coda, T.starFull + 0.5, T.pictureOut).toFixed(2) };
+    codaReport = { ...info.coda, gainDb: +db(gK).toFixed(2), windLufs: +segLufs(coda, T.codaUp, T.star).toFixed(2), starLufs: +segLufs(coda, T.starFull + 0.5, T.codaOut[0]).toFixed(2) };
+  }
+  // --- stare bus: set by the loudness of its steady part (the picture up, before the title) ---
+  let stare = null, stareReport = null;
+  if (info.stare && info.stare.active) {
+    const s0 = T.stareUp + 0.3, s1 = T.title ?? T.pictureOut;
+    const gR = undb(DESIGN.stare.lufs - segLufs(stems.stare, s0, s1));
+    stare = scale(stems.stare, () => gR);
+    stareReport = { ...info.stare, gainDb: +db(gR).toFixed(2), steadyLufs: +segLufs(stare, s0, s1).toFixed(2),
+      withTitleLufs: T.titleFull ? +segLufs(stare, T.titleFull, T.pictureOut).toFixed(2) : null };
   }
 
-  // --- master: music gain -> glue compression -> short-term cap under the climax; + climax + coda -> true-peak
-  //     limiter; the music gain is iterated to the programme loudness target ---
-  const cap = cxMax.lufs - CX.marginLu;
+  // --- master: music gain -> glue compression -> short-term cap (before the ignition) under the climax; + climax
+  //     (folded under the returning music) + build + coda + stare -> true-peak limiter; the music gain is iterated
+  //     to the programme loudness target ---
+  const cap = cxMax.lufs - CX.marginLu, F = DESIGN.fold;
   const preL = loudness(music[0], music[1]);
-  let gM = undb(DESIGN.targetLufs - 1.0 - preL), comp, ride, lim, L = 0, prev = null;
+  let gM = undb(DESIGN.targetLufs - 1.0 - preL), comp, ride, fold, lim, L = 0, prev = null;
   for (let it = 0; it < 8; it++) {
     comp = compress(...scale(music, () => gM), { ...DESIGN.comp, thresholdDb: DESIGN.targetLufs + DESIGN.comp.thresholdRel });
-    ride = loudnessCap(comp.L, comp.R, cap);
-    const sum = [0, 1].map((c) => { const m = c ? comp.R : comp.L, x = c ? cx.R : cx.L, k = coda && coda[c], y = new Float32Array(length); for (let i = 0; i < length; i++) y[i] = m[i] * ride.gain[i] + x[i] + (k ? k[i] : 0); return y; });
+    ride = loudnessCap(comp.L, comp.R, cap, { until: T.ignition });
+    const mus = [comp.L, comp.R].map((m) => { const y = new Float32Array(length); for (let i = 0; i < length; i++) y[i] = m[i] * ride.gain[i]; return y; });
+    fold = foldUnder([cx.L, cx.R], mus, T.explosion + F.fromS, T.explosion + F.untilS, { belowLu: F.belowLu, maxDb: F.maxDb, rampS: F.rampS });
+    const extra = [bld, coda, stare].filter(Boolean);
+    const sum = [0, 1].map((c) => { const m = mus[c], x = c ? cx.R : cx.L, fg = fold.gain, y = new Float32Array(length); for (let i = 0; i < length; i++) y[i] = m[i] + x[i] * fg[i]; for (const e of extra) { const z = e[c]; for (let i = 0; i < length; i++) y[i] += z[i]; } return y; });
     lim = limit(sum[0], sum[1], DESIGN.limiterCeilingDb);
     L = loudness(lim.L, lim.R);
-    log(`master pass ${it}: music gain ${db(gM).toFixed(2)} dB -> ${L.toFixed(2)} LUFS (comp max ${comp.maxGrDb.toFixed(1)} dB, cap ${cap.toFixed(1)} LUFS ride max ${ride.maxRideDb.toFixed(1)} dB on ${ride.ridePct.toFixed(1)}%, limiter max ${lim.maxGrDb.toFixed(1)} dB, active ${lim.activePct.toFixed(2)}%)`);
+    log(`master pass ${it}: music gain ${db(gM).toFixed(2)} dB -> ${L.toFixed(2)} LUFS (comp max ${comp.maxGrDb.toFixed(1)} dB, cap ${cap.toFixed(1)} LUFS ride max ${ride.maxRideDb.toFixed(1)} dB on ${ride.ridePct.toFixed(1)}%, fold max ${fold.maxRideDb.toFixed(1)} dB mean ${fold.meanRideDb.toFixed(1)} dB, limiter max ${lim.maxGrDb.toFixed(1)} dB, active ${lim.activePct.toFixed(2)}%)`);
     if (Math.abs(L - DESIGN.targetLufs) < 0.05) break;
-    // secant step: the climax and coda buses do not follow the music gain, so the programme moves less than 1:1
+    // secant step: the climax, build, coda and stare buses do not follow the music gain, so the programme moves less
+    // than 1:1
     let step = DESIGN.targetLufs - L;
     if (prev && Math.abs(db(gM) - prev.g) > 1e-3) step /= clamp((L - prev.L) / (db(gM) - prev.g), 0.25, 1.5);
     prev = { g: db(gM), L };
@@ -2143,39 +2205,51 @@ export async function renderSoundtrack({ base = '/', log = console.log, only = n
   }
   // the final mix's short-term profile (3 s windows ending in each range)
   const S = shortTerm(lim.L, lim.R);
-  const pre = stMax(S, 0, T.ignition), after = stMax(S, T.return56 + 3, T.end), win = stMax(S, cw0, cw1);
+  const bar60 = tl.music.at(60, 0) ?? T.explosion + 12, musicEnd = T.winterEnd;
+  const pre = stMax(S, 0, T.ignition), after = stMax(S, bar60, musicEnd), win = stMax(S, cw0, cw1);
   const outside = pre.lufs >= after.lufs ? pre : after;
+  const buildMax = stMax(S, T.buildStart, gsEnd);
   const shortTermReport = {
-    overall: stMax(S), climaxWindow: { ...win, frames: [plan.cues.find((c) => c.id === 'ignition').frame, Math.round(cw1 * tl.fps)] },
-    climax: stMax(S, T.ignition, T.return56), darkHold: stMax(S, T.ignition, T.darkEnd), shockPass: stMax(S, T.shock[0], T.shock[1]),
+    overall: stMax(S), climaxWindow: { ...win, frames: [Math.round(cw0 * tl.fps), Math.round(cw1 * tl.fps)] },
+    build: { max: buildMax, atCut: stMax(S, T.ignition - 0.05, T.ignition + 0.05), atEnd: stMax(S, gsEnd - 0.1, gsEnd) },
+    explosion: win, bars56to59: stMax(S, T.explosion, bar60), shockPass: stMax(S, T.shock[0], T.shock[1]),
     strikes: stMax(S, tS1, T.ignition),
     perStrike: strikes.map((s, k) => ({ id: s.id, t: +s.t.toFixed(3), ...stMax(S, s.t, k + 1 < strikes.length ? strikes[k + 1].t : T.ignition) })),
-    preIgnition: pre, aftermath: after, outsideClimax: outside, marginLu: +(win.lufs - outside.lufs).toFixed(2),
-    coda: stMax(S, T.coda, T.end),
+    preIgnition: pre, aftermath: after, outsideClimax: outside, marginLu: +(win.lufs - Math.max(outside.lufs, buildMax.lufs)).toFixed(2),
+    coda: stMax(S, T.coda, T.codaOut[1]), stare: T.stare != null ? stMax(S, T.stare, T.end) : null,
   };
-  log(`short-term: climax window ${win.lufs} LUFS at ${win.t} s; strikes ${shortTermReport.strikes.lufs}; outside the climax ${outside.lufs} at ${outside.t} s; margin ${shortTermReport.marginLu} LU`);
+  log(`short-term: explosion ${win.lufs} LUFS at ${win.t} s; build max ${buildMax.lufs} at ${buildMax.t} s; bars 56-59 ${shortTermReport.bars56to59.lufs}; strikes ${shortTermReport.strikes.lufs}; outside the climax ${outside.lufs} at ${outside.t} s; margin ${shortTermReport.marginLu} LU; stare ${shortTermReport.stare?.lufs}`);
 
-  // stems as they enter their buses: music stems x music gain (before glue + cap), climax after its limiter, coda
+  // stems as they enter their buses: music stems x music gain (before glue + cap), climax after its limiter and fold,
+  // build, coda, stare
   const scaled = {
     orchestra: scale(orch, () => gM), synth: scale(syn, () => gM), cannons: scale(can, () => gM), tension: scale(ten, () => gM),
-    ignition: [cx.L, cx.R], ...(coda ? { coda } : {}),
+    ...(sal ? { salvos: scale(sal, () => gM) } : {}), ...(bld ? { build: bld } : {}),
+    ignition: [cx.L, cx.R].map((x) => { const y = new Float32Array(length); for (let i = 0; i < length; i++) y[i] = x[i] * fold.gain[i]; return y; }),
+    ...(coda ? { coda } : {}), ...(stare ? { stare } : {}),
   };
   const stemLufs = {};
   for (const [k, v] of Object.entries(scaled)) { try { stemLufs[k] = +loudness(v[0], v[1]).toFixed(2); } catch { stemLufs[k] = null; } }
+  // the return against the orchestra before the cut, as heard (music gain and ride included): bars 56-62 vs bars 20-31
+  const retLufs = segLufs(scaled.orchestra, T.explosion + 0.5, tl.music.at(63, 0) ?? T.winterEnd), preLufs = segLufs(scaled.orchestra, tl.music.at(20, 0), tl.music.at(32, 0));
   const report = {
-    durationSeconds: tl.duration, sampleRate: SR, length,
-    times: T, tuningA4: tl.a4, gridCheck: tl.refined.report, shaperLatencySamples: { x2: Math.round(tl.lat['2x'] * SR), x4: Math.round(tl.lat['4x'] * SR) },
+    plan: planPath, durationSeconds: tl.duration, sampleRate: SR, length,
+    times: T, tuningA4: tl.a4, gridCheck: tl.refined.report, returnGridCheck: tl.refinedReturn ? { leadMs: tl.refinedReturn.leadMs, eighthsUsed: tl.refinedReturn.eighthsUsed } : null,
+    shaperLatencySamples: { x2: Math.round(tl.lat['2x'] * SR), x4: Math.round(tl.lat['4x'] * SR) },
     orchestra: info.orchestra, synth: { ...info.synth, steps: info.synth.steps.length, autoLevel: lev.rows.map((r) => ({ bar: r.bar, target: +r.target.toFixed(1), raw: +(r.synthK - r.orchK).toFixed(1), appliedDb: +r.appliedDb.toFixed(1) })), drone: lev.drone, pad: lev.pad },
     synthSteps: info.synth.steps,
     ladderRide: { ...DESIGN.ladderRide, rideStart: +tRide.toFixed(3), easeFrom: +tS1.toFixed(3) },
-    vacuum: { ...DESIGN.vacuum, start: +tv0.toFixed(4), gapStart: +tg.toFixed(4) },
+    ret: { ...DESIGN.ret, preRoll, orchestraLufs: +retLufs.toFixed(2), orchestraBars20to31Lufs: +preLufs.toFixed(2) },
     tension: { ...info.tension, relLu: DESIGN.tension.relLu, gainDb: +db(gT).toFixed(2) },
     cannonApproach: { law: DESIGN.cannon, passMaxErrDb: cannonPasses, cues: cl.rows, limiter: { ...DESIGN.cannonLimiter, maxGrDb: +cLim.maxGrDb.toFixed(1) } }, duck: { ...DESIGN.duck, cues: info.cannons.filter((c) => c.distance <= DESIGN.duck.maxD).map((c) => c.id) },
     cannons: info.cannons, cannonSamples: Object.fromEntries(Object.entries(samples).map(([k, s]) => [k, { ...CANNON_SAMPLES[k], onsetMs: +(s.info.onset * 1000).toFixed(2), peakAtMs: +(s.info.peakAt * 1000).toFixed(1), peakDb: +db(s.info.peak).toFixed(1), boomDb: +db(s.info.boomRms).toFixed(1), matchGainDb: +db(s.info.norm).toFixed(1) }])),
-    ignition: { ...info.ignition, bus: { ...CX, gainDb: +db(gX).toFixed(2), shortTermMax: cxMax, headroomBound, limiterMaxGrDb: +cx.maxGrDb.toFixed(2), sustainGrDb: +cxSustainGrDb.toFixed(2) } },
-    coda: codaReport,
+    salvos: { design: SV, cues: info.salvos, ...salvoReport },
+    build: buildReport,
+    ignition: { ...info.ignition, bus: { ...CX, gainDb: +db(gX).toFixed(2), shortTermMax: cxMax, headroomBound, limiterMaxGrDb: +cx.maxGrDb.toFixed(2), sustainGrDb: +cxSustainGrDb.toFixed(2) }, fold: { ...F, maxRideDb: +fold.maxRideDb.toFixed(2), meanRideDb: +fold.meanRideDb.toFixed(2) } },
+    coda: codaReport, stare: stareReport,
     master: { targetLufs: DESIGN.targetLufs, ceilingDbtp: DESIGN.ceilingDbtp, preLufs: +preL.toFixed(2), musicGainDb: +db(gM).toFixed(2), lufs: +L.toFixed(2), compMaxGrDb: +comp.maxGrDb.toFixed(2), compMeanGrDb: +comp.meanGrDb.toFixed(2), capLufs: +cap.toFixed(2), capRideMaxDb: +ride.maxRideDb.toFixed(2), capRidePct: +ride.ridePct.toFixed(2), limiterMaxGrDb: +lim.maxGrDb.toFixed(2), limiterActivePct: +lim.activePct.toFixed(3), stemLufs, orchestraMakeupDb: DESIGN.orchestraMakeupDb },
     shortTerm: shortTermReport,
+    stemSeconds, stemsWallSeconds,
     renderSeconds: (performance.now() - t00) / 1000,
   };
   return { mix: [lim.L, lim.R], stems: scaled, report };

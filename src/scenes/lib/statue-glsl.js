@@ -53,10 +53,9 @@ uniform vec3 uMfp;           // translucency length per channel (head units)
 uniform vec3 uTint;          // albedo tint (stone colour)
 uniform int uDebug;          // 0 off; 1 key visibility, 2 key thickness, 3 ao, 4 normal, 5 cavity/thick/skin, 6 veins
 
-const vec2 POI[12] = vec2[12](
-  vec2(-0.326,-0.406), vec2(-0.840,-0.074), vec2(-0.696, 0.457), vec2(-0.203, 0.621),
-  vec2( 0.962,-0.195), vec2( 0.473,-0.480), vec2( 0.519, 0.767), vec2( 0.185,-0.893),
-  vec2( 0.507, 0.064), vec2( 0.896, 0.412), vec2(-0.322,-0.933), vec2(-0.792,-0.598));
+const vec2 POI[8] = vec2[8](
+  vec2(-0.613, 0.617), vec2( 0.170,-0.040), vec2(-0.299,-0.792), vec2( 0.645, 0.493),
+  vec2(-0.651,-0.205), vec2( 0.421,-0.700), vec2( 0.040, 0.947), vec2( 0.966,-0.105));
 
 float D_GGX(float NoH, float a){ float a2 = a * a; float d = NoH * NoH * (a2 - 1.0) + 1.0; return a2 / (PI * d * d); }
 float V_Smith(float NoV, float NoL, float a){
@@ -71,19 +70,30 @@ float specGGX(vec3 N, vec3 V, vec3 L, float rough){
   float F = 0.035 + 0.965 * pow(1.0 - VoH, 5.0);
   return D_GGX(NoH, a) * V_Smith(NoV, NoL, a) * F * NoL;
 }
+// polished-but-aged stone: a broad low-gloss lobe everywhere plus a tighter polish lobe on the carved skin
+float specStone(vec3 N, vec3 V, vec3 L, float rough, float polish){
+  vec3 H = normalize(V + L);
+  float NoL = sat(dot(N, L)), NoV = max(dot(N, V), 1e-3), NoH = sat(dot(N, H)), VoH = sat(dot(V, H));
+  float F = 0.035 + 0.965 * pow(1.0 - VoH, 5.0);
+  float a = rough * rough, b = 0.24 * 0.24;
+  float s = D_GGX(NoH, a) * V_Smith(NoV, NoL, a) + polish * 0.3 * D_GGX(NoH, b) * V_Smith(NoV, NoL, b);
+  return s * F * NoL;
+}
 float wrapD(float nl, float w){ return sat((nl + w) / (1.0 + w)); }
 
-// faint grey Carrara veining, locked to the stone (head space). fp = pixel footprint in head units.
-float veins(vec3 P, float fp){
-  vec3 q = P * uMarble.y + vec3(3.1, 7.7, 1.9);
-  vec3 w = curlish(q * 0.55);
-  float f = fbm3(q + w * 1.1, 4);
-  float g = uMarble.y * 1.6;                       // ~|grad f| in head units
-  float v1 = 1.0 - smoothstep(0.0, 0.018 + fp * g * 1.5, abs(f));
-  float f2 = fbm3(q * 2.4 + w * 1.8 + 11.0, 3);
-  float v2 = 1.0 - smoothstep(0.0, 0.012 + fp * g * 3.5, abs(f2));
-  float cloud = smoothstep(-0.25, 0.35, n3(q * 0.6 + 5.0));   // veins gather in drifts
-  return (v1 * 0.8 + v2 * 0.45 * (0.4 + 0.6 * cloud)) * (0.55 + 0.45 * cloud);
+// faint grey Carrara veining, locked to the stone (head space), drawn out in long tilted drifts.
+// fp = pixel footprint in head units (veins soften instead of aliasing when small on screen).
+float veins(vec3 P, float fp, out float cloud){
+  vec3 q = vec3(P.x * 0.9 + P.y * 0.35, P.y * 0.42 - P.z * 0.2, P.z * 0.9 + P.x * 0.25) * uMarble.y + vec3(3.1, 7.7, 1.9);
+  vec4 wa = n4(q * 0.55), wb = n4(q * 0.55 + 17.3);
+  vec3 w = vec3(wa.r, wb.r, wa.b) * 2.0 - 1.0;
+  float f = fbm3(q + w * 1.25, 3);
+  float g = uMarble.y * 1.4;                       // ~|grad f| in head units
+  float v1 = 1.0 - smoothstep(0.0, 0.016 + fp * g * 1.5, abs(f));
+  float f2 = fbm3(q * 2.6 + w * 2.1 + 11.0, 2);
+  float v2 = 1.0 - smoothstep(0.0, 0.010 + fp * g * 4.0, abs(f2));
+  cloud = smoothstep(-0.2, 0.45, wb.b * 2.0 - 1.0);   // veins gather in drifts
+  return (v1 * 0.8 + v2 * 0.45 * cloud) * (0.45 + 0.55 * cloud);
 }
 
 void main(){
@@ -96,6 +106,20 @@ void main(){
   vec4 bk = texture(uGB, uv);
   float ao = bk.r, cav = bk.g, thick = bk.b, skin = bk.a;
   vec3 V = normalize(uCamH - P);
+  vec3 Ng = N;
+  // the stone's surface: fine weathered relief (pores, rasp marks, crystal grain), faded out below a pixel
+  float bf1 = 1.0 - smoothstep(0.3, 0.8, fp * 120.0);
+  float bf2 = 1.0 - smoothstep(0.3, 0.8, fp * 430.0);
+  if (bf1 > 0.0){
+    vec4 a = n4(P * 120.0), b = n4(P.zxy * 120.0 + 9.1);
+    vec3 bump = (vec3(a.r, b.r, a.b) - 0.5) * 0.10 * bf1;
+    if (bf2 > 0.0){
+      vec4 c = n4(P.yzx * 430.0 + 3.7);
+      bump += (vec3(c.r, c.b, b.b) - 0.5) * 0.07 * bf2;
+    }
+    bump *= mix(1.4, 0.8, skin);
+    N = normalize(N + bump - N * dot(bump, N));
+  }
   // interpolated normals can face slightly away at silhouettes: bend them back toward the viewer
   float nv = dot(N, V);
   if (nv < 0.02) N = normalize(N + V * (0.02 - nv));
@@ -104,34 +128,38 @@ void main(){
   // ---- stone: white Carrara, faint grey veins, a breath of warm age in the hollows, darker cavities
   float crev = smoothstep(0.48, 0.14, cav);
   float ridge = smoothstep(0.55, 0.85, cav);
-  float vn = veins(P, fp) * uMarble.x;
-  float mott = n3(P * 7.0 + 2.0) * 0.5 + n3(P * 19.0) * 0.25;
-  vec3 alb = uTint * (0.84 + 0.035 * mott);
-  alb = mix(alb, vec3(0.50, 0.53, 0.57), vn);
-  alb *= mix(1.0, 0.62, crev);
+  float cloud;
+  float vn = veins(P, fp, cloud) * uMarble.x;
+  vec4 mo = n4(P * 6.0 + 2.0);
+  float mott = (mo.r - 0.5) + (mo.b - 0.5) * 0.6;
+  vec3 alb = uTint * (0.82 + 0.06 * mott) * mix(vec3(1.0), vec3(0.985, 0.99, 1.0), cloud);
+  alb = mix(alb, vec3(0.46, 0.49, 0.53), vn);
+  alb *= mix(1.0, 0.6, crev);
   alb = mix(alb, alb * vec3(0.93, 0.86, 0.76), sat((1.0 - ao) * 1.4) * 0.7);
   alb *= 1.0 + 0.05 * ridge;
-  float rough = mix(0.66, 0.40, skin) * (1.0 + 0.18 * n3(P * 31.0 + 7.0)) + 0.08 * crev;
+  float rough = mix(0.62, 0.42, skin) * (1.0 + 0.25 * (mo.b - 0.5)) + 0.08 * crev;
   rough = clamp(rough, 0.25, 0.9);
-  float gloss = uMarble.z * mix(0.45, 1.0, skin) * (1.0 - 0.6 * crev);
+  float gloss = uMarble.z * mix(0.45, 1.0, skin) * (1.0 - 0.6 * crev) * (1.0 - 0.5 * vn);
+  float polish = skin * (1.0 - crev);
 
   // ---- key: hard light, shadow-mapped (PCF), translucent shadow map for light bleeding through thin stone
-  vec3 sp = (uLMat * vec4(P + N * uShTexel * 1.8, 1.0)).xyz * 0.5 + 0.5;
+  vec3 sp = (uLMat * vec4(P + Ng * uShTexel * 1.8, 1.0)).xyz * 0.5 + 0.5;
   float rot = ign(gl_FragCoord.xy) * TAU;
   mat2 R = rot2(rot);
   float vis = 0.0;
   float bias = uShTexel * 0.6 / uShDepth;
-  for (int i = 0; i < 12; i++) vis += texture(uSh, vec3(sp.xy + R * POI[i] * uPenUV, sp.z - bias));
-  vis /= 12.0;
+  for (int i = 0; i < 8; i++) vis += texture(uSh, vec3(sp.xy + R * POI[i] * uPenUV, sp.z - bias));
+  vis *= 0.125;
   float dth = 0.0;
-  vec3 sr = (uLMat * vec4(P - N * uShTexel * 0.5, 1.0)).xyz * 0.5 + 0.5;
-  for (int i = 0; i < 4; i++) dth += max(sr.z - texture(uShRaw, sr.xy + R * POI[i * 3 + 1] * uPenUV * 0.7).r, 0.0);
-  dth = dth * 0.25 * uShDepth;                       // stone between this point and the lit surface (head units)
+  vec3 sr = (uLMat * vec4(P - Ng * uShTexel * 0.5, 1.0)).xyz * 0.5 + 0.5;
+  dth += max(sr.z - texture(uShRaw, sr.xy + R * POI[1] * uPenUV * 0.7).r, 0.0);
+  dth += max(sr.z - texture(uShRaw, sr.xy + R * POI[4] * uPenUV * 0.7).r, 0.0);
+  dth = dth * 0.5 * uShDepth;                        // stone between this point and the lit surface (head units)
   float NoL = dot(N, uKeyDir);
-  vec3 trans = exp(-dth / uMfp) * (1.0 - vis) * sat(0.35 - 0.65 * NoL);
+  vec3 trans = exp(-dth / uMfp) * (1.0 - vis) * sat(0.35 - 0.65 * dot(Ng, uKeyDir));
   float aoK = mix(ao * ao, ao, skin);                 // the curls swallow light; the polished skin stays open
-  vec3 E = uKeyCol * (vis * wrapD(NoL, mix(0.12, 0.3, skin)) * mix(1.0, aoK, 0.55) + trans * uMarble.w);
-  vec3 S = uKeyCol * vis * specGGX(N, V, uKeyDir, rough);
+  vec3 E = uKeyCol * (vis * wrapD(NoL, mix(0.04, 0.12, skin)) * mix(1.0, aoK, 0.55) + trans * uMarble.w);
+  vec3 S = uKeyCol * vis * specStone(N, V, uKeyDir, rough, polish);
 
   // ---- fill (dim, broad), lens-axis fill, ambient
   E += uFillCol * wrapD(dot(N, uFillDir), 0.6) * ao;
@@ -293,11 +321,14 @@ void main(){
   float g1 = texture(uG1, uv).r, g2 = texture(uG2, uv).r;
   vec2 q = (fu - uCorona) * vec2(frameAspect(), 1.0);
   float r = length(q) / max(uCoronaR, 1e-3);
-  float ang = atan(q.y, q.x);
-  float streak = 0.62 + 0.38 * (0.6 * n3(vec3(cos(ang) * 9.0, sin(ang) * 9.0, r * 0.7 - uAuraT * 0.05)) + 0.4 * n3(vec3(cos(ang) * 23.0 + 3.0, sin(ang) * 23.0, r * 1.3 - uAuraT * 0.09)));
-  streak = mix(1.0, streak, uAura.w);
-  float corona = exp(-r * r * 2.2);
-  vec3 aura = uAuraCol * (uAura.x * g1 * g1 + uAura.y * g2 * g2) + mix(uAuraCol2, uAuraCol, exp(-r * r * 2.0)) * uAura.z * corona * streak;
+  vec3 aura = uAuraCol * (uAura.x * g1 * g1 + uAura.y * g2 * g2);
+  if (uAura.z > 0.0 && r < 2.5){
+    // corona: a soft radiance centred behind the head, with slow streamers
+    vec2 dq = q / max(length(q), 1e-4);
+    float streak = 0.62 + 0.38 * (0.6 * n3(vec3(dq * 9.0, r * 0.7 - uAuraT * 0.05)) + 0.4 * n3(vec3(dq * 23.0 + 3.0, r * 1.3 - uAuraT * 0.09)));
+    streak = mix(1.0, streak, uAura.w);
+    aura += mix(uAuraCol2, uAuraCol, sat(r)) * uAura.z * exp(-r * r * 2.2) * streak;
+  }
   float outside = 1.0 - smoothstep(0.0, 1.0, m) * 0.97;
   col += aura * outside;
   if (uHasRays > 0.5) col += texture(uRays, uv).rgb;
