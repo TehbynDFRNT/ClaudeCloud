@@ -21,7 +21,7 @@ requestAnimationFrame(function(){requestAnimationFrame(function(){var h=$('#h1')
 
 /* reveals: once, with a sibling stagger capped at 270ms inside grids */
 var io=new IntersectionObserver(function(es){es.forEach(function(e){if(!e.isIntersecting)return;var t=e.target;t.classList.add('in','split-in');io.unobserve(t)})},{threshold:.18,rootMargin:'0px 0px -6% 0px'});
-$$('[data-r],[data-split]:not(#h1)').forEach(function(el){var p=el.parentElement,grid=p&&(p.classList.contains('stills')||p.classList.contains('cards')),sib=grid?[].indexOf.call(p.children,el):0;
+$$('[data-r],[data-split]:not(#h1)').forEach(function(el){var p=el.parentElement,grid=p&&(p.classList.contains('stills')||p.classList.contains('cards')||p.classList.contains('dls')),sib=grid?[].indexOf.call(p.children,el):0;
  el.style.transitionDelay=(grid?Math.min((sib%4)*90,270):0)+'ms';io.observe(el)});
 
 /* ---------------- the film ---------------- */
