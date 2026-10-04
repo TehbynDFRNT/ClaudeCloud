@@ -19,3 +19,6 @@ dist/*-916-v4/
 
 # the one-pager's video (the film itself; shipped in the site zip, never committed)
 site/nova/assets/*.mp4
+dist/*-916-v4-*/
+dist/*-916-v4-*.mp4
+dist/*-916-v4-*.verify.json
