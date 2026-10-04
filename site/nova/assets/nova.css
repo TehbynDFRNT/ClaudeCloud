@@ -185,7 +185,7 @@ html.viewing{overflow:hidden}
 .film-dl{margin-top:clamp(24px,3vw,36px)}
 /* the wallpaper preview: the full picture in a phone, with the viewer's own time over it as a lock screen */
 .wp-fig{position:relative;margin:0;display:grid;place-items:center;min-height:0;padding:0 72px}
-.phone{position:relative;container-type:inline-size;height:min(calc(100vh - 190px),860px);aspect-ratio:2160/4680;border-radius:13cqw;overflow:hidden;background:var(--nv-2);box-shadow:0 0 0 1px var(--nv-border-strong),0 0 0 7px var(--nv-1),0 0 0 8px var(--nv-border),0 40px 90px -30px rgba(0,0,0,.9)}
+.phone{position:relative;container-type:inline-size;height:min(calc(100vh - 190px),860px);aspect-ratio:2160/4680;border-radius:13%/6%;overflow:hidden;background:var(--nv-2);box-shadow:0 0 0 1px var(--nv-border-strong),0 0 0 7px var(--nv-1),0 0 0 8px var(--nv-border),0 40px 90px -30px rgba(0,0,0,.9)}
 @supports (height:100dvh){.phone{height:min(calc(100dvh - 190px),860px)}}
 .phone img{display:block;width:100%;height:100%;object-fit:cover}
 .lock{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;padding-top:15cqw;color:#fff;text-shadow:0 1px 12px rgba(0,0,0,.35);pointer-events:none;transition:opacity .3s var(--out)}
