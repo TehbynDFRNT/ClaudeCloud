@@ -18,8 +18,10 @@ node tools/chunk.mjs status --plan film-plan.json        # must end "N/N blocks 
 - A record entry and its `.mp4` always come from the same source, so a fingerprint never describes another render.
 - **`--want` or `--plan` is required.** Helper branches keep pieces of older block layouts; without the current grid
   they would be restored, never cleaned by `chunk.mjs render` (it cleans only current block names), and committed by
-  the next `git add -A -f`. `--plan` computes each plan's current piece names (block size from `film.config.json`,
-  else 240; `--block` overrides); `--want` knows them from `status --json`. Either skips the rest as obsolete, and
+  the next `git add -A -f`. `--plan` computes each plan's current piece names with the block size `chunk.mjs`
+  uses: `plan.block`, else `film.config.json`, else 240 (`--block` overrides). Before it read `plan.block`, a dry run
+  on Nova's 72-frame 4K plan skipped all 111 pieces as obsolete unless `--block 72` was passed, and `watch-render.sh`
+  passes no `--block`. `--want` knows the piece names from `status --json`. Either skips the rest as obsolete, and
   without `--dirs` restricts the restore to the folders they cover. `--any-layout` restores everything.
 - Choice per piece: the wanted fp (`--want`, local first, then the newest branch), else the newest of the local file
   (mtime) and the branch tips.
