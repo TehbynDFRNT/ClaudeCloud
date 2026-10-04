@@ -651,7 +651,7 @@ def body_anchors(m, caster, an, cfg, rough16):
     """Shoulders, neck axis and neck base on the dense head-space surface (approximate, for framing).
     Torso axes: principal axis of the cross-section just above the cut.
     Shoulders: the torso's lateral extremes (along torso.left) in the cross-section 0.25 below the chin; a ray cast
-    straight down 0.06 inside each extreme finds the top of the shoulder there (accepted on smooth skin, otherwise
+    straight down from just under the chin, 0.06 inside each extreme, finds the top of the shoulder there (accepted on smooth skin, otherwise
     the extreme itself). The casts are cut well inside the real acromion, so this is the edge of what exists.
     Neck: a line through the convex-hull centroids of thin horizontal slabs of smooth vertices within 0.30 of the
     turn axis under the jaw; neckBase = that line at the mean shoulder height (at most chin - 0.12)."""
@@ -677,7 +677,7 @@ def body_anchors(m, caster, an, cfg, rough16):
         ii = np.where(slab)[0]
         ext = V[ii[np.argmax(sgn * lt[ii])]]
         p_in = ext - sgn * left_t * 0.06
-        q = caster.hit_point(np.array([p_in[0], an['chin'][1] + 0.12, p_in[2]]), np.array([0, -1.0, 0]))
+        q = caster.hit_point(np.array([p_in[0], an['chin'][1] - 0.02, p_in[2]]), np.array([0, -1.0, 0]))
         ok = q is not None and rough16[nn_tree.query(q)[1]] < 0.9 and q[1] > y_s
         out[lab] = q if ok else ext
         out['_' + lab] = 'top of the shoulder 0.06 inside its outer edge' if ok else 'outer edge of the torso at y = %.2f' % y_s
