@@ -870,6 +870,10 @@ def process(name, args):
     skin = 1 - smoothstep(BAKE['skin_rough'][0], BAKE['skin_rough'][1], rough['r16'])
     wr = region_weights(Vd, an, fw)
     w_face = np.maximum(wr['face'], wr['core'])
+    if 'beard' in cfg['hints']:                    # bearded: the face override stops at the mouth (lips kept)
+        y_m = an['mouth'][1]
+        lips = 1 - smoothstep(0.03, 0.05, np.linalg.norm(Vd - an['mouth'], axis=1))
+        w_face = np.maximum(w_face * smoothstep(y_m - 0.01, y_m + 0.04, Vd[:, 1]), lips)
     skin = np.maximum(skin, w_face * (1 - smoothstep(1.2, 1.8, rough['r16'])))   # the whole face is skin unless curls
     skin = scalar_smooth(skin, adjacency(Fd, len(Vd)), 8)
     bake = np.stack([np.clip(ao, 0, 1) * 255,
