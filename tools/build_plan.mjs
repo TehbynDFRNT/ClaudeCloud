@@ -26,7 +26,8 @@ const OUT_DIR = process.env.PLAN_OUT || '.';     // PLAN_OUT=out/plan-test to dr
 //   over the whole film, so inside each short insert it is barely moving, and the angle at each glimpse is where the
 //   film's timestamp has it; it lands in dead eye contact in the last shot. M06 stays the one rare cinematic angle.
 // - the ending keeps v3's order (the ink rings, the Milky Way and the new star, then the figure's stare and
-//   NOVA: <figure>); the stare holds 8 s (v3: 6.5 s).
+//   NOVA: <figure>); the stare holds 8 s (v3: 6.5 s), goes to black, and the film closes on the director's
+//   3 s sign-off (S32-signoff: his signature writes itself; TEHBYN NOVA, SEE MORE, nova.tehbyn.com).
 // - David is framed closer (head and neck with room round them: up close he is more interesting), still zoomed out
 //   from the old close-ups; Sol and Prometheus show the whole statue piece.
 // - the explosion 15% lower, the returning music and cannons 20% higher (src/audio/score.js, DESIGN.v4).
@@ -62,7 +63,9 @@ const CODA_STAR_FULL = CODA + 168;             // ... and has fully arrived (7 s
 const CODA_LINE1 = CODA + 192, CODA_LINE2 = CODA + 228;
 const CODA_END = CODA + 336;                   // 14 s coda
 const GAZE = V4 ? 192 : 156;                   // the final stare after the Milky Way, under NOVA: <figure> (v3 6.5 s; v4 8 s)
-const FRAMES = V3 ? CODA_END + GAZE : CODA_END;
+const SIGNOFF = V4 ? 72 : 0;                   // v4: the director's sign-off after the stare (3 s)
+const STARE_END = CODA_END + GAZE;
+const FRAMES = V3 ? STARE_END + SIGNOFF : CODA_END;
 
 function srcToFrame(s) {
   for (const p of [A, B]) {
@@ -134,6 +137,7 @@ const SB = [
   { id: 'S29b-drawing', start: at(63), scene: 'studies', purpose: 'Understanding endures', action: 'Dissolve to an ink drawing of the same rings with the tiny centre point; mirror script: il sole nõ si move', framing: 'Flat lay, centred' },
   // CODA — the same event, seen from Earth
   ...(V3 ? [{ id: 'M16', start: CODA_END, scene: 'statue', purpose: 'The gaze: after the night sky, the figure looks straight into the lens, staring into you', action: 'Marble figure on black, the 90-degree turn complete; NOVA: <figure> beneath', framing: 'See the statue preset', params: { turn: [508, CODA - 60, 90, 0] } }] : []),
+  ...(V4 ? [{ id: 'S32-signoff', start: STARE_END, scene: 'signoff', purpose: 'The director signs off', action: 'On black, Tehbyn Nova\'s signature writes itself (the vector from tehbyn.com); TEHBYN NOVA, SEE MORE, nova.tehbyn.com beneath', framing: 'Centred on black' }] : []),
   { id: 'S31-newstar', start: CODA, scene: 'earthsky', purpose: 'Seen from Earth: a new star', action: 'The Milky Way arches up from a dark, unlit horizon (no light pollution: the galactic core, dust lanes, airglow); stillness; then, silently, a new star appears where there was none. The film ends on it', framing: 'Locked-off night sky, 9:16, horizon low, galactic core rising vertically' },
 ];
 
@@ -324,7 +328,8 @@ const effects = [
   ...(V3 ? [
     { type: 'fade', start: CODA_END - 36, end: CODA_END, from: 0, to: 1 },               // the night goes to black ...
     { type: 'fade', start: CODA_END, end: CODA_END + 24, from: 1, to: 0 },               // ... the figure rises out of it
-    { type: 'fade', start: FRAMES - 30, end: FRAMES, from: 0, to: 1 },                   // and the film goes out on the stare
+    { type: 'fade', start: STARE_END - 30, end: STARE_END, from: 0, to: 1 },             // and the film goes out on the stare
+    ...(V4 ? [{ type: 'fade', start: FRAMES - 12, end: FRAMES, from: 0, to: 1 }] : []),   // (v4: after the sign-off)
   ] : [
     { type: 'fade', start: FRAMES - 36, end: FRAMES, from: 0, to: 1 },                   // and the film goes out
   ]),
@@ -365,7 +370,13 @@ for (const [cut, C] of Object.entries(CUTS)) {
     { id: 'coda-line-2', start: CODA_LINE2, end: CODA_END - 2, content: 'the Nova.', style: 'line', font: 'cinzel', size: 50, y: 0.875, fadeIn: 30, fadeOut: 34, minFrames: 60 },
     // v3: the film ends on the figure's stare and its name
     // Cinzel Roman capitals (lowercase sets as small caps: NOVA: SOL INVICTUS), molten gold
-    ...(V3 ? [{ id: 'end-title', start: CODA_END + 48, end: FRAMES - 2, content: `Nova: ${C.novaName}`, style: 'title', color: 'rgba(236,204,148,1)', y: 0.865, fadeIn: 30, fadeOut: 28, minFrames: 60 }] : []),
+    ...(V3 ? [{ id: 'end-title', start: CODA_END + 48, end: STARE_END - 2, content: `Nova: ${C.novaName}`, style: 'title', color: 'rgba(236,204,148,1)', y: 0.865, fadeIn: 30, fadeOut: 28, minFrames: 60 }] : []),
+    // v4: the sign-off under the signature (the pen lifts ~1.4 s in)
+    ...(V4 ? [
+      { id: 'signoff-name', start: STARE_END + 26, end: FRAMES - 1, content: 'Tehbyn Nova', style: 'line', font: 'cinzel', size: 46, y: 0.505, fadeIn: 14, fadeOut: 10, minFrames: 40 },
+      { id: 'signoff-more', start: STARE_END + 34, end: FRAMES - 1, content: 'See more', style: 'line', font: 'cinzel', size: 24, spacing: 0.42, color: 'rgba(236,204,148,1)', y: 0.585, fadeIn: 14, fadeOut: 10, minFrames: 36 },
+      { id: 'signoff-url', start: STARE_END + 38, end: FRAMES - 1, content: 'nova.tehbyn.com', style: 'line', font: 'cormorant', size: 44, y: 0.628, fadeIn: 14, fadeOut: 10, minFrames: 32 },
+    ] : []),
   ];
   const cutShots = shots.map((s) => {
     const o = { ...s };

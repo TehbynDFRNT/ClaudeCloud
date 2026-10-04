@@ -318,7 +318,9 @@ export async function loadTimeline(base = '/', planPath = 'film-plan.json') {
   // it follows the coda, with its fade up from black, the coda's fade to black before it and the end title over it
   const xc = cue('explosion');
   const lastShot = plan.shots[plan.shots.length - 1];
-  const stareShot = coda && lastShot.start > coda.frame ? lastShot : null;
+  // (v4: the director's sign-off follows the stare, so the stare is M16 when there is one)
+  const m16 = shot('M16');
+  const stareShot = coda ? (m16 && m16.start > coda.frame ? m16 : (lastShot.start > coda.frame ? lastShot : null)) : null;
   const stareUp = stareShot && fades.find((e) => e.start === stareShot.start && e.to === 0);
   const codaOut = stareShot && fades.find((e) => e.to === 1 && e.end === stareShot.start);
   const title = stareShot && (plan.text || []).find((x) => x.id === 'end-title' && x.start >= stareShot.start);

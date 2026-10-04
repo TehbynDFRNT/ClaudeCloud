@@ -13,5 +13,6 @@ import nova from './nova.js';
 import voidScene from './void.js';
 import earthsky from './earthsky.js';
 import statue from './statue.js';
+import signoff from './signoff.js';
 
-export const scenes = Object.fromEntries([redgiant, whitedwarf, binary, studies, vortex, atoms, plasma, nova, voidScene, earthsky, statue].map((s) => [s.id, s]));
+export const scenes = Object.fromEntries([redgiant, whitedwarf, binary, studies, vortex, atoms, plasma, nova, voidScene, earthsky, statue, signoff].map((s) => [s.id, s]));

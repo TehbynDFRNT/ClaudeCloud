@@ -4,7 +4,7 @@
  "title": "Sol Invictus — the unconquered sun",
  "version": 4,
  "fps": "24/1",
- "frames": 3953,
+ "frames": 4025,
  "width": 1080,
  "height": 1920,
  "backend": "webgl2-canvas (headless Chromium, SwiftShader)",
@@ -898,6 +898,15 @@
    },
    "end": 3953,
    "preset": "M05"
+  },
+  {
+   "id": "S32-signoff",
+   "start": 3953,
+   "scene": "signoff",
+   "purpose": "The director signs off",
+   "action": "On black, Tehbyn Nova's signature writes itself (the vector from tehbyn.com); TEHBYN NOVA, SEE MORE, nova.tehbyn.com beneath",
+   "framing": "Centred on black",
+   "end": 4025
   }
  ],
  "overlays": [
@@ -936,7 +945,7 @@
    "id": "score-synth",
    "generated": true,
    "timelineStart": 0,
-   "timelineEnd": 3953,
+   "timelineEnd": 4025,
    "sourceInSeconds": 0,
    "playbackRate": 1,
    "note": "80s synth pulse, the climax in the dark (pressure wave, Doppler roar), the night of the coda (src/audio/score.js); cannon samples processed for distance"
@@ -1715,6 +1724,13 @@
    "to": 1
   },
   {
+   "type": "fade",
+   "start": 4013,
+   "end": 4025,
+   "from": 0,
+   "to": 1
+  },
+  {
    "type": "dip",
    "frame": 2317,
    "amount": 0.35,
@@ -1946,6 +1962,47 @@
    "fadeIn": 30,
    "fadeOut": 28,
    "minFrames": 60
+  },
+  {
+   "id": "signoff-name",
+   "start": 3979,
+   "end": 4024,
+   "content": "Tehbyn Nova",
+   "style": "line",
+   "font": "cinzel",
+   "size": 46,
+   "y": 0.505,
+   "fadeIn": 14,
+   "fadeOut": 10,
+   "minFrames": 40
+  },
+  {
+   "id": "signoff-more",
+   "start": 3987,
+   "end": 4024,
+   "content": "See more",
+   "style": "line",
+   "font": "cinzel",
+   "size": 24,
+   "spacing": 0.42,
+   "color": "rgba(236,204,148,1)",
+   "y": 0.585,
+   "fadeIn": 14,
+   "fadeOut": 10,
+   "minFrames": 36
+  },
+  {
+   "id": "signoff-url",
+   "start": 3991,
+   "end": 4024,
+   "content": "nova.tehbyn.com",
+   "style": "line",
+   "font": "cormorant",
+   "size": 44,
+   "y": 0.628,
+   "fadeIn": 14,
+   "fadeOut": 10,
+   "minFrames": 32
   }
  ],
  "assets": [
