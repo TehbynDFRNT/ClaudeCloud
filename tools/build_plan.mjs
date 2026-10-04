@@ -33,7 +33,9 @@ const OUT_DIR = process.env.PLAN_OUT || '.';     // PLAN_OUT=out/plan-test to dr
 const VERSION = +(process.env.PLAN_VERSION || '4');   // 4 is the version in progress; 3 and 2 rebuild the delivered cuts
 const V3 = VERSION >= 3;
 const V4 = VERSION >= 4;
-const STATUE_LOCK = V4 ? { preset: 'M05', params: { drift: 0, height: 3.6 }, except: ['M06'], height: { david: 2.5, sol: 3.6, prometheus: 3.6 } } : null;
+const STATUE_LOCK = V4 ? { preset: 'M05', params: { drift: 0, height: 3.6 }, except: ['M06'], height: { david: 2.5, sol: 3.6, prometheus: 3.6 },
+  // David's curls overhang his face: under the M05 top light it drowns, so he keeps the M03 key (lower, from the right)
+  key: { david: [25, 50, 1.3] } } : null;
 const STARE4 = { rot: 72 };   // v4 final stare: the turn settles into the lens over its first 3 s, then the title
 
 // ---- audio placements (frames) -------------------------------------------------------------
@@ -371,7 +373,7 @@ for (const [cut, C] of Object.entries(CUTS)) {
     const o = { ...s };
     if (C.presets[s.id]) o.preset = C.presets[s.id];
     if (C.purposes[s.id]) o.purpose = C.purposes[s.id];
-    if (o.scene === 'statue') o.params = { ...o.params, figure: C.figure, ...(locked(o.id) ? { height: STATUE_LOCK.height[C.figure] } : {}) };
+    if (o.scene === 'statue') o.params = { ...o.params, figure: C.figure, ...(locked(o.id) ? { height: STATUE_LOCK.height[C.figure], ...(STATUE_LOCK.key[C.figure] ? { key: STATUE_LOCK.key[C.figure] } : {}) } : {}) };
     return o;
   });
   const plan = {
