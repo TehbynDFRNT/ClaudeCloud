@@ -6,7 +6,6 @@
 // shot runs ~0.79 s, so the first frame must already read and the bold strokes draw themselves inside it.
 import { Drawing, PX, TAU, arcPts, linePts, hatch, resample, spline } from './studies-ink.js';
 import { circleStroke, dot, scriptBlock } from './studies-drawings.js';
-import { inkFist } from './studies-hand.js';
 import { braid, knot, pebble, pouch } from './studies-sling.js';
 
 // ---- shared geometry ------------------------------------------------------------------------------
@@ -104,9 +103,8 @@ function timedStroke(D, pts, occ, o) {
 }
 
 // ==== F29.1 (David cut): the sling ===================================================================
-// The slinger's fist at the centre of a compass circle, the forearm leaving down to the right; one cord runs
-// from the fist and forks only at its end into two strings knotted to the tips of a leather pouch wrapped round
-// the stone. Faint ghosts of the sling earlier in its turn (the same shape)
+// No hand: the sling's finger loop at the centre of a compass circle; two plaited cords run from the loop to the
+// tips of a leather pouch wrapped round the stone. Faint ghosts of the sling earlier in its turn (the same shape)
 // fade back round the circle; during the cut the whirl is swept clockwise (arrows), and at the release point
 // the stone leaves along the tangent (ruled) while its real path bends into a parabola.
 export function sling() {
@@ -122,12 +120,21 @@ export function sling() {
   const pw = 0.062, stR = 0.036, bow = 0.008;                       // pouch half-length, the stone, cord bow
   const tipIn = 0.002;                                               // the tips (all but) beside the stone's centre
 
-  // ---- the fist (as S10's, in ink), the cords leaving its top toward the pouch; the forearm runs down-right
+  // ---- no hand (the director's note): at the centre of the turn, the sling's finger loop, a ring of plaited cord
+  // the slinger's finger goes through, its tied-off end laid back along the cords
   D.at(-14);
-  const CMf = 0.0225, THf = Math.atan2(rad[1], rad[0]) + Math.PI / 2;  // canonical 'up' points along the cords
-  const cf = Math.cos(THf), sf = Math.sin(THf);
-  const Of = [C[0] - 2.5 * sf * CMf, C[1] + 2.5 * cf * CMf];        // so canonical (0, -2.5) lands on C
-  const F = inkFist(D, { O: Of, CM: CMf, TH: THf, armTo: 17, wk: 1.15 });
+  const loopR = 0.013;
+  D.stroke(arcPts(C[0], C[1], loopR, 0, TAU, { step: 1.2 * PX, wob: 0.3 * PX, seed: 17 }), { w: 3.0, d: 0.9, speed: 0.5, taper: [4, 4], press: 0.3 });
+  D.stroke(arcPts(C[0], C[1], loopR * 0.66, 0.4, 0.4 + TAU * 0.82, { step: 1.2 * PX }), { w: 1.3, d: 0.55, speed: 0.6, taper: [8, 8] });
+  for (let i = 0; i < 9; i++) {   // the plait round the loop: short slanted ticks
+    const a = (i / 9) * TAU + 0.2, r0 = loopR * 0.8, r1 = loopR * 1.2, da = 0.22;
+    D.stroke([[C[0] + Math.cos(a) * r0, C[1] + Math.sin(a) * r0], [C[0] + Math.cos(a + da) * r1, C[1] + Math.sin(a + da) * r1]], { w: 1.1, d: 0.5, speed: 1.6, taper: [3, 3] });
+  }
+  const back = [Math.cos(thR + Math.PI), Math.sin(thR + Math.PI)];     // the tied-off end, away from the pouch
+  const tl0 = add(C, back, loopR * 1.05), tl1 = add(C, back, loopR * 2.9);
+  D.stroke(linePts(tl0[0], tl0[1], tl1[0], tl1[1]), { w: 2.0, d: 0.75, speed: 0.6, taper: [3, 14] });
+  dot(D, tl1[0], tl1[1], 2.2, { d: 0.6, wet: false });
+  const F = { sil: poly(arcPts(C[0], C[1], loopR * 0.95, 0, TAU, { step: 2 * PX })) };
   D.fitTo(0, -14, -0.6);
 
   // ---- written and constructed before the cut: stylus circle, ghosts of the sling, notes

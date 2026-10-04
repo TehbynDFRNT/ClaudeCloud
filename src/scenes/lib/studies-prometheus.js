@@ -1,4 +1,6 @@
-// S10 Prometheus: a red-chalk study of a fist carrying fire in a fennel stalk (scene 'studies').
+// S10 Prometheus: a red-chalk study of the stolen fire carried in a fennel stalk (scene 'studies').
+// No hand (the director: "just do no hands"): HAND = false draws the stalk alone, ember in its pith, flame rising;
+// the fist below is kept in the code (HAND = true restores it).
 // The fist is designed in a canonical frame (cm, y down) seen from the front: the stalk runs vertically
 // through it at x = 0; the four middle phalanges wrap across the front of the stalk as a stack of short,
 // unequal segments with their PIP knuckles on the right and the fingertips tucked under the thenar on the
@@ -102,7 +104,8 @@ export function prometheus(o = {}) {
   const toPage = (P) => poly(P.map(([x, y]) => T(x, y)));
   const fingerP = fingerC.map(toPage), thumbP = toPage(thumbC), thenarP = toPage(thenarC), nailP = toPage(nailC);
   const stalkP = poly([[-rStalk(yTop), yTop], [rStalk(yTop), yTop], [rStalk(yBot), yBot], [-rStalk(yBot), yBot]].map(([x, y]) => T(x, y)));
-  const handFront = [thumbP, thenarP, ...fingerP];
+  const HAND = false;
+  const handFront = HAND ? [thumbP, thenarP, ...fingerP] : [];
 
   const contour = (ctrl, o = {}, occ = []) => {
     const pts = TP(o.raw ? ctrl : sp(ctrl));
@@ -185,6 +188,7 @@ export function prometheus(o = {}) {
   contour(arcPts(0, yTop, rt, 0, TAU, { ry: rt * 0.38, step: 0.08 }), { w: 1.9, d: 0.62, taper: [4, 4], raw: true });
   contour(arcPts(0, yTop + 0.05, rt * 0.55, 0, TAU, { ry: rt * 0.2, step: 0.06 }), { w: 1.5, d: 0.7, taper: [3, 3], raw: true });
 
+  if (HAND) {
   // ---------------- forearm and the heel of the hand (behind the stalk) ----------------
   contour(armL, { w: 2.0, d: 0.52, search: true, taper: [10, 120], broken: 2.5 }, [stalkP, thenarP]);
   contour([...hypo, ...armR.slice(1)], { w: 2.6, d: 0.66, search: true, taper: [10, 140] }, [stalkP, ...fingerP]);
@@ -264,11 +268,12 @@ export function prometheus(o = {}) {
     if (u < 0 || u > 1) return 0;
     return (sm(0.4, 0.95, u) * 0.85 * (1 - 0.5 * sm(0.9, 1.0, u)) + Math.exp(-(y - 5.3) / 0.9) * 0.6) * sm(14, 7.5, y);
   }, [stalkP, thenarP, ...fingerP], [-8.5, 5.0, 2.0, 15], { sp: 5.2, maxLen: 90, thr: [0.25, 0.8], d: 0.4, shortenA: 0.15, shortenB: 0.2 });
+  }
   // the stalk: right side in shade with reflected light at the very edge; the fist's shadow below it
   shadeIn((x, y) => {
     const r = rStalk(y), u = x / r;
     if (Math.abs(u) > 1 || y < yTop + 0.3) return 0;
-    return Math.min(1, sm(-0.1, 0.55, u) * (1 - 0.5 * sm(0.8, 1.0, u)) + (y > 4.2 ? Math.exp(-(y - 4.3) / 1.1) * 0.8 : 0)) * sm(13, 6, y);
+    return Math.min(1, sm(-0.1, 0.55, u) * (1 - 0.5 * sm(0.8, 1.0, u)) + (HAND && y > 4.2 ? Math.exp(-(y - 4.3) / 1.1) * 0.8 : 0)) * sm(13, 6, y);
   }, handFront, [-1.5, yTop, 1.6, yBot], { sp: 4.4, maxLen: 70, thr: [0.2, 0.9], angle: -Math.PI / 2 + TH, d: 0.42, bow: 0.008 });
 
   // ---------------- mirror script (written before the cut) and the theft diagram ----------------
