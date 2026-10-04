@@ -22,6 +22,11 @@ plan's current piece names (block size from film.config.json, else 240; --block 
 obsolete. With --plan or --want and no --dirs, only the dist/<plan.id>/ folders they cover are restored.
 --any-layout restores everything (the old behaviour).
 
+--fetch: git refspecs take at most one '*' and no '?' or '[...]', so a glob like 'claude/film-hd[0-9]*' cannot be
+fetched as a refspec. Such globs are matched (fnmatch) against `git ls-remote --heads` and the hits fetched by exact
+name; plain globs go to git as refspecs. A fetch that still fails after 3 tries is an error (exit 1): it used to be a
+warning, and a collector then restored nothing, every loop, while all the helper branches sat on origin.
+
 Examples:
     node tools/chunk.mjs status --plan film-plan.json --json > out/want.json
     restore-from-branches.py --branches 'claude/my-film-*' --fetch --want out/want.json --dry-run
@@ -39,6 +44,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 
 PIECE = re.compile(r'^(chunk_\d{5}_\d{5})\.(\d{5})_(\d{5})\.mp4$')
 RECORD = re.compile(r'^(chunk_\d{5}_\d{5})\.json$')
@@ -49,6 +55,40 @@ def git(*args, binary=False, check=True):
     if check and r.returncode != 0:
         raise RuntimeError(f"git {' '.join(args)}: {(r.stderr if not binary else r.stderr.decode())[-300:]}")
     return r.stdout
+
+
+def refspec_safe(pattern):
+    """True when git accepts refs/heads/<pattern> as a refspec pattern (at most one '*'; no '?', '[', ']', ...)."""
+    return subprocess.run(['git', 'check-ref-format', '--refspec-pattern', f'refs/heads/{pattern}'],
+                          capture_output=True).returncode == 0
+
+
+def fetch_branches(patterns, remote, tries=3):
+    """Fetch every remote branch matching the patterns, or raise. A pattern git takes as a refspec is passed as one;
+    any other glob ('hd[0-9]*', 'h?', two '*') is matched with fnmatch against `git ls-remote --heads` and the hits
+    are fetched by exact name. Not the glob's prefix plus '*': that also pulls unrelated branches sharing the prefix
+    (Nova's 'film-hd*' would have pulled the multi-GB hd-downloads branch of 95 MB parts)."""
+    specs, glob_only = [], []
+    for p in patterns:
+        (specs.append(f'+refs/heads/{p}:refs/remotes/{remote}/{p}') if refspec_safe(p) else glob_only.append(p))
+    if glob_only:
+        heads = [l.split('\t', 1)[1][len('refs/heads/'):] for l in git('ls-remote', '--heads', remote).splitlines() if '\t' in l]
+        for p in glob_only:
+            hits = [h for h in heads if fnmatch.fnmatchcase(h, p)]
+            if not hits:
+                print(f'warning: no branch on {remote} matches {p!r} (yet)', file=sys.stderr)
+            specs += [f'+refs/heads/{h}:refs/remotes/{remote}/{h}' for h in hits]
+    if not specs:
+        return
+    for k in range(tries):
+        r = subprocess.run(['git', 'fetch', '-q', remote, *specs], capture_output=True, text=True)
+        if r.returncode == 0:
+            return
+        if k + 1 < tries:
+            time.sleep(2 ** (k + 1))
+    # an error, not a warning: a restore that silently fetched nothing reports 'restored 0' forever (Nova's 4K
+    # finisher sat at 2/56 blocks while all 14 helper branches were on origin)
+    raise RuntimeError(f'fetch from {remote} failed after {tries} tries: {r.stderr.strip()[-300:]}')
 
 
 def remote_refs(patterns, remote):
@@ -66,7 +106,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--branches', required=True, help="comma-separated branch names or globs (without the remote), e.g. 'claude/film-r*'")
     ap.add_argument('--remote', default='origin')
-    ap.add_argument('--fetch', action='store_true', help='fetch the matching branches first (one refspec per glob)')
+    ap.add_argument('--fetch', action='store_true', help='fetch the matching branches first (a glob git rejects as a '
+                    "refspec, such as 'r[0-9]*', is resolved with ls-remote; a failed fetch is an error, exit 1)")
     ap.add_argument('--dirs', default='', help='comma-separated dist/<cut> folders to restore (default: every dist/*/ found)')
     ap.add_argument('--dist', default='dist', help='the dist folder inside the repo (default dist)')
     ap.add_argument('--want', default='', help='status --json file(s) of chunk.mjs: prefer the candidates with the wanted fp')
@@ -85,11 +126,7 @@ def main():
     dest = os.path.abspath(a.dest) if a.dest else root
     patterns = [p.strip() for p in a.branches.split(',') if p.strip()]
     if a.fetch:
-        for p in patterns:
-            spec = f'+refs/heads/{p}:refs/remotes/{a.remote}/{p}'
-            r = subprocess.run(['git', 'fetch', '-q', a.remote, spec], capture_output=True, text=True)
-            if r.returncode != 0:
-                print(f'warning: fetch {p}: {r.stderr.strip()[-200:]}', file=sys.stderr)
+        fetch_branches(patterns, a.remote)
     branches = remote_refs(patterns, a.remote)
     dirs = {d.strip().rstrip('/') for d in a.dirs.split(',') if d.strip()}
 
