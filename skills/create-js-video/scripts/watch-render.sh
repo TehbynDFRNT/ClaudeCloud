@@ -6,6 +6,10 @@
 #   watch-render.sh --branches 'claude/my-film-r*' --plan film-plan.json [--dirs dist/my-film-v2]
 #                   [--status 'node tools/chunk.mjs status --plan film-plan.json'] [--interval 60] [--max-minutes 28]
 #
+# --plan also goes to the restore, which then takes only pieces of that plan's current block grid from the branches
+# (pass the plan the --status command reads). Copy this file and restore-from-branches.py into the film repo's
+# tools/ together, and commit both: this script runs the restore from its own folder.
+#
 # Exit codes and last lines (match ALL of them in a Monitor filter, not just success):
 #   0  DONE <summary>                    nothing missing or stale
 #   1  FAIL <reason>                     restore or status failed (the reason is printed)
@@ -26,7 +30,7 @@ while [ $# -gt 0 ]; do
     --interval) interval="$2"; shift 2 ;;
     --max-minutes) maxmin="$2"; shift 2 ;;
     --no-want) want=0; shift ;;
-    -h|--help) sed -n '2,16p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
     *) echo "FAIL unknown argument $1"; exit 1 ;;
   esac
 done
@@ -42,7 +46,7 @@ while true; do
      && python3 -c 'import json,sys; json.load(open(sys.argv[1]))["blocks"]' "$tmp/want.json" 2> /dev/null; then
     wantarg=(--want "$tmp/want.json")   # a status tool without --json support is simply not used for this
   fi
-  if ! python3 "$HERE/restore-from-branches.py" --branches "$branches" --fetch ${dirs:+--dirs "$dirs"} ${wantarg[@]+"${wantarg[@]}"} > "$tmp/restore.log" 2>&1; then
+  if ! python3 "$HERE/restore-from-branches.py" --branches "$branches" --fetch --plan "$plan" ${dirs:+--dirs "$dirs"} ${wantarg[@]+"${wantarg[@]}"} > "$tmp/restore.log" 2>&1; then
     echo "FAIL restore: $(tail -2 "$tmp/restore.log" | tr '\n' ' ')"; exit 1
   fi
   if ! $status > "$tmp/status.txt" 2>&1; then

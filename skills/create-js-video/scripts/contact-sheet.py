@@ -8,10 +8,15 @@ Pick the frames one of these ways:
     --count 24                   N frames evenly spread over the film
     --plan film-plan.json        one frame per shot (--at mid|start|end), or --at cuts: the last frame of each shot
                                  and the first of the next (checks every cut boundary)
+--shots narrows --plan to some shots: exact ids or prefixes ('S10' matches 'S10-prometheus'); an id that matches no
+shot is an error, so an audit never skips a shot quietly.
+--before OTHER.mp4 makes a before/after sheet: each frame appears twice, side by side, the other file's still first
+(labelled 'before') and this file's second ('after'); --cols counts stills, so keep it even.
 Examples:
     contact-sheet.py dist/film-v4.mp4 --plan film-plan.json --out out/sheets/shots.jpg
     contact-sheet.py dist/film-v4.mp4 --frames 2140,2141,2142,2143,2144 --width 360 --cols 5   # a motion strip
     contact-sheet.py dist/film-v4.mp4 --plan film-plan.json --at cuts --shots F30.3,S29a-ring --out out/sheets/cuts.jpg
+    contact-sheet.py dist/film-v5.mp4 --before dist/film-v4.mp4 --frames 2030,2040,2144 --cols 6 --out out/sheets/n1.jpg
 
 Requires only ffmpeg/ffprobe (a DejaVu or fc-match font for labels; without one the stills are unlabelled).
 Each still is decoded by an accurate seek, so the label is the frame you see.
@@ -53,7 +58,8 @@ def main():
     ap.add_argument('--to', type=int)
     ap.add_argument('--plan')
     ap.add_argument('--at', choices=['mid', 'start', 'end', 'cuts'], default='mid')
-    ap.add_argument('--shots', help='with --plan: only these shot ids (comma-separated)')
+    ap.add_argument('--shots', help='with --plan: only these shots (comma-separated ids or id prefixes)')
+    ap.add_argument('--before', help='another encode of the same film: before/after pairs, side by side')
     ap.add_argument('--cols', type=int, default=6)
     ap.add_argument('--width', type=int, default=270, help='width of each still in pixels')
     ap.add_argument('--quality', type=int, default=3, help='JPEG qscale, 2 (best) to 31')
@@ -71,7 +77,15 @@ def main():
     elif a.plan:
         plan = json.load(open(a.plan))
         shots = sorted(plan['shots'], key=lambda s: s['start'])
-        want = set(a.shots.split(',')) if a.shots else None
+        want = None
+        if a.shots:
+            asked = [x.strip() for x in a.shots.split(',') if x.strip()]
+            match = lambda w, sid: sid.startswith(w)   # an exact id is its own prefix
+            missing = [w for w in asked if not any(match(w, s['id']) for s in shots)]
+            if missing:
+                raise SystemExit(f"--shots: no shot in {a.plan} matches {', '.join(missing)} (ids: "
+                                 f"{', '.join(s['id'] for s in shots[:40])}{' ...' if len(shots) > 40 else ''})")
+            want = {s['id'] for s in shots if any(match(w, s['id']) for w in asked)}
         frames = []
         for i, s in enumerate(shots):
             if want and s['id'] not in want:
@@ -93,24 +107,25 @@ def main():
     if not frames:
         raise SystemExit('no frames selected')
     fnt = font()
+    stills = [x for f in frames for x in ([(a.before, f, 'before'), (a.video, f, 'after')] if a.before else [(a.video, f, '')])]
     tmp = tempfile.mkdtemp(prefix='sheet-')
     try:
-        for k, f in enumerate(frames):
+        for k, (src, f, tag) in enumerate(stills):
             t = max(0.0, (f - 0.25) / float(fps))          # accurate seek: the first frame at or after t is frame f
             sec = f / float(fps)
             tc = f"{int(sec // 60):02d}:{int(sec % 60):02d}:{int(round(f % float(fps))):02d}"
-            label = f"{f}  {tc}" + (f"  {labels[f]}" if f in labels else '')
+            label = f"{f}  {tc}" + (f"  {labels[f]}" if f in labels else '') + (f"  {tag}" if tag else '')
             lf = os.path.join(tmp, f'l{k:04d}.txt')
             open(lf, 'w').write(label)
             vf = f"scale={a.width}:-2:flags=lanczos,pad=iw:ih+22:0:0:color=0x111111"
             if fnt:
                 vf += f",drawtext=fontfile={fnt}:textfile={lf}:x=6:y=h-17:fontsize=13:fontcolor=0xdddddd"
-            r = subprocess.run(['ffmpeg', '-v', 'error', '-y', '-ss', f'{t:.6f}', '-i', a.video, '-frames:v', '1', '-vf', vf,
+            r = subprocess.run(['ffmpeg', '-v', 'error', '-y', '-ss', f'{t:.6f}', '-i', src, '-frames:v', '1', '-vf', vf,
                                 os.path.join(tmp, f's{k:04d}.png')], capture_output=True, text=True)
             if r.returncode:
-                raise SystemExit(f'frame {f}: {r.stderr.strip()[-200:]}')
-        cols = min(a.cols, len(frames))
-        rows = -(-len(frames) // cols)
+                raise SystemExit(f'frame {f} of {src}: {r.stderr.strip()[-200:]}')
+        cols = min(a.cols, len(stills))
+        rows = -(-len(stills) // cols)
         os.makedirs(os.path.dirname(os.path.abspath(a.out)) or '.', exist_ok=True)
         r = subprocess.run(['ffmpeg', '-v', 'error', '-y', '-framerate', '1', '-i', os.path.join(tmp, 's%04d.png'),
                             '-vf', f'tile={cols}x{rows}:padding=4:margin=4:color=0x111111', '-frames:v', '1', '-q:v', str(a.quality), a.out],
@@ -119,7 +134,7 @@ def main():
             raise SystemExit(r.stderr.strip()[-300:])
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
-    print(f'wrote {a.out}: {len(frames)} frames, {cols}x{rows}')
+    print(f"wrote {a.out}: {len(frames)} frames{' x 2 (before, after)' if a.before else ''}, {cols}x{rows}")
     return 0
 
 

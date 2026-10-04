@@ -15,8 +15,13 @@ frames of final pieces cost nothing; with --only-scenes the other scenes' frames
 linear partition of the fixed block grid (--block, default 240) minimising the costliest helper.
 
 The prompt is written for a helper that only ever follows its first message: everything it needs is in it, it
-stops and reports instead of improvising, and it never edits code. Start each with create_session (source_url,
-source_revision = the full SHA, outcome_branch = <base>-<tag>, the prompt), then watch with watch-render.sh.
+stops and reports instead of improvising, and it never edits code. Ranges run 25-30 minutes, longer than a
+foreground command may run (10 minutes), so the prompt starts the render with nohup in the background, has the
+helper poll the log, says that its own tool timeouts are not failures, and re-runs the same command (which resumes)
+until status shows the range final. Start each with create_session (source_url, source_revision = the full SHA,
+outcome_branch = <base>-<tag>, the prompt), then watch with watch-render.sh. Leave create_session's permission_mode
+out so the helper inherits yours (it can't be more permissive); never 'plan', which blocks on an approval nobody
+gives. --permission-mode adds one to the arguments when you need it.
 
 Lessons built in ("Nova, Episode 1", ClaudeCloud, Oct 2026): short SHAs fail (ref_not_found), so the full SHA is
 resolved here and must already be on the remote; a helper cannot be redirected (start a new one, interrupt and
@@ -34,12 +39,14 @@ PROMPT = """You are render helper {tag} for "{title}" ({plan_file}, plan id {pla
 
 1. Put the repository on the exact commit: `git fetch origin {sha}` (an error that it is already present is fine), then `git checkout -B {branch} {sha}`. Run `git rev-parse HEAD`: it must print {sha}. If not, stop and report.
 2. If `node_modules` is missing, run `npm ci` (or `npm install` when there is no lockfile).
-3. Run, from the repository root:
-   {cmd}
-   It renders frames {start}-{end} ({minutes} min estimated{scene_note}), encodes each 10 s block's pieces, commits them with `git add -f` (dist/ is git-ignored) and pushes them to {branch}. Let it run to the end; it resumes where it stopped if you run the same command again.
-4. Then run `{status_cmd}` and reply with the lines for blocks {start}-{end} and the summary line.
+3. Start the render IN THE BACKGROUND. It needs about {minutes} min, longer than one foreground command may run (a foreground command is cut off after 10 minutes). From the repository root:
+   `mkdir -p out && nohup sh -c '{cmd}; echo "RENDER exit=$?"' > {log} 2>&1 &`
+   It renders frames {start}-{end}{scene_note}, encodes each 10 s block's pieces, commits them with `git add -f` (dist/ is git-ignored) and pushes them to {branch}.
+4. Wait for it: every 3-5 minutes run `tail -n 3 {log}` (or watch {log} with the Monitor tool). A tool call that times out is NOT a failure: the render keeps running in the background, so check the log again. The run is over when the log's last line is `RENDER exit=<n>`.
+5. Run `{status_cmd}`. {done_rule} Otherwise run the command of step 3 again (it resumes where it stopped and skips finished pieces), wait as in step 4 and check again: at most 3 runs in all.
+6. Reply with the status lines for blocks {start}-{end} and the summary line.
 
-Rules: do not edit, create or delete any tracked file; do not merge, rebase or push to any other branch; do not change the command. If a command fails, run it once more; if it fails again, reply with the exact error text (the last 20 lines) and stop. Keep every reply to a few short lines."""
+Rules: do not edit, create or delete any tracked file; do not merge, rebase or push to any other branch; do not change the command. A timeout of your own tool call is not a failure. If two runs end with `RENDER exit=` other than 0, reply with the last 20 lines of {log} and stop. Keep every reply to a few short lines."""
 
 
 def git(*args):
@@ -77,8 +84,13 @@ def main():
     ap.add_argument('--reuse-branches', action='store_true', help='allow outcome branches that already exist on the remote')
     ap.add_argument('--cmd', default='node tools/chunk.mjs render --plan {plan} --from {start} --to {end}{scenes} --push')
     ap.add_argument('--status-cmd', default='node tools/chunk.mjs status --plan {plan}')
+    ap.add_argument('--permission-mode', help="create_session permission_mode (default: omitted, so the helper inherits yours); never 'plan'")
     ap.add_argument('--json', action='store_true', help='print create_session arguments as JSON')
     a = ap.parse_args()
+    if a.permission_mode == 'plan':
+        raise SystemExit("--permission-mode plan would make every helper wait for an approval nobody gives")
+    if "'" in a.cmd:
+        raise SystemExit("--cmd must not contain single quotes (the prompt wraps it in sh -c '...')")
 
     plan = json.load(open(a.plan))
     frames = plan['frames']
@@ -169,12 +181,17 @@ def main():
         branch = f'{base}-{tag}'
         scenes = f" --only-scenes {','.join(sorted(only))}" if only else ''
         cmd = a.cmd.format(plan=a.plan, start=s, end=e, scenes=scenes)
+        done_rule = (f"If no {', '.join(sorted(only))} piece in blocks {s}-{e} is listed as missing or stale, go to step 6."
+                     if only else f"If every block from {s} to {e} is `final`, go to step 6.")
         prompt = PROMPT.format(tag=tag, title=plan.get('title', plan.get('id', 'the film')), plan_file=a.plan, plan_id=plan.get('id'),
                                sha=sha, branch=branch, cmd=cmd, start=s, end=e, minutes=round(cost / 60000, 1),
-                               scene_note=f", {', '.join(sorted(only))} only" if only else '', status_cmd=a.status_cmd.format(plan=a.plan))
-        helpers.append({'tag': tag, 'range': [s, e], 'estMinutes': round(cost / 60000, 1),
-                        'create_session': {'title': f'Render {tag}: {plan.get("id", "film")} {s}-{e}', 'source_url': repo,
-                                           'source_revision': sha, 'outcome_branch': branch, 'prompt': prompt}})
+                               scene_note=f" ({', '.join(sorted(only))} only)" if only else '', status_cmd=a.status_cmd.format(plan=a.plan),
+                               log=f'out/render-{tag}.log', done_rule=done_rule)
+        args = {'title': f'Render {tag}: {plan.get("id", "film")} {s}-{e}', 'source_url': repo,
+                'source_revision': sha, 'outcome_branch': branch, 'prompt': prompt}
+        if a.permission_mode:
+            args['permission_mode'] = a.permission_mode
+        helpers.append({'tag': tag, 'range': [s, e], 'estMinutes': round(cost / 60000, 1), 'create_session': args})
     if a.json:
         print(json.dumps({'sha': sha, 'plan': a.plan, 'helpers': helpers}, indent=1))
         return 0

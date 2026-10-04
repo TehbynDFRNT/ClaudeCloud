@@ -22,7 +22,10 @@
 // render --push: after each block that wrote pieces, `git add -A -f <cut dir>` (dist is usually git-ignored),
 // commit, and push HEAD to its namesake on origin (5 tries). On a helper session that is its own outcome branch.
 // A piece identical (same name, same fp) in ANY other <distDir>/*/ folder (another cut or version) is copied, not
-// rendered ("twin"). assemble refuses missing pieces, stale ones unless --allow-stale, and a silent soundtrack.
+// rendered ("twin"). assemble refuses missing pieces, stale ones unless --allow-stale, and a silent soundtrack, and it
+// fails when verify_video.py (shipped beside this file, with validate_plan.py) cannot be found or fails.
+// render covers a whole film only once every block is final: for a first smoke test use a short plan (one 240-frame
+// block) and a placeholder soundtrack (the skill's assets/starter/ has both).
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -32,12 +35,24 @@ import { makeFingerprinter } from './fingerprint.mjs';
 import { ROOT, config, rel } from './config.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const C = config();
 const argv = process.argv.slice(2);
 const mode = argv[0];
 const opt = (k, d) => { const i = argv.indexOf('--' + k); return i >= 0 ? argv[i + 1] : d; };
 const flag = (k) => argv.includes('--' + k);
+const MODES = ['costs', 'plan', 'status', 'render', 'assemble'];
+if (!MODES.includes(mode) || flag('help') || argv.includes('-h')) {
+  // usage first: never read a plan just to print help
+  const usage = fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').filter((l) => l.startsWith('//   node ')).map((l) => l.slice(5));
+  const asked = flag('help') || argv.includes('-h');
+  (asked ? console.log : console.error)(`${asked ? '' : mode ? `unknown mode '${mode}'\n` : 'no mode given\n'}${usage.join('\n')}`);
+  process.exit(asked ? 0 : 1);
+}
+const C = config();
 const PLAN = opt('plan', 'film-plan.json');
+if (!fs.existsSync(path.resolve(ROOT, PLAN))) {
+  console.error(`no plan at ${path.resolve(ROOT, PLAN)}: run inside the film's repository (root ${ROOT}) or pass --plan`);
+  process.exit(1);
+}
 const plan = JSON.parse(fs.readFileSync(path.resolve(ROOT, PLAN), 'utf8'));
 const pad = (n) => String(n).padStart(5, '0');
 const PREVIEW = flag('preview');
@@ -99,7 +114,13 @@ if (mode === 'costs') {
   const frames = plan.shots.map((s) => Math.round((s.start + s.end - 1) / 2));
   const r = spawnSync('node', [path.join(HERE, 'render.mjs'), 'stills', '--plan', PLAN, '--frames', frames.join(','), '--w', String(plan.width), '--h', String(plan.height), '--out', 'out/costs'], { cwd: ROOT, encoding: 'utf8' });
   const costs = {};
-  for (const line of (r.stdout || '').split('\n')) { const m = /^f(\d+) (\S+) \(\S+\) (\d+)ms/.exec(line); if (m) costs[m[2]] = +m[3]; }
+  for (const line of (r.stdout || '').split('\n')) { const m = /^f(\d+) (\S+) \(\S+\) (\d+(?:\.\d+)?)ms/.exec(line); if (m) costs[m[2]] = Math.round(+m[3]); }
+  if (r.status !== 0 || !Object.keys(costs).length) {
+    // an empty costs.json would silently balance helpers by the 1500 ms default
+    console.error((r.stderr || '').split('\n').slice(-15).join('\n'));
+    console.error(r.status !== 0 ? `render.mjs stills failed (${r.status})` : 'no timings parsed: renderFrame must return { ms } as a number (render.mjs prints "f<n> <shot> (<scene>) <ms>ms")');
+    process.exit(1);
+  }
   fs.mkdirSync(path.join(ROOT, 'out'), { recursive: true });
   fs.writeFileSync(path.join(ROOT, 'out/costs.json'), JSON.stringify(costs, null, 1));
   console.log(costs);
@@ -118,7 +139,7 @@ if (mode === 'costs') {
   const total = per.reduce((a, b) => a + b, 0);
   // linear partition of the blocks into at most `parts` contiguous groups minimising the costliest group
   // (binary search on the capacity + greedy fill); the original split at cumulative thirds and snapped, which
-  // could leave one helper with twice another's work
+  // could leave one helper with nearly twice another's work
   const bl = blocks(), bc = bl.map(([a, b]) => { let s = 0; for (let f = a; f < b; f++) s += per[f]; return s; });
   const groupsFor = (cap) => { const g = []; let cur = [], s = 0; bc.forEach((c, i) => { if (cur.length && s + c > cap) { g.push(cur); cur = []; s = 0; } cur.push(i); s += c; }); if (cur.length) g.push(cur); return g; };
   let lo = Math.max(...bc), hi = Math.max(lo, bc.reduce((a, b) => a + b, 0));
@@ -255,13 +276,15 @@ if (mode === 'costs') {
   if (!mean || +mean[1] < -40) throw new Error(`${rel(out)}: soundtrack missing or silent (${mean ? mean[1] + ' dB' : 'no audio stream'})`);
   console.log(`soundtrack ok: mean ${mean[1]} dB`);
   console.log(`wrote ${rel(out)} (${(fs.statSync(out).size / 1e6).toFixed(1)} MB)`);
-  // structural verify (full decode, frame count, size, fps, codecs): the project's tools/verify_video.py, else the
-  // skill's scripts/verify_video.py. It does NOT measure loudness or true peak: run the audio --verify afterwards.
-  const verify = [path.join(ROOT, 'tools/verify_video.py'), path.resolve(HERE, '../verify_video.py')].find((p) => fs.existsSync(p));
+  // structural verify (full decode, frame count, size, fps, codecs): verify_video.py beside this file (it ships in the
+  // skill's scripts/pipeline/ and is copied into tools/ with it), else the project's tools/. It imports
+  // validate_plan.py from its own folder. It does NOT measure loudness or true peak: run the audio --verify afterwards.
+  const verify = [path.join(HERE, 'verify_video.py'), path.join(ROOT, 'tools/verify_video.py')].find((p) => fs.existsSync(p));
   if (PREVIEW) { /* previews are not verified */ }
   else if (verify) run('python3', [verify, out, '--plan', path.resolve(ROOT, PLAN), '--out', out.replace(/\.mp4$/, '.verify.json')], { cwd: path.dirname(verify) });
-  else console.warn('no verify_video.py found: run a full-decode check before delivering');
-} else {
-  console.error('modes: costs | plan | status | render | assemble');
-  process.exit(1);
+  else {
+    console.error(`${rel(out)} was written but NOT verified: no verify_video.py beside chunk.mjs or in tools/. Copy the skill's ` +
+      'scripts/pipeline/verify_video.py and validate_plan.py into tools/, then run: python3 tools/verify_video.py ' + rel(out) + ' --plan ' + PLAN);
+    process.exit(1);
+  }
 }

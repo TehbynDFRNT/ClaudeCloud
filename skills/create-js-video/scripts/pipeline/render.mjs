@@ -7,10 +7,14 @@
 //
 // Page contract (the page named by config.page, default src/index.html, opened as ?w=&h=&plan=[&warm]):
 //   window.__ready = true when fonts, plan, data and every scene's preload() are done (window.__error on failure)
-//   window.renderFrame(f) -> { f, shot, scene, ms }        draws frame f of the plan; must be a pure function of f
+//   window.renderFrame(f) -> { f, shot, scene, ms }        draws frame f of the plan; must be a pure function of f;
+//                                                           ms an integer (chunk.mjs costs parses "<ms>ms")
 //   window.grab(type, quality) -> base64 image of the canvas
 //   window.planInfo() -> { fps, frames, shots: [{ id, scene, start, end }] }
 //   window.renderSandbox(sceneId, params, local, dur, post, letterbox, presetId) -> { ms }   (optional, development)
+// Also: ?plan= is the plan's path relative to the REPOSITORY ROOT (a page in src/ fetches '../' + plan), and the
+// output canvas must be the first <canvas> in the document (sheet and strip copy document.querySelector('canvas')).
+// A minimal page that honours all of this: the skill's assets/starter/src/.
 //
 //   node render.mjs stills  --frames 0,120,500 [--w 960] [--out out/stills] [--fmt png]
 //   node render.mjs shot    <shotId> [--n 5]                     first..last frame of a plan shot -> out/shots/<id>/
@@ -26,7 +30,6 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
-import { chromium } from 'playwright-core';
 import { makeFingerprinter } from './fingerprint.mjs';
 import { ROOT, config, chromePath, rel } from './config.mjs';
 
@@ -35,8 +38,20 @@ const mode = argv[0];
 const positional = argv[1] && !argv[1].startsWith('--') ? argv[1] : null;
 const opt = (k, d) => { const i = argv.indexOf('--' + k); return i >= 0 ? argv[i + 1] : d; };
 const flag = (k) => argv.includes('--' + k);
+const MODES = ['stills', 'shot', 'sandbox', 'bench', 'strip', 'sheet', 'film'];
+if (!MODES.includes(mode) || flag('help') || argv.includes('-h')) {
+  // usage first: never read a plan just to print help
+  const usage = fs.readFileSync(new URL(import.meta.url), 'utf8').split('\n').filter((l) => /^\/\/ {3,5}(node |film keeps|each to)/.test(l)).map((l) => l.slice(5));
+  const asked = flag('help') || argv.includes('-h');
+  (asked ? console.log : console.error)(`${asked ? '' : mode ? `unknown mode '${mode}'\n` : 'no mode given\n'}${usage.join('\n')}`);
+  process.exit(asked ? 0 : 1);
+}
 
 const PLAN = opt('plan', 'film-plan.json');
+if (!fs.existsSync(path.resolve(ROOT, PLAN))) {
+  console.error(`no plan at ${path.resolve(ROOT, PLAN)}: run inside the film's repository (root ${ROOT}) or pass --plan`);
+  process.exit(1);
+}
 const planJson = JSON.parse(fs.readFileSync(path.resolve(ROOT, PLAN), 'utf8'));
 const W = +opt('w', mode === 'film' ? planJson.width : Math.round(planJson.width / 2));
 const H = +opt('h', Math.round(W * planJson.height / planJson.width));
@@ -58,6 +73,8 @@ function serve() {
 
 async function open() {
   const srv = await serve();
+  // loaded here, not at the top, so --help works where playwright-core is not installed (npm i -D playwright-core)
+  const { chromium } = await import('playwright-core');
   const browser = await chromium.launch({
     executablePath: chromePath(),
     args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--disable-gpu-sandbox', '--js-flags=--max-old-space-size=4096'],
@@ -191,8 +208,6 @@ async function main() {
         }
       }
       log.end();
-    } else {
-      throw new Error('unknown mode ' + mode + ' (stills | shot | sandbox | bench | strip | sheet | film)');
     }
     if (ctx.errors.length) console.error(`${ctx.errors.length} console errors/warnings`);
   } finally {

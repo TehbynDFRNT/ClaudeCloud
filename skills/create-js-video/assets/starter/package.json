@@ -1,0 +1,15 @@
+{
+  "name": "code-film",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "plan": "node tools/build_plan.mjs && python3 tools/validate_plan.py film-plan.json",
+    "stills": "node tools/render.mjs stills",
+    "status": "node tools/chunk.mjs status"
+  },
+  "devDependencies": {
+    "playwright-core": "1.56.1"
+  },
+  "engines": { "node": ">=18" }
+}

@@ -8,7 +8,8 @@
 // A fingerprint is sha1(JSON) truncated to 16 hex characters, over:
 //   engine  every file in config.engine (main.js, index.html, src/engine/*, fonts): one change invalidates EVERY frame
 //   grid    the config.globalInputs files (the bar grid): also global (the key name is kept for cache compatibility)
-//   global  the plan's fps, width, height, format, defaultPost (+ config.planFieldsInGlobal, if any)
+//   global  the plan's fps, width, height, format, defaultPost (+ config.planFieldsInGlobal, if any): keep prose
+//           (a format.note) out of these, or editing a sentence re-renders every frame
 //   W, H    the render size
 //   shot    the shot entry minus its descriptive fields (purpose, action, framing, note), so cuts can share frames
 //   scene   the scene module <scenesDir>/<scene>.js + every relative import/export-from it pulls in, recursively,

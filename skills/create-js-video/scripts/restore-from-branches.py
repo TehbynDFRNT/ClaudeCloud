@@ -15,9 +15,17 @@ render's picture. Choice, in order:
   2. otherwise the newest: the local piece unless a branch's tip commit is newer than the local file's mtime.
 Then run `chunk.mjs status` and require every block final: stale pieces mean a helper rendered under other sources.
 
+Pass --want or --plan (or both). Branches keep pieces of OLDER block layouts (a v3 block chunk_03840_03917 on a
+branch of a 4025-frame v4 film); without the current grid they would be restored, never cleaned (chunk.mjs render
+only cleans files under the current block names), and committed by the next `git add -A -f`. --plan computes each
+plan's current piece names (block size from film.config.json, else 240; --block overrides) and skips the rest as
+obsolete. With --plan or --want and no --dirs, only the dist/<plan.id>/ folders they cover are restored.
+--any-layout restores everything (the old behaviour).
+
 Examples:
-    restore-from-branches.py --branches 'claude/my-film-*' --fetch --dry-run
     node tools/chunk.mjs status --plan film-plan.json --json > out/want.json
+    restore-from-branches.py --branches 'claude/my-film-*' --fetch --want out/want.json --dry-run
+    restore-from-branches.py --branches 'claude/my-film-*' --fetch --plan film-plan.json,film-plan-sol.json
     restore-from-branches.py --branches 'claude/my-film-r*,claude/my-film-st*' --dirs dist/my-film-v2 --want out/want.json
 
 Provenance: generalised from the "Nova, Episode 1" project's ad-hoc restore.py (ClaudeCloud session scratchpad,
@@ -62,10 +70,16 @@ def main():
     ap.add_argument('--dirs', default='', help='comma-separated dist/<cut> folders to restore (default: every dist/*/ found)')
     ap.add_argument('--dist', default='dist', help='the dist folder inside the repo (default dist)')
     ap.add_argument('--want', default='', help='status --json file(s) of chunk.mjs: prefer the candidates with the wanted fp')
+    ap.add_argument('--plan', default='', help='plan file(s), comma-separated: restore only pieces of their current block grid')
+    ap.add_argument('--block', type=int, default=0, help='block size in frames (default: film.config.json "block", else 240)')
+    ap.add_argument('--any-layout', action='store_true', help='restore pieces of any block layout (no --want/--plan needed)')
     ap.add_argument('--dest', default='', help='write into this root instead of the repo (testing)')
     ap.add_argument('--dry-run', action='store_true')
     a = ap.parse_args()
 
+    if not (a.want or a.plan or a.any_layout):
+        raise SystemExit('pass --want (chunk.mjs status --json) or --plan, so pieces of older block layouts are not '
+                         'restored; --any-layout restores everything')
     root = git('rev-parse', '--show-toplevel').strip()
     os.chdir(root)
     dest = os.path.abspath(a.dest) if a.dest else root
@@ -85,6 +99,27 @@ def main():
         for b in st['blocks']:
             for p in b['pieces']:
                 want[f"{st['dir']}/{p['name']}"] = p['want']
+
+    # the current piece names of each --plan (the same split as chunk.mjs piecesOf: blocks of `block` frames from 0,
+    # cut at every shot start inside a block)
+    cfg_file = os.path.join(root, 'film.config.json')
+    cfg = json.load(open(cfg_file)) if os.path.exists(cfg_file) else {}
+    block = a.block or int(cfg.get('block', 240))
+    grid = {}
+    for pf in [x.strip() for x in a.plan.split(',') if x.strip()]:
+        plan = json.load(open(pf))
+        starts = sorted(s['start'] for s in plan['shots'])
+        names = set()
+        for b0 in range(0, plan['frames'], block):
+            b1, p0 = min(plan['frames'], b0 + block), b0
+            for st in starts:
+                if b0 < st < b1:
+                    names.add(f"chunk_{b0:05d}_{b1:05d}.{p0:05d}_{st:05d}")
+                    p0 = st
+            names.add(f"chunk_{b0:05d}_{b1:05d}.{p0:05d}_{b1:05d}")
+        grid[f"{a.dist}/{plan.get('id') or 'chunks'}"] = names
+    if not dirs and not a.any_layout:
+        dirs = set(grid) | {k.rpartition('/')[0] for k in want}
 
     # candidates[(cutdir, block, from, to)] = list of dicts
     cands, metas = {}, {}
@@ -156,7 +191,7 @@ def main():
     want_dirs = {k.rpartition('/')[0] for k in want}
     for (cut, block, p0, p1), cs in sorted(cands.items()):
         key = f"{cut}/{block}.{p0:05d}_{p1:05d}"
-        if cut in want_dirs and key not in want:
+        if (cut in want_dirs and key not in want) or (cut in grid and f"{block}.{p0:05d}_{p1:05d}" not in grid[cut]):
             obsolete += 1   # a piece of an older timeline of this cut (its block or shot boundaries moved): skip it
             continue
         wanted = want.get(key)

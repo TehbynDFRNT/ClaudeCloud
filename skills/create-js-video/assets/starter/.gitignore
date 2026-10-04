@@ -1,0 +1,5 @@
+node_modules/
+out/
+__pycache__/
+# render pieces: git-ignored here, committed with `git add -f` on render branches (chunk.mjs render --push)
+dist/
