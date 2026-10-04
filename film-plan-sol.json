@@ -1,9 +1,10 @@
 {
- "id": "sol-916",
+ "id": "sol-916-v3",
  "cut": "sol",
  "title": "Sol Invictus — the unconquered sun",
+ "version": 3,
  "fps": "24/1",
- "frames": 3986,
+ "frames": 3917,
  "width": 1080,
  "height": 1920,
  "backend": "webgl2-canvas (headless Chromium, SwiftShader)",
@@ -57,7 +58,7 @@
    "params": {
     "turn": [
      508,
-     3590,
+     3801,
      90,
      0
     ],
@@ -107,7 +108,7 @@
    "params": {
     "turn": [
      508,
-     3590,
+     3801,
      90,
      0
     ],
@@ -148,7 +149,7 @@
    "params": {
     "turn": [
      508,
-     3590,
+     3801,
      90,
      0
     ],
@@ -189,7 +190,7 @@
    "params": {
     "turn": [
      508,
-     3590,
+     3801,
      90,
      0
     ],
@@ -230,7 +231,7 @@
    "params": {
     "turn": [
      508,
-     3590,
+     3801,
      90,
      0
     ],
@@ -334,7 +335,7 @@
    "params": {
     "turn": [
      508,
-     3590,
+     3801,
      90,
      0
     ],
@@ -415,7 +416,7 @@
    "params": {
     "turn": [
      508,
-     3590,
+     3801,
      90,
      0
     ],
@@ -498,7 +499,7 @@
    "params": {
     "turn": [
      508,
-     3590,
+     3801,
      90,
      0
     ],
@@ -570,7 +571,7 @@
    "params": {
     "turn": [
      508,
-     3590,
+     3801,
      90,
      0
     ],
@@ -611,7 +612,7 @@
    "params": {
     "turn": [
      508,
-     3590,
+     3801,
      90,
      0
     ],
@@ -664,7 +665,7 @@
    "params": {
     "turn": [
      508,
-     3590,
+     3801,
      90,
      0
     ],
@@ -717,7 +718,7 @@
    "params": {
     "turn": [
      508,
-     3590,
+     3801,
      90,
      0
     ],
@@ -761,194 +762,106 @@
    "purpose": "The unconquered sun is reborn",
    "action": "Out of black a white-gold point swells into a seething spherical eruption, the surrounding space still black; never a full-frame white-out",
    "framing": "Close, centred",
-   "end": 2829
+   "end": 2825
   },
   {
    "id": "S23-eruption",
-   "start": 2829,
+   "start": 2825,
    "scene": "nova",
    "purpose": "The eruption overwhelms the system",
    "action": "Wide: the incandescent sphere swallows the disk and races toward the giant, whose facing hemisphere flares gold",
    "framing": "Wide system",
-   "end": 2885
+   "end": 2878
   },
   {
    "id": "S24-shockfront",
-   "start": 2885,
+   "start": 2878,
    "scene": "nova",
    "purpose": "The pressure wave passes us",
    "action": "The shock front sweeps through camera; refraction, debris streaks; peak of the Doppler roar",
    "framing": "Inside the wave",
-   "end": 2915,
-   "preset": "S24-shockfront",
-   "span": [
-    2885,
-    2939
-   ]
-  },
-  {
-   "id": "M13",
-   "start": 2915,
-   "end": 2939,
-   "scene": "statue",
-   "purpose": "After the shock front: the face, still, in its aura",
-   "action": "Marble figure on black, slowly turning its gaze toward us (see INSERTS)",
-   "framing": "See the statue preset",
-   "params": {
-    "turn": [
-     508,
-     3590,
-     90,
-     0
-    ],
-    "figure": "sol"
-   }
+   "end": 2923
   },
   {
    "id": "S25-shell",
-   "start": 2939,
+   "start": 2923,
    "scene": "nova",
    "purpose": "Fracture",
    "action": "The decelerating shell fractures into golden filaments as the roar descends",
    "framing": "Medium-wide, slowing",
-   "end": 2990
+   "end": 2994
   },
   {
    "id": "S26-expansion",
-   "start": 2990,
+   "start": 2994,
    "scene": "nova",
    "purpose": "Expansion",
    "action": "The fractured golden shell, immense, expanding; Rayleigh-Taylor fingers and knots; the pair small inside",
    "framing": "Wide, slow pull back",
-   "end": 3062,
-   "preset": "S26-expansion",
-   "span": [
-    2990,
-    3134
-   ]
-  },
-  {
-   "id": "M14",
-   "start": 3062,
-   "end": 3086,
-   "scene": "statue",
-   "purpose": "Expansion: the face nearly turned to us",
-   "action": "Marble figure on black, slowly turning its gaze toward us (see INSERTS)",
-   "framing": "See the statue preset",
-   "params": {
-    "turn": [
-     508,
-     3590,
-     90,
-     0
-    ],
-    "figure": "sol"
-   }
-  },
-  {
-   "id": "S26-expansion·2",
-   "start": 3086,
-   "scene": "nova",
-   "purpose": "Expansion",
-   "action": "The fractured golden shell, immense, expanding; Rayleigh-Taylor fingers and knots; the pair small inside",
-   "framing": "Wide, slow pull back",
-   "end": 3134,
-   "preset": "S26-expansion",
-   "span": [
-    2990,
-    3134
-   ]
+   "end": 3066
   },
   {
    "id": "S27-devastation",
-   "start": 3134,
+   "start": 3066,
    "scene": "redgiant",
    "purpose": "Winter broken",
    "action": "Goliath scarred: facing hemisphere stripped and burning, embers drifting, envelope torn",
    "framing": "Medium, slow lateral drift",
-   "end": 3253,
-   "preset": "S27-devastation",
-   "span": [
-    3134,
-    3277
-   ]
-  },
-  {
-   "id": "M15",
-   "start": 3253,
-   "end": 3277,
-   "scene": "statue",
-   "purpose": "Devastation gives way: the gaze a breath from direct",
-   "action": "Marble figure on black, slowly turning its gaze toward us (see INSERTS)",
-   "framing": "See the statue preset",
-   "params": {
-    "turn": [
-     508,
-     3590,
-     90,
-     0
-    ],
-    "figure": "sol"
-   }
+   "end": 3138
   },
   {
    "id": "S28-survival",
-   "start": 3277,
+   "start": 3138,
    "scene": "whitedwarf",
    "purpose": "The sun endures",
    "action": "The tiny core endures, still blazing; the shell recedes; a thin thread of matter begins to flow again",
    "framing": "Medium close, steady",
-   "end": 3425
+   "end": 3214
   },
   {
    "id": "S29a-ring",
-   "start": 3425,
+   "start": 3214,
    "scene": "nova",
    "purpose": "Cosmic order",
    "action": "Final wide: the system inside a perfect ring of the shell",
    "framing": "Wide, centred, still",
-   "end": 3505
+   "end": 3294
   },
   {
    "id": "S29b-drawing",
-   "start": 3505,
+   "start": 3294,
    "scene": "studies",
    "purpose": "Understanding endures",
    "action": "Dissolve to an ink drawing of the same rings with the tiny centre point; mirror script: il sole nõ si move",
    "framing": "Flat lay, centred",
-   "end": 3560,
-   "preset": "S29b-drawing",
-   "span": [
-    3505,
-    3650
-   ]
-  },
-  {
-   "id": "M16",
-   "start": 3560,
-   "end": 3650,
-   "scene": "statue",
-   "purpose": "The gaze: directly into the lens, staring into you",
-   "action": "Marble figure on black, slowly turning its gaze toward us (see INSERTS)",
-   "framing": "See the statue preset",
-   "params": {
-    "turn": [
-     508,
-     3590,
-     90,
-     0
-    ],
-    "figure": "sol"
-   }
+   "end": 3425
   },
   {
    "id": "S31-newstar",
-   "start": 3650,
+   "start": 3425,
    "scene": "earthsky",
    "purpose": "Dies Natalis Solis Invicti: the birth of a new star",
    "action": "The Milky Way arches up from a dark, unlit horizon (no light pollution: the galactic core, dust lanes, airglow); stillness; then, silently, a new star appears where there was none. The film ends on it",
    "framing": "Locked-off night sky, 9:16, horizon low, galactic core rising vertically",
-   "end": 3986
+   "end": 3761
+  },
+  {
+   "id": "M16",
+   "start": 3761,
+   "scene": "statue",
+   "purpose": "The gaze: after the night sky, the figure looks straight into the lens, staring into you",
+   "action": "Marble figure on black, the 90-degree turn complete; NOVA: <figure> beneath",
+   "framing": "See the statue preset",
+   "params": {
+    "turn": [
+     508,
+     3801,
+     90,
+     0
+    ],
+    "figure": "sol"
+   },
+   "end": 3917
   }
  ],
  "overlays": [
@@ -957,8 +870,8 @@
    "type": "dissolve",
    "from": "S29a-ring",
    "to": "S29b-drawing",
-   "start": 3487,
-   "end": 3535,
+   "start": 3276,
+   "end": 3324,
    "purpose": "Match dissolve: real rings become ink rings"
   }
  ],
@@ -976,8 +889,8 @@
   {
    "id": "winter-b",
    "path": "media/source/winter-usaf-band.ogg",
-   "timelineStart": 2989,
-   "timelineEnd": 3646,
+   "timelineStart": 2778,
+   "timelineEnd": 3421,
    "sourceInSeconds": 166.6083,
    "playbackRate": 1,
    "fadeInMs": 12,
@@ -987,7 +900,7 @@
    "id": "score-synth",
    "generated": true,
    "timelineStart": 0,
-   "timelineEnd": 3986,
+   "timelineEnd": 3917,
    "sourceInSeconds": 0,
    "playbackRate": 1,
    "note": "80s synth pulse, the climax in the dark (pressure wave, Doppler roar), the night of the coda (src/audio/score.js); cannon samples processed for distance"
@@ -1057,7 +970,7 @@
   {
    "id": "return-bar56",
    "kind": "music-reentry",
-   "frame": 2990,
+   "frame": 2779,
    "sourceAudioId": "winter-b",
    "sourceSeconds": 166.65,
    "status": "candidate",
@@ -1187,7 +1100,7 @@
   {
    "id": "bar-58",
    "kind": "bar-line",
-   "frame": 3134,
+   "frame": 2923,
    "sourceAudioId": "winter-b",
    "sourceSeconds": 172.6404,
    "status": "candidate",
@@ -1197,7 +1110,7 @@
   {
    "id": "bar-60",
    "kind": "bar-line",
-   "frame": 3277,
+   "frame": 3066,
    "sourceAudioId": "winter-b",
    "sourceSeconds": 178.621,
    "status": "candidate",
@@ -1207,7 +1120,7 @@
   {
    "id": "bar-62",
    "kind": "bar-line",
-   "frame": 3425,
+   "frame": 3214,
    "sourceAudioId": "winter-b",
    "sourceSeconds": 184.7569,
    "status": "candidate",
@@ -1217,7 +1130,7 @@
   {
    "id": "bar-63",
    "kind": "bar-line",
-   "frame": 3505,
+   "frame": 3294,
    "sourceAudioId": "winter-b",
    "sourceSeconds": 188.107,
    "status": "candidate",
@@ -1458,9 +1371,243 @@
    "evidence": "End of the dark hold: the eruption is first seen"
   },
   {
+   "id": "explosion",
+   "kind": "edit-cut",
+   "frame": 2779,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: the explosion hit lands with the first frame of the eruption; Winter bar 56 tutti restarts here, louder; a build runs from the S21 implosion through the dark into this frame"
+  },
+  {
+   "id": "return-bar56-v3",
+   "kind": "music-reentry",
+   "frame": 2779,
+   "sourceAudioId": "winter-b",
+   "sourceSeconds": 166.65,
+   "status": "candidate",
+   "confidence": "signal",
+   "evidence": "bar-56 downbeat placed on the explosion frame"
+  },
+  {
+   "id": "cannon-20h",
+   "kind": "cannon",
+   "frame": 1413,
+   "distance": 0.6,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: faster cannon tempo into the strikes (half-bar shots)"
+  },
+  {
+   "id": "cannon-21h",
+   "kind": "cannon",
+   "frame": 1480,
+   "distance": 0.56,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: faster cannon tempo into the strikes (half-bar shots)"
+  },
+  {
+   "id": "cannon-22h",
+   "kind": "cannon",
+   "frame": 1551,
+   "distance": 0.52,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: faster cannon tempo into the strikes (half-bar shots)"
+  },
+  {
+   "id": "cannon-23h",
+   "kind": "cannon",
+   "frame": 1622,
+   "distance": 0.48,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: faster cannon tempo into the strikes (half-bar shots)"
+  },
+  {
+   "id": "cannon-24h",
+   "kind": "cannon",
+   "frame": 1693,
+   "distance": 0.44,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: faster cannon tempo into the strikes (half-bar shots)"
+  },
+  {
+   "id": "cannon-25h",
+   "kind": "cannon",
+   "frame": 1765,
+   "distance": 0.4,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: faster cannon tempo into the strikes (half-bar shots)"
+  },
+  {
+   "id": "cannon-26h",
+   "kind": "cannon",
+   "frame": 1836,
+   "distance": 0.36,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: faster cannon tempo into the strikes (half-bar shots)"
+  },
+  {
+   "id": "cannon-27h",
+   "kind": "cannon",
+   "frame": 1910,
+   "distance": 0.32,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: faster cannon tempo into the strikes (half-bar shots)"
+  },
+  {
+   "id": "cannon-28h",
+   "kind": "cannon",
+   "frame": 1984,
+   "distance": 0.28,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: faster cannon tempo into the strikes (half-bar shots)"
+  },
+  {
+   "id": "cannon-29h",
+   "kind": "cannon",
+   "frame": 2059,
+   "distance": 0.24,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: faster cannon tempo into the strikes (half-bar shots)"
+  },
+  {
+   "id": "cannon-30h",
+   "kind": "cannon",
+   "frame": 2135,
+   "distance": 0.2,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: faster cannon tempo into the strikes (half-bar shots)"
+  },
+  {
+   "id": "cannon-31h",
+   "kind": "cannon",
+   "frame": 2209,
+   "distance": 0.16,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: faster cannon tempo into the strikes (half-bar shots)"
+  },
+  {
+   "id": "salvo-56.0",
+   "kind": "cannon-salvo",
+   "frame": 2780,
+   "distance": 0.05,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: cannon salvo with the restarted music"
+  },
+  {
+   "id": "salvo-56.2",
+   "kind": "cannon-salvo",
+   "frame": 2798,
+   "distance": 0.05,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: cannon salvo with the restarted music"
+  },
+  {
+   "id": "salvo-56.4",
+   "kind": "cannon-salvo",
+   "frame": 2816,
+   "distance": 0.05,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: cannon salvo with the restarted music"
+  },
+  {
+   "id": "salvo-56.6",
+   "kind": "cannon-salvo",
+   "frame": 2834,
+   "distance": 0.05,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: cannon salvo with the restarted music"
+  },
+  {
+   "id": "salvo-57.0",
+   "kind": "cannon-salvo",
+   "frame": 2852,
+   "distance": 0.05,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: cannon salvo with the restarted music"
+  },
+  {
+   "id": "salvo-57.2",
+   "kind": "cannon-salvo",
+   "frame": 2870,
+   "distance": 0.05,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: cannon salvo with the restarted music"
+  },
+  {
+   "id": "salvo-57.4",
+   "kind": "cannon-salvo",
+   "frame": 2887,
+   "distance": 0.05,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: cannon salvo with the restarted music"
+  },
+  {
+   "id": "salvo-57.6",
+   "kind": "cannon-salvo",
+   "frame": 2905,
+   "distance": 0.05,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: cannon salvo with the restarted music"
+  },
+  {
+   "id": "salvo-58.0",
+   "kind": "cannon-salvo",
+   "frame": 2923,
+   "distance": 0.2,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: cannon salvo with the restarted music"
+  },
+  {
+   "id": "salvo-58.4",
+   "kind": "cannon-salvo",
+   "frame": 2958,
+   "distance": 0.2,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: cannon salvo with the restarted music"
+  },
+  {
+   "id": "salvo-59.0",
+   "kind": "cannon-salvo",
+   "frame": 2994,
+   "distance": 0.2,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: cannon salvo with the restarted music"
+  },
+  {
+   "id": "salvo-59.4",
+   "kind": "cannon-salvo",
+   "frame": 3029,
+   "distance": 0.2,
+   "status": "verified",
+   "confidence": "authored",
+   "evidence": "v3: cannon salvo with the restarted music"
+  },
+  {
    "id": "coda",
    "kind": "edit-cut",
-   "frame": 3650,
+   "frame": 3425,
    "status": "verified",
    "confidence": "authored",
    "evidence": "Coda: the night sky seen from Earth fades up from black"
@@ -1468,10 +1615,10 @@
   {
    "id": "coda-star",
    "kind": "edit-cut",
-   "frame": 3782,
+   "frame": 3557,
    "status": "verified",
    "confidence": "authored",
-   "evidence": "The new star begins to appear; fully arrived at frame 3818"
+   "evidence": "The new star begins to appear; fully arrived at frame 3593"
   }
  ],
  "effects": [
@@ -1498,22 +1645,36 @@
   },
   {
    "type": "fade",
-   "start": 3626,
-   "end": 3650,
+   "start": 3401,
+   "end": 3425,
    "from": 0,
    "to": 1
   },
   {
    "type": "fade",
-   "start": 3650,
-   "end": 3710,
+   "start": 3425,
+   "end": 3485,
    "from": 1,
    "to": 0
   },
   {
    "type": "fade",
-   "start": 3950,
-   "end": 3986,
+   "start": 3725,
+   "end": 3761,
+   "from": 0,
+   "to": 1
+  },
+  {
+   "type": "fade",
+   "start": 3761,
+   "end": 3785,
+   "from": 1,
+   "to": 0
+  },
+  {
+   "type": "fade",
+   "start": 3887,
+   "end": 3917,
    "from": 0,
    "to": 1
   },
@@ -1713,20 +1874,9 @@
    "minFrames": 60
   },
   {
-   "id": "end-title",
-   "start": 3575,
-   "end": 3624,
-   "content": "SOL INVICTUS",
-   "style": "title",
-   "y": 0.84,
-   "fadeIn": 24,
-   "fadeOut": 20,
-   "minFrames": 48
-  },
-  {
    "id": "coda-line-1",
-   "start": 3842,
-   "end": 3984,
+   "start": 3617,
+   "end": 3759,
    "content": "The birth of a new star;",
    "style": "line",
    "font": "cormorant",
@@ -1738,8 +1888,8 @@
   },
   {
    "id": "coda-line-2",
-   "start": 3878,
-   "end": 3984,
+   "start": 3653,
+   "end": 3759,
    "content": "the Nova.",
    "style": "line",
    "font": "cinzel",
@@ -1747,6 +1897,18 @@
    "y": 0.875,
    "fadeIn": 30,
    "fadeOut": 34,
+   "minFrames": 60
+  },
+  {
+   "id": "end-title",
+   "start": 3809,
+   "end": 3915,
+   "content": "Nova: Sol Invictus",
+   "style": "title",
+   "color": "rgba(236,204,148,1)",
+   "y": 0.865,
+   "fadeIn": 30,
+   "fadeOut": 28,
    "minFrames": 60
   }
  ],

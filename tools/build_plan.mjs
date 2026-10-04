@@ -20,7 +20,7 @@ const OUT_DIR = process.env.PLAN_OUT || '.';     // PLAN_OUT=out/plan-test to dr
 // explosion on the frame the eruption appears; Winter's bar-56 tutti restarts ON the explosion (louder, with
 // cannon salvos); no statue after the explosion until after the Milky Way; the film ends on the statue's
 // gaze and NOVA: <figure>.
-const V3 = (process.env.PLAN_VERSION || '2') === '3';
+const V3 = (process.env.PLAN_VERSION || '3') === '3';   // v3 is the delivered version; PLAN_VERSION=2 rebuilds the earlier cut
 
 // ---- audio placements (frames) -------------------------------------------------------------
 // Recording: The United States Air Force Band, Vivaldi 'Winter' I (supplied by the director; public domain).
@@ -329,7 +329,8 @@ for (const [cut, C] of Object.entries(CUTS)) {
     { id: 'coda-line-1', start: CODA_LINE1, end: CODA_END - 2, content: 'The birth of a new star;', style: 'line', font: 'cormorant', size: 44, y: 0.815, fadeIn: 30, fadeOut: 34, minFrames: 60 },
     { id: 'coda-line-2', start: CODA_LINE2, end: CODA_END - 2, content: 'the Nova.', style: 'line', font: 'cinzel', size: 50, y: 0.875, fadeIn: 30, fadeOut: 34, minFrames: 60 },
     // v3: the film ends on the figure's stare and its name
-    ...(V3 ? [{ id: 'end-title', start: CODA_END + 48, end: FRAMES - 2, content: `Nova: ${C.novaName}`, style: 'nova', y: 0.865, fadeIn: 30, fadeOut: 28, minFrames: 60 }] : []),
+    // Cinzel Roman capitals (lowercase sets as small caps: NOVA: SOL INVICTUS), molten gold
+    ...(V3 ? [{ id: 'end-title', start: CODA_END + 48, end: FRAMES - 2, content: `Nova: ${C.novaName}`, style: 'title', color: 'rgba(236,204,148,1)', y: 0.865, fadeIn: 30, fadeOut: 28, minFrames: 60 }] : []),
   ];
   const cutShots = shots.map((s) => {
     const o = { ...s };
