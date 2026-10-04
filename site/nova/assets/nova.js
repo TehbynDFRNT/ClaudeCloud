@@ -129,6 +129,29 @@ if(video){
  window.novaPlayFrom=function(t){film.scrollIntoView({behavior:RM?'auto':'smooth',block:'center'});start(t);video.focus({preventScroll:true})};
 }
 
+/* ---------------- sharing ---------------- */
+/* Instagram takes pictures, not links, from the web: its button hands the phone's share sheet the 1080 x 1920
+   story card (pick Instagram, then Stories), fetched ahead as the buttons come near so the share stays inside
+   the tap. Where a browser cannot share files (most desktops), the link's own download saves the card and the
+   address is copied. X is a plain link to a prefilled post, so it works without the script too. */
+var shIg=$('#shareIg'),shMsg=$('#shareMsg'),cardFile=null,cardP=null;
+function say(t){if(!shMsg)return;shMsg.textContent=t;clearTimeout(say.t);say.t=setTimeout(function(){shMsg.textContent=''},8000)}
+function getCard(){if(!cardP&&window.fetch&&window.File)cardP=fetch(shIg.getAttribute('href')).then(function(r){if(!r.ok)throw 0;return r.blob()}).then(function(b){cardFile=new File([b],'nova-ep1-david-goliath-story.jpg',{type:'image/jpeg'});return cardFile}).catch(function(){cardP=null});return cardP}
+function copyLink(){var u='https://nova.tehbyn.com/';try{if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(u).then(function(){return true},function(){return false})}catch(e){}return Promise.resolve(false)}
+if(shIg){
+ if('IntersectionObserver' in window)new IntersectionObserver(function(es,o){if(es[0].isIntersecting){o.disconnect();getCard()}},{rootMargin:'400px 0px'}).observe(shIg);
+ shIg.addEventListener('click',function(e){
+  var files=cardFile?[cardFile]:null;
+  if(files&&navigator.canShare&&navigator.share&&navigator.canShare({files:files})){e.preventDefault();
+   navigator.share({files:files}).then(function(){say('Shared. Add a link sticker to nova.tehbyn.com in your story.')},function(err){
+    if(err&&err.name==='AbortError')return;
+    /* the share sheet refused: save the card the plain way instead */
+    var a=d.createElement('a');a.href=shIg.getAttribute('href');a.download=shIg.getAttribute('download');d.body.appendChild(a);a.click();a.remove();
+    copyLink().then(function(ok){say('Story card saved'+(ok?' and link copied':'')+'. Post it to your Instagram story with a link sticker.')})});
+   return}
+  /* no file sharing here: the download goes ahead (the link's default), and the address is copied */
+  getCard();copyLink().then(function(ok){say('Story card saved'+(ok?' and link copied':'')+'. Post it to your Instagram story with a link sticker.')})})}
+
 /* ---------------- stills lightbox ---------------- */
 var lb=$('#lb'),stills=$$('.still'),cur=0;
 var S=stills.map(function(b){var img=$('img',b),cap=$('.cap',b);return{src:img.getAttribute('src').replace('-t.jpg','.jpg'),alt:img.alt,name:cap.firstChild.textContent,tc:$('em',cap).textContent}});
