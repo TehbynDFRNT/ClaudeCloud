@@ -54,7 +54,7 @@ if(video){
     headphones) from assets/hls/. hls.js where the browser has Media Source; Safari's own HLS where it has not
     (sound only there: it picks the quality itself). With neither, or no stream on the server, the MP4 plays and
     the pills stay hidden. Nothing loads until Play; the choices are remembered on this device. */
- var SRC='assets/hls/master.m3u8',opts=$('#filmOpts'),qSel=$('#qSel'),sSel=$('#sSel'),hint=$('#optHint'),hls=null,native=false,loaded=false,fixes=0,autoAt='';
+ var resumeAt=0,lastT=0,revives=0,SRC='assets/hls/master.m3u8',opts=$('#filmOpts'),qSel=$('#qSel'),sSel=$('#sSel'),hint=$('#optHint'),hls=null,native=false,loaded=false,fixes=0,autoAt='';
  function pref(k,v){try{if(v==null)return localStorage.getItem('nova.'+k);localStorage.setItem('nova.'+k,v)}catch(e){return null}}
  var Q=pref('q')||'auto',SND=pref('snd')==='binaural'?'binaural':'stereo';
  function qName(h){return h>=2160?'4K':h+'p'}
@@ -82,7 +82,7 @@ if(video){
   if(t>0||was)video.addEventListener('loadedmetadata',function f(){video.removeEventListener('loadedmetadata',f);if(t>0){try{video.currentTime=t}catch(e){}}if(was){var p=video.play();if(p&&p.catch)p.catch(function(){})}})}
  function useHls(){var E=Hls.Events,dying=false;
   function bail(){if(dying)return;dying=true;setTimeout(mp4,0)}
-  hls=new Hls({autoStartLoad:false,capLevelToPlayerSize:true,abrEwmaDefaultEstimate:8e6,maxBufferLength:30,maxMaxBufferLength:60,backBufferLength:30});
+  hls=new Hls({autoStartLoad:false,startPosition:resumeAt>0?resumeAt:-1,capLevelToPlayerSize:true,abrEwmaDefaultEstimate:8e6,maxBufferLength:30,maxMaxBufferLength:60,backBufferLength:30});
   hls.on(E.MANIFEST_PARSED,function(){
    var ls=hls.levels.slice().sort(function(a,b){return side(b)-side(a)});
    qSel.innerHTML='';[['auto','Auto']].concat(ls.map(function(l){return [String(side(l)),qName(side(l))+' · '+l.width+' × '+l.height]})).forEach(function(o){var e=d.createElement('option');e.value=o[0];e.textContent=o[1];qSel.appendChild(e)});
@@ -103,7 +103,7 @@ if(video){
   video.addEventListener('loadedmetadata',function(){if(native)setS(SND)});
   if(video.audioTracks&&video.audioTracks.addEventListener)video.audioTracks.addEventListener('addtrack',function(){if(native)setS(SND)});
   video.addEventListener('error',function(){if(native)mp4()});ready()}
- function load(at){if(hls&&!loaded){setQ(Q);loaded=true;hls.startLoad(at==null?-1:at);return true}return false}
+ function load(at){if(hls&&!loaded){setQ(Q);loaded=true;var s=at!=null?at:resumeAt||-1;resumeAt=0;hls.startLoad(s);return true}return false}
  if(qSel&&sSel&&location.protocol!=='file:'){
   qSel.addEventListener('change',function(){setQ(qSel.value,true)});
   sSel.addEventListener('change',function(){setS(sSel.value,true)});
@@ -113,6 +113,20 @@ if(video){
    var MS=window.ManagedMediaSource||window.MediaSource,H264=MS&&MS.isTypeSupported&&MS.isTypeSupported('video/mp4; codecs="avc1.640028,mp4a.40.2"');
    if(window.Hls&&Hls.isSupported()&&H264)useHls();else if(video.canPlayType('application/vnd.apple.mpegurl'))useNative()}).catch(function(){})}
  video.addEventListener('play',function(){load(video.currentTime||null)});
+ /* coming back to a broken stream: iOS can tear a page's media down while the app is in the background (or the
+    page sits in the back/forward cache), and the player then shows Error. Rebuild the stream where the film
+    was, keeping quality and sound; it waits for Play, as apps do when you return. A clean play clears the
+    counts, so one bad moment early on never sends a long session to the fallback. */
+ video.addEventListener('timeupdate',function(){if(video.currentTime>0)lastT=video.currentTime});
+ video.addEventListener('playing',function(){fixes=0;revives=0});
+ function revive(){if(revives++>=3)return;var t=lastT||video.currentTime||0;
+  if(hls){try{hls.destroy()}catch(e){}hls=null;loaded=false;fixes=0;resumeAt=t;useHls();if(film.classList.contains('started'))load(t)}
+  else{video.src=native?SRC:'assets/nova-ep1-david-goliath.mp4';try{video.load()}catch(e){}
+   if(t>0)video.addEventListener('loadedmetadata',function f(){video.removeEventListener('loadedmetadata',f);try{video.currentTime=t}catch(e){}})}}
+ function broken(){return !!video.error||(film.classList.contains('started')&&video.networkState===3)}
+ video.addEventListener('error',function(){if(film.classList.contains('started'))setTimeout(revive,0)});
+ d.addEventListener('visibilitychange',function(){if(!d.hidden&&broken())revive()});
+ addEventListener('pageshow',function(e){if(e.persisted&&broken())revive()});
  function start(at){
   if(load(at))at=null;
   if(at!=null){try{video.currentTime=at}catch(e){}}
