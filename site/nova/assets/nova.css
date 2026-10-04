@@ -150,9 +150,10 @@ html.viewing{overflow:hidden}
 .opt.on{border-color:rgba(var(--lp-300-rgb),.6)}
 .opt-hint{flex-basis:100%;margin:2px 0 0;text-align:center;font-size:13px;color:var(--nv-mute)}
 .film.viewer{align-content:center}
-.film.viewer.has-opts{--sh:calc(100vh - 88px)}
-@supports (height:100dvh){.film.viewer.has-opts{--sh:calc(100dvh - 88px)}}
-.film.viewer .film-opts{margin-top:14px}
+/* the viewer is the film alone: the quality and sound pills stay on the page */
+.film.viewer .film-opts{display:none}
+/* screens taller than the film (phones held upright): the film edge to edge, its light above and below */
+@media (max-aspect-ratio:9/16){.film.viewer{padding:0}.film.viewer .screen{width:100vw;border-radius:0;box-shadow:none}}
 .film.viewer .opt-hint{display:none}
 /* sharing: Instagram (a story card through the share sheet) and X (a prefilled post) */
 .film-share{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px;width:min(calc(var(--sh)*9/16),calc(100vw - 32px));margin-top:12px}
