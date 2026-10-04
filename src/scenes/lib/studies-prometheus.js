@@ -1,51 +1,21 @@
 // S10 Prometheus: a red-chalk study of a fist carrying fire in a fennel stalk (scene 'studies').
-// The fist is designed in a canonical frame (cm, y down) seen from the front: the stalk runs vertically
-// through it at x = 0; the four middle phalanges wrap across the front of the stalk as a stack of short,
-// unequal segments with their PIP knuckles on the right and the fingertips tucked under the thenar on the
-// left; the thumb grows out of the thenar mass and crosses the index and middle fingers diagonally; the
-// wrist breaks and the forearm leaves down-left, fading out like an unfinished study. The canonical frame
-// is rotated onto the page so the stalk leans right and the arm enters from the lower left.
-import { Drawing, PX, TAU, spline, arcPts, linePts, hatch, resample } from './studies-ink.js';
+// The fist is a small solid model (studies-prometheus-form.js): a hand built on its skeleton and closed
+// around the stalk joint by joint, the thumb laid across the middle phalanges of the index and middle
+// fingers, the wrist breaking and the forearm leaving down-left and away. It is seen in a canonical frame
+// (cm, y down; the stalk vertical at x = 0) rotated onto the page so the stalk leans right.
+// Everything is modelled under one key from the upper left (the page's own light): contours are the
+// model's visible outlines, heavy and closed on the shadow side, thin and lifting on the lit side, light
+// where two masses only meet; tone is laid in Leonardo's left-handed parallel hatching, densening in
+// passes into the core shadows, with cross-contour strokes round the fingers and a rubbed ground in the
+// darkest places; the forearm and the stalk below the fist are left unfinished. The fennel stalk is a
+// ribbed, fibrous stem with swollen nodes, a clasping leaf-sheath and a cut, pithy top in which the ember
+// is carried; the flame rises out of it during the shot, drawn in chalk tongue by tongue.
+import { Drawing, PX, TAU, arcPts, resample, hatch, fnoise } from './studies-ink.js';
 import { streamPath, XG, XW, R_LOBE_GIANT } from './binary.js';
+import * as F from './studies-prometheus-form.js';
 
-function inPoly(poly, x, y) {
-  let c = false;
-  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    const xi = poly[i][0], yi = poly[i][1], xj = poly[j][0], yj = poly[j][1];
-    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c;
-  }
-  return c;
-}
-// bounding-box accelerated polygon
-function poly(pts) {
-  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
-  for (const [x, y] of pts) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
-  const P = pts.slice();
-  P.bb = [x0, y0, x1, y1];
-  return P;
-}
-const inP = (P, x, y) => x >= P.bb[0] && x <= P.bb[2] && y >= P.bb[1] && y <= P.bb[3] && inPoly(P, x, y);
-function clipOut(pts, occ) {
-  const runs = [];
-  let cur = [];
-  for (const p of pts) {
-    const hid = occ.some((o) => inP(o, p[0], p[1]));
-    if (hid) { if (cur.length > 1) runs.push(cur); cur = []; } else cur.push(p);
-  }
-  if (cur.length > 1) runs.push(cur);
-  return runs.filter((r) => r.length > 2);
-}
-function lerpY(pts, x) {
-  if (x <= pts[0][0]) return pts[0][1];
-  for (let i = 0; i < pts.length - 1; i++) if (x <= pts[i + 1][0]) { const u = (x - pts[i][0]) / (pts[i + 1][0] - pts[i][0]); return pts[i][1] + (pts[i + 1][1] - pts[i][1]) * u; }
-  return pts[pts.length - 1][1];
-}
-function lerpX(pts, y) { // x(y) through points sorted by y
-  if (y <= pts[0][1]) return pts[0][0];
-  for (let i = 0; i < pts.length - 1; i++) if (y <= pts[i + 1][1]) { const u = (y - pts[i][1]) / (pts[i + 1][1] - pts[i][1]); return pts[i][0] + (pts[i + 1][0] - pts[i][0]) * u; }
-  return pts[pts.length - 1][0];
-}
 const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 
 // o.vertical (the 9:16 cut): the fist, stalk and flame are unchanged; the theft diagram moves to the top
 // right beside the flame and the notes to the open paper right of the fist
@@ -58,218 +28,389 @@ export function prometheus(o = {}) {
   const c = Math.cos(TH), s = Math.sin(TH);
   const T = (x, y) => [O[0] + (x * c - y * s) * CM, O[1] + (x * s + y * c) * CM];
   const Ti = (X, Y) => { const dx = (X - O[0]) / CM, dy = (Y - O[1]) / CM; return [dx * c + dy * s, -dx * s + dy * c]; };
-  const TP = (pts) => resample(pts.map(([x, y]) => T(x, y)), 1.5 * PX);
-  const sp = (ctrl, closed = false) => spline(ctrl, 0.08, closed);
   const CH = { kind: 'chalk', nib: 0, wet: false };
+  const toCanon = (v) => [c * v[0] + s * v[1], -s * v[0] + c * v[1], v[2]];
 
-  // ---------------- forms (canonical cm) ----------------
-  const FD = [
-    { yT: -2.55, yB: -0.70, xL: -1.95, xR: 2.05 },   // index
-    { yT: -0.74, yB: 1.22, xL: -2.0, xR: 2.42 },     // middle (its knuckle stands out furthest)
-    { yT: 1.18, yB: 2.98, xL: -1.7, xR: 2.18 },      // ring
-    { yT: 2.94, yB: 4.34, xL: -1.15, xR: 1.66 },     // little: smaller, set back
-  ];
-  const fingerCtrl = (f) => {
-    const h = f.yB - f.yT;
-    return [
-      [f.xL + 0.25, f.yT + 0.2], [f.xL + 1.2, f.yT + 0.03], [f.xR - 1.35, f.yT - 0.04], [f.xR - 0.55, f.yT + 0.06],
-      [f.xR - 0.12, f.yT + 0.3 * h], [f.xR, f.yT + 0.56 * h], [f.xR - 0.18, f.yT + 0.84 * h], [f.xR - 0.64, f.yB],
-      [f.xR - 1.45, f.yB + 0.05], [f.xL + 1.0, f.yB + 0.03], [f.xL + 0.2, f.yB - 0.16],
-      [f.xL - 0.1, f.yT + 0.62 * h], [f.xL - 0.04, f.yT + 0.38 * h],
-    ];
+  // ---------------- the solid ----------------
+  const M = F.fistModel();
+  const ALPHA = 17, OFF = [0, 0.6];
+  const VW = F.viewOf(M, { phi: 36, alpha: ALPHA, mirror: true, offset: OFF });
+  const cosA = Math.cos(ALPHA * Math.PI / 180), sinA = Math.sin(ALPHA * Math.PI / 180);
+  const R = M.R;
+  const yTop = -8.3;
+  const tOf = (y) => (OFF[1] - y) / cosA;                      // stalk parameter (cm along its axis) at canonical y
+  const rSt = (t) => R * (1 - 0.016 * Math.max(0, t) - 0.004 * Math.min(0, t));   // the stem tapers toward the cut
+  const axis = (t) => VW.C(F.add(M.Q, F.mul(M.u, t)));
+  const prims = M.prims.map((p) => ({ ...p, a: VW.C(p.a), b: VW.C(p.b) }));
+  const groups = M.groups.map((g) => ({ ...g }));
+  const gStalk = groups.length; groups.push({ name: 'stalk', k: 0.3 });
+  const tTop = tOf(yTop), tBot = tOf(19);
+  prims.push({ a: axis(tBot), b: axis(0), ra: rSt(tBot), rb: rSt(0), g: gStalk });
+  prims.push({ a: axis(0), b: axis(tTop + 0.3), ra: rSt(0), rb: rSt(tTop + 0.3), g: gStalk });
+  const NODES = [tOf(-4.6), tOf(10.6)];
+  for (const tn of NODES) prims.push({ a: axis(tn - 0.15), b: axis(tn + 0.35), ra: rSt(tn) * 1.1, rb: rSt(tn) * 1.04, g: gStalk, k: 0.35 });
+  const ryTop = R * sinA;
+  const FF = F.rasterise(prims, groups, { x0: -9, y0: -10.5, x1: 7, y1: 18, h: 0.045 }, {
+    clip: { stalk: (x, y) => y - (yTop - ryTop * Math.sqrt(Math.max(0, 1 - (x / rSt(tTop)) ** 2))) },
+  });
+  const Lc = F.norm(toCanon([-0.6, -0.62, 0.5])), Rc = F.norm(toCanon([0.55, 0.62, 0.12]));
+  const LF = F.lightField(FF, { L: Lc, Rf: Rc });
+  // the study is left unfinished down the forearm and the stalk below the fist
+  const wrist = VW.C([0, 0.9, 0]), dfa = VW.Cd(M.df);
+  const dfl = Math.hypot(dfa[0], dfa[1]), dfx = dfa[0] / dfl, dfy = dfa[1] / dfl;
+  const FADE = new Float32Array(FF.nx * FF.ny);
+  for (let j = 0; j < FF.ny; j++) for (let i = 0; i < FF.nx; i++) {
+    const k = j * FF.nx + i, g = FF.GI[k];
+    if (g < 0) continue;
+    const x = FF.x0 + i * FF.hc, y = FF.y0 + j * FF.hc;
+    if (g === M.gPalm) { const fa = (x - wrist[0]) * dfx + (y - wrist[1]) * dfy; FADE[k] = sm(9.5, 2.5, fa); }
+    else if (g === gStalk) FADE[k] = y > 0 ? sm(14.5, 6.5, y) : 1;
+    else FADE[k] = 1;
+  }
+  const toneS = F.sampler(FF, LF.T, 0), fadeS = F.sampler(FF, FADE, 0);
+  const tone = (x, y) => toneS(x, y) * fadeS(x, y);
+  const front = (x, y) => { const k = F.at(FF, x, y); return k < 0 ? -1 : FF.GI[k]; };
+  const visible = (q, tol = 0.07) => { const k = F.at(FF, q[0], q[1]); return k >= 0 && FF.GI[k] >= 0 && q[2] >= FF.H[k] - tol; };
+
+  // ---------------- drawing helpers ----------------
+  // a chalk line through canonical points with per-point weight/density factors (the line swells and tapers)
+  const line = (pts, wf, df, op = {}) => {
+    if (pts.length < 3) return null;
+    const P = pts.map(([x, y]) => T(x, y));
+    const it = D.stroke(P, { ...CH, w: (op.w ?? 2.0) * 1.45, d: op.d ?? 0.7, speed: op.speed ?? 0.6, taper: op.taper ?? [10, 16], press: op.press ?? 0.3, pfreq: 14, load: op.load ?? 0.14, gap: op.gap });
+    if (it) for (let i = 0; i < it.W.length; i++) { it.W[i] *= wf[i]; it.D[i] = clamp(it.D[i] * df[i]); }
+    return it;
   };
-  const FC = FD.map(fingerCtrl);
-  const fingerC = FC.map((k) => poly(sp(k, true)));
-  // thumb: grows out of the thenar (upper left), crosses the index and the middle finger, tip on the right
-  const thTop = [[-3.5, -1.5], [-2.8, -2.3], [-1.9, -2.78], [-1.0, -2.86], [0.0, -2.46], [0.9, -1.84], [1.58, -1.28]];
-  const thTip = [[1.98, -0.86], [2.04, -0.38], [1.7, -0.06]];
-  const thBot = [[1.02, -0.04], [0.22, -0.3], [-0.6, -0.72], [-1.45, -0.98], [-2.25, -0.78]];
-  const thumbC = poly(sp([...thTop, ...thTip, ...thBot, [-2.9, -0.95]], true));
-  const nail = [[0.5, -1.62], [0.95, -1.98], [1.5, -1.62], [1.82, -1.08], [1.6, -0.74], [1.05, -0.98], [0.6, -1.26]];
-  const nailC = poly(sp(nail, true));
-  // thenar: the thumb's fleshy base, the fist's left silhouette, in front of the tucked fingertips
-  const thenarOut = [[-3.5, -1.5], [-3.85, -0.4], [-3.95, 1.1], [-3.7, 2.75], [-3.15, 4.15], [-2.4, 5.15]];
-  const thenarIn = [[-2.25, -0.78], [-1.7, 0.3], [-1.38, 1.6], [-1.12, 2.9], [-0.88, 4.0], [-0.66, 4.85]];
-  const thenarC = poly(sp([...thenarOut, [-1.6, 5.45], ...thenarIn.slice().reverse(), [-2.9, -0.95]], true));
-  // hypothenar / heel of the hand below the little finger, the wrist break, the forearm down-left
-  const hypo = [[1.02, 4.34], [1.5, 4.66], [1.72, 5.25]];
-  const armR = [[1.72, 5.25], [1.25, 6.55], [0.05, 9.0], [-1.95, 12.5], [-4.2, 16.4]];
-  const armL = [[-2.4, 5.15], [-3.2, 6.3], [-4.4, 8.6], [-6.2, 12.0], [-8.0, 15.4]];
-  const rStalk = (y) => 0.95 + 0.006 * (y + 17);
-  const yTop = -8.3, yBot = 22;
+  // split a long run into hand-length strokes that overlap a little
+  const handRuns = (pts, cmMin = 1.2, cmMax = 3.4) => {
+    const out = [];
+    let a = 0;
+    while (a < pts.length - 3) {
+      let L = 0, b = a + 1;
+      const want = D.r(cmMin, cmMax);
+      while (b < pts.length - 1 && L < want) { L += Math.hypot(pts[b][0] - pts[b - 1][0], pts[b][1] - pts[b - 1][1]); b++; }
+      if (pts.length - b < 6) b = pts.length;
+      out.push([a, b]);
+      a = Math.max(a + 3, b - Math.floor(D.r(1, 4)));
+    }
+    return out;
+  };
 
-  // page polygons for occlusion (hatching masks are evaluated in page space)
-  const toPage = (P) => poly(P.map(([x, y]) => T(x, y)));
-  const fingerP = fingerC.map(toPage), thumbP = toPage(thumbC), thenarP = toPage(thenarC), nailP = toPage(nailC);
-  const stalkP = poly([[-rStalk(yTop), yTop], [rStalk(yTop), yTop], [rStalk(yBot), yBot], [-rStalk(yBot), yBot]].map(([x, y]) => T(x, y)));
-  const handFront = [thumbP, thenarP, ...fingerP];
-
-  const contour = (ctrl, o = {}, occ = []) => {
-    const pts = TP(o.raw ? ctrl : sp(ctrl));
-    let runs = occ.length ? clipOut(pts, occ) : [pts];
-    if (o.broken) { // lit-side contours: the chalk lifts here and there
-      const out = [];
+  // ---------------- contours: the model's visible outlines ----------------
+  const CT = F.contours(FF);
+  const big = new Set([M.gPalm, gStalk, M.gTP, M.gTD]);
+  const contourStrokes = (filter) => {
+    for (const C of CT) {
+      if (!filter(C)) continue;
+      const pts = C.pts;
+      // owned points, with their weights
+      const own = pts.map((p) => {
+        // this group's line where it stands in front; where two masses only meet, the lower-numbered draws it
+        const crease = Math.abs(p[2]) <= 0.1;
+        if (p[2] < -0.1 || (crease && !(p[5] > C.g))) return null;
+        const xi = p[0] - p[3] * 0.14, yi = p[1] - p[4] * 0.14;
+        const tin = toneS(xi, yi), fd = fadeS(xi, yi) || fadeS(p[0] - p[3] * 0.3, p[1] - p[4] * 0.3);
+        if (fd < 0.06) return null;
+        const sil = crease ? (p[5] >= 0 && p[5] !== M.gPalm && C.g !== M.gPalm ? 0.75 : 0.1) : p[5] < 0 ? sm(0.1, 1.2, p[2]) : 0.45 + 0.55 * sm(0.05, 0.6, p[2]);
+        return { p, tin, fd, sil };
+      });
+      // runs of owned points; the lit side lifts here and there
+      let run = [];
+      const runs = [];
+      let sAcc = 0;
+      own.forEach((q, i) => {
+        if (i > 0) sAcc += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+        const lift = q && q.tin < 0.12 && q.sil > 0.5 && fnoise(sAcc * 1.3, C.g * 13 + 5) > 0.5 - 0.8 * q.tin;
+        if (q && !lift) run.push(q); else { if (run.length > 4) runs.push(run); run = []; }
+      });
+      if (run.length > 4) runs.push(run);
       for (const r of runs) {
-        let a = 0;
-        while (a < r.length - 3) {
-          const len = Math.floor(D.r(0.35, 1.0) * r.length / o.broken);
-          const b = Math.min(r.length, a + Math.max(6, len));
-          out.push(r.slice(a, b));
-          a = b + Math.floor(D.r(2, 7));
+        for (const [a, b] of handRuns(r.map((q) => q.p))) {
+          const seg = r.slice(a, b);
+          if (seg.length < 4) continue;
+          const wf = seg.map((q) => (0.42 + 0.62 * q.sil) * (0.68 + 0.85 * q.tin) * (0.3 + 0.7 * q.fd));
+          const df = seg.map((q) => (0.5 + 0.5 * q.sil) * (0.78 + 0.42 * q.tin) * Math.pow(q.fd, 0.6));
+          // a slight unsteadiness of the hand along the line
+          const sd0 = D.r(0, 100);
+          let acc = 0;
+          const wob = seg.map((q, i) => {
+            if (i) acc += Math.hypot(q.p[0] - seg[i - 1].p[0], q.p[1] - seg[i - 1].p[1]);
+            const o2 = 0.018 * fnoise(acc * 2.2 + sd0, 77);
+            return [q.p[0] + q.p[3] * o2, q.p[1] + q.p[4] * o2];
+          });
+          line(wob, wf, df, { w: 2.0, d: 0.72, taper: [9, 14] });
+          // a searching line beside the big forms
+          if (big.has(C.g) && seg.length > 40 && D.rnd() < 0.4) {
+            const off = D.r(0.04, 0.09) * (D.rnd() < 0.5 ? 1 : -1);
+            const a2 = Math.floor(seg.length * D.r(0, 0.3)), b2 = Math.floor(seg.length * D.r(0.55, 1));
+            const sub = seg.slice(a2, b2);
+            if (sub.length > 6) line(sub.map((q) => [q.p[0] + q.p[3] * off, q.p[1] + q.p[4] * off]), sub.map(() => 0.75), sub.map((q) => 0.38 * Math.pow(q.fd, 0.8)), { w: 1.5, d: 0.6, taper: [20, 20], speed: 1.0 });
+          }
         }
       }
-      runs = out.filter((r) => r.length > 3);
-    }
-    for (const r of runs) {
-      D.stroke(r, { ...CH, w: (o.w ?? 2.2) * 1.45, d: o.d ?? 0.62, speed: o.speed ?? 0.5, taper: o.taper ?? [12, 18], press: o.press ?? 0.35, pfreq: 14, load: 0.18 });
-      if (o.search) { // a lighter searching line beside it
-        const off = (D.rnd() - 0.5) * 2.6 * PX;
-        const a = Math.floor(r.length * D.r(0, 0.25)), b = Math.floor(r.length * D.r(0.6, 1));
-        const sub = r.slice(a, b).map(([x, y], i) => [x + off + 0.6 * PX * Math.sin(i * 0.05), y - off * 0.7]);
-        if (sub.length > 3) D.stroke(sub, { ...CH, w: (o.w ?? 2.2) * 1.0, d: (o.d ?? 0.62) * 0.4, speed: 0.9, taper: [20, 20], press: 0.4 });
-      }
     }
   };
-  // tone by hatching: fn(x, y) in canonical cm -> shade 0..1; occluders in page space
-  const shadeIn = (fn, occ, bbox, o) => {
-    const inside = (X, Y) => {
-      for (const q of occ) if (inP(q, X, Y)) return 0;
-      const [x, y] = Ti(X, Y);
-      return fn(x, y, X, Y);
-    };
-    const [x0, y0, x1, y1] = bbox;
-    const corners = [T(x0, y0), T(x1, y0), T(x0, y1), T(x1, y1)];
-    const bb = [Math.min(...corners.map((p) => p[0])), Math.min(...corners.map((p) => p[1])), Math.max(...corners.map((p) => p[0])), Math.max(...corners.map((p) => p[1]))];
-    const oo = { kind: 'chalk', angle: 0.92, sp: 5.4, w: 2.2, d: 0.48, maxLen: 60, speed: 1.4, gap: 0.006, bow: 0.05, wet: false, nib: 0, ...o };
-    return hatch(D, inside, bb, oo);
-  };
-  // cross-contour strokes over a horizontal cylinder (a finger segment): short arcs from top to bottom,
-  // drawn where its shade exceeds a per-stroke threshold
-  const crossContour = (f, shade, occ, o = {}) => {
-    const step = o.step ?? 0.12;
-    for (let x = f.xL + 0.15; x < f.xR - 0.15; x += step * D.r(0.8, 1.2)) {
-      const th = D.r(o.thr?.[0] ?? 0.35, o.thr?.[1] ?? 0.8);
-      const pts = [];
-      for (let y = f.yT - 0.1; y <= f.yB + 0.05; y += 0.04) {
-        const v = (y - f.yT) / (f.yB - f.yT);
-        const xx = x + (o.bow ?? 0.22) * Math.sin(Math.PI * Math.min(1, Math.max(0, v)));
-        if (inP(fingerC[FD.indexOf(f)], xx, y) && shade(xx, y) > th) pts.push([xx, y]);
-        else if (pts.length) break;
+
+  // cross-sections of a bone, kept where visible and dark enough: hatching that turns round the form
+  const rings = (B, op = {}) => {
+    const a = B.a, b = B.b, ax = F.sub(b, a), L = F.len(ax);
+    const e1 = B.e1, e2 = B.e2, k1 = B.k1 ?? 1, k2 = B.k2 ?? 1;
+    const step = op.step ?? 0.13;
+    for (let t = op.t0 ?? 0.08; t < (op.t1 ?? 0.92); t += (step / L) * D.r(0.75, 1.25)) {
+      const cc = F.lerp3(a, b, t), r = (B.ra + (B.rb - B.ra) * t) * 1.004;
+      const th = D.r(op.thr?.[0] ?? 0.42, op.thr?.[1] ?? 0.85);
+      let cur = [];
+      const flush = () => {
+        if (cur.length > 5) {
+          const tn = cur.map((q) => tone(q[0], q[1]));
+          line(cur, tn.map((v) => 0.75 + 0.5 * v), tn.map((v) => 0.55 + 0.6 * v), { w: op.w ?? 1.35, d: op.d ?? 0.46, speed: 1.6, taper: [5, 9], press: 0.25, gap: 0.006, load: 0.1 });
+        }
+        cur = [];
+      };
+      for (let k = 0; k <= 96; k++) {
+        const ang = (k / 96) * TAU;
+        const q = F.add(cc, F.add(F.mul(e1, Math.cos(ang) * r * k1), F.mul(e2, Math.sin(ang) * r * k2)));
+        if (visible(q, 0.16) && front(q[0], q[1]) === B.g && tone(q[0], q[1]) > th) cur.push(q); else flush();
       }
-      if (pts.length < 6) continue;
-      for (const r of clipOut(TP(pts), occ)) {
-        D.stroke(r, { ...CH, w: (o.w ?? 1.9) * D.r(0.85, 1.15), d: (o.d ?? 0.42) * D.r(0.8, 1.1), speed: 1.6, taper: [4, 10], press: 0.3, load: 0.1, gap: 0.006 });
-      }
+      flush();
     }
   };
+
+  // tone by parallel hatching in page space, from the shade field
+  const pageBox = (() => {
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    for (let j = 0; j < FF.ny; j += 2) for (let i = 0; i < FF.nx; i += 2) {
+      const k = j * FF.nx + i;
+      if (FF.GI[k] < 0 || FADE[k] < 0.03) continue;
+      const P = T(FF.x0 + i * FF.hc, FF.y0 + j * FF.hc);
+      x0 = Math.min(x0, P[0]); y0 = Math.min(y0, P[1]); x1 = Math.max(x1, P[0]); y1 = Math.max(y1, P[1]);
+    }
+    return [x0, y0, x1, y1];
+  })();
+  const shadeHatch = (fn, op) => hatch(D, (X, Y) => { const [x, y] = Ti(X, Y); return fn(x, y); }, op.bb ?? pageBox,
+    { kind: 'chalk', angle: 0.95, sp: 5, w: 1.7, d: 0.5, maxLen: 34, speed: 1.6, gap: 0.004, bow: 0.04, wet: false, nib: 0, thr: [0.15, 0.6], ...op });
 
   D.at(-60);
-  // ---------------- the stalk, behind the fingers and in front of the palm heel ----------------
-  const sL = [], sR = [];
-  for (let y = yTop; y <= yBot; y += 0.5) { sL.push([-rStalk(y), y]); sR.push([rStalk(y) + 0.04 * Math.sin(y * 0.7), y]); }
-  contour(sL, { w: 1.7, d: 0.45, search: true, broken: 3 }, handFront);
-  contour(sR, { w: 2.4, d: 0.66, search: true }, handFront);
-  for (const k of [-0.5, 0.08, 0.56]) { // ribs
-    const rib = []; for (let y = yTop + 0.6; y <= yBot; y += 0.5) rib.push([k * rStalk(y) + 0.05 * Math.sin(y * 0.9 + k * 5), y]);
-    for (const r of clipOut(TP(sp(rib)), handFront)) D.stroke(r, { ...CH, w: 1.4, d: 0.26, speed: 1.2, taper: [30, 30], press: 0.5 });
-  }
-  for (const yn of [-5.9, 9.5]) { // nodes: a swelling ring and a leaf-base stub
-    const r = rStalk(yn);
-    contour([[-r - 0.12, yn - 0.1], [-r * 0.4, yn + 0.32], [r * 0.4, yn + 0.32], [r + 0.12, yn - 0.1]], { w: 1.8, d: 0.52, taper: [6, 6] }, handFront);
-    contour([[-r - 0.1, yn + 0.45], [0, yn + 0.8], [r + 0.1, yn + 0.45]], { w: 1.3, d: 0.32, taper: [6, 6] }, handFront);
-    contour([[r + 0.08, yn + 0.1], [r + 0.9, yn - 1.4], [r + 1.25, yn - 3.0]], { w: 1.6, d: 0.48, taper: [4, 14] }, handFront);
-    contour([[r + 0.05, yn + 0.5], [r + 0.75, yn - 0.6], [r + 1.25, yn - 3.0]], { w: 1.2, d: 0.36, taper: [4, 14] }, handFront);
-  }
-  // open top of the stalk (the hollow pith keeps the ember)
-  const rt = rStalk(yTop);
-  contour(arcPts(0, yTop, rt, 0, TAU, { ry: rt * 0.38, step: 0.08 }), { w: 1.9, d: 0.62, taper: [4, 4], raw: true });
-  contour(arcPts(0, yTop + 0.05, rt * 0.55, 0, TAU, { ry: rt * 0.2, step: 0.06 }), { w: 1.5, d: 0.7, taper: [3, 3], raw: true });
-
-  // ---------------- forearm and the heel of the hand (behind the stalk) ----------------
-  contour(armL, { w: 2.0, d: 0.52, search: true, taper: [10, 120], broken: 2.5 }, [stalkP, thenarP]);
-  contour([...hypo, ...armR.slice(1)], { w: 2.6, d: 0.66, search: true, taper: [10, 140] }, [stalkP, ...fingerP]);
-  contour([[-1.7, 5.45], [-0.4, 5.75], [1.0, 5.55]], { w: 1.3, d: 0.3, taper: [8, 8] }, [stalkP]);   // wrist crease
-  contour([[-2.3, 7.4], [-1.1, 7.15], [0.4, 7.4]], { w: 1.1, d: 0.22, taper: [10, 10] }, [stalkP]);   // a tendon's swell
-
-  // ---------------- fingers: middle phalanges stacked, back to front (little finger first) ----------------
-  for (let i = FD.length - 1; i >= 0; i--) {
-    const f = FD[i], k = FC[i];
-    const occ = [thumbP, thenarP, ...fingerP.slice(0, i)];
-    const top = k.slice(0, 4), knuckle = k.slice(3, 8), bot = k.slice(7, 11), left = [k[10], k[11], k[12], k[0]];
-    contour(top, { w: 1.7, d: 0.46, broken: 2.2 }, occ);                         // lit: light, broken
-    contour(knuckle, { w: 2.5, d: 0.74, taper: [8, 8], search: i === 1 }, occ); // the knuckle, firm
-    contour(bot, { w: 2.2, d: 0.68, taper: [8, 26] }, occ);                      // the crease below, firm
-    contour(left, { w: 1.7, d: 0.55, taper: [6, 6] }, occ);
-    // skin folds over the PIP joint and the proximal phalanx turning back toward the knuckles
-    const h = f.yB - f.yT;
-    for (let q = 0; q < 2; q++) {
-      const xx = f.xR - 0.42 - q * 0.3;
-      contour([[xx + 0.05, f.yT + 0.22 * h], [xx - 0.08, f.yT + 0.5 * h], [xx + 0.02, f.yT + 0.76 * h]], { w: 1.1, d: 0.3, taper: [6, 6] }, occ);
+  // ---------------- the stalk's own marks: ribs, nodes, the leaf-sheath, the cut top ----------------
+  const stalkHatchTop = -4.2;                 // above this the stalk is worked up during the shot
+  const onStalk = (x, y) => front(x, y) === gStalk;
+  // the stem is fluted: its ribs carry the tone, sparse and faint in the light, close and firm in the shade
+  const ribs = (pre) => {
+    const NR = 13;
+    for (let f = 0; f < NR; f++) {
+      const th = -Math.PI / 2 + (Math.PI * (f + 0.5 + D.r(-0.15, 0.15))) / NR;
+      for (const dbl of [0, 1]) {
+        const pts = [];
+        const yA = pre ? stalkHatchTop - 0.3 : yTop + 0.12, yB = pre ? 17.5 : stalkHatchTop + 0.3;
+        for (let y = yA; y <= yB; y += 0.06) {
+          const r = rSt(tOf(y));
+          const x = r * Math.sin(th + dbl * 0.07) * (1 + 0.01 * fnoise(y * 0.8, f + 3)) + 0.018 * fnoise(y * 1.7, f * 7 + dbl);
+          pts.push([x, y]);
+        }
+        let run = [], sAcc = 0, thr = D.r(0.05, 0.45) + dbl * 0.35;
+        const runs = [];
+        pts.forEach((p) => {
+          sAcc += 0.06;
+          const tn = tone(p[0], p[1]);
+          const keep = onStalk(p[0], p[1]) && fadeS(p[0], p[1]) > 0.04 && tn + 0.25 * fnoise(sAcc * 0.7, 40 + f * 3 + dbl) > thr;
+          if (keep) run.push(p); else { if (run.length > 5) runs.push(run); run = []; if (D.rnd() < 0.3) thr = D.r(0.05, 0.45) + dbl * 0.35; }
+        });
+        if (run.length > 5) runs.push(run);
+        for (const r of runs) for (const [a, b] of handRuns(r, 1.4, 4.2)) {
+          const seg = r.slice(a, b);
+          if (seg.length < 5) continue;
+          const tn = seg.map((p) => tone(p[0], p[1]));
+          const fd = seg.map((p) => fadeS(p[0], p[1]));
+          line(seg, tn.map((v, i) => (0.5 + 0.8 * v) * (0.4 + 0.6 * fd[i])), tn.map((v, i) => (0.4 + 0.75 * v) * fd[i]), { w: 1.1, d: 0.62, taper: [14, 18], speed: pre ? 1.2 : 2.6, press: 0.45, load: 0.1, gap: pre ? 0.04 : 0.004 });
+        }
+      }
     }
-    contour([[f.xR - 0.5, f.yT + 0.05], [f.xR + 0.05, f.yT + 0.12], [f.xR + 0.42, f.yT + 0.42]], { w: 1.5, d: 0.42, taper: [4, 10] }, [thumbP, ...fingerP.slice(0, i)]);
-    // DIP crease where the fingertip turns under the thenar
-    contour([[f.xL + 0.55, f.yT + 0.2 * h], [f.xL + 0.45, f.yT + 0.5 * h], [f.xL + 0.55, f.yT + 0.8 * h]], { w: 1.1, d: 0.3, taper: [5, 5] }, occ);
-  }
-  // ---------------- thumb and thenar (front-most) ----------------
-  contour(thTop, { w: 1.9, d: 0.5, search: true, broken: 2 }, []);
-  contour([thTop[thTop.length - 2], thTop[thTop.length - 1], ...thTip, thBot[0], thBot[1]], { w: 2.5, d: 0.72, taper: [8, 8] });
-  contour(thBot, { w: 2.5, d: 0.74, taper: [8, 20] });
-  contour([...nail, nail[0]], { w: 1.4, d: 0.5, taper: [3, 3] });
-  contour([[0.72, -1.38], [1.12, -1.6], [1.5, -1.38]], { w: 1.0, d: 0.26, taper: [4, 4] });          // lunula / cuticle
-  contour([[-1.2, -2.95], [-0.98, -2.5], [-1.06, -2.12]], { w: 1.2, d: 0.34, taper: [6, 6] });       // IP joint folds
-  contour([[-0.85, -2.85], [-0.7, -2.55], [-0.78, -2.25]], { w: 1.0, d: 0.26, taper: [6, 6] });
-  contour(thenarOut, { w: 2.0, d: 0.56, search: true, broken: 2.5 });
-  contour([[-2.25, -0.78], [-2.7, -0.9], [-3.1, -1.15]], { w: 1.5, d: 0.44, taper: [6, 14] });   // thumb meets thenar
-  contour(thenarIn, { w: 2.0, d: 0.46, taper: [10, 30], broken: 2.2 });
-  contour([[-2.75, 1.0], [-2.45, 2.5], [-2.2, 3.8]], { w: 1.1, d: 0.22, taper: [20, 20] });             // the thenar's swell
-
-  // ---------------- shading: light from the upper left; Leonardo's left-handed hatching ----------------
-  const thBotRev = [...thBot].reverse();
-  FD.forEach((f, i) => {
-    const occ = [thumbP, thenarP, ...fingerP.slice(0, i)];
-    const fsh = (x, y) => {
-      if (!inP(fingerC[i], x, y)) return 0;
-      const v = (y - f.yT) / (f.yB - f.yT);
-      let sh = sm(0.3, 0.95, v) * 0.78;                              // the underside of the cylinder
-      sh += sm(f.xR - 1.1, f.xR - 0.05, x) * 0.42;                    // the knuckle end turns away
-      sh += sm(f.xL + 1.1, f.xL - 0.1, x) * 0.5;                      // the tip end turns under
-      sh += Math.exp(-Math.max(0, f.yB - y) / 0.18) * 0.8;             // crease
-      if (i > 0) sh += Math.exp(-Math.max(0, y - f.yT) / 0.26) * 0.62; // the finger above shades the top
-      if (i < 2 && x < 2.0) sh += Math.exp(-Math.max(0, y - lerpY(thBotRev, x)) / 0.55) * 0.75; // the thumb's cast shadow
-      return Math.min(1, sh * (1 - 0.25 * sm(0.75, 0.25, v) * sm(f.xR - 0.4, f.xR - 1.4, x)));
+  };
+  ribs(true);
+  // nodes: the stem swells a little; a leaf-base wraps it like a sheath, its front edge running up and across
+  // the stem to a torn tip that stands off on the far side; a stub of the leaf stalk broken off beside it
+  NODES.forEach((tn, ni) => {
+    const fdN = ni === 0 ? 1 : 0.6;
+    const cy = axis(tn)[1];
+    const draw = (pts, w, d, op = {}) => {
+      let run = [];
+      const flush = () => { if (run.length > 4) { const tnn = run.map((q) => toneS(q[0], q[1])); line(run, tnn.map((v) => (op.wk ?? 0.8) + 0.6 * v), tnn.map((v) => fdN * (0.75 + 0.4 * v)), { w, d, taper: op.taper ?? [6, 10], speed: 0.8 }); } run = []; };
+      for (const p of pts) { const g = front(p[0], p[1]); if (g === gStalk || g < 0) run.push(p); else flush(); }
+      flush();
     };
-    shadeIn(fsh, occ, [f.xL - 0.3, f.yT - 0.3, f.xR + 0.2, f.yB + 0.3], { sp: 4.8, d: 0.46, thr: [0.2, 0.85] });
-    crossContour(f, fsh, occ, { thr: [0.5, 0.9], d: 0.38 });
+    const sd = ni === 0 ? -1 : 1;               // the side the sheath's tip stands off
+    const Ls = ni === 0 ? 2.1 : 1.7;
+    // the node: a faint, uneven ring where the stem swells
+    const ring = [];
+    for (let i = 0; i <= 40; i++) { const a = (i / 40) * Math.PI; ring.push([Math.cos(a) * rSt(tn) * 1.06, cy + Math.sin(a) * rSt(tn) * sinA * 1.06 + 0.04 + 0.02 * fnoise(i * 0.4, ni)]); }
+    draw(ring.slice(0, 22), 1.3, 0.55, { wk: 0.6 });
+    draw(ring.slice(26), 1.3, 0.55, { wk: 0.6 });
+    // the sheath: papery, clasping the stem from the node, its back edge standing off the stem as it rises,
+    // its front edge wrapping across to a torn point
+    const back = [], frontE = [], flareAt = [];
+    for (let i = 0; i <= 32; i++) {
+      const v = i / 32, y = cy - v * Ls, r = rSt(tOf(y));
+      const fl = 0.42 * Math.pow(v, 1.5);
+      flareAt.push([sd * r, y, sd * (r + fl)]);
+      back.push([sd * (r + fl), y]);
+      const k = Math.cos(Math.PI * Math.pow(v, 0.85) * 0.95);          // +1 .. -1: across the front of the stem
+      frontE.push([-sd * r * k * (1 + 0.05 * v) + sd * fl * Math.pow(v, 1.5), y + v * v * 0.3 * ryTop]);
+    }
+    const tipP = [sd * (rSt(tOf(cy - Ls)) + 0.5), cy - Ls - 0.22];
+    draw([...back, tipP], 1.8, 0.72, { taper: [6, 4] });
+    draw([...frontE, tipP], 1.5, 0.66, { taper: [6, 4] });
+    draw([[tipP[0] - sd * 0.03, tipP[1] + 0.12], [tipP[0] + sd * 0.05, tipP[1] + 0.05], [tipP[0] + sd * 0.02, tipP[1] - 0.05]], 0.9, 0.5, { taper: [2, 4] });
+    // the dark gap between the stem and the sheath's flare, hatched across
+    for (let i = 4; i < 30; i += 2) {
+      const [x0, y0, x1] = flareAt[i];
+      if (Math.abs(x1 - x0) < 0.05) continue;
+      draw([[x0, y0 + 0.02], [(x0 + x1) / 2, y0 - 0.05], [x1 - sd * 0.02, y0 - 0.12]], 1.0, 0.6, { taper: [2, 4], wk: 1.0 });
+    }
+    // veins of the sheath, running up from the node and ending against its front edge
+    for (let k = 0; k < 6; k++) {
+      const vk = 0.15 + k * 0.13;
+      const pts = [];
+      for (let i = 0; i <= 30; i++) {
+        const v = i / 30, y = cy - 0.12 - v * Ls * 0.95, r = rSt(tOf(y));
+        const fl = 0.42 * Math.pow(v, 1.5);
+        const xb = sd * ((r + fl * (1 - vk)) * Math.sin(Math.PI / 2 - vk * 2.4));
+        const kf = Math.cos(Math.PI * Math.pow(v, 0.85) * 0.95);
+        if (sd * xb < sd * (-sd * r * kf) + 0.03) break;       // past the front edge: the sheath has ended
+        pts.push([xb, y]);
+      }
+      draw(pts, 0.8, 0.38, { taper: [10, 10], wk: 0.6 });
+    }
+    // the scar of a fallen leaf on the other side: a short torn stub
+    const sx = -sd * rSt(tn) * 0.98, syy = cy - 0.05;
+    const stubA = [[sx, syy], [sx - sd * 0.25, syy - 0.18], [sx - sd * 0.5, syy - 0.42]];
+    const stubB = [[sx, syy - 0.42], [sx - sd * 0.2, syy - 0.55], [sx - sd * 0.42, syy - 0.68]];
+    draw(stubA, 1.6, 0.66, { taper: [4, 3] });
+    draw(stubB, 1.2, 0.5, { taper: [4, 3] });
+    draw([[sx - sd * 0.5, syy - 0.42], [sx - sd * 0.47, syy - 0.52], [sx - sd * 0.52, syy - 0.58], [sx - sd * 0.44, syy - 0.68]], 1.0, 0.6, { taper: [2, 2] });
+    for (let k = 0; k < 4; k++) draw([[sx - sd * (0.08 + k * 0.1), syy - 0.06 - k * 0.12], [sx - sd * (0.04 + k * 0.1), syy - 0.2 - k * 0.12]], 0.9, 0.5, { taper: [2, 2], wk: 1 });
   });
-  // thumb: underside in shadow, the tip turning; nail left bare
-  shadeIn((x, y) => {
-    if (!inP(thumbC, x, y) || inP(nailC, x, y)) return 0;
-    const yt = lerpY(thTop, x), yb = lerpY(thBotRev, x);
-    const v = (y - yt) / Math.max(0.3, yb - yt);
-    return Math.min(1, sm(0.38, 1.0, v) * 0.85 + sm(1.0, 2.0, x) * 0.3 + sm(-2.4, -3.6, x) * 0.25);
-  }, [], [-4.2, -3.3, 2.2, 0.1], { sp: 4.6, d: 0.48, thr: [0.2, 0.85] });
-  // thenar: a rounded mass, darker toward the fingertips and below; a reflected light at its left edge
-  shadeIn((x, y) => {
-    if (!inP(thenarC, x, y)) return 0;
-    const xl = lerpX(thenarOut, y), xr = lerpX(thenarIn, y);
-    const u = (x - xl) / Math.max(0.3, xr - xl);
-    const refl = 1 - 0.5 * sm(0.12, 0.0, u);
-    return Math.min(1, (sm(0.35, 1.0, u) * 0.7 + sm(1.5, 5.0, y) * 0.45 + Math.exp(-Math.max(0, y - lerpY(thBotRev, x)) / 0.4) * 0.5 * sm(-3.6, -2.4, x)) * refl);
-  }, [thumbP], [-4.1, -1.8, -0.4, 5.6], { sp: 4.6, d: 0.5, thr: [0.22, 0.88] });
-  // forearm: the lower side, fading out as the study is left unfinished
-  shadeIn((x, y) => {
-    if (y < 5.3) return 0;
-    const xl = lerpX(armL, y), xr = lerpX(armR, y);
-    const u = (x - xl) / Math.max(0.5, xr - xl);
-    if (u < 0 || u > 1) return 0;
-    return (sm(0.4, 0.95, u) * 0.85 * (1 - 0.5 * sm(0.9, 1.0, u)) + Math.exp(-(y - 5.3) / 0.9) * 0.6) * sm(14, 7.5, y);
-  }, [stalkP, thenarP, ...fingerP], [-8.5, 5.0, 2.0, 15], { sp: 5.2, maxLen: 90, thr: [0.25, 0.8], d: 0.4, shortenA: 0.15, shortenB: 0.2 });
-  // the stalk: right side in shade with reflected light at the very edge; the fist's shadow below it
-  shadeIn((x, y) => {
-    const r = rStalk(y), u = x / r;
-    if (Math.abs(u) > 1 || y < yTop + 0.3) return 0;
-    return Math.min(1, sm(-0.1, 0.55, u) * (1 - 0.5 * sm(0.8, 1.0, u)) + (y > 4.2 ? Math.exp(-(y - 4.3) / 1.1) * 0.8 : 0)) * sm(13, 6, y);
-  }, handFront, [-1.5, yTop, 1.6, yBot], { sp: 4.4, maxLen: 70, thr: [0.2, 0.9], angle: -Math.PI / 2 + TH, d: 0.42, bow: 0.008 });
+  // the cut top: the near rim of the rind (the far rim is the outline), the rind's thickness
+  const rt = rSt(tTop);
+  const rimNear = [], rimIn = [], rimInFar = [];
+  for (let i = 0; i <= 48; i++) {
+    const a = (i / 48) * Math.PI;
+    rimNear.push([Math.cos(a) * rt, yTop + Math.sin(a) * ryTop]);
+    rimIn.push([Math.cos(a) * rt * 0.8, yTop + Math.sin(a) * ryTop * 0.8]);
+    rimInFar.push([Math.cos(a + Math.PI) * rt * 0.8, yTop + Math.sin(a + Math.PI) * ryTop * 0.8]);
+  }
+  line(rimNear, rimNear.map((p) => 0.7 + 0.6 * clamp(0.5 + p[0] / rt)), rimNear.map(() => 1), { w: 2.2, d: 0.76, taper: [6, 6] });
+  line(rimIn, rimIn.map(() => 0.75), rimIn.map(() => 0.8), { w: 1.3, d: 0.55, taper: [6, 6] });
+  line(rimInFar, rimInFar.map(() => 0.85), rimInFar.map(() => 0.9), { w: 1.4, d: 0.6, taper: [6, 6] });
+  // the rind's ribs show as little notches round the rim; frayed fibres stand up from the cut
+  for (let k = 0; k < 13; k++) {
+    const a = Math.PI * (k + 0.5) / 13;
+    const x0 = Math.cos(a) * rt, y0 = yTop + Math.sin(a) * ryTop;
+    line([[x0, y0], [x0 * 0.92, y0 + 0.05], [x0 * 0.9, y0 + 0.11]], [1, 1, 1], [1, 1, 1], { w: 0.9, d: 0.5, taper: [2, 4], speed: 0.4 });
+  }
+  for (let k = 0; k < 7; k++) {
+    const a = D.r(0.15, Math.PI - 0.15) + (k % 2 ? Math.PI : 0);
+    const x0 = Math.cos(a) * rt * D.r(0.84, 1.0), y0 = yTop + Math.sin(a) * ryTop * 0.95;
+    const h = D.r(0.1, 0.26), lean = D.r(-0.1, 0.1);
+    line([[x0, y0], [x0 + lean * 0.4, y0 - h * 0.5], [x0 + lean, y0 - h]], [1, 0.9, 0.6], [1, 1, 1], { w: 0.9, d: 0.5, taper: [2, 6], speed: 0.4 });
+  }
+
+  // ---------------- the hand: contours, then tone ----------------
+  contourStrokes((C) => C.g !== gStalk);
+  contourStrokes((C) => C.g === gStalk);
+
+  // the thumbnail, the cuticle and lunula, and the creases of the skin
+  const H2C = (p) => VW.C(p);
+  const th = M.thumb;
+  const tAx = F.sub(th.tip, th.ip), tL = F.len(tAx), tu = F.norm(tAx);
+  const md1 = M.fingers[1].segs[1];
+  const outT = F.norm(F.sub(F.lerp3(th.ip, th.tip, 0.6), F.lerp3(md1.a, md1.b, 0.4)));
+  let nD = F.add(outT, F.mul(VW.view, 0.6));
+  nD = F.norm(F.sub(nD, F.mul(tu, F.dot(nD, tu))));
+  const eS = F.cross(tu, nD);
+  const onThumb = (sx, ang, k = 1.02) => {
+    const r = (0.95 + (0.78 - 0.95) * sx) * k;
+    return H2C(F.add(F.lerp3(th.ip, th.tip, sx), F.add(F.mul(nD, Math.cos(ang) * r), F.mul(eS, Math.sin(ang) * r))));
+  };
+  const visRun = (pts, w, d, op = {}) => {
+    let run = [];
+    const flush = () => { if (run.length > 3) { const tn = run.map((q) => tone(q[0], q[1])); line(run, tn.map((v) => (op.wk ?? 0.8) + 0.6 * v), tn.map((v) => 0.75 + 0.4 * v), { w, d, taper: op.taper ?? [4, 6], speed: op.speed ?? 0.5 }); } run = []; };
+    for (const q of pts) { if (visible(q, op.tol ?? 0.1)) run.push(q); else flush(); }
+    flush();
+  };
+  const NA = 0.82;
+  const nail = [];
+  for (let i = 0; i <= 16; i++) nail.push(onThumb(0.47 + 0.07 * ((i / 16) * 2 - 1) ** 2, -NA + 2 * NA * (i / 16)));   // cuticle
+  for (let i = 0; i <= 18; i++) nail.push(onThumb(0.47 + 0.07 + (0.98 - 0.54) * (i / 18), NA));                     // side
+  for (let i = 0; i <= 12; i++) nail.push(onThumb(0.98 + 0.03 * Math.sin(Math.PI * i / 12), NA - 2 * NA * (i / 12)));  // free edge
+  for (let i = 0; i <= 18; i++) nail.push(onThumb(0.98 - (0.98 - 0.54) * (i / 18), -NA));
+  visRun(nail, 1.5, 0.66);
+  const lun = [];
+  for (let i = 0; i <= 14; i++) lun.push(onThumb(0.56 + 0.05 * ((i / 14) * 2 - 1) ** 2 * -1 + 0.05, -0.5 + (i / 14)));
+  visRun(lun, 0.9, 0.3);
+  const fold = [];
+  for (let i = 0; i <= 16; i++) fold.push(onThumb(0.42 + 0.06 * ((i / 16) * 2 - 1) ** 2, -1.0 + 2.0 * (i / 16), 1.03));
+  visRun(fold, 1.0, 0.36);
+  // dorsal wrinkles over the thumb's IP joint
+  for (let q = 0; q < 3; q++) {
+    const pts = [];
+    const sx = -0.06 + q * 0.07;
+    for (let i = 0; i <= 14; i++) pts.push(onThumb(sx + 0.03 * Math.sin(i * 0.7 + q), -0.9 + 1.8 * (i / 14) + 0.1 * q, 1.03));
+    visRun(pts, 0.9, 0.34);
+  }
+  // skin over the PIP knuckles: a few faint transverse folds on the dorsum of each middle phalanx's base
+  M.fingers.forEach((f, fi) => {
+    const sg = f.segs[1], dir = F.norm(F.sub(sg.b, sg.a));
+    const nd = F.norm(F.cross(dir, f.A));
+    const es = F.cross(dir, nd);
+    for (let q = 0; q < 3; q++) {
+      const sx = 0.06 + q * 0.07 + D.r(-0.015, 0.015);
+      const r = (sg.ra + (sg.rb - sg.ra) * sx) * 1.02;
+      const cc = F.lerp3(sg.a, sg.b, sx);
+      const pts = [];
+      for (let i = 0; i <= 12; i++) {
+        const ang = -0.75 + 1.5 * (i / 12) + 0.15 * q;
+        pts.push(H2C(F.add(cc, F.add(F.mul(nd, Math.cos(ang) * r), F.mul(es, Math.sin(ang) * r)))));
+      }
+      visRun(pts, 0.85 - 0.1 * q, 0.3, { wk: 0.7 });
+    }
+  });
+  // the wrist's bracelet creases across its palmar side
+  {
+    const perpR = F.norm(F.sub([1, 0, 0], F.mul(M.df, M.df[0])));
+    const perpP = F.norm(F.cross(perpR, M.df));
+    for (const [tw, wk] of [[0.55, 0.9], [1.15, 0.6]]) {
+      const pts = [];
+      for (let i = 0; i <= 30; i++) {
+        const ang = -0.9 + 1.8 * (i / 30);
+        const cc = F.add([0, 0.9, 0], F.mul(M.df, tw - 0.6));
+        const p = F.add(cc, F.add(F.mul(perpP, Math.cos(ang) * 1.62), F.mul(perpR, Math.sin(ang) * 2.45)));
+        pts.push(H2C(p));
+      }
+      let run = [];
+      const flush = () => { if (run.length > 4) line(run, run.map(() => wk), run.map((q) => 0.8 * fadeS(q[0], q[1])), { w: 1.15, d: 0.5, taper: [8, 8], speed: 0.6 }); run = []; };
+      for (const q of pts) { if (front(q[0], q[1]) === M.gPalm && visible(q, 0.4)) run.push(q); else flush(); }
+      flush();
+    }
+  }
+
+  // tone: Leonardo's parallel hatching from the upper left, in passes that deepen into the core shadows
+  const handTone = (x, y) => (front(x, y) === gStalk && y < stalkHatchTop ? 0 : tone(x, y));
+  const fleshTone = (x, y) => (front(x, y) === gStalk ? 0 : tone(x, y));
+  // (tone is eased so the half-tones stay open and the passes gather in the core shadows)
+  const ease = (f) => (x, y) => Math.pow(f(x, y), 1.25);
+  shadeHatch(ease(fleshTone), { thr: [0.1, 0.55], sp: 4.2, d: 0.56, w: 1.45, maxLen: 64, jit: 0.25, bow: 0.025 });
+  shadeHatch((x, y) => Math.pow(handTone(x, y), 1.5), { thr: [0.42, 0.85], sp: 4.2, d: 0.6, w: 1.5, angle: 0.99, jit: 0.25, maxLen: 52, bow: 0.025 });
+  shadeHatch((x, y) => Math.pow(handTone(x, y), 1.5), { thr: [0.82, 1.0], sp: 5.0, d: 0.5, w: 1.4, angle: 0.95 - 1.05, maxLen: 18, jit: 0.4 });
+  // a rubbed ground under the darkest passages
+  shadeHatch(ease(handTone), { thr: [0.55, 0.92], sp: 7, d: 0.26, w: 7, maxLen: 40, angle: 0.85, bow: 0.02 });
+  // cross-contour strokes round the fingers and the thumb in their half-shadows
+  for (const B of M.bones) {
+    if (!B.finger) continue;
+    let e1, e2, k1 = 1, k2 = 1;
+    if (B.lat) { e1 = VW.Cd(B.lat); e2 = VW.Cd(B.dors); k1 = B.wk; k2 = B.dk; }
+    else { const u = F.norm(F.sub(B.b, B.a)); e1 = F.norm(F.cross(u, [0, 0, 1])); e2 = F.cross(u, e1); e1 = VW.Cd(e1); e2 = VW.Cd(e2); }
+    rings({ ...B, a: VW.C(B.a), b: VW.C(B.b), e1, e2, k1, k2 }, { thr: [0.35, 0.8], step: 0.16, d: 0.5, w: 1.4 });
+  }
 
   // ---------------- mirror script (written before the cut) and the theft diagram ----------------
   if (V) scriptBlock(D, ['il foco furato', 'nella ferula portato', 'di cielo in terra', 'alli omini'], 0.11, 0.15, { size: 20, lh: 27, d: 0.62, kind: 'chalk' });
@@ -283,20 +424,37 @@ export function prometheus(o = {}) {
   D.fitTo(0, -30, -0.05);
   const preT = D.mark();
 
-  // ---------------- during the shot: last hatching near the top of the stalk, the flame, the theft ----------------
+  // ---------------- during the shot: the top of the stalk shaded and scorched, the flame, the theft ----------------
   D.at(0.0);
-  shadeIn((x, y) => {
-    const r = rStalk(y), u = x / r;
-    if (Math.abs(u) > 1 || y < yTop + 0.3 || y > -4.2) return 0;
-    return 0.4 + 0.6 * sm(-0.3, 0.7, u);
-  }, handFront, [-1.5, yTop, 1.6, -4.1], { sp: 4.2, maxLen: 40, angle: -Math.PI / 2 + TH + 0.08, d: 0.4, speed: 2.2, gap: 0.004, thr: [0.3, 0.95], bow: 0.008 });
+  const topTone = (x, y) => {
+    if (front(x, y) !== gStalk || y >= stalkHatchTop || y < yTop - ryTop) return 0;
+    return Math.min(1, tone(x, y) + 0.5 * Math.exp(-(y - yTop) / 0.9));   // scorched below the cut
+  };
+  const bbTop = (() => { const a = T(-rt - 0.3, yTop - 0.5), b = T(rt + 0.3, stalkHatchTop + 0.2), cc = T(-rt - 0.3, stalkHatchTop + 0.2), d = T(rt + 0.3, yTop - 0.5); return [Math.min(a[0], b[0], cc[0], d[0]), Math.min(a[1], b[1], cc[1], d[1]), Math.max(a[0], b[0], cc[0], d[0]), Math.max(a[1], b[1], cc[1], d[1])]; })();
+  ribs(false);
+  shadeHatch(topTone, { bb: bbTop, thr: [0.45, 0.9], sp: 4.6, d: 0.5, w: 1.6, speed: 2.4, angle: 1.03, maxLen: 26 });
+  // the pith: spongy, flecked, darkened where the ember sits
+  for (let k = 0; k < 34; k++) {
+    const a = D.r(0, TAU), rr = Math.sqrt(D.rnd()) * 0.74;
+    const x = Math.cos(a) * rt * rr, y = yTop + Math.sin(a) * ryTop * rr;
+    const l = D.r(0.03, 0.09), an = D.r(-0.5, 0.5) + (D.rnd() < 0.5 ? 0 : Math.PI);
+    const dk = 0.45 + 0.4 * (1 - rr);                          // darker toward the ember at the centre
+    line([[x, y], [x + Math.cos(an) * l * 0.5, y + Math.sin(an) * l * 0.25], [x + Math.cos(an) * l, y + Math.sin(an) * l * 0.4]], [1, 1, 1], [1, 1, 1], { w: D.r(0.9, 1.5), d: dk, taper: [2, 3], speed: 0.3, gap: 0.01 });
+  }
   D.fitTo(preT, 0.0, 0.75);
 
-  // flame rising from the hollow top: a teardrop body, side tongues curling out, inner zone lines,
-  // detached flicks and smoke curling off the tip (fire rises vertically, whatever the stalk's lean)
+  // ---------------- the flame: tongues rising out of the pith, modelled in chalk ----------------
   const base = T(0, yTop);
   const flame = { x: base[0], y: base[1] - 0.004 };
-  const bez = (p0, p1, p2, p3, n = 50) => {
+  const FSC = 1.0;
+  const FP = ([x, yu]) => [flame.x + x * FSC, flame.y - yu * FSC];   // flame frame: y up, fire rises vertically
+  const fstroke = (pts, wf, df, op) => {
+    const P = resample(pts.map(FP), 1.3 * PX);
+    const it = D.stroke(P, { ...CH, press: 0.35, pfreq: 10, load: 0.12, ...op, w: (op.w ?? 2) * 1.45 });
+    if (it && wf) for (let i = 0; i < it.W.length; i++) { const u = i / (it.W.length - 1); it.W[i] *= wf(u); it.D[i] = clamp(it.D[i] * df(u)); }
+    return it;
+  };
+  const bez = (p0, p1, p2, p3, n = 40) => {
     const out = [];
     for (let i = 0; i <= n; i++) {
       const t = i / n, a = (1 - t) ** 3, b = 3 * (1 - t) ** 2 * t, cc = 3 * (1 - t) * t * t, d = t ** 3;
@@ -304,34 +462,110 @@ export function prometheus(o = {}) {
     }
     return out;
   };
-  const FSC = 1.35;
-  const FP = ([x, yu]) => [flame.x + x * FSC, flame.y - yu * FSC];   // flame frame: y up
-  const fl = (pts, o) => D.stroke(resample(pts.map(FP), 1.4 * PX), { ...CH, press: 0.3, ...o, w: (o.w ?? 2) * 1.5 });
-  const tongue = (bl, br, tip, cl1, cl2, cr1, cr2, o = {}) => {
-    fl(bez(bl, cl1, cl2, tip), { w: o.w ?? 2.2, d: o.d ?? 0.66, speed: o.speed ?? 0.45, taper: [8, 26], gap: 0.0 });
-    fl(bez(br, cr1, cr2, tip), { w: (o.w ?? 2.2) * 1.08, d: (o.d ?? 0.66) * 1.05, speed: o.speed ?? 0.45, taper: [8, 26], gap: 0.03 });
-  };
   D.at(0.65);
   const m0 = D.mark();
-  tongue([-0.021, 0], [0.021, 0], [-0.034, 0.172], [-0.05, 0.05], [-0.012, 0.105], [0.046, 0.065], [0.0, 0.122]);   // main
-  tongue([-0.03, 0.05], [-0.016, 0.075], [-0.07, 0.132], [-0.046, 0.088], [-0.058, 0.112], [-0.03, 0.104], [-0.05, 0.118], { w: 1.9, d: 0.6 });
-  tongue([0.01, 0.06], [0.034, 0.04], [0.03, 0.128], [0.006, 0.09], [0.024, 0.108], [0.046, 0.08], [0.04, 0.104], { w: 1.8, d: 0.56 });
-  tongue([-0.011, 0.012], [0.012, 0.012], [-0.016, 0.112], [-0.026, 0.05], [-0.006, 0.085], [0.024, 0.055], [-0.002, 0.09], { w: 1.4, d: 0.4 });
-  tongue([-0.007, 0.006], [0.007, 0.006], [-0.003, 0.046], [-0.012, 0.022], [-0.004, 0.036], [0.012, 0.022], [0.002, 0.038], { w: 1.2, d: 0.34 });
-  tongue([-0.036, 0.15], [-0.03, 0.152], [-0.05, 0.19], [-0.042, 0.165], [-0.048, 0.18], [-0.03, 0.165], [-0.044, 0.18], { w: 1.3, d: 0.46 });
-  tongue([0.012, 0.135], [0.018, 0.136], [0.016, 0.166], [0.01, 0.148], [0.014, 0.16], [0.022, 0.148], [0.018, 0.16], { w: 1.2, d: 0.42 });
-  const tipX = flame.x - 0.036 * FSC, tipY = flame.y - 0.176 * FSC;
-  const curl = (x0, y0, r0, turns, dirn, rise) => {
-    const pts = [];
-    for (let i = 0; i <= 90; i++) {
-      const u = i / 90, a = dirn * u * turns * TAU, r = r0 * (1 - 0.75 * u);
-      pts.push([x0 - u * 0.05 + Math.cos(a) * r - r0, y0 - u * rise + Math.sin(a) * r]);
+  // the root: short dark strokes where the fire leaves the pith, hugging the mouth of the stalk
+  for (let k = 0; k < 6; k++) {
+    const x0 = -0.02 + 0.04 * (k + D.r(0.1, 0.9)) / 6, h = D.r(0.012, 0.026), bend = D.r(-0.008, 0.008);
+    fstroke(bez([x0, 0.0], [x0 + bend * 0.3, h * 0.4], [x0 * 0.85 + bend, h * 0.75], [x0 * 0.7 + bend * 1.4, h], 12), (u) => 1.1 - 0.5 * u, () => 1, { w: 1.4, d: 0.62, speed: 0.2, taper: [3, 10], gap: 0.006 });
+  }
+  // one body of fire: a swelling root that parts into tongues, each with its own sway and a curled tip.
+  // tips: [x, y] in the flame frame (y up), with the sway of the tongue (+ bends right) and its width at
+  // the notch; the body's outline runs from the root up each tongue and down into the notch beside it
+  const TIPS = [
+    { tip: [-0.064, 0.142], sw: -0.012, nb: [-0.046, 0.082] },
+    { tip: [-0.03, 0.232], sw: 0.016, nb: [-0.018, 0.118] },
+    { tip: [0.016, 0.178], sw: -0.014, nb: [0.012, 0.11] },
+    { tip: [0.056, 0.128], sw: 0.012, nb: [0.046, 0.078] },
+  ];
+  const BL = [-0.027, 0.0], BR = [0.027, 0.0];
+  // outline: left flank, then each tongue up and down, then the right flank
+  
+  TIPS.forEach((T0, i) => {
+    const nL = i === 0 ? TIPS[0].nb : TIPS[i - 1].nbR ?? TIPS[i].nb;
+    const nR = i < TIPS.length - 1 ? [(TIPS[i].tip[0] + TIPS[i + 1].tip[0]) / 2 + T0.sw * 0.3, Math.min(TIPS[i].tip[1], TIPS[i + 1].tip[1]) * 0.62] : TIPS[i].nb;
+    T0.nbR = nR;
+    const up = bez(i === 0 ? TIPS[0].nb : TIPS[i - 1].nbR, [nL[0] + T0.sw * 1.5 - 0.006, nL[1] + (T0.tip[1] - nL[1]) * 0.45], [T0.tip[0] - T0.sw * 1.2 - 0.004, T0.tip[1] - (T0.tip[1] - nL[1]) * 0.25], T0.tip, 24);
+    const dn = bez(T0.tip, [T0.tip[0] - T0.sw * 0.6 + 0.006, T0.tip[1] - (T0.tip[1] - nR[1]) * 0.35], [nR[0] + T0.sw * 1.2 + 0.004, nR[1] + (T0.tip[1] - nR[1]) * 0.4], nR, 24);
+    T0.up = up; T0.dn = dn;
+  });
+  // draw each tongue's two edges, root to tip (fire is drawn the way it rises)
+  const fl = (pts, w, d, sp = 0.45) => fstroke(pts, (u) => 0.5 + 0.8 * Math.sin(Math.PI * Math.min(1, u * 1.15)), () => 1, { w, d, speed: sp, taper: [10, 30], gap: 0.004 });
+  fl(bez(BL, [-0.036, 0.018], [-0.044, 0.05], TIPS[0].nb, 24), 2.4, 0.84);
+  fl(bez(BR, [0.036, 0.016], [0.044, 0.045], TIPS[3].nb, 24), 2.7, 0.9);
+  TIPS.forEach((T0, i) => {
+    fl(T0.up, i === 1 ? 2.5 : 2.1, 0.82);
+    fl(T0.dn.slice().reverse(), i === 1 ? 2.7 : 2.3, 0.86);
+  });
+  // streamlines: from the root, spread across it, fanning to each tip; dark toward the outer flanks and the
+  // root, the hot core left bare
+  TIPS.forEach((T0, i) => {
+    const n = i === 1 ? 5 : 3;
+    for (let k = 0; k < n; k++) {
+      const f = (k + 0.5) / n;                                   // 0 = this tongue's left edge .. 1 = right
+      const outer = i === 0 ? 1 - f : i === TIPS.length - 1 ? f : Math.abs(f - 0.5) * 2 * 0.8;
+      const bx = BL[0] + (BR[0] - BL[0]) * ((i + f) / TIPS.length) * 1.0;
+      const nL = i === 0 ? TIPS[0].nb : TIPS[i - 1].nbR, nR = T0.nbR;
+      const mid = [nL[0] + (nR[0] - nL[0]) * f, nL[1] + (nR[1] - nL[1]) * f];
+      const tgt = [T0.tip[0] + (f - 0.5) * 0.008, T0.tip[1] - D.r(0.012, 0.04)];
+      const p0 = [bx, D.r(0.006, 0.03) + (1 - outer) * 0.035];
+      const wv = D.r(-0.01, 0.01);
+      const pts = bez(p0, [p0[0] * 0.5 + mid[0] * 0.5 - T0.sw * 0.8 + wv, p0[1] + (mid[1] - p0[1]) * 0.7], [mid[0] + T0.sw * (1.4 + f * 0.8) - wv, mid[1] + (tgt[1] - mid[1]) * 0.45], tgt, 36);
+      const d = 0.34 + 0.5 * outer;
+      fstroke(pts, (u) => 0.4 + 0.7 * Math.sin(Math.PI * u), (u) => 0.45 + 0.6 * Math.sin(Math.PI * Math.min(1, u * 1.6)), { w: 1.3 + 0.4 * outer, d, speed: 0.8, taper: [10, 26], gap: 0.004 });
     }
-    return pts;
+  });
+  // tone inside the fire: hatched along its rise, dense at the flanks and down in the notches between the
+  // tongues, thinning to nothing in the hot core
+  {
+    const poly = [...bez(BL, [-0.036, 0.018], [-0.044, 0.05], TIPS[0].nb, 24)];
+    TIPS.forEach((T0) => { poly.push(...T0.up, ...T0.dn); });
+    poly.push(...bez(BR, [0.036, 0.016], [0.044, 0.045], TIPS[3].nb, 24).reverse());
+    const P = poly.map(FP);
+    let bx0 = 1e9, by0 = 1e9, bx1 = -1e9, by1 = -1e9;
+    for (const [x, y] of P) { bx0 = Math.min(bx0, x); by0 = Math.min(by0, y); bx1 = Math.max(bx1, x); by1 = Math.max(by1, y); }
+    const inside = (x, y) => {
+      let c2 = false;
+      for (let i = 0, j = P.length - 1; i < P.length; j = i++) {
+        const [xi, yi] = P[i], [xj, yj] = P[j];
+        if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c2 = !c2;
+      }
+      return c2;
+    };
+    const edgeD = (x, y) => {
+      let m = 1e9;
+      for (let i = 0; i < P.length - 1; i += 2) m = Math.min(m, Math.hypot(P[i][0] - x, P[i][1] - y));
+      return m;
+    };
+    const fTone = (x, y) => {
+      if (!inside(x, y)) return 0;
+      const d = edgeD(x, y) / FSC, yu = (flame.y - y) / FSC;
+      return Math.min(1, Math.exp(-d / 0.016) * 1.0 + 0.45 * sm(0.05, 0.0, yu) + 0.25 * sm(0.12, 0.2, yu));
+    };
+    hatch(D, fTone, [bx0, by0, bx1, by1], { kind: 'chalk', angle: -1.5, sp: 3.4, w: 1.4, d: 0.66, maxLen: 30, speed: 1.6, gap: 0.003, bow: 0.06, wet: false, nib: 0, thr: [0.25, 0.85], flip: true });
+  }
+  // flickers torn free above, sparks
+  const lick = (x, y, h, sw, w = 1.6) => {
+    const L = bez([x, y], [x + sw, y + h * 0.35], [x - sw * 0.6, y + h * 0.7], [x + sw * 0.4, y + h], 20);
+    const Rr = bez([x + 0.006, y + 0.002], [x + sw + 0.008, y + h * 0.35], [x - sw * 0.5 + 0.004, y + h * 0.66], [x + sw * 0.4, y + h], 20);
+    fl(L, w, 0.7, 0.3); fl(Rr, w * 1.1, 0.75, 0.3);
   };
-  const sm2 = (pts, o) => D.stroke(resample(pts, 1.4 * PX), { ...CH, press: 0.5, ...o });
-  sm2(curl(tipX, tipY - 0.01, 0.016, 1.3, -1, 0.04), { w: 1.5, d: 0.3, speed: 0.3, taper: [10, 30] });
-  sm2(curl(tipX + 0.02, tipY - 0.035, 0.011, 1.1, -1, 0.03), { w: 1.4, d: 0.24, speed: 0.3, taper: [10, 30] });
+  lick(-0.05, 0.19, 0.05, -0.012);
+  lick(0.02, 0.215, 0.04, 0.01, 1.4);
+  for (let k = 0; k < 7; k++) {
+    const x = D.r(-0.07, 0.06), y = D.r(0.2, 0.27), a = D.r(1.2, 1.9), l = D.r(0.004, 0.01);
+    fstroke([[x, y], [x + Math.cos(a) * l, y + Math.sin(a) * l]], null, null, { w: 1.4, d: 0.7, speed: 0.15, taper: [2, 2], gap: 0.03 });
+  }
+  // smoke curling off the tip
+  const tip = [-0.04, 0.245];
+  for (let k = 0; k < 3; k++) {
+    const pts = [];
+    for (let i = 0; i <= 60; i++) {
+      const v = i / 60;
+      pts.push([tip[0] + k * 0.014 - 0.035 * v + 0.012 * Math.sin(v * 9 + k * 2) * (0.3 + v), tip[1] + 0.01 * k + v * 0.05]);
+    }
+    fstroke(pts, (u) => 0.9 - 0.5 * u, (u) => 0.85 - 0.6 * u, { w: 1.3, d: 0.42, speed: 0.25, taper: [10, 30], press: 0.5, gap: 0.02 });
+  }
   D.fitTo(m0, 0.45, 2.1);
 
   // the arc that links the large circle to the small one: the real ballistic stream from L1
@@ -340,7 +574,7 @@ export function prometheus(o = {}) {
   D.stroke(resample(arcS, 1.5 * PX), { ...CH, w: 2.8, d: 0.58, dur: 0.8, taper: [10, 20], press: 0.3 });
   if (V) D.text('dal grande al picholo', 0.105, gc[1] + 0.085, { size: 17, d: 0.56, kind: 'chalk', t0: 2.95, dur: 0.5 });
   else D.text('dal grande al picholo', gc[0] + 0.19, gc[1] + 0.145, { size: 17, d: 0.56, kind: 'chalk', t0: 2.95, dur: 0.5 });
-  D.flame = [flame.x - 0.014, flame.y - 0.08];
+  D.flame = [flame.x - 0.008, flame.y - 0.1];
   return D;
 }
 
