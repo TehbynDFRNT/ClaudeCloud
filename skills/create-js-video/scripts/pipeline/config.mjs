@@ -35,7 +35,7 @@ export const DEFAULTS = Object.freeze({
   planFieldsInGlobal: [],               // top-level plan fields a scene reads through E.plan (fingerprint hazard)
   page: 'src/index.html',               // the page that exposes window.renderFrame etc.
   distDir: 'dist',                      // render pieces: <distDir>/<plan.id>/
-  block: 240,                           // fixed block length in frames, aligned to frame 0
+  block: 240,                           // fixed block length in frames, aligned to frame 0 (a plan's own `block` wins)
   audio: 'out/audio/mix.wav',           // default soundtrack for assemble
   comment: '',                          // container comment metadata (credits)
   chrome: null,                         // Chromium executable (else $CHROME, else discovered)
