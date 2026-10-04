@@ -96,7 +96,10 @@ export const DESIGN = {
   // v4 (the director's note on v3): the explosion 15% lower and the returning music and cannons 20% higher, as
   // amplitude: the climax bus gain found for the v3 balance x explosionGain; the return's ride x returnGain (the
   // salvos are set against the orchestra as heard, so they rise with it)
-  v4: { explosionGain: 0.85, returnGain: 1.2 },
+  // (measured on the normalised mix the first try moved the balance ~1 dB: the music limiter and the loudness
+  // normalisation took the rest back, so the return also gets musicCeilDb more headroom and the gains are set so the
+  // MEASURED change is the note's: hit about -1.4 dB, return about +1.6 dB against the rest of the film)
+  v4: { explosionGain: 0.75, returnGain: 1.4, musicCeilDb: -1.6 },
   // the fold compares loudness over winS windows (the roar follows the music's phrase level, not its notes)
   // salvoDuckDb: the climax bus also ducks under each salvo (3 ms attack, 40 ms hold, 80 ms release), so the guns
   // cut through the explosion's body on the beat instead of piling onto the master limiter
@@ -2258,7 +2261,7 @@ export async function renderSoundtrack({ base = '/', plan: planPath = 'film-plan
   const cap = cxMax.lufs - CX.marginLu, F = DESIGN.fold;
   // the music bus's own true-peak ceiling from the ignition on (the hotter return); none before it
   const musicCeil = new Float32Array(length).fill(1e3);
-  musicCeil.fill(undb(RT.musicCeilDb), Math.round(T.ignition * SR));
+  musicCeil.fill(undb(V4 ? DESIGN.v4.musicCeilDb : RT.musicCeilDb), Math.round(T.ignition * SR));
   const preL = loudness(music[0], music[1]);
   let gM = undb(DESIGN.targetLufs - 1.0 - preL), comp, ride, mlim, fold, lim, L = 0, prev = null;
   for (let it = 0; it < 8; it++) {
