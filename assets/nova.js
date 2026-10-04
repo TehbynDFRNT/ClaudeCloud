@@ -100,9 +100,15 @@ if(video){
  video.addEventListener('pause',function(){film.classList.remove('playing')});
  video.addEventListener('ended',function(){film.classList.remove('playing')});
  /* the film's own light spills onto the page while it plays (a few times a second, only on screen) */
- var ambOn=false;
- function loopAmbient(){if(ambOn)return;ambOn=true;requestAnimationFrame(ambFrame)}
- function ambFrame(){if(video.paused||video.ended||!filmOn||d.hidden){ambOn=false;return}var n=performance.now();if(n-ambT>(film.classList.contains('viewer')?110:180)){ambT=n;paintAmbient(video)}requestAnimationFrame(ambFrame)}
+ /* repainted on every frame the video presents (requestVideoFrameCallback), so the light follows each cut
+    within a frame; where that call is missing, on animation frames whenever the picture's time has moved */
+ var ambOn=false,ambLast=-1,VFC='requestVideoFrameCallback' in video;
+ function ambNext(){if(VFC)video.requestVideoFrameCallback(ambFrame);else requestAnimationFrame(ambFrame)}
+ function loopAmbient(){if(ambOn)return;ambOn=true;ambNext()}
+ function ambFrame(){if(!filmOn||d.hidden){ambOn=false;return}
+  if(video.readyState>1&&video.currentTime!==ambLast){ambLast=video.currentTime;paintAmbient(video)}
+  if(video.paused||video.ended){ambOn=false;return}ambNext()}
+ video.addEventListener('seeked',function(){if(video.readyState>1&&film.classList.contains('started'))paintAmbient(video)});
  new IntersectionObserver(function(es){es.forEach(function(e){filmOn=e.isIntersecting;if(filmOn)loopAmbient()})},{threshold:0}).observe(film);
  /* every Watch link plays from the top (or resumes) and brings the screen into view */
  $$('[data-watch]').forEach(function(a){a.addEventListener('click',function(ev){ev.preventDefault();film.scrollIntoView({behavior:RM?'auto':'smooth',block:'center'});start(video.ended?0:null);video.focus({preventScroll:true})})});
