@@ -3,11 +3,13 @@
 # into dist/ (restore-from-branches.py), run the status command, and count the pieces still missing OR stale. Prints
 # one line only when that line changes, so it can run under the Monitor tool (each printed line is an event).
 #
-#   watch-render.sh --branches 'claude/my-film-r*' --plan film-plan.json [--dirs dist/my-film-v2]
+#   watch-render.sh --branches 'claude/my-film-r*' --plan film-plan.json [--dirs dist/my-film-v2] [--block 72]
 #                   [--status 'node tools/chunk.mjs status --plan film-plan.json'] [--interval 60] [--max-minutes 28]
 #
 # --plan also goes to the restore, which then takes only pieces of that plan's current block grid from the branches
-# (pass the plan the --status command reads). Copy this file and restore-from-branches.py into the film repo's
+# (pass the plan the --status command reads). The restore reads the block length from the plan's own "block" (a 4K
+# plan's 72 frames), else film.config.json, else 240; --block passes an explicit length to the restore for a layout
+# that is in neither. Copy this file and restore-from-branches.py into the film repo's
 # tools/ together, and commit both: this script runs the restore from its own folder.
 #
 # Exit codes and last lines (match ALL of them in a Monitor filter, not just success):
@@ -20,17 +22,18 @@
 # Never edit this file while a copy of it is running: bash reads scripts incrementally and the run goes wrong.
 set -u
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-branches="" plan="film-plan.json" dirs="" status="" interval=60 maxmin=28 want=1
+branches="" plan="film-plan.json" dirs="" block="" status="" interval=60 maxmin=28 want=1
 while [ $# -gt 0 ]; do
   case "$1" in
     --branches) branches="$2"; shift 2 ;;
     --plan) plan="$2"; shift 2 ;;
     --dirs) dirs="$2"; shift 2 ;;
+    --block) block="$2"; shift 2 ;;
     --status) status="$2"; shift 2 ;;
     --interval) interval="$2"; shift 2 ;;
     --max-minutes) maxmin="$2"; shift 2 ;;
     --no-want) want=0; shift ;;
-    -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,22p' "$0"; exit 0 ;;
     *) echo "FAIL unknown argument $1"; exit 1 ;;
   esac
 done
@@ -46,7 +49,7 @@ while true; do
      && python3 -c 'import json,sys; json.load(open(sys.argv[1]))["blocks"]' "$tmp/want.json" 2> /dev/null; then
     wantarg=(--want "$tmp/want.json")   # a status tool without --json support is simply not used for this
   fi
-  if ! python3 "$HERE/restore-from-branches.py" --branches "$branches" --fetch --plan "$plan" ${dirs:+--dirs "$dirs"} ${wantarg[@]+"${wantarg[@]}"} > "$tmp/restore.log" 2>&1; then
+  if ! python3 "$HERE/restore-from-branches.py" --branches "$branches" --fetch --plan "$plan" ${dirs:+--dirs "$dirs"} ${block:+--block "$block"} ${wantarg[@]+"${wantarg[@]}"} > "$tmp/restore.log" 2>&1; then
     echo "FAIL restore: $(tail -2 "$tmp/restore.log" | tr '\n' ' ')"; exit 1
   fi
   if ! $status > "$tmp/status.txt" 2>&1; then

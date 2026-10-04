@@ -8,9 +8,11 @@ what changing it would re-render IN EVERY CUT: the plans are every film-plan*.js
     notes-to-version.py notes.txt --plan film-plan.json,film-plan-sol.json --json
 
 Accepted input (several cuts may be pasted one after another):
-    David (Render 4, render 4)
-    1. 01:25:00 (frame 2040, F29.1) [open] {sling} @ 45%,30%
+    David (Render 4.2, render 4)
+    1. 00:01:25:00 (frame 2040, F29.1) [open] {Picture} @ 45%,30%
        The hands look weird
+    2. 00:01:55:00 (frame 2790, S22-ignition) [open] {Sound} @ 50%,50%
+       Explosion 15% lower
     - [ ] **01:25:00** (frame 2040) · F29.1 · pin 45% across, 30% down        (notes.md from serve.mjs)
       The hands look weird
 Free text without that structure is kept as one note per paragraph, so nothing the director wrote is lost.
@@ -219,7 +221,7 @@ def main():
         return 0
     cuts = sorted({n['cut'] or 'Film' for n in notes})
     print(f"# Director's notes{' → v' + a.next if a.next else ''}: {', '.join(cuts)}\n")
-    print(f"{len(notes)} note(s), {sum(1 for n in notes if n['status'] != 'resolved')} open. Kinds are guesses: correct them. "
+    print(f"{len(notes)} note(s), {sum(1 for n in notes if n['status'] != 'resolved')} open. Kinds come from the notes' {{tags}}, else from keywords: correct them. "
           f"Standing rules apply to every later version.")
     if plans:
         print(f"Plans read (one per cut): {', '.join(label(p, pl) for p, pl in plans)}.")
