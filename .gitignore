@@ -16,3 +16,6 @@ dist/sol-916/
 dist/prometheus-916/
 dist/*-916-v3/
 dist/*-916-v4/
+
+# the one-pager's video (the film itself; shipped in the site zip, never committed)
+site/nova/assets/*.mp4
