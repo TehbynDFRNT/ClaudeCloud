@@ -51,6 +51,7 @@ uniform vec3 uHoles[7]; uniform vec3 uHoleCol; uniform float uHoleR;
 uniform vec4 uMarble;        // vein strength, vein scale, gloss, translucency
 uniform vec3 uMfp;           // translucency length per channel (head units)
 uniform vec3 uTint;          // albedo tint (stone colour)
+uniform int uDebug;          // 0 off; 1 key visibility, 2 key thickness, 3 ao, 4 normal, 5 cavity/thick/skin, 6 veins
 
 const vec2 POI[12] = vec2[12](
   vec2(-0.326,-0.406), vec2(-0.840,-0.074), vec2(-0.696, 0.457), vec2(-0.203, 0.621),
@@ -128,7 +129,8 @@ void main(){
   dth = dth * 0.25 * uShDepth;                       // stone between this point and the lit surface (head units)
   float NoL = dot(N, uKeyDir);
   vec3 trans = exp(-dth / uMfp) * (1.0 - vis) * sat(0.35 - 0.65 * NoL);
-  vec3 E = uKeyCol * (vis * wrapD(NoL, mix(0.12, 0.3, skin)) * mix(1.0, ao, 0.35) + trans * uMarble.w);
+  float aoK = mix(ao * ao, ao, skin);                 // the curls swallow light; the polished skin stays open
+  vec3 E = uKeyCol * (vis * wrapD(NoL, mix(0.12, 0.3, skin)) * mix(1.0, aoK, 0.55) + trans * uMarble.w);
   vec3 S = uKeyCol * vis * specGGX(N, V, uKeyDir, rough);
 
   // ---- fill (dim, broad), lens-axis fill, ambient
@@ -139,7 +141,8 @@ void main(){
   // ---- coloured rims from behind: wrapped diffuse, sheen and light through the thin edges (ears, curls, nostrils)
   float tU = thick * 0.12;
   vec3 tT = exp(-tU / (uMfp * 1.4));
-  float aoR = ao * ao;
+  float edge = smoothstep(0.05, 0.75, 1.0 - NoV);     // rims belong to the edges of the form
+  float aoR = ao * ao * edge;
   float r1 = dot(N, uRimDir), r2 = dot(N, uRim2Dir);
   E += uRimCol * (wrapD(r1, 0.12) * aoR + tT * sat(0.45 - 0.55 * r1) * 0.55 * uMarble.w * ao);
   S += uRimCol * specGGX(N, V, uRimDir, rough * 0.85) * aoR;
@@ -159,6 +162,12 @@ void main(){
     }
   }
   vec3 col = alb * E + S * gloss;
+  if (uDebug == 1) col = vec3(vis);
+  else if (uDebug == 2) col = vec3(dth * 20.0, exp(-dth / uMfp.g), 0.0);
+  else if (uDebug == 3) col = vec3(ao);
+  else if (uDebug == 4) col = N * 0.5 + 0.5;
+  else if (uDebug == 5) col = vec3(cav, thick, skin);
+  else if (uDebug == 6) col = vec3(1.0 - vn);
   fragColor = vec4(col, max(dot(P - uCamH, uFwdH), 1e-3));
 }`);
 
@@ -287,9 +296,9 @@ void main(){
   float ang = atan(q.y, q.x);
   float streak = 0.62 + 0.38 * (0.6 * n3(vec3(cos(ang) * 9.0, sin(ang) * 9.0, r * 0.7 - uAuraT * 0.05)) + 0.4 * n3(vec3(cos(ang) * 23.0 + 3.0, sin(ang) * 23.0, r * 1.3 - uAuraT * 0.09)));
   streak = mix(1.0, streak, uAura.w);
-  float corona = exp(-r * r * 1.6) * 0.55 + exp(-r * 1.4) * 0.45;
-  vec3 aura = uAuraCol * (uAura.x * g1 * g1 + uAura.y * g2) + mix(uAuraCol2, uAuraCol, exp(-r * r * 2.0)) * uAura.z * corona * streak;
-  float outside = 1.0 - smoothstep(0.0, 1.0, m) * 0.92;
+  float corona = exp(-r * r * 2.2);
+  vec3 aura = uAuraCol * (uAura.x * g1 * g1 + uAura.y * g2 * g2) + mix(uAuraCol2, uAuraCol, exp(-r * r * 2.0)) * uAura.z * corona * streak;
+  float outside = 1.0 - smoothstep(0.0, 1.0, m) * 0.97;
   col += aura * outside;
   if (uHasRays > 0.5) col += texture(uRays, uv).rgb;
   col *= uGain;
