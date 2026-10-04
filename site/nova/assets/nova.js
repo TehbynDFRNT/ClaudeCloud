@@ -119,7 +119,6 @@ if(video){
   video.controls=true;film.classList.add('started');if(d.activeElement===play)video.focus({preventScroll:true});
   var p=video.play();if(p&&p.catch)p.catch(function(){});
  }
- play.addEventListener('click',function(){start()});
  video.addEventListener('play',function(){film.classList.add('playing','started');video.controls=true;loopAmbient()});
  video.addEventListener('pause',function(){film.classList.remove('playing')});
  video.addEventListener('ended',function(){film.classList.remove('playing')});
@@ -134,23 +133,32 @@ if(video){
   if(video.paused||video.ended){ambOn=false;return}ambNext()}
  video.addEventListener('seeked',function(){if(video.readyState>1&&film.classList.contains('started'))paintAmbient(video)});
  new IntersectionObserver(function(es){es.forEach(function(e){filmOn=e.isIntersecting;if(filmOn)loopAmbient()})},{threshold:0}).observe(film);
- /* every Watch link plays from the top (or resumes) and brings the screen into view */
- $$('[data-watch]').forEach(function(a){a.addEventListener('click',function(ev){ev.preventDefault();film.scrollIntoView({behavior:RM?'auto':'smooth',block:'center'});start(video.ended?0:null);video.focus({preventScroll:true})})});
- /* the viewer: the whole film section goes fullscreen (or, where an element cannot, an edge-to-edge layer) */
- var vbtn=$('#viewerBtn');
+ /* Play, every Watch link and a still's Play from open the viewer: the film at full height with its own light
+    filling the screen around it (the film section goes full screen where an element can, an edge-to-edge
+    layer where it cannot, as on iPhone). The expand button is real full screen: the video alone, in the
+    browser's full screen or the iPhone's own player. */
+ var fsb=$('#fsBtn'),vx=$('#vwClose'),lastFs=null;
  function fsEl(){return d.fullscreenElement||d.webkitFullscreenElement}
  var behind=$$('body>*:not(main):not(script):not(svg),main>*:not(#film)');
- function setViewer(on){film.classList.toggle('viewer',on);root.classList.toggle('viewing',on);vbtn.setAttribute('aria-pressed',on);behind.forEach(function(el){el.inert=on});paintAmbient(video.readyState>1&&film.classList.contains('started')?video:poster)}
- function openViewer(){setViewer(true);var rq=film.requestFullscreen||film.webkitRequestFullscreen;if(rq){try{var p=rq.call(film);if(p&&p.catch)p.catch(function(){})}catch(e){}}if(!film.classList.contains('started'))start()}
- function closeViewer(){if(fsEl()){var ex=d.exitFullscreen||d.webkitExitFullscreen;try{ex.call(d)}catch(e){}}setViewer(false)}
- if(vbtn){vbtn.addEventListener('click',function(){film.classList.contains('viewer')?closeViewer():openViewer()});
-  video.addEventListener('dblclick',function(){film.classList.contains('viewer')?closeViewer():openViewer()});
-  /* a browser's own fullscreen on the bare video (where the hide hint is ignored) becomes the viewer instead */
+ function setViewer(on){film.classList.toggle('viewer',on);root.classList.toggle('viewing',on);behind.forEach(function(el){el.inert=on});paintAmbient(video.readyState>1&&film.classList.contains('started')?video:poster)}
+ function openViewer(){if(film.classList.contains('viewer'))return;setViewer(true);var rq=film.requestFullscreen||film.webkitRequestFullscreen;if(rq&&!fsEl()){try{var p=rq.call(film);if(p&&p.catch)p.catch(function(){})}catch(e){}}}
+ function closeViewer(){if(fsEl()){var ex=d.exitFullscreen||d.webkitExitFullscreen;try{var p=ex.call(d);if(p&&p.catch)p.catch(function(){})}catch(e){}}setViewer(false)}
+ function watch(at){openViewer();start(at);video.focus({preventScroll:true})}
+ function iosFull(){try{video.webkitEnterFullscreen();return true}catch(e){return false}}
+ function fullScreen(){if(!film.classList.contains('started'))start();
+  var rq=video.requestFullscreen||video.webkitRequestFullscreen;
+  if(rq){try{var p=rq.call(video);if(p&&p.catch)p.catch(function(){if(video.webkitEnterFullscreen)iosFull()})}catch(e){if(video.webkitEnterFullscreen)iosFull()}}
+  else if(video.webkitEnterFullscreen&&!iosFull())video.addEventListener('loadedmetadata',function f(){video.removeEventListener('loadedmetadata',f);iosFull()})}
+ play.addEventListener('click',function(){watch()});
+ $$('[data-watch]').forEach(function(a){a.addEventListener('click',function(ev){ev.preventDefault();watch(video.ended?0:null)})});
+ window.novaPlayFrom=function(t){watch(t)};
+ if(fsb){fsb.addEventListener('click',fullScreen);
+  vx.addEventListener('click',closeViewer);
+  video.addEventListener('dblclick',function(){if(fsEl()===video){var ex=d.exitFullscreen||d.webkitExitFullscreen;try{ex.call(d)}catch(e){}}else fullScreen()});
+  /* leaving the viewer's own full screen (Esc, the browser's control) closes the viewer; leaving the video's does not */
   ['fullscreenchange','webkitfullscreenchange'].forEach(function(ev){d.addEventListener(ev,function(){var f=fsEl();
-   if(f===video){film.dataset.keep='1';var ex=d.exitFullscreen||d.webkitExitFullscreen;try{var p=ex.call(d);if(p&&p.catch)p.catch(function(){})}catch(e){}setViewer(true);return}
-   if(!f&&film.classList.contains('viewer')&&!film.dataset.keep)setViewer(false);delete film.dataset.keep})});
+   if(lastFs===film&&!f&&film.classList.contains('viewer'))setViewer(false);lastFs=f})});
   d.addEventListener('keydown',function(e){if(e.key==='Escape'&&film.classList.contains('viewer')&&!fsEl())setViewer(false)})}
- window.novaPlayFrom=function(t){film.scrollIntoView({behavior:RM?'auto':'smooth',block:'center'});start(t);video.focus({preventScroll:true})};
 }
 
 /* ---------------- sharing ---------------- */
