@@ -48,7 +48,9 @@ uniform vec3 uFillDir; uniform vec3 uFillCol;
 uniform vec3 uRimDir; uniform vec3 uRimCol;
 uniform vec3 uRim2Dir; uniform vec3 uRim2Col;
 uniform vec3 uUnderDir; uniform vec3 uUnderCol;
-uniform vec3 uFrontCol;      // soft fill from the lens axis: lifts the eye sockets just enough to read the gaze
+uniform vec3 uUnderH;        // under light by height: full below x, gone above y (head space: beard and nostrils glow,
+                             // nothing reaches the brow); z = lobe exponent (a tight, hot glow on the planes facing it)
+uniform vec3 uFrontCol;     // soft fill from the lens axis: lifts the eye sockets just enough to read the gaze
 uniform vec3 uAmb;
 uniform vec3 uHoles[7]; uniform vec3 uHoleCol; uniform float uHoleR;
 uniform vec4 uMarble;        // vein strength, vein scale, gloss, translucency
@@ -61,9 +63,29 @@ uniform vec2 uSpot;          // head-space height where the light falls away (th
 uniform vec2 uSpotR;         // ... and the radius around the head where it falls away (shoulders, the slab, the back)
 uniform int uDebug;          // 0 off; 1 key visibility, 2 key thickness, 3 ao, 4 normal, 5 cavity/thick/skin, 6 veins
 
-const vec2 POI[8] = vec2[8](
-  vec2(-0.613, 0.617), vec2( 0.170,-0.040), vec2(-0.299,-0.792), vec2( 0.645, 0.493),
-  vec2(-0.651,-0.205), vec2( 0.421,-0.700), vec2( 0.040, 0.947), vec2( 0.966,-0.105));
+uniform float uShTexUV;      // one shadow texel in shadow uv
+
+// Key visibility: a box-filtered PCF over the penumbra square (half-size uPenUV). Hardware-compared bilinear taps at
+// <= 2-texel spacing give a smooth ramp with no noise and no comb (sparse or rotated taps replicate the shadow edge
+// into streaks); 9 probes on the square first, the dense grid only where they disagree (the penumbra itself).
+const vec2 PROBE[8] = vec2[8](vec2(-1.0,-1.0), vec2(0.0,-1.0), vec2(1.0,-1.0), vec2(-1.0,0.0),
+                              vec2(1.0,0.0), vec2(-1.0,1.0), vec2(0.0,1.0), vec2(1.0,1.0));
+float keyVis(vec2 uv, float z){
+  float s0 = texture(uSh, vec3(uv, z));
+  float lo = s0, hi = s0;
+  for (int i = 0; i < 8; i++){ float s = texture(uSh, vec3(uv + PROBE[i] * uPenUV, z)); lo = min(lo, s); hi = max(hi, s); }
+  if (hi - lo < 0.002) return s0;
+  int n = clamp(int(ceil(uPenUV / uShTexUV)) + 1, 2, 10);   // taps per axis: spacing 2 r / (n - 1) <= 2 texels
+  float sum = 0.0, st = 2.0 / float(n - 1);
+  for (int y = 0; y < 10; y++){
+    if (y >= n) break;
+    for (int x = 0; x < 10; x++){
+      if (x >= n) break;
+      sum += texture(uSh, vec3(uv + (vec2(x, y) * st - 1.0) * uPenUV, z));
+    }
+  }
+  return sum / float(n * n);
+}
 
 float D_GGX(float NoH, float a){ float a2 = a * a; float d = NoH * NoH * (a2 - 1.0) + 1.0; return a2 / (PI * d * d); }
 float V_Smith(float NoV, float NoL, float a){
@@ -97,13 +119,13 @@ float veins(vec3 P, float fp, out float cloud){
   vec3 w = vec3(wa.r, wb.r, wa.b) * 2.0 - 1.0;
   float f = fbm3(q + w * 1.4, 3);
   float g = uMarble.y * 1.4;                       // ~|grad f| in head units
-  float w1 = 0.03 + fp * g * 1.5;
+  float w1 = 0.022 + fp * g * 1.5;
   float v1 = exp(-f * f / (w1 * w1));               // soft-edged main veins
   float f2 = fbm3(q * 2.7 + w * 2.4 + 11.0, 2);
   float w2 = 0.016 + fp * g * 4.0;
   float v2 = exp(-f2 * f2 / (w2 * w2));             // fine branching threads
   cloud = smoothstep(-0.2, 0.45, wb.b * 2.0 - 1.0); // veins gather in drifts
-  return (v1 * 0.55 * (0.35 + 0.65 * cloud) + v2 * 0.4 * cloud) * (0.5 + 0.5 * smoothstep(0.3, 0.7, wa.g));
+  return (v1 * 0.62 * (0.4 + 0.6 * cloud) + v2 * 0.42 * cloud) * (0.55 + 0.45 * smoothstep(0.3, 0.7, wa.g));
 }
 
 void main(){
@@ -143,9 +165,9 @@ void main(){
   vec4 mo = n4(P * 6.0 + 2.0);
   float mott = (mo.r - 0.5) + (mo.b - 0.5) * 0.6;
   vec3 alb = uTint * (0.82 + 0.06 * mott) * mix(vec3(1.0), vec3(0.985, 0.99, 1.0), cloud);
-  alb = mix(alb, vec3(0.52, 0.54, 0.58), vn);
+  alb = mix(alb, vec3(0.4, 0.42, 0.46), vn);
   alb *= mix(1.0, 0.6, crev);
-  alb = mix(alb, alb * vec3(0.93, 0.86, 0.76), sat((1.0 - ao) * 1.4) * 0.7);
+  alb = mix(alb, alb * vec3(0.96, 0.92, 0.86), sat((1.0 - ao) * 1.4) * 0.6);
   alb *= 1.0 + 0.05 * ridge;
   float rough = mix(0.62, 0.42, skin) * (1.0 + 0.25 * (mo.b - 0.5)) + 0.08 * crev;
   rough = clamp(rough, 0.25, 0.9);
@@ -154,12 +176,8 @@ void main(){
 
   // ---- key: hard light, shadow-mapped (PCF), translucent shadow map for light bleeding through thin stone
   vec3 sp = (uLMat * vec4(P + Ng * uShTexel * 1.8, 1.0)).xyz * 0.5 + 0.5;
-  float rot = ign(gl_FragCoord.xy) * TAU;
-  mat2 R = rot2(rot);
-  float vis = 0.0;
   float bias = uShTexel * 0.6 / uShDepth;
-  for (int i = 0; i < 8; i++) vis += texture(uSh, vec3(sp.xy + R * POI[i] * uPenUV, sp.z - bias));
-  vis *= 0.125;
+  float vis = keyVis(sp.xy, sp.z - bias);
   // diffusion + translucency from the pre-blurred moments map (variance shadow map, one smooth fetch):
   // visW = the key's visibility averaged over the stone's diffusion length (light that entered nearby re-emerges here:
   // marble's soft glow at every shadow edge and terminator); dth = mean stone between here and the lit surface
@@ -194,9 +212,13 @@ void main(){
   E += uRim2Col * (wrapD(r2, 0.12) * aoR + tT * sat(0.45 - 0.55 * r2) * 0.55 * uMarble.w * ao);
   S += uRim2Col * specGGX(N, V, uRim2Dir, min(rough * 1.25, 0.9)) * aoR * 0.45;
   // ---- under light (Prometheus: the stolen fire below)
-  float ul = dot(N, uUnderDir);
-  E += uUnderCol * (sat(ul) * ao + tT * sat(0.4 - 0.6 * ul) * 0.4 * uMarble.w);
-  S += uUnderCol * specGGX(N, V, uUnderDir, rough) * ao;
+  if (uUnderCol.r + uUnderCol.g > 0.0){
+    float ul = dot(N, uUnderDir);
+    float uh = 1.0 - smoothstep(uUnderH.x, uUnderH.y, P.y);
+    vec3 uc = uUnderCol * uh * uh;
+    E += uc * (pow(sat(ul), uUnderH.z) * ao + tT * sat(0.4 - 0.6 * ul) * 0.25 * uMarble.w);
+    S += uc * specGGX(N, V, uUnderDir, rough) * ao;
+  }
   // ---- Sol: the restored rays light the curls around the diadem
   if (uHoleR > 0.0){
     for (int i = 0; i < 7; i++){
@@ -244,15 +266,25 @@ void main(){
   }
   fragColor = vec4(m1 * 0.25, m2 * 0.25, c * 0.25, 1.0);
 }`);
+// Dense separable gaussian (sigma uSigma texels, every texel sampled: each tap is a bilinear fetch between texels
+// 2i+1 and 2i+2 weighted so the pair is exact). A strided kernel would replicate sharp light-space edges into a comb.
 export const VBLUR_FS = frag(`
-uniform sampler2D uSrc; uniform vec2 uDir;
+uniform sampler2D uSrc; uniform vec2 uDir; uniform float uSigma; uniform int uN;
 void main(){
   vec2 uv = gl_FragCoord.xy / uRes;
   vec2 t = uDir / uRes;
-  vec4 s = texture(uSrc, uv) * 0.2;
-  for (int i = 1; i <= 4; i++){ float w = exp(-float(i * i) / 8.0) * 0.2; s += (texture(uSrc, uv + t * float(i)) + texture(uSrc, uv - t * float(i))) * w; }
-  float norm = 0.2; for (int i = 1; i <= 4; i++) norm += 2.0 * exp(-float(i * i) / 8.0) * 0.2;
-  fragColor = s / norm;
+  float k = -0.5 / (uSigma * uSigma);
+  vec4 s = texture(uSrc, uv);
+  float ws = 1.0;
+  for (int i = 0; i < 24; i++){
+    if (i >= uN) break;
+    float o1 = float(2 * i + 1), o2 = o1 + 1.0;
+    float w1 = exp(k * o1 * o1), w2 = exp(k * o2 * o2), w = w1 + w2;
+    float o = (o1 * w1 + o2 * w2) / w;
+    s += (texture(uSrc, uv + t * o) + texture(uSrc, uv - t * o)) * w;
+    ws += 2.0 * w;
+  }
+  fragColor = s / ws;
 }`);
 
 // ---------------------------------------------------------------- FXAA (in a tonemapped space, alpha passes through),

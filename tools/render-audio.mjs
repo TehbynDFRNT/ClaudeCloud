@@ -186,8 +186,11 @@ function sharedTimeline(plan = ROOT_PLAN) {
   const keys = files.map((f) => key(JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'))));
   return { plans: files.map((f) => path.relative(ROOT, path.join(dir, f)).split(path.sep).join('/')), identical: keys.every((k) => k === keys[0]) };
 }
+// No start/stop: with fscale=log, ffmpeg 6.1's showspectrumpic mislabels its frequency legend when they are set (a
+// pure 87 Hz tone was drawn at the "220-300 Hz" labels, 1047 Hz at "1355"); without them the legend is right. The
+// FFT size follows the image height, so a taller picture resolves the low end better.
 const SPECTRUM_ARGS = (file, out, t0, dur) => ['-y', '-hide_banner', '-loglevel', 'error', '-ss', String(t0), '-t', String(dur), '-i', file,
-  '-lavfi', 'showspectrumpic=s=1600x700:legend=1:fscale=log:start=20:stop=16000:drange=110', out];
+  '-lavfi', 'showspectrumpic=s=1600x900:legend=1:fscale=log:drange=110', out];
 async function spectrum(file, out, t0, dur) {
   const r = await run('ffmpeg', SPECTRUM_ARGS(file, out, t0, dur));
   if (r.status !== 0) throw new Error(r.stderr.slice(-300));
@@ -198,8 +201,9 @@ function spectraWindows(P) {
   const strikes = P.plan.cues.filter((c) => c.kind === 'orchestral-strike').map((c) => c.frame / P.fps);
   const t0 = strikes.length ? Math.floor(Math.max(...strikes)) : 100;
   const parse = (s) => s.split('-').map((x) => (x === 'end' ? P.dur : +x));
-  const w = opt('spectra', null) ? opt('spectra').split(',').map(parse) : [[t0, t0 + 22], [Math.max(0, P.dur - 13.2), P.dur]];
-  return [['climax', ...w[0]], ['ending', ...(w[1] || [Math.max(0, P.dur - 13.2), P.dur])]].map(([name, a, b]) => ({ name, start: +(+a).toFixed(3), end: +Math.min(P.dur, b).toFixed(3) }));
+  const ending = [Math.max(0, Math.floor(P.dur - 13.2)), P.dur];
+  const w = opt('spectra', null) ? opt('spectra').split(',').map(parse) : [[t0, t0 + 22], ending];
+  return [['climax', ...w[0]], ['ending', ...(w[1] || ending)]].map(([name, a, b]) => ({ name, start: +(+a).toFixed(3), end: +Math.min(P.dur, b).toFixed(3) }));
 }
 
 // ---------------------------------------------------------------------------------------------------------------
