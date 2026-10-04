@@ -99,7 +99,7 @@ export const DESIGN = {
   // (measured on the normalised mix the first try moved the balance ~1 dB: the music limiter and the loudness
   // normalisation took the rest back, so the return also gets musicCeilDb more headroom and the gains are set so the
   // MEASURED change is the note's: hit about -1.4 dB, return about +1.6 dB against the rest of the film)
-  v4: { explosionGain: 0.6, returnGain: 1.3, musicCeilDb: -1.6 },
+  v4: { explosionGain: 0.62, returnGain: 1.19, musicCeilDb: -1.6 },
   // the fold compares loudness over winS windows (the roar follows the music's phrase level, not its notes)
   // salvoDuckDb: the climax bus also ducks under each salvo (3 ms attack, 40 ms hold, 80 ms release), so the guns
   // cut through the explosion's body on the beat instead of piling onto the master limiter
