@@ -346,9 +346,19 @@ if (V3) {
   cues.push({ id: 'return-bar56-v3', kind: 'music-reentry', frame: srcToFrame(BAR56_SRC), sourceAudioId: 'winter-b', sourceSeconds: BAR56_SRC, status: 'candidate', confidence: 'signal', evidence: 'bar-56 downbeat placed on the explosion frame' });
   // the approaching cannons tighten their tempo: half-bar shots from bar 20, closing in
   for (let bar = 20; bar <= 31; bar++) cues.push({ id: `cannon-${bar}h`, kind: 'cannon', frame: at(bar, 4), distance: +(0.6 - (bar - 20) * 0.04).toFixed(2), status: 'verified', confidence: 'authored', evidence: 'v3: faster cannon tempo into the strikes (half-bar shots)' });
-  // salvos with the returning tutti (1812-finale style): every beat of bars 56-57, every half bar of 58-59
-  for (const [bar, eighths] of [[56, [0, 2, 4, 6]], [57, [0, 2, 4, 6]], [58, [0, 4]], [59, [0, 4]]]) for (const e of eighths)
-    cues.push({ id: `salvo-${bar}.${e}`, kind: 'cannon-salvo', frame: at(bar, e), distance: bar < 58 ? 0.05 : 0.2, status: 'verified', confidence: 'authored', evidence: 'v3: cannon salvo with the restarted music' });
+  // salvos with the returning tutti (1812-finale style)
+  if (!V4) {
+    // v3: every beat of bars 56-57, every half bar of 58-59
+    for (const [bar, eighths] of [[56, [0, 2, 4, 6]], [57, [0, 2, 4, 6]], [58, [0, 4]], [59, [0, 4]]]) for (const e of eighths)
+      cues.push({ id: `salvo-${bar}.${e}`, kind: 'cannon-salvo', frame: at(bar, e), distance: bar < 58 ? 0.05 : 0.2, status: 'verified', confidence: 'authored', evidence: 'v3: cannon salvo with the restarted music' });
+  } else {
+    // v4 (the director: louder, running four more bars, only on notes): bars 56-63, each salvo on an orchestral
+    // note attack measured in the recording ([bar, eighth, source s]: the spectral-flux peak within 60 ms of the
+    // eighth, kept where the attack is >= 1.1x the 90th-percentile flux of bars 56-59, at most 3 per bar, at least two
+    // eighths apart); bar 63's is the final chord after the breath (188.33 s)
+    for (const [bar, e, src] of [[56, 0, 166.637], [56, 4, 168.123], [56, 6, 168.884], [57, 0, 169.621], [57, 4, 171.089], [57, 6, 171.856], [58, 0, 172.581], [58, 4, 174.056], [58, 6, 174.805], [59, 0, 175.548], [59, 4, 177.028], [60, 0, 178.578], [60, 4, 180.047], [60, 7, 181.173], [61, 0, 181.538], [61, 3, 182.694], [61, 6, 183.994], [62, 0, 184.789], [63, 0, 188.33]])
+      cues.push({ id: `salvo-${bar}.${e}`, kind: 'cannon-salvo', frame: srcToFrame(src), sourceAudioId: 'winter-b', sourceSeconds: src, distance: bar < 60 ? 0.05 : 0.1, status: 'verified', confidence: 'signal', evidence: 'v4: cannon salvo on a measured note attack' });
+  }
 }
 cues.push({ id: 'coda', kind: 'edit-cut', frame: CODA, status: 'verified', confidence: 'authored', evidence: 'Coda: the night sky seen from Earth fades up from black' });
 cues.push({ id: 'coda-star', kind: 'edit-cut', frame: CODA_STAR, status: 'verified', confidence: 'authored', evidence: `The new star begins to appear; fully arrived at frame ${CODA_STAR_FULL}` });

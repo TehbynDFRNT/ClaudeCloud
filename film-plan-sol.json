@@ -1544,110 +1544,211 @@
   {
    "id": "salvo-56.0",
    "kind": "cannon-salvo",
-   "frame": 2780,
+   "frame": 2779,
+   "sourceAudioId": "winter-b",
+   "sourceSeconds": 166.637,
    "distance": 0.05,
    "status": "verified",
-   "confidence": "authored",
-   "evidence": "v3: cannon salvo with the restarted music"
-  },
-  {
-   "id": "salvo-56.2",
-   "kind": "cannon-salvo",
-   "frame": 2798,
-   "distance": 0.05,
-   "status": "verified",
-   "confidence": "authored",
-   "evidence": "v3: cannon salvo with the restarted music"
+   "confidence": "signal",
+   "evidence": "v4: cannon salvo on a measured note attack"
   },
   {
    "id": "salvo-56.4",
    "kind": "cannon-salvo",
-   "frame": 2816,
+   "frame": 2814,
+   "sourceAudioId": "winter-b",
+   "sourceSeconds": 168.123,
    "distance": 0.05,
    "status": "verified",
-   "confidence": "authored",
-   "evidence": "v3: cannon salvo with the restarted music"
+   "confidence": "signal",
+   "evidence": "v4: cannon salvo on a measured note attack"
   },
   {
    "id": "salvo-56.6",
    "kind": "cannon-salvo",
-   "frame": 2834,
+   "frame": 2833,
+   "sourceAudioId": "winter-b",
+   "sourceSeconds": 168.884,
    "distance": 0.05,
    "status": "verified",
-   "confidence": "authored",
-   "evidence": "v3: cannon salvo with the restarted music"
+   "confidence": "signal",
+   "evidence": "v4: cannon salvo on a measured note attack"
   },
   {
    "id": "salvo-57.0",
    "kind": "cannon-salvo",
-   "frame": 2852,
+   "frame": 2850,
+   "sourceAudioId": "winter-b",
+   "sourceSeconds": 169.621,
    "distance": 0.05,
    "status": "verified",
-   "confidence": "authored",
-   "evidence": "v3: cannon salvo with the restarted music"
-  },
-  {
-   "id": "salvo-57.2",
-   "kind": "cannon-salvo",
-   "frame": 2870,
-   "distance": 0.05,
-   "status": "verified",
-   "confidence": "authored",
-   "evidence": "v3: cannon salvo with the restarted music"
+   "confidence": "signal",
+   "evidence": "v4: cannon salvo on a measured note attack"
   },
   {
    "id": "salvo-57.4",
    "kind": "cannon-salvo",
-   "frame": 2887,
+   "frame": 2886,
+   "sourceAudioId": "winter-b",
+   "sourceSeconds": 171.089,
    "distance": 0.05,
    "status": "verified",
-   "confidence": "authored",
-   "evidence": "v3: cannon salvo with the restarted music"
+   "confidence": "signal",
+   "evidence": "v4: cannon salvo on a measured note attack"
   },
   {
    "id": "salvo-57.6",
    "kind": "cannon-salvo",
-   "frame": 2905,
+   "frame": 2904,
+   "sourceAudioId": "winter-b",
+   "sourceSeconds": 171.856,
    "distance": 0.05,
    "status": "verified",
-   "confidence": "authored",
-   "evidence": "v3: cannon salvo with the restarted music"
+   "confidence": "signal",
+   "evidence": "v4: cannon salvo on a measured note attack"
   },
   {
    "id": "salvo-58.0",
    "kind": "cannon-salvo",
-   "frame": 2923,
-   "distance": 0.2,
+   "frame": 2921,
+   "sourceAudioId": "winter-b",
+   "sourceSeconds": 172.581,
+   "distance": 0.05,
    "status": "verified",
-   "confidence": "authored",
-   "evidence": "v3: cannon salvo with the restarted music"
+   "confidence": "signal",
+   "evidence": "v4: cannon salvo on a measured note attack"
   },
   {
    "id": "salvo-58.4",
    "kind": "cannon-salvo",
-   "frame": 2958,
-   "distance": 0.2,
+   "frame": 2957,
+   "sourceAudioId": "winter-b",
+   "sourceSeconds": 174.056,
+   "distance": 0.05,
    "status": "verified",
-   "confidence": "authored",
-   "evidence": "v3: cannon salvo with the restarted music"
+   "confidence": "signal",
+   "evidence": "v4: cannon salvo on a measured note attack"
+  },
+  {
+   "id": "salvo-58.6",
+   "kind": "cannon-salvo",
+   "frame": 2975,
+   "sourceAudioId": "winter-b",
+   "sourceSeconds": 174.805,
+   "distance": 0.05,
+   "status": "verified",
+   "confidence": "signal",
+   "evidence": "v4: cannon salvo on a measured note attack"
   },
   {
    "id": "salvo-59.0",
    "kind": "cannon-salvo",
-   "frame": 2994,
-   "distance": 0.2,
+   "frame": 2993,
+   "sourceAudioId": "winter-b",
+   "sourceSeconds": 175.548,
+   "distance": 0.05,
    "status": "verified",
-   "confidence": "authored",
-   "evidence": "v3: cannon salvo with the restarted music"
+   "confidence": "signal",
+   "evidence": "v4: cannon salvo on a measured note attack"
   },
   {
    "id": "salvo-59.4",
    "kind": "cannon-salvo",
-   "frame": 3029,
-   "distance": 0.2,
+   "frame": 3028,
+   "sourceAudioId": "winter-b",
+   "sourceSeconds": 177.028,
+   "distance": 0.05,
    "status": "verified",
-   "confidence": "authored",
-   "evidence": "v3: cannon salvo with the restarted music"
+   "confidence": "signal",
+   "evidence": "v4: cannon salvo on a measured note attack"
+  },
+  {
+   "id": "salvo-60.0",
+   "kind": "cannon-salvo",
+   "frame": 3065,
+   "sourceAudioId": "winter-b",
+   "sourceSeconds": 178.578,
+   "distance": 0.1,
+   "status": "verified",
+   "confidence": "signal",
+   "evidence": "v4: cannon salvo on a measured note attack"
+  },
+  {
+   "id": "salvo-60.4",
+   "kind": "cannon-salvo",
+   "frame": 3101,
+   "sourceAudioId": "winter-b",
+   "sourceSeconds": 180.047,
+   "distance": 0.1,
+   "status": "verified",
+   "confidence": "signal",
+   "evidence": "v4: cannon salvo on a measured note attack"
+  },
+  {
+   "id": "salvo-60.7",
+   "kind": "cannon-salvo",
+   "frame": 3128,
+   "sourceAudioId": "winter-b",
+   "sourceSeconds": 181.173,
+   "distance": 0.1,
+   "status": "verified",
+   "confidence": "signal",
+   "evidence": "v4: cannon salvo on a measured note attack"
+  },
+  {
+   "id": "salvo-61.0",
+   "kind": "cannon-salvo",
+   "frame": 3136,
+   "sourceAudioId": "winter-b",
+   "sourceSeconds": 181.538,
+   "distance": 0.1,
+   "status": "verified",
+   "confidence": "signal",
+   "evidence": "v4: cannon salvo on a measured note attack"
+  },
+  {
+   "id": "salvo-61.3",
+   "kind": "cannon-salvo",
+   "frame": 3164,
+   "sourceAudioId": "winter-b",
+   "sourceSeconds": 182.694,
+   "distance": 0.1,
+   "status": "verified",
+   "confidence": "signal",
+   "evidence": "v4: cannon salvo on a measured note attack"
+  },
+  {
+   "id": "salvo-61.6",
+   "kind": "cannon-salvo",
+   "frame": 3195,
+   "sourceAudioId": "winter-b",
+   "sourceSeconds": 183.994,
+   "distance": 0.1,
+   "status": "verified",
+   "confidence": "signal",
+   "evidence": "v4: cannon salvo on a measured note attack"
+  },
+  {
+   "id": "salvo-62.0",
+   "kind": "cannon-salvo",
+   "frame": 3214,
+   "sourceAudioId": "winter-b",
+   "sourceSeconds": 184.789,
+   "distance": 0.1,
+   "status": "verified",
+   "confidence": "signal",
+   "evidence": "v4: cannon salvo on a measured note attack"
+  },
+  {
+   "id": "salvo-63.0",
+   "kind": "cannon-salvo",
+   "frame": 3299,
+   "sourceAudioId": "winter-b",
+   "sourceSeconds": 188.33,
+   "distance": 0.1,
+   "status": "verified",
+   "confidence": "signal",
+   "evidence": "v4: cannon salvo on a measured note attack"
   },
   {
    "id": "coda",

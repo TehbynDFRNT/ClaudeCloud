@@ -99,7 +99,11 @@ export const DESIGN = {
   // (measured on the normalised mix the first try moved the balance ~1 dB: the music limiter and the loudness
   // normalisation took the rest back, so the return also gets musicCeilDb more headroom and the gains are set so the
   // MEASURED change is the note's: hit about -1.4 dB, return about +1.6 dB against the rest of the film)
-  v4: { explosionGain: 0.62, returnGain: 1.19, musicCeilDb: -1.6 },
+  v4: { explosionGain: 0.62, returnGain: 1.19, musicCeilDb: -1.6,
+    // the cannons louder (+3 dB on the loudest salvo over the orchestra) and running to the final chord, holding
+    // their weight instead of thinning out after bar 57; bar 63 is the final chord
+    salvo: { relDb: 5.0, guns: { 56: 3, 57: 3, 58: 3, 59: 3, 60: 2, 61: 2, 62: 2, 63: 4 }, levelDb: { 56: 0, 57: -0.5, 58: -1.0, 59: -1.5, 60: -1.5, 61: -2.0, 62: -2.0, 63: 1.0 },
+      duckDb: { 56: 3, 57: 3, 58: 2.5, 59: 2.5, 60: 2.5, 61: 2, 62: 2, 63: 3 } } },
   // the fold compares loudness over winS windows (the roar follows the music's phrase level, not its notes)
   // salvoDuckDb: the climax bus also ducks under each salvo (3 ms attack, 40 ms hold, 80 ms release), so the guns
   // cut through the explosion's body on the beat instead of piling onto the master limiter
@@ -769,6 +773,10 @@ function cannonBeat(c, tl) {
   }
   // salvo on bar.eighth of the return (bars 56-59, recording-checked lead)
   const sv = /^salvo-(\d+)\.(\d+)$/.exec(c.id);
+  if (sv && c.sourceSeconds != null) {   // v4: on a note attack measured in the recording
+    const t = music.sourceToFilm(c.sourceSeconds);
+    if (t != null && Math.abs(t - ft) <= 1 / fps) return { t, basis: `note attack at ${c.sourceSeconds} s (recording)` };
+  }
   if (sv) {
     const bar = +sv[1], k = +sv[2], R = tl.refinedReturn, ev = R && R.table.get(bar), tg = music.at(bar, k);
     const t = ev ? music.sourceToFilm(ev[k]) : tg;
@@ -1426,6 +1434,10 @@ export function buildIgnition(ctx, tl, samples) {
 // ragged within ~50 ms and alternating sides, three per salvo in bars 56-57, fewer and farther in 58-59 as the salvos
 // thin out and fade (DESIGN.salvo). The salvo on the explosion's downbeat is the explosion's own cluster.
 // ----------------------------------------------------------------------------------------------------------
+// the salvo design for a plan (v4 overrides the per-bar tables and the level)
+export function salvoDesign(plan) {
+  return (plan.version || 0) >= 4 ? { ...DESIGN.salvo, ...DESIGN.v4.salvo } : DESIGN.salvo;
+}
 export function salvoTimes(tl) {
   return tl.plan.cues.filter((c) => c.kind === 'cannon-salvo').sort((a, b) => a.frame - b.frame).map((c) => {
     const m = /^salvo-(\d+)\./.exec(c.id), r = cannonTime(c, tl);
@@ -1434,7 +1446,7 @@ export function salvoTimes(tl) {
 }
 
 export function buildSalvos(ctx, tl, samples) {
-  const P = DESIGN.salvo;
+  const P = salvoDesign(tl.plan);
   const out = G(ctx, 1); out.connect(BQ(ctx, 'highpass', 28, 0.707)).connect(ctx.destination);
   const alive = keepAlive(ctx); alive(out);
   // open air at point-blank range: a short bright slap and a tail that clears before the next beat's salvo
@@ -2148,7 +2160,7 @@ export async function renderSoundtrack({ base = '/', plan: planPath = 'film-plan
   }
   // the return's headroom: the tutti ducks under the detonation (it rises out of it within a second) and breathes
   // under each salvo on the beat
-  const RT = DESIGN.ret, SV = DESIGN.salvo, live = info.salvos.filter((s) => !s.merged);
+  const RT = DESIGN.ret, SV = salvoDesign(plan), live = info.salvos.filter((s) => !s.merged);
   const rduck = new Float32Array(length);   // dB
   const duckAt = (tc, depth, attack, hold, tau) => {
     for (let i = Math.max(0, Math.round((tc - attack) * SR)); i < Math.min(length, Math.round((tc + hold + 8 * tau) * SR)); i++) {
