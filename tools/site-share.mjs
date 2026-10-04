@@ -1,7 +1,7 @@
 // The 1080x1920 Instagram story card for nova.tehbyn.com: the graded closing frame (the marble David looking
 // into the lens) full bleed, with the title and the address in the site's own face, inside Instagram's safe
 // zone (clear of the top ~250 px and the bottom ~340 px, where the app draws its own controls).
-//   node tools/site-share.mjs   -> site/nova/assets/share/nova-ep1-story.jpg
+//   node tools/site-share.mjs   -> site/nova/assets/share/nova-ep1-david-goliath-story.jpg
 import { chromium } from 'playwright-core';
 import fs from 'fs';
 const A = 'site/nova/assets/';
@@ -22,5 +22,6 @@ p{position:absolute;left:88px;right:88px;margin:0;font:400 34px/1.35 "Inter Tigh
 fs.mkdirSync(A + 'share', { recursive: true });
 const b = await chromium.launch(); const pg = await b.newPage({ viewport: { width: 1080, height: 1920 } });
 await pg.setContent(html); await pg.evaluate(() => document.fonts.ready); await pg.waitForTimeout(300);
-await pg.screenshot({ path: A + 'share/nova-ep1-story.jpg', type: 'jpeg', quality: 86 }); await b.close();
-console.log('wrote', A + 'share/nova-ep1-story.jpg', fs.statSync(A + 'share/nova-ep1-story.jpg').size);
+const OUT = A + 'share/nova-ep1-david-goliath-story.jpg';
+await pg.screenshot({ path: OUT, type: 'jpeg', quality: 86 }); await b.close();
+console.log('wrote', OUT, fs.statSync(OUT).size);

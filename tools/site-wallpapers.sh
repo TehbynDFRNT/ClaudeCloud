@@ -15,5 +15,7 @@ for f, n in names.items():
     im = Image.open(f'tmp/wallpapers/f{f:05d}.png').convert('RGB')
     im.save(f'site/nova/assets/wallpapers/nova-ep1-{n}-2160x4680.jpg', 'JPEG', quality=95, optimize=True, progressive=True, subsampling=0)
     im.resize((540, 1170), Image.LANCZOS).save(f'site/nova/assets/wallpapers/{n}-t.jpg', 'JPEG', quality=82, optimize=True, progressive=True)
+    # the phone-frame preview: enough for a 3x phone, a tenth of the full file
+    im.resize((1080, 2340), Image.LANCZOS).save(f'site/nova/assets/wallpapers/{n}-p.jpg', 'JPEG', quality=84, optimize=True, progressive=True)
 print('wallpapers written')
 PY
