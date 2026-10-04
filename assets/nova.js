@@ -168,6 +168,27 @@ if(lb&&lb.showModal){
  $('#lbPlay').addEventListener('click',function(){var t=secs(S[cur].tc);lb.close();if(window.novaPlayFrom)window.novaPlayFrom(t)});
 }
 
+/* ---------------- wallpaper preview: the full picture in a phone, the viewer's own time over it ---------------- */
+/* opens from the card's picture or its Preview link (both plain links to the full JPEG without the script);
+   the thumbnail shows at once and the full 2160 x 4680 picture replaces it when it has loaded */
+var wp=$('#wp'),wcards=$$('.dl'),wcur=0;
+var WP=wcards.map(function(f){var im=$('.ph img',f),dl=$('a[download]',f);return{thumb:im.getAttribute('src'),full:dl.getAttribute('href'),file:dl.getAttribute('download'),alt:im.alt,name:$('.cap',f).firstChild.textContent,meta:$('.cap em',f).textContent}});
+function clock(){var n=new Date();try{$('#wpTime').textContent=n.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}).replace(/\s?[AP]M$/i,'');$('#wpDate').textContent=n.toLocaleDateString([],{weekday:'long',day:'numeric',month:'long'})}catch(e){}}
+function wshow(i){wcur=(i+WP.length)%WP.length;var w=WP[wcur],im=$('#wpImg');im.src=w.thumb;im.alt=w.alt;
+ var full=new Image();full.onload=function(){if(WP[wcur]===w)im.src=w.full};full.src=w.full;
+ $('#wpName').textContent=w.name;$('#wpMeta').textContent=w.meta;var g=$('#wpGet');g.href=w.full;g.download=w.file;clock()}
+if(wp&&wp.showModal&&WP.length){
+ $$('[data-wp]').forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();wshow(+a.dataset.wp);wp.showModal();root.classList.add('lb-open')})});
+ wp.addEventListener('close',function(){root.classList.remove('lb-open')});
+ $$('[data-step]',wp).forEach(function(b){b.addEventListener('click',function(){wshow(wcur+ +b.dataset.step)})});
+ $('[data-close]',wp).addEventListener('click',function(){wp.close()});
+ wp.addEventListener('click',function(e){if(e.target===wp||e.target.classList.contains('wp-fig'))wp.close()});
+ wp.addEventListener('keydown',function(e){if(e.key==='ArrowRight'){wshow(wcur+1);e.preventDefault()}else if(e.key==='ArrowLeft'){wshow(wcur-1);e.preventDefault()}});
+ /* a swipe across the phone steps through the five */
+ var sx=null,ph=$('#wpPhone');ph.addEventListener('touchstart',function(e){sx=e.touches[0].clientX},{passive:true});
+ ph.addEventListener('touchend',function(e){if(sx==null)return;var dx=e.changedTouches[0].clientX-sx;sx=null;if(Math.abs(dx)>40)wshow(wcur+(dx<0?1:-1))});
+ $('#wpClock').addEventListener('click',function(){var on=ph.classList.toggle('bare');this.setAttribute('aria-pressed',!on)})}
+
 /* ---------------- story: the study on the stage follows the paragraph you are reading ---------------- */
 /* one visible image; the next study fades in on a layer that leaves the page again once it has landed */
 var stage=$('#stage'),beats=$$('.beat'),base=stage&&$('.st-base',stage),fade=stage&&$('.st-fade',stage),shown=base&&base.getAttribute('src'),fadeT;
