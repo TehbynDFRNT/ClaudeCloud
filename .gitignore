@@ -22,3 +22,4 @@ site/nova/assets/*.mp4
 dist/*-916-v4-*/
 dist/*-916-v4-*.mp4
 dist/*-916-v4-*.verify.json
+site/nova/assets/hls/

@@ -26,8 +26,8 @@ plan = json.load(open(ROOT / 'film-plan.json'))
 FPS = 24
 TOP, BOT = 244, 1676                      # active picture rows in the 1080x1920 master
 
-GALLERY = [(360, 'Goliath'), (412, 'David'), (600, 'Two stars'), (1000, 'The stream'), (1180, 'Hot spot'),
-           (1550, 'Nuclei'), (1820, 'Filaments'), (2265, 'The ladder'), (2850, 'Eruption'), (2950, 'The shell'),
+GALLERY = [(360, 'Goliath'), (412, 'David'), (600, 'Two stars'), (1000, 'The fall'), (1180, 'Hot spot'),
+           (1550, 'Nuclei'), (1820, 'Filaments'), (2265, 'The vortex'), (2850, 'Eruption'), (2950, 'The shell'),
            (3180, 'Survival'), (3600, 'A new star')]
 STORY = [720, 1290, 1710, 2030, 2145, 3380, 3790]
 TURN_FRAMES = [521, 808, 1097, 1313, 1501, 2012, 2163, 2231, 2299, 2456, 2601, 3790]   # one per locked insert
@@ -130,7 +130,7 @@ for c in plan['cues']:
 strikes = [s_['start'] for s_ in plan['shots'] if s_['id'].startswith(('S17', 'S18', 'S19', 'S20', 'S21'))]
 data['strikes'] = [round(f / FPS, 3) for f in strikes]
 dark = next(s_ for s_ in plan['shots'] if s_['id'] == 'S22-dark')
-data['dark'] = [round(dark['start'] / FPS, 3), round(next(s_ for s_ in plan['shots'] if s_['id'] == 'S23-eruption')['start'] / FPS, 3)]
+data['dark'] = [round(dark['start'] / FPS, 3), round(dark['end'] / FPS, 3)]     # the dark ends on the explosion (S22-ignition)
 data['guns'] = marks
 data['frames'] = plan['frames']
 json.dump(data, open(OUT.parent / 'site-data.json', 'w'), indent=1)

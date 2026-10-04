@@ -4,6 +4,7 @@
   python3 tools/site-build.py
 
 - the signature path (assets/signature.svg) into <path id="sigp" d="...">
+- download sizes, measured from the files, into <span class="sz" data-size="<path under assets/>">
 - the score card: the final mix's envelope as bars from zero, with cannon, strike and ignition marks,
   between <!--WAVE--> and <!--/WAVE--> (labels are HTML, so they keep the type ramp at any card width)
 """
@@ -41,7 +42,7 @@ first_gun = min(g['t'] for g in data['guns'] if g['kind'] == 'gun')
 first_salvo = min(g['t'] for g in data['guns'] if g['kind'] == 'salvo')
 pct = lambda t: f'{t / dur * 100:.2f}%'
 wave = f'''<!--WAVE-->
-    <div class="wv" role="img" aria-label="The soundtrack's loudness over 2 min 48 s: distant guns, five strikes, silence at the ignition, then the closing tutti under cannon salvos">
+    <div class="wv" role="img" aria-label="The soundtrack's loudness over 2 min 48 s: distant guns, five strikes, a roar in the dark at the ignition, then the closing tutti under cannon salvos">
      <svg class="reveal" viewBox="0 0 {W} {H}" preserveAspectRatio="none" aria-hidden="true">
       <line class="base" x1="0" x2="{W}" y1="{BASE + .5}" y2="{BASE + .5}"/>
       <g class="env">{''.join(bars_lo)}</g>
@@ -57,5 +58,9 @@ wave = f'''<!--WAVE-->
 <!--/WAVE-->'''
 html = re.sub(r'<!--WAVE-->.*?(<!--/WAVE-->|$)', lambda m: wave, html, count=1, flags=re.S) if '<!--/WAVE-->' in html \
     else html.replace('<!--WAVE-->', wave, 1)
+def size(m):
+    n = (SITE / 'assets' / m.group(2)).stat().st_size
+    return f'{m.group(1)} · {n / 1e6:.1f} MB{m.group(3)}' if n >= 1e6 else f'{m.group(1)} · {n // 1000} KB{m.group(3)}'
+html = re.sub(r'(<span class="sz" data-size="([^"]+)">)[^<]*(</span>)', size, html)
 page.write_text(html)
 print('built', page.relative_to(ROOT), f'{len(html) // 1024} KB', len(bars_lo) + len(bars_hi), 'bars')
