@@ -39,10 +39,23 @@ if(video){
  video.addEventListener('pause',function(){film.classList.remove('playing')});
  video.addEventListener('ended',function(){film.classList.remove('playing')});
  /* the film's own light spills onto the page while it plays (a few times a second, only on screen) */
- function loopAmbient(){if(video.paused||video.ended||!filmOn)return;var n=performance.now();if(n-ambT>180){ambT=n;paintAmbient(video)}requestAnimationFrame(loopAmbient)}
+ function loopAmbient(){if(video.paused||video.ended||!filmOn)return;var n=performance.now();if(n-ambT>(film.classList.contains('viewer')?110:180)){ambT=n;paintAmbient(video)}requestAnimationFrame(loopAmbient)}
  new IntersectionObserver(function(es){es.forEach(function(e){filmOn=e.isIntersecting;if(filmOn)loopAmbient()})},{threshold:0}).observe(film);
  /* every Watch link plays from the top (or resumes) and brings the screen into view */
  $$('[data-watch]').forEach(function(a){a.addEventListener('click',function(ev){ev.preventDefault();film.scrollIntoView({behavior:RM?'auto':'smooth',block:'center'});start(video.ended?0:null)})});
+ /* the viewer: the whole film section goes fullscreen (or, where an element cannot, an edge-to-edge layer) */
+ var vbtn=$('#viewerBtn');
+ function fsEl(){return d.fullscreenElement||d.webkitFullscreenElement}
+ function setViewer(on){film.classList.toggle('viewer',on);root.classList.toggle('viewing',on);vbtn.setAttribute('aria-pressed',on);vbtn.setAttribute('aria-label',on?'Close the viewer':'Open the viewer');paintAmbient(video.readyState>1&&film.classList.contains('started')?video:poster)}
+ function openViewer(){setViewer(true);var rq=film.requestFullscreen||film.webkitRequestFullscreen;if(rq){try{var p=rq.call(film);if(p&&p.catch)p.catch(function(){})}catch(e){}}if(!film.classList.contains('started'))start()}
+ function closeViewer(){if(fsEl()){var ex=d.exitFullscreen||d.webkitExitFullscreen;try{ex.call(d)}catch(e){}}setViewer(false)}
+ if(vbtn){vbtn.addEventListener('click',function(){film.classList.contains('viewer')?closeViewer():openViewer()});
+  video.addEventListener('dblclick',function(){film.classList.contains('viewer')?closeViewer():openViewer()});
+  /* a browser's own fullscreen on the bare video (where the hide hint is ignored) becomes the viewer instead */
+  ['fullscreenchange','webkitfullscreenchange'].forEach(function(ev){d.addEventListener(ev,function(){var f=fsEl();
+   if(f===video){film.dataset.keep='1';var ex=d.exitFullscreen||d.webkitExitFullscreen;try{var p=ex.call(d);if(p&&p.catch)p.catch(function(){})}catch(e){}setViewer(true);return}
+   if(!f&&film.classList.contains('viewer')&&!film.dataset.keep)setViewer(false);delete film.dataset.keep})});
+  d.addEventListener('keydown',function(e){if(e.key==='Escape'&&film.classList.contains('viewer')&&!fsEl())setViewer(false)})}
  window.novaPlayFrom=function(t){film.scrollIntoView({behavior:RM?'auto':'smooth',block:'center'});start(t)};
 }
 
