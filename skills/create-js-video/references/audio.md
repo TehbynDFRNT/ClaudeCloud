@@ -6,32 +6,44 @@ muxed file. The director's existing skill has the generic sound guidance (`sound
 mix architecture that worked, measuring notes on the final mix, and the delivery checks.
 
 ## Contents
-1. Render model
+1. Render model, and the approved mix as the master
 2. Stems and buses
 3. Master targets and the loudness loop
 4. Versioned sound design
-5. Measuring and the report
-6. "Make X% louder/quieter": calibrate on the normalised mix
-7. Mux and delivery checks
-8. Sound design lessons from Nova
+5. A binaural variant for headphones
+6. Measuring and the report
+7. "Make X% louder/quieter": calibrate on the normalised mix
+8. Mux and delivery checks
+9. Sound design lessons from Nova
 
-## 1. Render model
+## 1. Render model, and the approved mix as the master
 
-- Nova's score and renderer are `src/audio/index.html`, `src/audio/score.js` (2,351 lines: stems, buses, the
-  loudness loop, `DESIGN.vN`) and `tools/render-audio.mjs` (render and `--verify`) at the pinned commit
+- Nova's score and renderer are `src/audio/index.html`, `src/audio/score.js` (2,377 lines: stems, buses, the
+  loudness loop, `DESIGN.vN`, the binaural mode) and `tools/render-audio.mjs` (render and `--verify`) at the pinned commit
   (reference-implementation.md). Until the score exists, `assets/starter/tools/tone-mix.mjs` writes a placeholder
   soundtrack of the right length, so `assemble` can run.
 - `src/audio/index.html` loads `score.js`. `tools/render-audio.mjs` serves the repo, opens the page in Chromium with
   `--autoplay-policy=no-user-gesture-required`, and calls `window.renderAudio({ outDir, stems, only })`. The page
-  POSTs WAVs back to a local endpoint that may only write under `out/`.
+  POSTs WAVs back to a local endpoint that may only write under `out/`: `--out tmp/...` fails only at the end, after
+  a full 4-minute render, with `write tmp/.../mix.wav: 403 only under out/`.
 - Each stem renders in its own `OfflineAudioContext(2, 48000 * duration, 48000)`. Independent contexts render
   concurrently. The mix and master run in plain JS on the rendered buffers, which makes iterating gains cheap.
 - Everything derives from the plan and the grid: placements, cues, shots, effects, text, bars, `bassMidi`, tuning.
   The only authored numbers are design constants (levels, envelopes, filter shapes), written relative to plan events.
   Never use absolute timestamps.
-- Determinism: seeded `mulberry32` noise and impulse responses, no `Math.random`/`Date`. Chrome's Web Audio kernels
-  still differ between runs at float-rounding level (about -104 dBFS peak between renders), so renders are not
-  bit-identical. Don't fingerprint audio by its bytes; re-render it per version (about 3 minutes for 2:48).
+- Determinism: seeded `mulberry32` noise and impulse responses, no `Math.random`/`Date`. Renders are still not
+  reproducible. Two renders of identical code differed by up to -74.4 dBFS peak (-104.1 dBFS RMS). A re-render of
+  Nova's approved stereo mix with unchanged score code (commit 7717051) differed from the approved
+  `out/audio-v4/mix.wav` by up to -44.6 dBFS peak, -69.4 dBFS RMS, with 3.24 M samples over -80 dB, the first at
+  8.401 s. The cause was not isolated; the likely amplifiers are the iterative loops (the cannon approach law
+  re-renders its stem over passes, max error 13.97 → 6.04 → 5.40 dB with the limiter at up to 14.9 dB; the master
+  loudness loop runs 4 passes), which can settle on slightly different gains from float-level differences.
+- **The approved mix WAV is the master.** Mux every later deliverable (copies, the 4K master, upload files) from that
+  file, never from a fresh render, and keep a copy of it on a branch the day it is approved: `out/` is git-ignored
+  and a container reset loses it. Treat re-renders, and the binaural mix, as variants, and never promise a
+  bit-identical stereo mix. To show that a code change left the stereo mix alone, render twice and compare the
+  change against the run-to-run spread, not against zero. Don't fingerprint audio by its bytes; a version's mix is
+  rendered per version (about 3 minutes for 2:48).
 - Outputs: `out/audio[-vN]/mix.wav` (24-bit, 48 kHz, exactly `frames / fps` long), `stems/*.wav` (32-bit float, as
   they enter their buses), `report.json`, and spectrograms of the climax, the ending and the coda.
 - The mix used by default at assembly must follow the root plan. Render other versions with `--plan
@@ -83,7 +95,59 @@ if (V4) gX *= DESIGN.v4.explosionGain;
 Delivered versions then still render their own mix: `render-audio.mjs --plan plans-v3/film-plan.json --out
 out/audio-v3`. Put the director's note and the measured outcome in a comment next to the numbers.
 
-## 5. Measuring and the report
+## 5. A binaural variant for headphones
+
+An alternate track that places the sound design around the listener, rendered from the same plan.
+- **The switch.** `src/audio/score.js` has a module-level spatial mode, set in `renderSoundtrack` by
+  `setSpatial(plan.spatial)`, with `plan.spatial = { mode: 'binaural' }`. `panNode(ctx, pan, az, el)` returns the old
+  `StereoPannerNode` in stereo mode (the same nodes as before, so the approved mix stays reproducible as far as audio
+  ever is) or `hrtf(ctx, az, el)` in binaural mode.
+- **The panner.** `new PannerNode(ctx, { panningModel: 'HRTF', distanceModel: 'linear', refDistance: 1, maxDistance:
+  1e4, rolloffFactor: 0, ... })`: no distance attenuation, so levels don't move. Cones 360, `channelCount: 1,
+  channelCountMode: 'explicit'`. Positioned on the unit sphere by
+  `headPos(az, el) = [sin(az)cos(el), sin(el), -cos(az)cos(el)]` (az 0 = front, + = right, ±180 = behind; the
+  listener faces -Z).
+- **Angles per element** (Nova):
+
+  | Element | Azimuth, elevation |
+  |---|---|
+  | approaching guns | `az = pan * (35 + 95 * d)`, `el = 4 + 6 * d`: far guns wider and further round, up to ±130° |
+  | salvo battery | `side * [-65, 125, -150][j % 3]`, el 6: left front, right rear, left rear |
+  | ignition cluster | `pan * 100` |
+  | fly-by tone | `positionX`/`positionZ` automated along `panCurve(x) * 115°`, round the front to just behind |
+  | coda wind | `pan * 140` |
+  | new star shimmer | `pan * 70`, el 38 (above) |
+  | the music (chorus, ping-pong delays) | stays stereo, in front |
+- **Render it** without touching the picture (`spatial` is not in the picture fingerprint):
+  ```bash
+  node tools/make-spatial-plan.mjs              # {...plan, spatial: {mode: 'binaural'}} -> tmp/film-plan-binaural.json
+  node tools/render-audio.mjs --plan tmp/film-plan-binaural.json --out out/audio-v4-binaural --no-publish   # 234.5 s
+  ```
+- **Verify by measurement.**
+  1. Per-stem integrated loudness, stereo against binaural (`ffmpeg -nostats -i stems/X.wav -af ebur128 -f null -`):
+     cannons -22.5 / -21.7 (HRTF adds about 0.8 LU), salvos -15.7 / -15.6, ignition -13.8 / -13.9, coda -33.9 /
+     -33.9, synth -33.6 / -33.4. The mix lands at -16.0 LUFS either way (the loudness loop renormalises); the
+     binaural true peak was -1.3 dBTP (`ebur128=peak=true`).
+  2. Interaural time difference: normalised cross-correlation of L and R over a short window at each spatialised
+     event, lag searched over ±48 samples (±1 ms at 48 kHz). Stereo panners give lag 0. Nova's binaural salvos at
+     56, 58 and 61 s gave -27, -24 and -23 samples (-0.56, -0.50, -0.48 ms), the coda shimmer -38 (-0.79 ms):
+     realistic ITDs for sources well off-centre. A window with correlation near 0 is inconclusive (the approaching
+     gun at 60 s: r 0.01, lag pinned at the search edge): don't count it. The level difference shrank (0.0-0.3 dB
+     against 0.4-1.4 dB in stereo), because HRTF places sources with time and spectral cues rather than level.
+     ```python
+     import subprocess, numpy as np
+     def itd(wav, t0, dur=0.25, sr=48000, maxlag=48):
+         raw = subprocess.run(['ffmpeg', '-v', 'error', '-ss', str(t0), '-t', str(dur), '-i', wav,
+                               '-f', 'f32le', '-ac', '2', '-ar', str(sr), '-'], capture_output=True).stdout
+         x = np.frombuffer(raw, np.float32).reshape(-1, 2); L, R = x[:, 0] - x[:, 0].mean(), x[:, 1] - x[:, 1].mean()
+         def r(k): a, b = (L[k:], R[:len(R) - k]) if k >= 0 else (L[:k], R[-k:]); return (a @ b) / np.sqrt((a @ a) * (b @ b) + 1e-20)
+         best = max(range(-maxlag, maxlag + 1), key=r)
+         return best, best / sr * 1000, r(best)   # samples, ms, r; negative: R lags L (source left); r near 0: inconclusive
+     ```
+- **Deliver it as track 1**, titled for headphones, with the stereo mix as track 0, the default (hd-master.md §6),
+  and verify that track on its own (§8). Tell the director it was measured, not listened to.
+
+## 6. Measuring and the report
 
 ffmpeg `ebur128=peak=true:framelog=verbose` gives integrated loudness, LRA, true peak, and the momentary (400 ms) and
 short-term (3 s) series every 100 ms. Report against the plan:
@@ -92,9 +156,9 @@ short-term (3 s) series every 100 ms. Report against the plan:
   aftermath, the final stare (with and without the title), and the coda;
 - spectrograms of the climax and the ending (`showspectrumpic`). In ffmpeg 6.1 its frequency legend is mislabelled
   when `start`/`stop` are set with `fscale=log`, so leave them unset;
-- AAC round trips of the mix, each checked like a delivered file (§7).
+- AAC round trips of the mix, each checked like a delivered file (§8).
 
-## 6. "Make X% louder/quieter": calibrate on the normalised mix
+## 7. "Make X% louder/quieter": calibrate on the normalised mix
 
 Limiters and loudness normalisation swallow raw gain changes. On Nova, the note "the explosion 15% lower, the
 return 20% higher" was first applied as ×0.85 and ×1.2. That moved the hit/return balance about 1 dB on the final
@@ -112,7 +176,7 @@ Procedure:
    the dB figure you used in your reply.
 2. Define the sections in seconds from the plan's cues (for example the explosion + 75 frames, and the return bars).
 3. Render, then measure **relative to the rest of the film on the normalised mix**, before and after:
-   `scripts/loudness-rebalance.py --before ... --after ... --section ... --target hit=-15% --raw hit=0.85`.
+   `$SKILL/scripts/loudness-rebalance.py --before ... --after ... --section ... --target hit=-15% --raw hit=0.85`.
 4. Step the raw gain by the measured efficiency, as the script suggests. If the efficiency is below about 0.3, the
    section is limiter-bound: raise that bus's ceiling or lower the competing bus.
 5. With this procedure expect 2-3 renders (Nova, without it, needed four). Stop when the residual is under about
@@ -120,7 +184,7 @@ Procedure:
 
 Measure on the muxed AAC as well. The mix the director hears has been through the codec.
 
-## 7. Mux and delivery checks
+## 8. Mux and delivery checks
 
 - Mux at **AAC 512k with `-aac_coder fast`**, 48 kHz stereo. At 320k the default (twoloop) coder coded Nova's dense
   climax at about 26 dB SNR, and the decoded true peak overshot the mix by 1-2 dB, above 0 dBTP. At 512k fast the
@@ -141,8 +205,15 @@ Measure on the muxed AAC as well. The mix the director hears has been through th
 
 - `chunk.mjs assemble` only refuses a silent soundtrack and checks structure. Always run `--verify` on every muxed
   deliverable, including review copies whose audio was re-encoded (`encode-copy.py` reports their true peak).
+- **Verify every muxed audio track, alternate tracks included.** A deliverable with a binaural track 1 gets two
+  verifies: the file against the stereo mix, and track 1 against the binaural mix. Extract it with its picture, so
+  the length and sync checks still work: `ffmpeg -i film.mp4 -map 0:v:0 -map 0:a:1 -c copy film-binaural.mp4`. A WAV
+  that measured -16.0 LUFS and -1.3 dBTP says nothing about its AAC-encoded copy, and a decode-and-duration check
+  is not a sound verify.
+- Re-apply the mux settings on every re-encode (512k `-aac_coder fast`, `-t frames/fps`): Nova's first 4K finisher
+  draft dropped both.
 
-## 8. Sound design lessons from Nova
+## 9. Sound design lessons from Nova
 
 - **The climax was heard, not seen.** The director asked for no white flash at ignition: the picture goes dark, and
   "the sound must be far more intense". The dark hold (54 frames) carries the build, and the explosion lands on the

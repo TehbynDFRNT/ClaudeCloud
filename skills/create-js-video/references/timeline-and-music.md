@@ -19,7 +19,10 @@ generic contract in `timeline.md` and `timing.md`; this file adds the builder, t
 ## 1. The plan schema in practice
 
 Top level: `id, cut, title, version, fps ("24/1"), frames, width, height, backend, timingMode, format { letterbox },
-defaultPost, shots, overlays, audio, cues, effects, text, assets, checks`.
+defaultPost, shots, overlays, audio, cues, effects, text, assets, checks`. Optional, set by derived plans: `block`
+(render block length, a 4K plan's 72), `masterGrade` (a master-only grade) and `spatial` (`{ mode: 'binaural' }` for
+the headphone mix). A size or master variant of a cut is generated from the cut's plan with a size-suffixed id
+(`tools/make-hd-plan.mjs`: hd-master.md §4), never hand-edited.
 
 | Field | Shape | Notes |
 |---|---|---|
@@ -104,9 +107,12 @@ One storyboard, several cuts (`CUTS = { david: {...}, sol: {...}, prometheus: {.
   renderer checks that every `film-plan*.json` in the directory has the same timeline.
 - Pixel differences live only in `presets`/`params` (and text), so every shared shot renders once and is copied
   between cut folders as a twin piece.
-- Check the cut-specific drawings separately: a rule like "no hands" has to be applied to every cut's variant. On
-  Nova the David cut was cleaned and the Prometheus `F30.3-chains` study still draws a fist (open: picture-craft.md
-  §1). `notes-to-version.py` lists each cut's variants of a touched scene.
+- Check the cut-specific drawings separately: a rule like "no hands" has to be applied to every variant of every
+  cut the director revisits. On Nova he chose to revisit only David, so the David cut was cleaned and the deferred
+  Prometheus cut's `F30.3-chains` study still draws a fist, an open item for when he returns to it
+  (picture-craft.md §1). `notes-to-version.py` lists each cut's variants of a touched scene.
+- A change for one cut only goes in that cut's params, gated by version and cut in the builder (Nova v4.2's `crown`
+  param on David's S29b: director-notes-loop.md §4).
 
 ## 6. Versions: PLAN_VERSION, frozen plans, new ids
 
@@ -115,7 +121,7 @@ One storyboard, several cuts (`CUTS = { david: {...}, sol: {...}, prometheus: {.
 - **New version, new id, new folder.** From v3 on, Nova's ids carry the version (`david-916-v4` →
   `dist/david-916-v4/`), so a version's pieces never overwrite the delivered version's. Use versioned ids from v1.
 - **Freeze on delivery.** Copy the delivered plans to `plans-vN/` and prove they rebuild byte for byte
-  (`scripts/freeze-version.sh N`). Re-run `freeze-version.sh --check` after every builder change.
+  (`$SKILL/scripts/freeze-version.sh N`). Re-run `freeze-version.sh --check` after every builder change.
 - **Plans reproduce; pictures need more.** A shared scene module edited for v5 changes v4's pictures too. Gate
   picture changes through presets/params in the v5 plan, or accept that v4's pictures reproduce only from the commit
   they were rendered at, and tag that commit.
@@ -137,7 +143,7 @@ One storyboard, several cuts (`CUTS = { david: {...}, sol: {...}, prometheus: {.
 
 ```bash
 node tools/build_plan.mjs && for p in film-plan*.json; do python3 tools/validate_plan.py $p || break; done
-scripts/freeze-version.sh --check
+$SKILL/scripts/freeze-version.sh --check
 node -e "const p=require('./film-plan.json'); console.log(p.id, p.version, p.frames, p.frames/24)"
 ```
 `validate_plan.py` (shipped in `scripts/pipeline/`, copied into `tools/` with the pipeline; `verify_video.py`

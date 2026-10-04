@@ -2,7 +2,7 @@
 
 How to structure a film that is rendered entirely in code (WebGL2 + Canvas 2D in a page, captured frame by frame
 by a headless Chromium, sound rendered offline in the same browser, ffmpeg assembly). It is distilled from
-"Nova, Episode 1" (2:48, 9:16, three cuts, four versions). Nova's engine is the reference implementation: its files
+"Nova, Episode 1" (2:48, 9:16, three cuts; v4 delivered for David only, plus a 4K master). Nova's engine is the reference implementation: its files
 are at a pinned commit (reference-implementation.md). The skill's `assets/starter/` is a minimal page and engine
 that honours the same contract and runs the whole pipeline.
 
@@ -56,7 +56,8 @@ analysis/grid.json              the bar grid fitted to the recording
 tools/                          the skill's pipeline (config, fingerprint, render, chunk .mjs; verify_video.py,
                                 validate_plan.py), restore-from-branches.py, watch-render.sh, and the project's
                                 build_plan.mjs, render-audio.mjs, build-review.mjs, publish-downloads.sh
-film-plan*.json                 the live plans (one per cut); plans-vN/ the frozen delivered versions
+film-plan*.json                 the live plans (one per cut, plus size variants such as film-plan-4k.json);
+                                plans-vN/ the frozen delivered versions
 out/                            frames, audio, sheets, review builds (git-ignored)
 dist/<plan.id>/                 render pieces (git-ignored on main; committed on helper branches)
 docs/                           art bible, department briefs, the next version's notes
@@ -113,7 +114,10 @@ export default {
 - `S` (per-frame state): `{ f, t, local, dur, u, fps, W, H, portrait, shot, params, framing, seed }`.
 - `E` (engine): `{ G, W, H, fps, plan, music, math, rng, portrait, k, program, camera, target(name, scale, format),
   draw, overlayCtx, overlayCanvas, overlayTexture(), shotById, S }`.
-  - `E.k` = short side / 1080: multiply stroke widths, glow sizes and type by it, so 9:16 and 16:9 match.
+  - `E.k` = short side / 1080: multiply stroke widths, glow sizes and type by it, so 9:16 and 16:9 match. Features
+    sized in pixel angles inside shaders (star size, point glows) and in post (bloom pyramid, streaks, shake, blur)
+    must scale too, by the global uniform `uK` (`min(W, H) / 1080`, read as `max(uK, 1.0)`), or a 4K render is a
+    different picture: hd-master.md §1.
   - `E.draw` scissors frame-shaped targets to the letterbox, so pixels the bars cover are never shaded.
   - `E.music.at(bar, eighth)` → film seconds; `E.music.pulse(t)` → the current eighth `{ bar, k, since, period }`
     for accents on the beat.
@@ -146,7 +150,10 @@ params = { ...(presets[shot.preset || shot.id] || presets.default),
 3. The scene `render()` into `sceneA` (linear HDR, `rgba16f`).
 4. During a dissolve or bleed, the partner shot into `sceneB`.
 5. Post: composite (shake, blur, overlay, mixB) → bloom pyramid → anamorphic streak → ACES (Hill fit) → grade →
-   grain → letterbox → fade.
+   grain → letterbox → fade. Size the bloom pyramid and streak targets from the 1080p-equivalent frame
+   (`W / k, H / k` with `k = min(W, H) / 1080`), not from the output: a fixed number of halvings from the output size
+   gives a bloom radius in output pixels, half as wide at 4K. A master-only grade (`plan.masterGrade`: black point,
+   toe, no grain in black) runs after ACES (hd-master.md §3).
 6. Titles (plan `text`), drawn on their own canvas and composited **after** tonemapping, so type stays crisp and
    exactly the colour asked for.
 
@@ -186,6 +193,8 @@ Headless Chromium renders WebGL2 on the CPU (SwiftShader). Budget for it from th
 - Measure with `render.mjs bench <scene> --preset <shot> --w 1920 --t 2`, and remember that other renders on the
   same machine inflate the numbers.
 - Total render time scales with frames × cost: measure costs per shot (`chunk.mjs costs`) before planning helpers.
+- Cost grows with pixels: a 2160x3840 frame took about 9-10 s on a 4-core container, about 3x the 1080x1920 frame
+  (hd-master.md §5).
 
 ## 10. The development loop
 
@@ -207,3 +216,6 @@ invalidates every frame of every cut and version when it changes. Late in a proj
 - change one shot through its **preset or params**;
 - never "just fix" a shared helper in `src/engine/` or swap a font a day before delivery. If an engine change is
   unavoidable, plan a full re-render with helpers and say so to the director before making it.
+- an engine change for a new deliverable (Nova's resolution-independent 4K engine) goes on its own commit after the
+  1080p deliverables are frozen: afterwards the delivered plan reads all stale (`0/17 blocks final`), which is
+  expected, and its tagged commit still reproduces it (hd-master.md §1).

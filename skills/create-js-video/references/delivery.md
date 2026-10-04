@@ -51,7 +51,7 @@ Don't edit that script while it runs.
 - `verify_video.py` (structural, shipped in `scripts/pipeline/` with the `validate_plan.py` it imports): size, fps,
   frame count by decoding, codecs, pixel format, audio present, start near 0, full decode with `-xerror`. It writes
   `<file>.verify.json`. `assemble` runs it and fails when it is missing or fails.
-- `render-audio.mjs --verify` (sound): loudness, true peak, climax, coda, sync (audio.md §7).
+- `render-audio.mjs --verify` (sound): loudness, true peak, climax, coda, sync (audio.md §8).
 - Then **look at it**: a contact sheet of the encoded file, the cut boundaries, and the standing rules (no hands, no
   flashes) checked on every cut.
 - Masters are big: crf 17 with grain tuning on noisy HDR imagery ran at about 45 Mbps (Nova's 2:47.7 master: 944 MB).

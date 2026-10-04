@@ -20,7 +20,7 @@ guidance is in the existing skill's `drawing.md`, `motion.md` and `art-direction
 ## 1. No hands
 
 The director's words: **"The hands look weird just do no hands."** Treat it as a standing rule for this director,
-in every cut and every later version. It covers hands, fists, fingers, thumbs, wrists and forearms, drawn or modelled,
+in every cut he revisits and every later version. It covers hands, fists, fingers, thumbs, wrists and forearms, drawn or modelled,
 partial or stylised.
 - **Show the object, its path and a diagram instead.** Nova's fixes so far:
   - The sling lost its fist. The sling's finger loop sits at the centre of a compass circle, the plaited cords and
@@ -29,43 +29,57 @@ partial or stylised.
   - The 3D figures never needed a fix: they are head and bust scans (Head of David, Alexander as Helios, the
     Pergamon giant), cut 0.35-0.45 head heights below the chin in `tools/prepare_statues.py`, above the shoulders,
     so no arm or hand can enter the frame. Crop any figure scan the same way.
-- **OPEN: the Prometheus chains study still draws a forearm and a fist.** At the pinned commit
-  (reference-implementation.md), `F30.3-chains` (frames 2135-2153 of `film-plan-prometheus.json`; the fist is plain
-  at 2144 and 2150) calls `chains()` in `src/scenes/lib/studies-cuts.js`. That function draws the arm frame
-  (line 264), the forearm and a clenched fist with knuckles, tendons and thumb (lines 343-414), and a cuff round the
-  wrist (from line 415). The Prometheus helper renders of `prometheus-916-v4` contain it. The fix:
+- **Nova's status, stated plainly.** The director had chosen David as the only cut to revisit: "Apply those notes
+  transpose only to David only re render David I have chosen it to be the only one we will revisit the others later"
+  (03:34). "The hands look weird just do no hands" (04:14) came during that David-only round. So:
+  - **David is clean from v4 on**, v4.2 and the 4K master included, checked on rendered frames.
+  - **Prometheus and Sol are deferred, not missed.** No later version of them was asked for or delivered.
+  - **Delivered films older than commit 853008d still show hands**: the fire study's fist in `S10-prometheus` in v2
+    and v3 of all three cuts, David's sling fist in his v2 and v3, and in Prometheus also the chains fist. Only David
+    has a v4 delivery.
+  - **Prometheus's `F30.3-chains` still draws a forearm and a clenched fist** at the pinned commit
+    (reference-implementation.md), unchanged since commit 853008d. A grep of the Sol cut's own study code
+    (`src/scenes/lib/studies-sol.js`) finds no hand.
+  Don't re-render a deferred cut unasked: record its violations as open items. When a deferred cut comes back, run
+  `notes-to-version.py` across all plans and apply the standing rules first.
+- **The chains fix, for when Prometheus is revisited.** `F30.3-chains` (frames 2135-2153 of
+  `film-plan-prometheus.json`; the fist is plain at 2144 and 2150) calls `chains()` in
+  `src/scenes/lib/studies-cuts.js`. That function draws the arm frame (line 264), the forearm and a clenched fist with
+  knuckles, tendons and thumb (lines 343-414), and a cuff round the wrist (from line 415). The fix:
   1. In `chains()`, delete the arm frame, the forearm and fist strokes and their hatching (`fistTone`). Draw the
      cuff hinged open and empty on the rock, with the links running to the ring bolt. Fix the comments at lines 4
      and 234 ("a wrist bound to the rock", "the hand strains open above it").
   2. In `src/scenes/studies.js`, fix the comment on the `F30.3-chains` preset (line 199) and on `S10-prometheus`
      ("the fist on the left third", lines 148-149).
-  3. Delete `src/scenes/lib/studies-hand.js`. Nothing imports it, so it is in no module tree: deleting it is free.
+  3. Delete `src/scenes/lib/studies-hand.js`. Nothing imports it, so it is in no module tree: deleting it changes no
+     fingerprint, and it can go now.
   4. In `src/scenes/lib/studies-prometheus.js`, which `studies-drawings.js` imports, delete the `HAND = false`
      switch (line 107), the `if (HAND)` block (lines 191-216), the `HAND` term at line 276, the finger, thumb, thenar
      and arm outlines it alone uses (from line 74), and the header that describes the fist (lines 2-9).
+  5. Fix the stale comments in David's `sling()` in the same file (the cords "leave the fist", the path lifts "over
+     the forearm": lines 145, 156, 194). No hand is drawn there; the words invite one back.
 
-  **What it re-renders.** Steps 1, 2 and 4 edit the `studies` module tree, so every studies shot in all three cuts
-  goes stale: 8 shots and 368 frames per cut, mostly shared between the cuts as twin pieces, plus their dissolve
-  partners. Fold it into the next studies re-render if one is due. To re-render only F30.3 instead, give it its own
-  scene id: a new `studies-chains` module (registered in `src/scenes/index.js`, which is not hashed) with a fist-free
-  chains drawing, and point the Prometheus F30.3 entry at it in the builder. Leave the shared files untouched until
-  the next full studies re-render, then delete the dead code. Step 3 is free either way. Afterwards, render F30.3
-  in the Prometheus plan (`render.mjs shot F30.3 --plan film-plan-prometheus.json --n 3`) and look.
-- **Audit every cut, not only the one the note was on.** Cut-specific presets hide extra drawings: after the David
-  cut was cleaned, the Prometheus cut's chains study kept its fist. `notes-to-version.py` lists every cut's
-  variant of the touched scene.
+  **What it re-renders, and the safe order.** Steps 1, 2, 4 and 5 edit the `studies` module tree, so every studies
+  shot in all three cuts goes stale: 8 shots and 368 frames per cut, plus their dissolve partners. That includes
+  David's delivered studies pieces and the David HD-master pieces in `dist/david-916-v4-2160x3840/` (hd-master.md).
+  Until the David HD master is final, use a separate scene id instead: a new `studies-chains` module (registered in
+  `src/scenes/index.js`, which is not hashed) with a fist-free chains drawing, and point the Prometheus F30.3 entry at
+  it in the builder. That re-renders only F30.3 in Prometheus. Leave the shared files untouched until the next full
+  studies re-render, then delete the dead code. Afterwards, render F30.3 in the Prometheus plan
+  (`render.mjs shot F30.3 --plan film-plan-prometheus.json --n 3`) and look.
+- **Audit every cut the rule covers.** Cut-specific presets hide extra drawings, so list each cut's variant of a
+  touched scene with `notes-to-version.py` and look at every one.
   ```bash
   grep -rnwiE 'hand|hands|fist|finger|fingers|knuckle|thumb|palm|wrist|forearm' src/scenes   # comments count too
-  python3 scripts/contact-sheet.py dist/<cut>.mp4 --plan film-plan-<cut>.json --shots <every study shot> --width 360
+  python3 $SKILL/scripts/contact-sheet.py dist/<cut>.mp4 --plan film-plan-<cut>.json --shots <every study shot> --width 360
   ```
-  Then look at every study frame of every cut. The grep also finds the artist's hand in comments ("hand-length
-  strokes", "the hand stops a little short"); read each hit. Delete dead code that draws hands, such as an orphaned
-  `studies-hand.js` or a `HAND = false` branch. Otherwise a later edit can bring the hands back. Fix descriptive text
-  too: a shot whose `action` still says "a hand carrying a flame" will mislead the next person.
+  Then look at every study frame of every cut in scope. The grep also finds the artist's hand in comments
+  ("hand-length strokes", "the hand stops a little short") and the eagle's feather "fingers"; read each hit. Delete
+  dead code that draws hands, such as an orphaned `studies-hand.js` or a `HAND = false` branch. Otherwise a later
+  edit can bring the hands back. Fix descriptive text too: a shot whose `action` still says "a hand carrying a
+  flame" will mislead the next person.
 - Prefer objects, instruments, diagrams, orbits and geometry to bodies in general. Where a human presence matters,
   imply it: a tool, a trace, a mark, a notebook, the impulse to measure.
-- A no-hands edit to a shared studies module stales every studies shot in every cut and version. Plan the re-render,
-  or route the change through per-shot presets or a scene of its own.
 
 ## 2. Recomposing approved 16:9 photography for 9:16
 
@@ -165,6 +179,15 @@ the real disk, the rings.
   with the licences in `src/fonts/`.
 - Sizes follow the short side (×1.3 in portrait). Lines are shrunk to fit 86% of the width. Give each line a fade in
   and out, and enough frames to read on a phone.
+- **Hard-code measured text widths inside scenes.** Text a scene centres with `ctx.measureText` at render time
+  depends on whether the webfont has loaded in that worker: a helper whose font loads late measures the fallback
+  face and centres the line differently, a jump between pieces the fingerprint cannot see. Measure once in Chromium
+  and write the number, with how it was measured, next to the constant. Nova: "A king is crowned" sets 407 px wide in
+  IM Fell English italic at the renderer's 64 px base, so `w = 407 / 64 * size * PX` (`PX = 1/1080`), drawn at
+  `x = -w / 2` (`src/scenes/lib/studies-drawings.js:457-460`). The measuring script: Playwright from
+  `playwright-core` (Nova's repository has no `playwright` package: `ERR_MODULE_NOT_FOUND`), the woff2 inlined as a
+  data-URL `@font-face`, `await document.fonts.load('italic 64px "IM Fell English"')`, then
+  `canvas.getContext('2d').measureText(str).width`.
 
 ## 9. The sign-off card
 
@@ -189,9 +212,13 @@ must be far more intense."
 
 - Look at rendered frames, never at code alone. Use contact sheets per shot (`contact-sheet.py --plan`), the cut
   boundaries (`--at cuts`), and motion strips around fast action.
+- For a grade or a new render size, measure before looking: black percentiles of the active picture, faint-star
+  counts, luma ratios against the 1080 frame, then 1:1 crops (hd-master.md §2-3). "Deeper blacks" judged by eye
+  alone overshoots.
 - For a note, make before/after sheets of the same frames, side by side:
-  `contact-sheet.py new.mp4 --before old.mp4 --frames 2030,2040,2144 --cols 6`.
+  `python3 $SKILL/scripts/contact-sheet.py new.mp4 --before old.mp4 --frames 2030,2040,2144 --cols 6`.
 - For creative work, run a judge panel. Several independent reviewers score the sheets against the brief. An art
   director then verifies the change on before/after frames before the work counts as done. Prompt templates and
   the rubric: director-notes-loop.md §6.
-- Recheck every cut's variant of a changed shot. Check standing rules (no hands, no flashes) on every delivery.
+- Recheck every cut's variant of a changed shot. Check standing rules (no hands, no flashes) on every delivery of
+  every cut in scope.

@@ -21,6 +21,11 @@ bites.
 - **Editing a shared scene library stales every shot of that scene**, in every cut and version, and also the
   dissolve partner of any of those shots. The no-hands edit to the studies module made the delivered v3 studies
   pieces stale. Isolate late changes in a new module, or route them through presets.
+- **An engine edit stales the delivered cut even when its pixels don't change.** Nova's HD-master engine (`uK`
+  scaling, hd-master.md §1) kept the 1080 output byte-identical where the shaders compile alike, but at HEAD
+  `chunk.mjs status --plan film-plan.json` reads `0/17 blocks final` for the delivered David v4: the fingerprint
+  hashes file contents. Make engine changes for a new master on a separate commit (or worktree) after the 1080p
+  deliverables are frozen, keep the delivered file and its tag, and don't re-render the delivered cut unasked.
 - **Prose in the plan's global fields re-renders everything.** `format` and `defaultPost` are hashed into every
   frame, and Nova's `format.note` holds a sentence ("9:16. A 3:4 window ..."): editing that note would invalidate
   every frame of every cut. Keep prose in shot `purpose/action/framing/note` (not hashed) or in a top-level field
@@ -34,6 +39,10 @@ bites.
   "final" frames. Keep assets in their scene's folder and throw in `preload`.
 - **Hidden randomness**: `Math.random`, `Date`, `performance.now()` in pixel paths, accumulated particle state, and
   canvas state leaking between frames (`ctx.reset()` every frame). Grep before each final.
+- **Font-load timing changes text measured at render time.** A scene that centres a line with `ctx.measureText`
+  measures the fallback face in a worker whose webfont loaded late, and the line jumps between pieces: the
+  fingerprint can't see it. Measure once in Chromium and hard-code the width (picture-craft.md §8; Nova's "A king is
+  crowned" is 407 px at the 64 px base).
 - **Byte-identical pieces under new fingerprints** are normal after a module edit that didn't change a drawing.
   They are not a corruption.
 
@@ -86,6 +95,15 @@ bites.
   final" while all 14 helper branches were on origin. The restore now resolves such globs with
   `git ls-remote --heads` plus fnmatch, and treats a failed fetch as an error. Check a stuck collector with
   `git ls-remote` against `git branch -r`.
+- **A restore on the wrong block grid restores nothing.** With `--plan`, the old restore took the block length from
+  `--block` or `film.config.json`, never from the plan's own `block`, so every piece of Nova's 72-frame 4K plan was
+  "obsolete" unless `--block 72` was passed, and `watch-render.sh` could not pass it. Both now follow the plan
+  (fingerprints-and-distributed-render.md §9).
+- **Range edges must be multiples of the plan's block.** `helper-prompts.py --block 240` against a 72-frame plan
+  gives ranges `chunk.mjs render` refuses (`--from/--to must be multiples of 72`). The script now reads the plan's
+  block and refuses a contradicting `--block`.
+- **Parallel `create_session` calls can hang.** A batch of 7 issued together never returned until a worker restart
+  46 minutes later, and only one helper existed afterwards. Launch helpers one at a time and record each session id.
 - **A local `render --push` commits about 1 GB per cut and version** to whatever branch is checked out, the PR branch
   included. Render locally from a worktree on a dedicated `<base>-local` branch.
 - **The old ad-hoc restore** kept the local `.mp4` while merging a branch's record entry, which can pair a picture with
@@ -98,13 +116,30 @@ bites.
   - Push every piece to a branch as it finishes.
   - Keep tools and scripts in git.
   - Keep a restore script, and publish finished films on the downloads branch at once.
+- **A worker restart is not a snapshot reset.** At 07:29 Nova's session worker restarted and `uptime` said "up 1
+  min": the VM rebooted. Files survived (the repository, `tmp/`, the scratchpad), but every background process died
+  (the local `http.server` for site captures, renders, watchers) and in-flight tool calls never returned. After
+  one: list helpers and branches before relaunching (`list_sessions`, `git ls-remote origin 'refs/heads/<base>-*'`),
+  restart local servers, re-arm watchers, and re-check background jobs by PID.
 - **A master is about 1 GB** (944 MB for 2:48 at crf 17 grain). Never commit it to a normal branch. Copies go to the
   downloads branch (under 100 MB) or to chat (under 30 MiB).
 
 ## 5. Shell, background jobs and monitors
 
 - **`pkill -f <pattern>` killed its own shell** (exit 144): the pattern matched the command line of the shell that
-  ran it. Kill by PID (`kill <pid>`, from `$!` or `pgrep -f` checked first).
+  ran it. Kill by PID (`kill <pid>`, from `$!` or a bracketed `pgrep -f`).
+- **`pgrep -f` matches its own shell too, so liveness checks lie.** `pgrep -f "http.server 8799" >/dev/null ||
+  start_server` matched the shell running that very line, decided the server was up, and the next step got
+  `ERR_CONNECTION_REFUSED`. Use the bracket trick (`pgrep -f '[h]ttp.server 8799'`, `ps -eo pid,args | grep
+  "[f]inish-hd.sh"`), or better, probe the port itself
+  (`curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8799/`), and kill by the PIDs you found.
+- **`run_in_background` commands are capped at 2 hours** (timeout at most 7,200,000 ms). A finisher that waits up to
+  3 hours for helpers and then encodes would be killed. Run it fully detached,
+  `setsid nohup <script> > tmp/<name>.log 2>&1 < /dev/null & disown` (a plain `nohup ... &` from the tool shell is
+  less robust), and arm a separate watcher that ends only on a terminal line:
+  `until grep -qE 'FINISH-DONE|FAIL' tmp/<name>.log; do sleep 30; done; tail -20 tmp/<name>.log`. Re-arm the watcher
+  if it hits its own cap. The finisher's shape is in hd-master.md §8. A scratchpad copy of the script survives a
+  worker restart, not a container reset: keep it in the repository.
 - **Editing a bash script while it runs corrupts the run.** Bash reads scripts incrementally. Write a new file, or
   wait for the run to finish.
 - **Monitors die after 30 minutes.** Re-arm them. The skill's watchers exit with `REARM` at 28 minutes.
@@ -125,11 +160,25 @@ bites.
 - **Short-term maxima barely move** in a limiter-bound section. Say which statistic you measured.
 - **AAC at 320k with the default coder** overshot the true peak above 0 dBTP. Mux at 512k with `-aac_coder fast`, and
   re-check the true peak of every re-encoded copy.
-- **Web Audio renders are not bit-identical** (float-rounding differences at about -104 dBFS). Don't hash audio for
-  caching.
+- **Audio renders are not reproducible, so the approved mix WAV is the master.** Two renders of identical code
+  differed by up to -74.4 dBFS peak (-104.1 dBFS RMS; the skill used to quote -104 as the peak). A re-render of
+  Nova's approved stereo mix with unchanged score code (commit 7717051) differed from the approved
+  `out/audio-v4/mix.wav` by up to -44.6 dBFS peak (-69.4 dBFS RMS, 3.24 M samples over -80 dB, the first at
+  8.401 s). The likely amplifiers are the iterative calibration loops (the cannon approach law re-renders its stem
+  over passes; the master loudness loop runs 4), which can settle on slightly different gains; the cause was not
+  isolated. Mux every later deliverable from the approved WAV, never from a fresh render; treat re-renders (and a
+  binaural mix) as variants; don't promise a bit-identical stereo mix; and don't hash audio for caching. To show a
+  code change left stereo alone, render twice and compare the change against the run-to-run spread, not against
+  zero.
+- **`render-audio.mjs` writes only under `out/`.** `--out tmp/audio-check` failed after a full 4-minute render with
+  `403 only under out/`.
 - **The default mix follows the root plan.** Assembling another version needs `--audio out/audio-vN/mix.wav`, and the
   verifier refuses a reference mix of the wrong length.
-- **`assemble` does not check loudness.** Always run `render-audio.mjs --verify` on muxed files.
+- **`assemble` does not check loudness.** Always run `render-audio.mjs --verify` on muxed files, on **every**
+  audio track: an alternate binaural track needs its own verify against the binaural mix (audio.md §8). A WAV
+  measured at -16.0 LUFS says nothing about its AAC copy, and a decode-and-duration check is not a sound verify.
+- **Every re-encode needs the mux lessons again.** Nova's first 4K finisher draft muxed the HD deliverables with the
+  default AAC settings and `-shortest`; the coordinator restored AAC 512k `-aac_coder fast` and `-t 167.708`.
 - **A missing structural verifier looked like success.** The original `assemble` printed "no verify_video.py found"
   and exited 0. `verify_video.py` and `validate_plan.py` now ship in `scripts/pipeline/`, and `assemble` fails
   without them.
@@ -142,18 +191,34 @@ bites.
   `plan.id`.
 - **Hosting limits**: 15 MB per file, 64 MB per publish, 256 MB per version. The builder doesn't check the 256 MB
   total.
-- **Chat attachments over 30 MiB fail; GitHub refuses files over 100 MB.** Use `encode-copy.py`.
+- **Chat attachments over 30 MiB fail; GitHub refuses files over 100 MB.** Use `encode-copy.py`, or split bigger
+  files into parts (`publish-downloads.sh --split`).
+- **`split -b 95m` makes MiB parts.** `m` is 1,048,576 bytes, so each part is 99,614,720 bytes, over the
+  99,000,000-byte publish guard: every publish would have failed. Use decimal, `split -b 95000000 -d -a 2`.
+- **GitHub releases are refused in a Claude Code session.** `gh api -X POST repos/<o>/<r>/releases` returns HTTP
+  403 ("Creating, editing, or deleting releases is not permitted for this session type"), and `gh release list`
+  fails because gh uses GraphQL ("not available from Claude Code sessions; use the REST API"). Files over 100 MB go
+  on the downloads branch as parts, with `SHA256SUMS` and join instructions (delivery.md §4).
+- **A push is not a deploy.** Nova's site was a direct Vercel upload: fixes pushed to both branches were not live,
+  although the user was "Pretty sure if you push it goes live". Verify the live build by its bytes (`cmp` the live
+  `index.html` with `git show <c>:...`, compare the video's `Content-Range` total) and say exactly which build is
+  live (website.md §6).
 - **The container's network may block a site** the WebFetch tool can still reach. WebFetch saves binaries to a file.
 - **Interim cuts must say they are interim**, in the file name and on the Edit Room label.
 
 ## 8. Picture and taste
 
-- **"The hands look weird just do no hands."** Hands were removed from the David cut's studies, but the Prometheus
-  cut's `F30.3-chains` study still draws a forearm and a fist (frames 2144 and 2150), and it is **still open** at the
-  pinned commit, with `studies-hand.js` orphaned, a `HAND = false` branch kept and a preset comment that still says
-  "the fist on the left third". The fix and its re-render cost are in picture-craft.md §1. Audit every cut's variant
-  of a study (`notes-to-version.py` lists them), delete dead hand-drawing code, and fix descriptive text that still
-  mentions a hand.
+- **"The hands look weird just do no hands" applies to every cut the director revisits; know which cuts those
+  are.** He had chosen David as the only cut to revisit ("Apply those notes transpose only to David only re render David
+  I have chosen it to be the only one we will revisit the others later", 03:34), and the hands note (04:14) came in
+  that David-only round. So the David cut has no hands from v4 on (v4.2 and the 4K master included), checked on
+  rendered frames, while the Prometheus and Sol cuts are deferred, not missed. Their open items: Prometheus's
+  `F30.3-chains` still draws a forearm and a clenched fist (`studies-cuts.js` line 264 and lines 343-414 at the
+  pinned commit), and every delivered film older than commit 853008d still shows hands (the fire study's fist in
+  `S10-prometheus` in v2 and v3 of all three cuts, David's sling fist in his v2/v3, the chains fist in
+  Prometheus). A grep of the Sol cut's own study code finds no hand. Don't re-render a deferred cut unasked; record
+  its violations as open items, and when it comes back, run `notes-to-version.py` across all plans and apply the
+  standing rules first (picture-craft.md §1).
 - **White flashes were rejected.** Use dark dips and a dark climax.
 - **Varied cinematic angles on a recurring motif read worse** than one locked angle where only the subject changes.
 - **Restyling approved photography during a format change.** Recompose through framing only.
@@ -166,3 +231,11 @@ bites.
 - A comment that still mentions a removed element ("the fist on the left third") invites someone to restore it.
 - Freeze each delivered version's plans before starting the next. Nova's delivered v4 had no `plans-v4/` while v5
   work could have begun.
+- **A point release under the same id replaces the delivered version's pieces.** Nova's v4.2 (commit c5c7046) changed
+  David's S29b through a param but kept the id `david-916-v4`, so its pieces replaced the delivered v4's in
+  `dist/david-916-v4/`, and with no `plans-v4/` the pre-4.2 v4 can now be rebuilt only from a commit before
+  c5c7046. Freeze vN first, then give the point release its own id (`PLAN_VERSION` 4.2 → `<cut>-v4.2`, or bump to
+  v5): director-notes-loop.md §4.
+- Comments that still name a removed element: David's `sling()` in `src/scenes/lib/studies-cuts.js` still says the
+  cords "leave the fist" and the path lifts "over the forearm" (lines 145, 156, 194) although no hand is drawn. Fold
+  the comment fix into the next studies edit: it changes the module's hash like any other edit.

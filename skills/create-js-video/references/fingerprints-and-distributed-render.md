@@ -25,24 +25,43 @@ keep it safe when the container resets. Tools: `scripts/pipeline/` (fingerprint,
 |---|---|
 | `engine` | `src/main.js`, `src/index.html`, every file in `src/engine/` and `src/fonts/` |
 | `grid` | `analysis/grid.json` (the bar grid) |
-| `global` | the plan's `fps, width, height, format, defaultPost` |
+| `global` | the plan's `fps, width, height, format, defaultPost, masterGrade` (+ `planFieldsInGlobal`) |
 | `W, H` | render size |
 | `shot` | the shot entry minus `purpose, action, framing, note` |
 | `scene` | `src/scenes/<scene>.js` + every relative `import`/`export ... from` it pulls in, recursively, + every file under `media/scenes/<scene>/` |
 | `others` | the partner shot (and its scene hash) of an active dissolve or bleed |
 | `trs, effects, text` | the transitions, effects and text items active on frame `f` (same windows as the engine) |
 
+**Adding an optional plan-global field without re-rendering other plans.** Put it in the hashed global object as a
+direct key whose value is `undefined` when a plan lacks it: `JSON.stringify` drops undefined keys, so plans without
+the field keep their fingerprints and plans with it get their own. Nova's `masterGrade` (a grade only the 4K master
+plan carries, hd-master.md §3) is such a key in both the repository's and the skill's `fingerprint.mjs`. Don't wrap
+optional fields in a sub-object that is always present: an `extra: {}` changes every fingerprint. The skill's
+`planFieldsInGlobal` adds its `extra` object only when at least one listed field is defined, for that reason.
+
 ## 2. Consequences you plan around
 
 - **An engine or font change invalidates everything**: every frame of every cut and every version. The same goes for
   a `main.js` or `index.html` edit, a grid refit, or a change to the plan's global fields. Late in a project, put
   new work in a new scene module or in plan params instead.
+- **An engine edit for a new master stales the delivered cut, and that is expected.** Nova's resolution-independent
+  4K engine (hd-master.md §1) kept the 1080 output byte-identical where the shaders compile alike, yet
+  `chunk.mjs status --plan film-plan.json` reads `0/17 blocks final` for the delivered David v4 at HEAD: the
+  fingerprint hashes file contents, not pixels. Keep the delivered master file and its tag, and don't re-render the
+  delivered cut unless asked. Make such an edit on its own commit after the 1080 deliverables are frozen.
 - **New scenes are free.** `src/scenes/index.js` is not hashed. Registering a new scene invalidates nothing (Nova's
   sign-off was added this way).
 - **The unit of invalidation is a scene's whole module tree.** One edit to any `lib/studies-*.js` drawing stales
   every studies shot in every cut and version, and also the dissolve partner of a studies shot. To localise a change:
   - give the affected shots their own scene id or module;
   - or route the change through `preset`/`params`, which are per shot.
+- **Route per-cut differences through params, gated in the builder by version and cut.** Nova v4.2 wrote "A king is
+  crowned" under the rings in David's S29b only: `if (V4 && o.id === 'S29b-drawing' && C.figure === 'david')
+  o.params = { ...o.params, crown: true, shadeY: [0.44, 0.66, 0.92, 0] }` in `tools/build_plan.mjs`, and the scene
+  picks the drawing from the param (`this.drawing((P.drawing || 'blank') + (P.crown ? 'Crown' : ''))`). The frozen
+  v2 and v3 plans rebuild byte-identically, the Sol and Prometheus plans don't change, and the scene never reads
+  `plan.version` or `plan.cut`. Editing the shared drawing module still staled every studies piece in every cut
+  (module-tree invalidation); the other cuts re-render to the same pixels.
 - **Descriptive fields are free, but only on shots.** Edit a shot's `purpose/action/framing/note` without
   re-rendering anything. Prose inside the hashed global fields is not free: `format` and `defaultPost` go into every
   frame's `global` key, so editing Nova's `format.note` ("9:16. A 3:4 window ...") would re-render every frame of
@@ -67,15 +86,23 @@ are renamed atomically. The manifest is rewritten after every frame, and `render
 
 The cache is keyed by **frame index**: the fingerprint has no `f` in it, so it is not content-addressed. Two cuts
 rendered into the same folder overwrite each other's differing frames, and two renders into one folder at once race.
-Give concurrent renders their own `--frames` folder.
+Give concurrent renders their own `--frames` folder. A plan at another size gets its own folders anyway: the cache
+is `out/frames-WxH/`, and a size-suffixed plan id (`david-916-v4-2160x3840`, from `tools/make-hd-plan.mjs`) gives its
+pieces their own `dist/<id>/`, so a master never mixes or twins with the delivered cut. Extend `.gitignore` for the
+new id before rendering (hd-master.md §4).
 
 ## 4. Blocks, pieces and records
 
-- **Blocks** are fixed, 240 frames (10 s at 24 fps), aligned to frame 0. They never move when shots move.
+- **Blocks** are fixed, 240 frames (10 s at 24 fps) by default, aligned to frame 0. They never move when shots move.
+  A plan may set its own length (`plan.block`, read by `chunk.mjs`, `restore-from-branches.py` and
+  `helper-prompts.py`; else `film.config.json` `block`). Size it from a measured bitrate so a piece stays under
+  GitHub's 100 MB: Nova's 4K plan measured 133 Mbps on its heaviest passage, so 240 frames would be about 167 MB, and
+  it uses `block: 72` (3 s: about 50 MB typical, 72 MB at worst).
 - **Pieces.** A block splits at every shot boundary inside it: `chunk_AAAAA_BBBBB.PPPPP_QQQQQ.mp4`. Each piece is
   encoded on its own from a keyframe with the final settings (`libx264 -preset slow -crf 17 -tune grain -pix_fmt
-  yuv420p -profile:v high -level 4.1 -x264-params keyint=48:min-keyint=24:scenecut=40`). Pieces therefore
-  concatenate with `-c copy`, and the frame count is checked with `ffprobe -count_frames`.
+  yuv420p -profile:v high -level 4.1 -x264-params keyint=48:min-keyint=24:scenecut=40`; level 5.1 above 2048x1088,
+  because 2160x3840 is over level 4.1's frame limit). Pieces therefore concatenate with `-c copy`, and the frame
+  count is checked with `ffprobe -count_frames`.
 - **Records.** `dist/<plan.id>/chunk_AAAAA_BBBBB.json` = `{ from, to, crf, pieces: [{ from, to, fp, scene }] }`. A
   piece's `fp` is the sha1 of its frames' fingerprints as rendered, read from the manifest. If a source changed while
   the piece was rendering, the piece is recorded stale and redone.
@@ -85,7 +112,8 @@ Give concurrent renders their own `--frames` folder.
 
 - `status` reports each block as final, partial, stale or missing, listing every non-final piece as
   `from-to:scene:state`. `status --json` adds each piece's wanted and recorded fp (input to `restore --want`).
-- `render --from A --to B` takes A as a multiple of 240 and B as a multiple of 240 or the film end. Options:
+- `render --from A --to B` takes A as a multiple of the block (240, or `plan.block`) and B as a multiple of the
+  block or the film end. Options:
   - `--only-scenes statue` renders only those scenes' pieces; the record lists only what this machine wrote.
   - `--skip-scenes statue` renders everything else first.
   - `--push` commits each finished block (`git add -A -f`, because `dist/` is git-ignored) and pushes HEAD to its
@@ -115,16 +143,20 @@ material where they were.
 3. Generate prompts:
    ```bash
    node tools/chunk.mjs status --plan film-plan.json --json > out/status.json
-   python3 scripts/helper-prompts.py --plan film-plan.json --parts 6 --log 'out/frames-*/render-log.jsonl' \
+   python3 $SKILL/scripts/helper-prompts.py --plan film-plan.json --parts 6 --log 'out/frames-*/render-log.jsonl' \
        --scene-cost statue=1400 --status-json out/status.json --json > out/helpers.json
    ```
+   For a new frame size with no render log, pass a measured `--default-ms` (4K: 9500). The ranges follow the plan's
+   block length, which `chunk.mjs render` insists on.
 4. Start each helper with `create_session` (load it with ToolSearch if deferred), passing:
    - `source_url`: the repository;
    - `source_revision`: the full 40-character SHA;
    - `outcome_branch`: `<base>-<tag>`;
    - `prompt`: the generated prompt.
 
-   A helper starts in the calling session's environment (`create_session` inherits it). Its prompt runs `npm ci`
+   Launch them one at a time (or a few at once) and record each returned session id: on Nova a batch of 7
+   parallel `create_session` calls hung until a worker restart 46 minutes later, and only one helper existed
+   afterwards. A helper starts in the calling session's environment (`create_session` inherits it). Its prompt runs `npm ci`
    when `node_modules` is missing. Leave `permission_mode` out so the helper inherits your mode (it can't be more
    permissive than yours). The helper has to run Bash unattended: if your session prompts before Bash, so will the
    helper, and nobody will answer. Never pass `plan`, which blocks until someone approves a plan.
@@ -141,7 +173,8 @@ material where they were.
   other history.
 - **Git-ignored output needs `git add -f`.** `chunk.mjs --push` does this.
 - **Balance by the costly frames, not by frame count.** Statue frames cost about 1.4 s each, studies 0.7-1 s, and
-  cosmic shots vary. Partition the block grid by measured cost. Where one scene dominates, give it its own helpers
+  cosmic shots vary; a 4K frame costs about 9-10 s, about 3x its 1080 frame. Partition the block grid by measured
+  cost: `chunk.mjs plan` without a costs file assumes 1,500 ms a frame. Where one scene dominates, give it its own helpers
   with `--only-scenes`, and render the rest elsewhere with `--skip-scenes`.
 - **Helpers are fast.** A fresh helper container is warm and has the CPU to itself: 6 helpers turned about 25 minutes
   of statue frames into about 4. Parallelise early; don't wait on the local machine.
@@ -156,6 +189,12 @@ material where they were.
   that is two timeouts and an unfinished range you can't redirect.
 - **Keep the prompt short and literal**: commands, the checkout check, the rules, and "stop and report" on any
   surprise.
+- **After a worker restart, check before relaunching.** In-flight tool calls die with the worker, so a
+  `create_session` may or may not have happened. List what exists (`list_sessions`,
+  `git ls-remote origin 'refs/heads/<base>-*'`) before starting replacements, so two helpers never share an outcome
+  branch. Nova relaunched hd2-hd14 one call at a time, about 7 s each, all succeeding.
+- **Check piece sizes on a helper branch without restoring**:
+  `git fetch -q origin <b> && git ls-tree -r -l origin/<b> -- dist/<id> | awk '{printf "%s %.1fMB\n", $5, $4/1e6}'`.
 
 ## 9. Collecting: restore, status, watch
 
@@ -179,6 +218,11 @@ On Nova's 4K master the old script only warned about the invalid refspec `hd[0-9
 "2/56 blocks final" for 20 minutes while all 14 helper branches were on origin. If a collector's count stops moving,
 compare `git ls-remote origin 'refs/heads/<base>-*'` with `git branch -r`.
 
+The block grid of `--plan` is each plan's own `block`, else `film.config.json`, else 240 (`--block` overrides). The
+old restore never read `plan.block`: with a 72-frame plan every piece came out "obsolete" unless you passed
+`--block 72`, and `watch-render.sh` had no way to pass it. The watcher now has a `--block` passthrough, which a plan
+with its own `block` doesn't need.
+
 `watch-render.sh` loops fetch → restore (with `--plan` and, when the status tool supports `--json`, `--want`) →
 status, and exits `DONE`, `FAIL ...` or `REARM`. Give the Monitor a filter that matches failures as well as success.
 It runs `restore-from-branches.py` from its own folder: copy both into `tools/` and commit them.
@@ -186,7 +230,10 @@ It runs `restore-from-branches.py` from its own folder: copy both into `tools/` 
 ## 10. Surviving a container reset
 
 The session container can restart from an old snapshot. When it does, untracked files are gone: frame caches, dist
-pieces, masters, mixes, review builds, scratchpad scripts.
+pieces, masters, mixes, review builds, scratchpad scripts. A **worker restart** is milder: the VM reboots (`uptime`
+says "up 1 min"), files survive, but every background process dies (renders, watchers, local servers, finishers)
+and in-flight tool calls never return. After one, re-check jobs by PID, restart servers, re-arm watchers, and list
+helpers before relaunching (§8, pitfalls.md §4).
 - Push every rendered piece to a branch as it finishes (`--push`), on helpers and locally. Locally, render from a
   worktree on a dedicated `<base>-local` branch (`git worktree add ../render-local -b <base>-local`, then `npm ci`
   there): `--push` commits about 1 GB per cut and version to whatever branch is checked out.
@@ -194,8 +241,9 @@ pieces, masters, mixes, review builds, scratchpad scripts.
   only in the skill folder, is lost on reset or missing on a helper.
 - After a reset: `chunk.mjs status --json > out/want.json`, then
   `restore-from-branches.py --branches '<base>-*' --fetch --want out/want.json --plan film-plan.json`, then
-  `status`; re-render only what is missing or stale, re-render the mix (`render-audio.mjs`, about 3 minutes for
-  Nova), and re-assemble.
+  `status`; re-render only what is missing or stale, and re-assemble. Mux from the approved mix WAV, not from a
+  re-render: audio renders are not reproducible (audio.md §1), so keep a copy of the approved `mix.wav` (about 50 MB
+  for 2:48 at 24-bit) on a branch, such as the downloads branch, the day it is approved.
 - Publish finished films on the downloads branch as soon as they pass the checks, before doing anything else.
 
 ## 11. Command reference
@@ -209,4 +257,6 @@ node tools/chunk.mjs render --plan film-plan.json --from 2640 --to 3360 [--only-
 node tools/chunk.mjs assemble --plan film-plan.json --audio out/audio-v4/mix.wav [--placeholders statue]
 python3 tools/restore-from-branches.py --branches 'claude/film-*' --fetch --want out/status.json --plan film-plan.json
 tools/watch-render.sh --branches 'claude/film-h*' --plan film-plan.json
+node tools/make-hd-plan.mjs --out film-plan-4k.json                                  # 2160x3840, block 72, masterGrade
+python3 $SKILL/scripts/helper-prompts.py --plan film-plan-4k.json --parts 14 --default-ms 9500 --tag-prefix hd --json
 ```
