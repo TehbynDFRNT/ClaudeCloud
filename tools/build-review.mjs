@@ -233,7 +233,9 @@ const data = {
       id: cut.id, key: cut.plan.id || cut.id, name: cut.name, sub: cut.sub, title: cut.plan.title || cut.name, frames: cut.frames,
       shots: T.shots.map((s) => {
         const mine = pictureKey(cut, s);
-        const diff = cuts.length > 1 && cuts.some((o) => { const t = o.plan.shots.find((x) => x.id === s.id && x.start === s.start); return !t || pictureKey(o, t) !== mine; });
+        // compared only with the cuts of the same plan version (v2 and v3 differ by design after the climax)
+        const peers = cuts.filter((o) => (o.plan.version ?? null) === (cut.plan.version ?? null));
+        const diff = peers.length > 1 && peers.some((o) => { const t = o.plan.shots.find((x) => x.id === s.id && x.start === s.start); return !t || pictureKey(o, t) !== mine; });
         return {
           id: s.id, start: s.start, end: s.end, scene: s.scene, purpose: s.purpose || '', action: s.action || '', framing: s.framing || '', act: T.actOf(s.start).name,
           ...(s.preset ? { preset: s.preset } : {}), ...(s.params && s.params.figure ? { figure: s.params.figure } : {}), ...(diff ? { diff: true } : {}),

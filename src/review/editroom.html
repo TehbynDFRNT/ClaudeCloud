@@ -48,6 +48,8 @@ button { font: inherit; color: inherit; }
 .cuts button[aria-pressed="true"] { background: var(--gold); color: #1a1408; }
 .cuts button[aria-pressed="true"] .cs { color: rgba(26, 20, 8, 0.72); }
 .cuts button.has-cb { padding-right: 20px; }
+/* more than three cuts (two versions of three): a 3-column grid, one version per row */
+.cuts.many { display: inline-grid; grid-template-columns: repeat(3, auto); }
 .cuts .cb { position: absolute; top: -8px; right: -6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--crimson); color: #fff; font: 600 10px/18px var(--mono); text-align: center; box-shadow: 0 0 0 2px var(--bg); }
 
 .suite { --sw: clamp(240px, min(calc((100vh - var(--chrome)) * var(--arn)), 46vw), 760px);
@@ -191,6 +193,7 @@ details.card[open] summary { margin-bottom: 8px; }
   .cuts { display: flex; width: 100%; }
   .cuts button { flex: 1 1 0; justify-items: center; text-align: center; padding: 6px 6px 7px; }
   .cuts .cn { white-space: normal; font-size: 13px; }
+  .cuts.many { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .suite { grid-template-columns: minmax(0, 1fr); --pw: min(calc(100% + 32px), calc((100vh - 128px) * var(--arn))); }
   @supports (height: 100svh) { .suite { --pw: min(calc(100% + 32px), calc((100svh - 128px) * var(--arn))); } }
   .viewer { position: static; }
@@ -585,6 +588,7 @@ details.card[open] summary { margin-bottom: 8px; }
   // ---------- cuts ----------
   function renderCuts() {
     const box = $('cuts');
+    box.classList.toggle('many', CUTS.length > 3);
     box.replaceChildren(...CUTS.map((c, i) => {
       const b = document.createElement('button'); b.type = 'button'; b.dataset.cut = c.id;
       b.setAttribute('aria-pressed', String(c === C));
