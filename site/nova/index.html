@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nova, Episode 1: David &amp; Goliath</title>
-<meta name="description" content="Nova, Episode 1: a tiny white dwarf feeds on a colossal red giant until the stolen hydrogen ignites, and from Earth a new star appears. A vertical short film by Tehbyn Nova, rendered entirely in code.">
+<meta name="description" content="Nova, Episode 1: a white dwarf no bigger than Earth feeds on a red giant until the stolen hydrogen ignites, and from Earth a new star appears. A vertical short film by Tehbyn Nova, rendered entirely in code.">
 <meta name="author" content="Tehbyn Nova">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#000000">
@@ -16,7 +16,7 @@
 <meta property="og:locale" content="en_AU">
 <meta property="og:url" content="https://nova.tehbyn.com/">
 <meta property="og:title" content="Nova, Episode 1: David &amp; Goliath">
-<meta property="og:description" content="A tiny white dwarf feeds on a colossal red giant until the stolen hydrogen ignites. A vertical short film by Tehbyn Nova, rendered entirely in code.">
+<meta property="og:description" content="A white dwarf no bigger than Earth feeds on a red giant until the stolen hydrogen ignites, and from Earth a new star appears. A vertical short film by Tehbyn Nova, rendered entirely in code.">
 <meta property="og:image" content="https://nova.tehbyn.com/assets/og.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -25,7 +25,7 @@
 <meta name="twitter:site" content="@tehbyn">
 <meta name="twitter:creator" content="@tehbyn">
 <meta name="twitter:title" content="Nova, Episode 1: David &amp; Goliath">
-<meta name="twitter:description" content="A tiny white dwarf feeds on a colossal red giant until the stolen hydrogen ignites. A vertical short film by Tehbyn Nova, rendered entirely in code.">
+<meta name="twitter:description" content="A white dwarf no bigger than Earth feeds on a red giant until the stolen hydrogen ignites, and from Earth a new star appears. A vertical short film by Tehbyn Nova, rendered entirely in code.">
 <meta name="twitter:image" content="https://nova.tehbyn.com/assets/og.jpg">
 <meta name="twitter:image:alt" content="The marble head of Michelangelo's David staring into the lens, beside the title NOVA, Episode 1, David &amp; Goliath.">
 
@@ -61,7 +61,7 @@
   --gap: clamp(48px, 7vw, 128px);
   --bar-h: 56px;
   --slate-h: 40px;
-  --measure: 36rem;
+  --measure: 33rem;                  /* ~60-70 characters a line of the reading text */
 }
 @media (min-width: 720px) { :root { --gutter: clamp(24px, 4vw, 64px); --bar-h: 72px; } }
 
@@ -81,6 +81,7 @@ body {
   overflow-wrap: break-word;
 }
 @media (min-width: 720px) { body { font-size: 1.25rem; } }
+@media (min-width: 1200px) { body { font-size: 1.3125rem; } }
 img, svg, video { display: block; max-width: 100%; }
 a { color: inherit; text-decoration-color: var(--line-2); text-underline-offset: .22em; text-decoration-thickness: 1px; }
 a:hover { color: var(--ink); text-decoration-color: var(--gold); }
@@ -149,6 +150,8 @@ cite { font-style: italic; }
 .slate-tc b { font-weight: 500; color: var(--gold-2); }
 
 .text-col { min-width: 0; }
+/* one column (phone, tablet): the reading column keeps its measure and sits under the screen */
+@media (max-width: 899px) { .text-col { max-width: var(--measure); margin-inline: auto; } }
 
 @media (min-width: 900px) {
   :root {
@@ -223,7 +226,7 @@ cite { font-style: italic; }
 .beats li { border-bottom: 1px solid var(--line); }
 .beat {
   -webkit-appearance: none; appearance: none;
-  display: grid; grid-template-columns: 5.25rem minmax(0, 1fr); column-gap: .75rem;
+  display: grid; grid-template-columns: 6.6rem minmax(0, 1fr); column-gap: .9rem;
   width: 100%; margin: 0; padding: 1.15rem 0 1.25rem;
   background: none; border: 0; border-radius: 0;
   color: inherit; font: inherit; text-align: left; cursor: pointer;
@@ -236,8 +239,10 @@ cite { font-style: italic; }
   padding-top: .05rem;
   font: 500 1.0625rem/1.4 var(--font-text); font-variant-numeric: lining-nums tabular-nums; letter-spacing: .02em;
   color: var(--ink-3);
+  white-space: nowrap;
   transition: color .5s ease;
 }
+.tc-to { opacity: .72; }
 .tc img { width: 11px; height: 11px; flex: none; opacity: 0; transition: opacity .5s ease, filter 2.4s ease; }
 .beat-act { --track: .22em; display: block; font-size: .78125rem; line-height: 1.4; padding-top: .2rem; color: var(--ink); transition: color .5s ease, text-shadow 2.4s ease; }
 .beat-text { display: block; margin-top: .45rem; font-size: 1.125rem; line-height: 1.55; color: var(--ink-3); transition: color .5s ease; }
@@ -270,17 +275,12 @@ cite { font-style: italic; }
 .dims { transition: opacity 1.4s ease; }
 body.is-dark .dims { opacity: .1; transition-duration: .9s; }
 
-/* ---------- how it was made ---------- */
-.spec { margin: clamp(1.75rem, 3vw, 2.25rem) 0 0; max-width: var(--measure); border-top: 1px solid var(--line); }
-.spec div { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); column-gap: 1rem; padding: .85rem 0 .9rem; border-bottom: 1px solid var(--line); }
-.spec dt { --track: .22em; font-size: .71875rem; line-height: 1.5; padding-top: .3rem; color: var(--gold-2); }
-.spec dd { margin: 0; font-size: 1.125rem; line-height: 1.5; color: var(--ink-2); font-variant-numeric: lining-nums; }
-
 /* ---------- credits ---------- */
 .film-by { margin: 0 0 clamp(2rem, 4vw, 2.75rem); }
 .film-by .label { display: block; font-style: italic; font-size: 1.1875rem; color: var(--ink-3); }
 .film-by .who { --track: .3em; display: block; margin-top: .45rem; font-size: clamp(1.15rem, 4.4vw, 1.5rem); line-height: 1.3; color: var(--ink); }
-.film-by .what { display: block; margin-top: .7rem; font-size: 1.0625rem; color: var(--ink-3); font-variant-numeric: lining-nums; }
+.film-by .what { display: block; margin-top: .35rem; font-size: 1.0625rem; color: var(--ink-3); font-variant-numeric: lining-nums; }
+.film-by .who + .what { margin-top: .7rem; }
 .credits { margin: 0; max-width: var(--measure); }
 .credits div { padding: 1.05rem 0 1.1rem; border-top: 1px solid var(--line); }
 .credits div:last-child { border-bottom: 1px solid var(--line); }
@@ -319,8 +319,9 @@ body.is-dark .dims { opacity: .1; transition-duration: .9s; }
 <body>
 <!--
   nova.tehbyn.com, Episode 1: David & Goliath. Static, no build step; every asset path is relative.
-  Page copy is taken from the copy writer's copy.md (scratchpad/site/copy.md). Every element that holds
-  page copy carries data-copy="<key>" so the final copy can be merged in place.
+  Page copy is the final copy (copy.md), merged in place. Every element that holds page copy carries
+  data-copy="<key>". Breakdown timecodes are shown as the copy gives them; the seek point of each button
+  (data-t) is the exact film second of its first frame in film-plan.json (frame / 24).
   To swap the film: replace assets/nova-ep1-david-goliath.mp4 (H.264 + AAC, 1080x1920). Breakdown seek
   points are film seconds from film-plan.json (frame / 24), in data-t on each button.
 -->
@@ -384,7 +385,8 @@ body.is-dark .dims { opacity: .1; transition-duration: .9s; }
         <p>Last, the marble David, who has been turning toward the lens all film, looks straight at you.</p>
       </section>
 
-      <!-- DRAFT FOR THE DIRECTOR (from copy.md): this section is written in Tehbyn Nova's voice, but these are not his words. Edit or replace it before publishing. -->
+      <!-- DRAFT FOR THE DIRECTOR (from copy.md): this section is written in Tehbyn Nova's voice, but these are not his words. Edit or replace it before publishing.
+           Merge note: the first sentence, "Nova retells old stories as events that really happen in the sky", describes the whole series, beyond Episode 1; the brief does not state it. Confirm it with the director. -->
       <section class="part" id="series" aria-labelledby="series-h" data-copy="series">
         <h2 id="series-h"><span class="caps">The series</span><span class="sub">what Nova means</span></h2>
         <p>Nova retells old stories as events that really happen in the sky. In Episode 1 the shepherd and the giant become a white dwarf and a red giant, and the theft of fire is in there too, because the physics fits the myth: the small, dense and determined against the immense.</p>
@@ -398,67 +400,67 @@ body.is-dark .dims { opacity: .1; transition-duration: .9s; }
         <p class="hint">Choose a moment to play the film from there.</p>
         <ol class="beats" id="beats">
           <li><button class="beat" type="button" data-t="0" data-label="I · Attraction" data-copy="breakdown.attraction">
-            <span class="tc"><img src="assets/star.png" width="11" height="11" alt="" loading="lazy" decoding="async"><span class="sr-only">Play from </span>0:00</span>
+            <span class="tc"><img src="assets/star.png" width="11" height="11" alt="" loading="lazy" decoding="async"><span class="tc-t"><span class="sr-only">Play from </span>0:00<span class="tc-to"><span aria-hidden="true">–</span><span class="sr-only"> to </span>0:34</span></span></span>
             <span class="beat-body"><span class="beat-act caps">I · Attraction</span>
             <span class="beat-text">The abyss, the giant, the dwarf, and the Roche figure-eight that binds them, drawn in ice-blue lines and then again in Leonardo-style ink. Watch for the marble David’s first glimpse at 0:21, in profile, and listen for cannon fire far off that draws closer through the first half.</span></span>
             <span class="beat-bar" aria-hidden="true"></span>
           </button></li>
           <li><button class="beat" type="button" data-t="34.0417" data-label="II · Resistance" data-copy="breakdown.resistance">
-            <span class="tc"><img src="assets/star.png" width="11" height="11" alt="" loading="lazy" decoding="async"><span class="sr-only">Play from </span>0:34</span>
+            <span class="tc"><img src="assets/star.png" width="11" height="11" alt="" loading="lazy" decoding="async"><span class="tc-t"><span class="sr-only">Play from </span>0:34<span class="tc-to"><span aria-hidden="true">–</span><span class="sr-only"> to </span>0:58</span></span></span>
             <span class="beat-body"><span class="beat-act caps">II · Resistance</span>
             <span class="beat-text">The stream rips through L1, the balance point between the stars, and falls toward the dwarf along curved orbital paths traced in gold. Then a red-chalk study of the stolen fire, under the solo violin’s “horrid wind”.</span></span>
             <span class="beat-bar" aria-hidden="true"></span>
           </button></li>
           <li><button class="beat" type="button" data-t="57.5417" data-label="II · Compression" data-copy="breakdown.compression">
-            <span class="tc"><img src="assets/star.png" width="11" height="11" alt="" loading="lazy" decoding="async"><span class="sr-only">Play from </span>0:58</span>
+            <span class="tc"><img src="assets/star.png" width="11" height="11" alt="" loading="lazy" decoding="async"><span class="tc-t"><span class="sr-only">Play from </span>0:58<span class="tc-to"><span aria-hidden="true">–</span><span class="sr-only"> to </span>1:18</span></span></span>
             <span class="beat-body"><span class="beat-act caps">II · Compression</span>
             <span class="beat-text">The vortex closes over the dwarf, atoms rain onto its surface and the hydrogen ocean thickens. Leonardo’s deluge draws itself and the real spiral answers it, turning the same way, while the full ensemble hammers repeated notes and the cannon shots come faster.</span></span>
             <span class="beat-bar" aria-hidden="true"></span>
           </button></li>
           <li><button class="beat" type="button" data-t="78.0417" data-label="II · Frenzy" data-copy="breakdown.frenzy">
-            <span class="tc"><img src="assets/star.png" width="11" height="11" alt="" loading="lazy" decoding="async"><span class="sr-only">Play from </span>1:18</span>
+            <span class="tc"><img src="assets/star.png" width="11" height="11" alt="" loading="lazy" decoding="async"><span class="tc-t"><span class="sr-only">Play from </span>1:18<span class="tc-to"><span aria-hidden="true">–</span><span class="sr-only"> to </span>1:34</span></span></span>
             <span class="beat-body"><span class="beat-act caps">II · Frenzy</span>
             <span class="beat-text">Cuts on every beat, then every half-beat: plasma, magnetic filaments, sparks, nuclei, drawings (the sling among them) and the marble gaze. The edit rides the soloist’s runs.</span></span>
             <span class="beat-bar" aria-hidden="true"></span>
           </button></li>
           <li><button class="beat" type="button" data-t="93.5417" data-label="II · Ladder" data-copy="breakdown.ladder">
-            <span class="tc"><img src="assets/star.png" width="11" height="11" alt="" loading="lazy" decoding="async"><span class="sr-only">Play from </span>1:34</span>
+            <span class="tc"><img src="assets/star.png" width="11" height="11" alt="" loading="lazy" decoding="async"><span class="tc-t"><span class="sr-only">Play from </span>1:34<span class="tc-to"><span aria-hidden="true">–</span><span class="sr-only"> to </span>1:54</span></span></span>
             <span class="beat-body"><span class="beat-act caps">II · Ladder</span>
             <span class="beat-text">Five strikes on the downbeats, each darkening the picture a step further. On the fifth, under the final tremolo, the whole image is drawn inward to a single point.</span></span>
             <span class="beat-bar" aria-hidden="true"></span>
           </button></li>
           <li><button class="beat" type="button" data-t="113.5417" data-label="III · Ignition" data-copy="breakdown.ignition">
-            <span class="tc"><img src="assets/star.png" width="11" height="11" alt="" loading="lazy" decoding="async"><span class="sr-only">Play from </span>1:54</span>
+            <span class="tc"><img src="assets/star.png" width="11" height="11" alt="" loading="lazy" decoding="async"><span class="tc-t"><span class="sr-only">Play from </span>1:54<span class="tc-to"><span aria-hidden="true">–</span><span class="sr-only"> to </span>1:56</span></span></span>
             <span class="beat-body"><span class="beat-act caps">III · Ignition</span>
             <span class="beat-text">Black. The thermonuclear runaway happens here and you only hear it: a pressure build rising through the dark toward a single frame.</span></span>
             <span class="beat-bar" aria-hidden="true"></span>
           </button></li>
           <li><button class="beat beat--moment" type="button" data-t="115.7917" data-label="The explosion" data-copy="breakdown.explosion" id="explosion">
-            <span class="tc"><img src="assets/star.png" width="11" height="11" alt="" loading="lazy" decoding="async"><span class="sr-only">Play from </span>1:55.8</span>
+            <span class="tc"><img src="assets/star.png" width="11" height="11" alt="" loading="lazy" decoding="async"><span class="tc-t"><span class="sr-only">Play from </span>1:55.8</span></span>
             <span class="beat-body"><span class="beat-act caps">The explosion</span>
             <span class="beat-text">The eruption appears out of the black, and the explosion lands on that frame. The music restarts with Vivaldi’s closing tutti, hotter than anything before it, with cannon salvos on its beats in the manner of the 1812 finale.</span></span>
             <span class="beat-bar" aria-hidden="true"></span>
           </button></li>
           <li><button class="beat" type="button" data-t="116" data-label="IV · Aftermath" data-copy="breakdown.aftermath">
-            <span class="tc"><img src="assets/star.png" width="11" height="11" alt="" loading="lazy" decoding="async"><span class="sr-only">Play from </span>1:56</span>
+            <span class="tc"><img src="assets/star.png" width="11" height="11" alt="" loading="lazy" decoding="async"><span class="tc-t"><span class="sr-only">Play from </span>1:56<span class="tc-to"><span aria-hidden="true">–</span><span class="sr-only"> to </span>2:23</span></span></span>
             <span class="beat-body"><span class="beat-act caps">IV · Aftermath</span>
             <span class="beat-text">The shock front sweeps through the camera, the shell fractures into gold and expands, the giant is scarred, and the small core survives as a thin thread of matter begins to flow again. The system settles inside a ring of the shell, and the ring is drawn again in ink.</span></span>
             <span class="beat-bar" aria-hidden="true"></span>
           </button></li>
           <li><button class="beat" type="button" data-t="142.7083" data-label="Coda" data-copy="breakdown.coda">
-            <span class="tc"><img src="assets/star.png" width="11" height="11" alt="" loading="lazy" decoding="async"><span class="sr-only">Play from </span>2:23</span>
+            <span class="tc"><img src="assets/star.png" width="11" height="11" alt="" loading="lazy" decoding="async"><span class="tc-t"><span class="sr-only">Play from </span>2:23<span class="tc-to"><span aria-hidden="true">–</span><span class="sr-only"> to </span>2:37</span></span></span>
             <span class="beat-body"><span class="beat-act caps">Coda</span>
             <span class="beat-text">The same event from a dark-sky Earth: the Milky Way over an unlit horizon, and a new star where there was none. The orchestra is gone; listen for night air and a faint shimmer as the star appears, then read: “The birth of a new star; the Nova.”</span></span>
             <span class="beat-bar" aria-hidden="true"></span>
           </button></li>
           <li><button class="beat" type="button" data-t="156.7083" data-label="The gaze" data-copy="breakdown.gaze">
-            <span class="tc"><img src="assets/star.png" width="11" height="11" alt="" loading="lazy" decoding="async"><span class="sr-only">Play from </span>2:37</span>
+            <span class="tc"><img src="assets/star.png" width="11" height="11" alt="" loading="lazy" decoding="async"><span class="tc-t"><span class="sr-only">Play from </span>2:37<span class="tc-to"><span aria-hidden="true">–</span><span class="sr-only"> to </span>2:45</span></span></span>
             <span class="beat-body"><span class="beat-act caps">The gaze</span>
             <span class="beat-text">The ninety-degree turn is complete: the marble David looks straight into the lens, with NOVA: DAVID beneath. A single deep tone swells with the title and fades to silence.</span></span>
             <span class="beat-bar" aria-hidden="true"></span>
           </button></li>
           <li><button class="beat" type="button" data-t="164.7083" data-label="Sign-off" data-copy="breakdown.signoff">
-            <span class="tc"><img src="assets/star.png" width="11" height="11" alt="" loading="lazy" decoding="async"><span class="sr-only">Play from </span>2:45</span>
+            <span class="tc"><img src="assets/star.png" width="11" height="11" alt="" loading="lazy" decoding="async"><span class="tc-t"><span class="sr-only">Play from </span>2:45<span class="tc-to"><span aria-hidden="true">–</span><span class="sr-only"> to </span>2:48</span></span></span>
             <span class="beat-body"><span class="beat-act caps">Sign-off</span>
             <span class="beat-text">On black, Tehbyn Nova’s signature writes itself.</span></span>
             <span class="beat-bar" aria-hidden="true"></span>
@@ -469,12 +471,6 @@ body.is-dark .dims { opacity: .1; transition-duration: .9s; }
       <section class="part" id="making" aria-labelledby="making-h" data-copy="making">
         <h2 id="making-h"><span class="caps">How it was made</span></h2>
         <p>Nothing in Nova was filmed. Every frame is computed: a WebGL engine renders light in high dynamic range and is stepped one frame at a time inside headless Chromium, 4,025 frames at 1080 by 1920 and 24 frames per second. The sound design is synthesised and the whole soundtrack is mixed in code. The marble head is real: a public-domain 3D scan of a plaster cast of Michelangelo’s David. The notebook studies are drawn in code in the manner of Leonardo, not by him. The score is an edit of Vivaldi’s <cite>Winter</cite>, bars 1 to 38 and then bars 56 to 63, with cannon fire from Tchaikovsky’s <cite>1812 Overture</cite> placed first as approaching guns, then as salvos.</p>
-        <dl class="spec">
-          <div><dt class="caps">Format</dt><dd>Vertical 9:16, 1080 × 1920, 24 fps</dd></div>
-          <div><dt class="caps">Running time</dt><dd>2 min 48 s, 4,025 frames</dd></div>
-          <div><dt class="caps">Picture</dt><dd>A WebGL HDR engine, driven frame by frame in headless Chromium</dd></div>
-          <div><dt class="caps">Sound</dt><dd>Synthesised and mixed in code</dd></div>
-        </dl>
       </section>
 
       <section class="part" id="credits" aria-labelledby="credits-h" data-copy="credits">
@@ -483,13 +479,14 @@ body.is-dark .dims { opacity: .1; transition-duration: .9s; }
           <span class="label">A film by</span>
           <span class="who caps">Tehbyn Nova</span>
           <span class="what">NOVA · Episode 1 · David &amp; Goliath</span>
+          <span class="what">Vertical 9:16 · 1080 × 1920 · 24 fps · 2 min 48 s</span>
         </p>
         <dl class="credits">
-          <div><dt class="caps">Music</dt><dd>Antonio Vivaldi, <cite>The Four Seasons</cite>, “L’inverno” (Winter), RV 297, I. Allegro non molto<span>Performed by The United States Air Force Band. Public domain. Edited into bars 1–38 and bars 56–63.</span></dd></div>
+          <div><dt class="caps">Music</dt><dd>Antonio Vivaldi, <cite>The Four Seasons</cite>, “L’inverno” (Winter), RV 297, I. Allegro non molto<span>Performed by The United States Air Force Band. Public domain.</span><span>Edited into bars 1–38 and bars 56–63.</span></dd></div>
           <div><dt class="caps">Cannon fire</dt><dd>Pyotr Ilyich Tchaikovsky, <cite>1812 Overture</cite><span>Performed by The United States Army Band. Public domain.</span></dd></div>
-          <div><dt class="caps">Marble figure</dt><dd>Head of David, after Michelangelo<span>3D scan of a plaster cast, SMK Royal Cast Collection, KAS2232. Public domain.</span></dd></div>
-          <div><dt class="caps">Studies</dt><dd>Drawn in code in the manner of Leonardo da Vinci’s notebooks<span>Not by Leonardo.</span></dd></div>
-          <div><dt class="caps">Fonts</dt><dd>Cinzel, Cormorant Garamond, IM Fell English<span>SIL Open Font License.</span></dd></div>
+          <div><dt class="caps">Marble figure</dt><dd>Head of David, after Michelangelo.<span>3D scan of a plaster cast, SMK Royal Cast Collection, KAS2232. Public domain.</span></dd></div>
+          <div><dt class="caps">Fonts</dt><dd>Cinzel, Cormorant Garamond, IM Fell English.<span>SIL Open Font License.</span></dd></div>
+          <div><dt class="caps">Renaissance studies</dt><dd>Drawn in code in the manner of Leonardo da Vinci’s notebooks.<span>Not by Leonardo.</span></dd></div>
         </dl>
         <p class="original">Picture, sound design and code are original to this film.</p>
       </section>
