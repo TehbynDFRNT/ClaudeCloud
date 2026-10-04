@@ -5,6 +5,12 @@
 (function(){
 var d=document,root=d.documentElement;root.classList.add('js');
 var RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* the screen height, held still while a browser's toolbars slide in and out as you scroll (iPhone Chrome,
+   Instagram's browser and others resize the page then, which made everything sized from it jump): measured
+   once, and again only when the width changes (a turn of the phone), or on any resize with a mouse */
+var VH=innerHeight,vw0=innerWidth,FINE=matchMedia('(pointer: fine)').matches;
+function holdVH(){VH=innerHeight;root.style.setProperty('--vh',VH/100+'px')}holdVH();
+addEventListener('resize',function(){if(FINE||innerWidth!==vw0){vw0=innerWidth;holdVH()}});
 function $(s,c){return (c||d).querySelector(s)}
 function $$(s,c){return Array.prototype.slice.call((c||d).querySelectorAll(s))}
 function ease(k,p){return 1-Math.pow(1-k,p||4)}
@@ -241,7 +247,7 @@ if(hero&&!RM&&matchMedia('(pointer:fine)').matches){hero.addEventListener('point
 
 /* scroll-linked: hero parallax, band and footer plates climb as they arrive */
 var band=$('#band'),foot=$('#foot'),pending=false;
-function arrive(el){var r=el.getBoundingClientRect();return Math.max(0,Math.min(1,(innerHeight-r.top)/(innerHeight*.9)))}
+function arrive(el){var r=el.getBoundingClientRect();return Math.max(0,Math.min(1,(VH-r.top)/(VH*.9)))}
 function tick(){pending=false;if(RM)return;
  if(hero){var rc=hero.getBoundingClientRect();hero.style.setProperty('--p',Math.max(0,Math.min(1,-rc.top/rc.height)).toFixed(3))}
  if(band)band.style.setProperty('--bp',arrive(band).toFixed(3));if(foot)foot.style.setProperty('--bp',arrive(foot).toFixed(3))}
