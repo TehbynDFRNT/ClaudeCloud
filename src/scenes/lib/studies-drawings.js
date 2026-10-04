@@ -2,6 +2,7 @@
 // origin at the page centre, y down. Times are shot-local seconds (negative = drawn before the cut).
 // Geometry comes from lib/binary.js so the ink matches the fire.
 import { Drawing, PX, TAU, arcPts, linePts, hatch, resample } from './studies-ink.js';
+import { cnoStudy } from './studies-cno.js';
 import { lobeContour, streamPath, XG, XW, L1, R_LOBE_GIANT, R_CIRC, R_DISK } from './binary.js';
 
 // --- shared helpers -------------------------------------------------------------------------------
@@ -364,71 +365,11 @@ export function eye() {
   return D;
 }
 
-// --- F30.3: the CNO cycle as an ink wheel of hatched spheres -----------------------------------
+// --- F30.3: the CNO cycle as a notebook page of balls modelled in the pen (lives in studies-cno.js) ----
 // o.vertical (the 9:16 cut): the notes move above and below the wheel; the positron trails are shorter so the
 // wheel can fill the narrow frame
 export function cno(o = {}) {
-  const V = !!o.vertical;
-  const D = new Drawing(3033);
-  const C = [0.02, 0.0], R = 0.2;
-  const names = [['C', '12'], ['N', '13'], ['C', '13'], ['N', '14'], ['O', '15'], ['N', '15']];
-  const st = names.map((nm, i) => {
-    const a = -Math.PI / 2 - (i / 6) * TAU;                      // counter-clockwise on screen
-    return { a, p: [C[0] + Math.cos(a) * R, C[1] + Math.sin(a) * R], r: 0.034 + 0.0012 * (+nm[1] - 12), nm };
-  });
-  D.at(-15);
-  D.stroke(arcPts(C[0], C[1], R, 0, TAU, { step: 3 * PX }), { kind: 'relief', w: 1.4, d: 0.5, speed: 3, wet: false });
-  circleStroke(D, C[0], C[1], R, { w: 0.8, d: 0.25, speed: 1.2, wet: false });
-  st.forEach((s, i) => {
-    circleStroke(D, s.p[0], s.p[1], s.r, { w: 1.9, d: 0.85, speed: 0.35, wob: 0.6 * PX });
-    hatch(D, (x, y) => {
-      const dx = (x - s.p[0]) / s.r, dy = (y - s.p[1]) / s.r;
-      if (dx * dx + dy * dy > 0.86) return 0;
-      return Math.max(0, dx * 0.55 + dy * 0.8 + 0.35);
-    }, [s.p[0] - s.r, s.p[1] - s.r, s.p[0] + s.r, s.p[1] + s.r], { angle: 0.95, sp: 4.2, w: 1.0, d: 0.55, speed: 3, thr: [0.2, 0.95] });
-    const lp = [C[0] + Math.cos(s.a) * (R + s.r + 0.03), C[1] + Math.sin(s.a) * (R + s.r + 0.03)];
-    D.text(s.nm[0], lp[0] + 0.012, lp[1] + 0.012, { size: 24, d: 0.7 });
-    D.text(s.nm[1], lp[0] + 0.032, lp[1] - 0.006, { size: 14, d: 0.6 });
-  });
-  // protons arriving at C12, C13, N14, N15; positrons leaving N13, O15
-  const protonAt = [0, 2, 3, 5], betaAt = [1, 4];
-  for (const i of protonAt) {
-    const s = st[i], am = s.a - Math.PI / 6;
-    const p0 = [C[0] + Math.cos(am) * (R + 0.13), C[1] + Math.sin(am) * (R + 0.13)];
-    const p1 = [C[0] + Math.cos(am) * (R + 0.055), C[1] + Math.sin(am) * (R + 0.055)];
-    circleStroke(D, p0[0], p0[1], 0.011, { w: 1.4, d: 0.75, speed: 0.3 });
-    D.stroke(linePts(p0[0] + (p1[0] - p0[0]) * 0.2, p0[1] + (p1[1] - p0[1]) * 0.2, p1[0], p1[1], { wob: 0.3 * PX, seed: i + 40 }), { w: 1.1, d: 0.6, speed: 0.6 });
-  }
-  for (const i of betaAt) {
-    const s = st[i], am = s.a - Math.PI / 6;
-    const pts = [];
-    for (let k = 0; k <= 60; k++) { const u = k / 60, r = R + 0.05 + u * (V ? 0.062 : 0.1); pts.push([C[0] + Math.cos(am + 0.05 * Math.sin(u * 18)) * r, C[1] + Math.sin(am + 0.05 * Math.sin(u * 18)) * r]); }
-    D.stroke(resample(pts, 1.4 * PX), { w: 1.1, d: 0.55, speed: 0.5, taper: [6, 6] });
-  }
-  // helium leaving from N15 -> C12 (inward)
-  const hp = [C[0] + 0.02, C[1] + 0.02];
-  circleStroke(D, hp[0], hp[1], 0.026, { w: 1.6, d: 0.8, speed: 0.35 });
-  hatch(D, (x, y) => (Math.hypot(x - hp[0], y - hp[1]) < 0.024 ? Math.max(0, (x - hp[0]) * 20 + (y - hp[1]) * 30 + 0.4) : 0), [hp[0] - 0.03, hp[1] - 0.03, hp[0] + 0.03, hp[1] + 0.03], { angle: 0.95, sp: 4, w: 0.9, d: 0.55, speed: 3 });
-  D.text('He', hp[0] + 0.016, hp[1] + 0.06, { size: 20, d: 0.6 });
-  scriptBlock(D, ['la ruota del foco', 'che mai si ferma'], V ? 0.2 : -0.36, V ? 0.352 : 0.22, { size: 19, lh: 26, d: 0.5 });
-  scriptBlock(D, ['il carbone si fa azoto', 'e l’azoto si fa carbone'], V ? 0.29 : 0.74, V ? -0.372 : -0.24, { size: 18, lh: 25, d: 0.45 });
-  D.fitTo(0, -15, -0.1);
-  // during the cut: the arrows race round the wheel (counter-clockwise)
-  D.at(-0.12);
-  const a0i = D.mark();
-  st.forEach((s, i) => {
-    const n = st[(i + 1) % 6];
-    const a0 = s.a - (s.r + 0.012) / R, a1 = n.a + (n.r + 0.016) / R;
-    const pts = arcPts(C[0], C[1], R, a0, a1, { step: 1.5 * PX });
-    D.stroke(pts, { w: 1.6, d: 0.85, dur: 0.12, taper: [4, 2], gap: 0.0 });
-    const e = pts[pts.length - 1], tdir = [Math.sin(a1), -Math.cos(a1)];      // ccw tangent
-    const nrm = [Math.cos(a1), Math.sin(a1)];
-    const hl = 0.016;
-    D.stroke(linePts(e[0] - tdir[0] * hl + nrm[0] * hl * 0.6, e[1] - tdir[1] * hl + nrm[1] * hl * 0.6, e[0], e[1]), { w: 1.4, d: 0.85, dur: 0.03, gap: 0.0, taper: [3, 2] });
-    D.stroke(linePts(e[0] - tdir[0] * hl - nrm[0] * hl * 0.6, e[1] - tdir[1] * hl - nrm[1] * hl * 0.6, e[0], e[1]), { w: 1.4, d: 0.85, dur: 0.03, gap: 0.0, taper: [3, 2] });
-  });
-  D.fitTo(a0i, -0.12, 0.72);
-  return D;
+  return cnoStudy(o);
 }
 
 // --- F31.4: compression — circles collapsing to a point -----------------------------------------

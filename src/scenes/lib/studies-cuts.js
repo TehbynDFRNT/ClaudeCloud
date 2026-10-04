@@ -7,6 +7,7 @@
 import { Drawing, PX, TAU, arcPts, linePts, hatch, resample, spline } from './studies-ink.js';
 import { circleStroke, dot, scriptBlock } from './studies-drawings.js';
 import { inkFist } from './studies-hand.js';
+import { braid, knot, pebble, pouch } from './studies-sling.js';
 
 // ---- shared geometry ------------------------------------------------------------------------------
 const add = (a, b, k = 1) => [a[0] + b[0] * k, a[1] + b[1] * k];
@@ -118,8 +119,8 @@ export function sling() {
   const s = vel[1] / vel[0], k = 3.3;
   const parY = (x) => Pr[1] + s * (x - Pr[0]) + k * (x - Pr[0]) ** 2;
   const apex = [Pr[0] - s / (2 * k), parY(Pr[0] - s / (2 * k))];
-  const pw = 0.056, stR = 0.029, forkL = 0.048, bow = 0.008;          // pouch half-length, the stone, fork, cord bow
-  const tipIn = 0.002, lipB = 0.009;                                 // tips (all but) beside the stone's centre; the near flap's sag
+  const pw = 0.062, stR = 0.036, bow = 0.008;                       // pouch half-length, the stone, cord bow
+  const tipIn = 0.002;                                               // the tips (all but) beside the stone's centre
 
   // ---- the fist (as S10's, in ink), the cords leaving its top toward the pouch; the forearm runs down-right
   D.at(-14);
@@ -134,62 +135,36 @@ export function sling() {
   const g0 = D.mark();
   D.stroke(arcPts(C[0], C[1], R, 0, TAU, { step: 3 * PX }), { kind: 'relief', w: 1.4, d: 0.5, speed: 3, wet: false, taper: [2, 2] });
   circleStroke(D, C[0], C[1], R * 1.06, { w: 0.8, d: 0.26, speed: 1.2, wet: false, sweep: TAU * 0.45, a0: 3.4 });
-  // a sling at angle th: ONE cord from the fist, bowed a little back against the turn, forking only at the
-  // end into two thin strings to the tips of the leather pouch. The pouch is wrapped round the stone: the
-  // leather runs taut from each tip over the stone (so its outline hugs the stone, with no gap: a stone in a
-  // wrapper, not an eye), and the near flap folds across the stone's inner side, so the stone sits IN it.
+  // a sling at angle th: two plaited cords leave the fist together and splay to the tips of a leather pouch,
+  // threaded through holes there and knotted. Under the pull of the turn the stone presses outward into the
+  // pouch, so the leather cups its outer side (cut and stitched edge across the stone) and the stone shows
+  // on the side toward the hand. o.detail 0 = a faded ghost of the same sling.
   const slingAt = (th, o) => {
     const P0 = at(th), v = tan(th), r = [Math.cos(th), Math.sin(th)];
     const St = add(P0, r, 0.012);                                    // the stone's centre
-    const Lp = (x, y) => add(add(St, v, x), r, y);                   // pouch-local (x along v, y outward along r)
-    const E1 = Lp(pw, -tipIn), E2 = Lp(-pw, -tipIn);                 // the pouch tips, beside the stone
-    const fk = R + 0.012 - forkL, Fk = add(add(C, r, fk), v, -0.002); // the fork, a short way short of the pouch
-    const cord = [];
-    for (let i = 0; i <= 80; i++) { const f = i / 80; cord.push(add(add(C, r, f * fk), v, -bow * Math.sin(Math.PI * f) - 0.002 * f)); }
-    for (const run of clipOut(resample(cord, 1.5 * PX), [F.sil])) D.stroke(run, { w: o.cw, d: o.d, speed: o.speed, taper: [6, 2], wet: o.wet });
-    // the two strings leave the fork together and splay out to the tips (concave, as taut strings round a load)
-    for (const E of [E1, E2]) {
-      const pts = [], d = [E[0] - Fk[0], E[1] - Fk[1]], n = nrm([-d[1], d[0]]), sgn = Math.sign(n[0] * r[0] + n[1] * r[1]);
-      for (let i = 0; i <= 24; i++) { const u = i / 24; pts.push(add(lerp2(Fk, E, u), n, sgn * 0.006 * Math.sin(Math.PI * u))); }
-      D.stroke(pts, { w: o.sw, d: o.d * 0.95, speed: o.speed * 0.6, taper: [2, 3], gap: 0, wet: o.wet });
-    }
-    // the leather's outline: tip, taut to its tangent on the wrapped stone, round the stone, taut to the other tip
-    const Rw = stR + 0.004, dd = Math.hypot(pw, tipIn), be = Math.acos(Rw / dd), ph = Math.atan2(tipIn, pw);
-    const wrap = (a0, a1) => {
+    const det = o.ghost ? 0 : 1;
+    const Pq = pouch(D, { St, v, r, sx: stR * 1.1, sy: stR * 0.88, d: o.d, detail: det, wet: o.wet, seed: o.seed, ow: o.pw });
+    const stone = pebble(D, St, { rx: stR * 1.1, ry: stR * 0.88, rot: Math.atan2(v[1], v[0]) + 0.1, seed: o.seed + 1, d: Math.min(0.95, o.d * 1.03), detail: det,
+      hide: Pq.cover, shade: (X, Y) => { const [x, y] = Pq.toL(X, Y); return 0.55 * sm(0.0075, 0.0005, Pq.yLip(x) - y); }, wet: o.wet, sp: det ? 1.7 : 2.4, ow: o.pw * 0.85, hw: det ? 1.15 : 0.95 });
+    // the cords: from the fist side by side to the holes in the tips, bowed back a little against the turn;
+    // each passes through its hole and is knotted on the leather, the tail laid up the flank
+    for (const sg of [1, -1]) {
+      const A = add(C, v, sg * 0.0028), H = sg > 0 ? Pq.H1 : Pq.H2;
+      const u = nrm([H[0] - A[0], H[1] - A[1]]), K = add(H, u, det ? (sg > 0 ? -0.0095 : -0.0175) : -0.004);   // the knot, below the hole
       const pts = [];
-      for (let i = 0; i <= 40; i++) { const a = a0 + (a1 - a0) * (i / 40); pts.push(Lp(Math.cos(a) * Rw, Math.sin(a) * Rw)); }
-      return pts;
-    };
-    // the taut stretches from a tip to the stone sag in a little (as a wrapper twisted at its ends)
-    const taut = (A, B, sg) => {
-      const pts = [], n = nrm([-(B[1] - A[1]), B[0] - A[0]]), m = lerp2(A, B, 0.5);
-      const k = Math.sign((St[0] - m[0]) * n[0] + (St[1] - m[1]) * n[1]) * 0.0032;
-      for (let i = 0; i <= 12; i++) { const u = i / 12; pts.push(add(lerp2(A, B, u), n, k * Math.sin(Math.PI * u))); }
-      return sg > 0 ? pts : pts.reverse();
-    };
-    const arcO = wrap(be - ph, Math.PI + ph - be), arcI = wrap(Math.PI + ph + be, TAU - ph - be);
-    const outer = [...taut(E1, arcO[0], 1), ...arcO.slice(1, -1), ...taut(E2, arcO[arcO.length - 1], -1)];  // round the far side
-    const inner = [...taut(E2, arcI[0], 1), ...arcI.slice(1, -1), ...taut(E1, arcI[arcI.length - 1], -1)];  // round the near side
-    const lip = [];                                                   // the near flap's edge, across the stone
-    for (let i = 0; i <= 40; i++) { const u = i / 40; lip.push(Lp(pw - 2 * pw * u, -tipIn - lipB * Math.sin(Math.PI * u))); }
-    const front = poly([...lip, ...inner]);                           // the near flap
-    D.stroke(resample(outer, 1.5 * PX), { w: o.pw, d: o.d * 1.02, speed: o.speed * 0.5, taper: [3, 3], gap: 0, wet: o.wet });
-    D.stroke(resample(inner, 1.5 * PX), { w: o.pw * 0.9, d: o.d, speed: o.speed * 0.5, taper: [3, 3], gap: 0, wet: o.wet });
-    for (const E of [E1, E2]) dot(D, E[0], E[1], o.knot, { d: Math.min(0.95, o.d * 1.05), wet: o.wet });   // the strings knotted through the tips
-    if (o.ghost) {  // a faded sling: the wrapped stone just shaded in, so it reads as the same object
-      hatch(D, (x, y) => { const dx = (x - St[0]) / stR, dy = (y - St[1]) / stR; return dx * dx + dy * dy <= 0.8 ? 0.75 + 0.35 * (dx * 0.6 + dy * 0.8) : 0; },
-        [St[0] - stR, St[1] - stR, St[0] + stR, St[1] + stR], { angle: 0.95, sp: 2.2, w: 1.2, d: o.d * 1.1, speed: 3, minLen: 2, thr: [0.2, 0.9], wet: false });
-      const ring = arcPts(St[0], St[1], stR, th + 0.6, th + 0.6 + Math.PI * 1.1, { step: 1.5 * PX, seed: 5 + o.seed });   // its shadowed side
-      D.stroke(ring, { w: o.pw, d: o.d, speed: o.speed * 0.4, taper: [4, 4], gap: 0, wet: false });
-    } else {
-      const ring = arcPts(St[0], St[1], stR, th - Math.PI * 0.4, th - Math.PI * 0.4 + TAU * 1.02, { step: 1.5 * PX, wob: 0.4 * PX, seed: 5 + o.seed });
-      for (const run of clipOut(ring, [front])) D.stroke(run, { w: o.pw * 0.75, d: o.d, speed: o.speed * 0.4, taper: [3, 3], gap: 0, wet: o.wet });
-      D.stroke(lip, { w: o.pw * 0.55, d: o.d * 0.85, speed: o.speed * 0.5, taper: [6, 6], wet: o.wet });
+      for (let i = 0; i <= 60; i++) { const f = i / 60; pts.push(add(lerp2(A, K, f), v, -bow * Math.sin(Math.PI * f))); }
+      braid(D, pts, { w: det ? 0.0054 : 0.0032, d: o.d, detail: det, hide: (x, y) => inP(F.sil, x, y), wet: o.wet, seed: o.seed + sg, ew: det ? 1.1 : 0.9 });
+      if (det) {
+        // the end through the hole, the knot that stops it, the tail turned out to the side
+        D.stroke(linePts(K[0], K[1], H[0], H[1]), { w: 2.0, d: o.d, speed: 0.3, taper: [2, 2], gap: 0.004 });
+        knot(D, K, u, o.knot, { d: o.d, side: Math.sign((-u[1] * v[0] + u[0] * v[1]) * sg) || 1, cw: 0.0054 });
+      } else dot(D, K[0], K[1], 2.4, { d: o.d, wet: false });
     }
-    return { P0, v, r, E1, E2, St, Lp, outer, inner, lip, front, Fk };
+    const stoneQ = (x, y) => stone.qOf(x, y);
+    return { P0, v, r, St, Lp: Pq.Lp, Pq, stone, stoneQ };
   };
   // ghosts: the sling a tenth and a fifth of a turn earlier, fading back
-  for (let g = 1; g <= 2; g++) slingAt(thR - g * 0.63, { cw: 1.5, sw: 1.0, pw: 1.4, knot: 2.6, d: 0.42 - g * 0.07, speed: 1.4, wet: false, ghost: true, seed: 40 + 3 * g });
+  for (let g = 1; g <= 2; g++) slingAt(thR - g * 0.63, { pw: 1.4, d: 0.42 - g * 0.07, wet: false, ghost: true, seed: 40 + 3 * g });
   // the construction under the cut's pen: the tangent ruled blind with the stylus, the stone's curve sketched faint
   const tEnd0 = add(Pr, vel, 0.5);
   D.stroke(linePts(Pr[0], Pr[1], tEnd0[0], tEnd0[1], { step: 3 * PX }), { kind: 'relief', w: 1.4, d: 0.5, speed: 3, wet: false, taper: [2, 2] });
@@ -205,32 +180,7 @@ export function sling() {
   // ---- the sling itself, laid in just before the cut: the cord, the strings, the pouch, the stone hatched dark
   D.at(-0.42);
   const s0 = D.mark();
-  const L = slingAt(thR, { cw: 2.6, sw: 1.6, pw: 2.8, knot: 4.2, d: 0.93, speed: 1.3, wet: true, seed: 60 });
-  const inStone = (x, y) => { const dx = (x - L.St[0]) / stR, dy = (y - L.St[1]) / stR; return dx * dx + dy * dy; };
-  const sbb = [L.St[0] - stR, L.St[1] - stR, L.St[0] + stR, L.St[1] + stR];
-  const pouchPoly = poly([...L.outer, ...L.inner]);
-  const rr = (x, y) => (x - L.St[0]) * L.r[0] + (y - L.St[1]) * L.r[1];   // across the pouch (outward +)
-  const vv = (x, y) => (x - L.St[0]) * L.v[0] + (y - L.St[1]) * L.v[1];   // along the pouch
-  // the stone, bare above the near flap: dark, a small light on its upper left
-  const lit = (x, y) => ((x - L.St[0]) * 0.6 + (y - L.St[1]) * 0.8) / stR;
-  const bare = (x, y) => inStone(x, y) <= 0.84 && !inP(L.front, x, y);
-  hatch(D, (x, y) => (bare(x, y) ? 0.95 + 0.4 * lit(x, y) : 0), sbb, { angle: 0.95, sp: 1.9, w: 1.5, d: 0.9, speed: 3, minLen: 2, thr: [0.2, 0.9], wet: true });
-  hatch(D, (x, y) => (bare(x, y) ? 0.7 + 0.5 * lit(x, y) : 0), sbb, { angle: -0.6, sp: 2.2, w: 1.35, d: 0.86, speed: 3, minLen: 2, thr: [0.2, 0.9], wet: true });
-  hatch(D, (x, y) => (bare(x, y) ? 0.35 + 0.7 * lit(x, y) : 0), sbb, { angle: 0.15, sp: 2.4, w: 1.25, d: 0.84, speed: 3, minLen: 2, thr: [0.2, 0.9], wet: true });
-  // the leather, lighter than the stone: the taut wings shaded toward the far side; the near flap paler,
-  // darkening where it turns round the stone
-  hatch(D, (x, y) => {
-    if (!inP(pouchPoly, x, y) || inStone(x, y) < 1.1 || inP(L.front, x, y)) return 0;
-    return 0.4 + 0.35 * sm(-0.004, 0.02, rr(x, y));
-  }, pouchPoly.bb, { angle: -0.35, sp: 2.8, w: 1.0, d: 0.7, speed: 3, minLen: 2, thr: [0.22, 0.9], wet: true });
-  hatch(D, (x, y) => (inP(L.front, x, y) ? 0.25 + 0.55 * sm(-0.012, -0.028, rr(x, y)) + 0.15 * sm(0.3, 1, Math.abs(vv(x, y)) / pw) : 0),
-    L.front.bb, { angle: 0.25, sp: 3.0, w: 1.0, d: 0.66, speed: 3, minLen: 2, thr: [0.22, 0.9], wet: true });
-  // the leather gathered at each tip: folds fanning from the tip round the stone, fading out on it
-  for (const sg of [1, -1]) for (const [ang, len, w] of [[1.0, 0.72, 1.15], [0.45, 0.6, 1.0], [-0.15, 0.5, 0.9], [-0.75, 0.62, 1.0]]) {
-    const a = L.Lp(sg * pw * 0.9, -tipIn * 0.9), aa = sg > 0 ? ang : Math.PI - ang;
-    const e = L.Lp(Math.cos(aa) * (stR + 0.004), Math.sin(aa) * (stR + 0.004)), b = lerp2(a, e, len);
-    D.stroke(linePts(a[0], a[1], b[0], b[1], { bow: 0.0025 * sg * Math.sign(ang + 0.01) }), { w, d: 0.74, speed: 0.6, taper: [2, 7] });
-  }
+  const L = slingAt(thR, { pw: 2.4, knot: 0.0085, d: 0.93, wet: true, seed: 60 });
   D.fitTo(s0, -0.42, -0.04);
 
   // ---- during the cut: the whirl swept by the pen (clockwise) from the pouch's leading edge round to its
@@ -250,17 +200,20 @@ export function sling() {
   // the stone's path: one bold sweep from b over the apex c, the stone drawn at equal times along it
   const par = [];
   let xs = Pr[0];
-  while (inStone(xs, parY(xs)) < 1.25 || inP(pouchPoly, xs, parY(xs))) xs += 0.001;   // from where it leaves the pouch
+  while (L.stoneQ(xs, parY(xs)) < 1.25 || L.Pq.inHull(xs, parY(xs))) xs += 0.001;   // from where it leaves the pouch
   for (let x = xs; x <= 0.47; x += 0.003) par.push([x, parY(x)]);
-  const pz = D.stroke(resample(par, 1.6 * PX), { w: 4.4, d: 0.94, t0: 0.24, dur: 0.46, taper: [4, 16], press: 0.2, nib: 0.45, load: 0.15 });
+  // the pen lifts where it passes behind the stones drawn along it
+  const flyAt = (i) => { const x = Pr[0] + i * 0.09; return [x, parY(x)]; };
+  const behind = [1, 2, 3, 4, 5, 6].map((i) => { const p = flyAt(i); return (x, y) => Math.hypot(x - p[0], y - p[1]) < 0.0185; });
+  const pz = timedStroke(D, resample(par, 1.6 * PX), behind, { w: 4.4, d: 0.94, t0: 0.24, dur: 0.46, taper: [4, 16], press: 0.2, nib: 0.45, load: 0.15, gap: 0 });
   for (let i = 1; i <= 6; i++) {
-    const x = Pr[0] + i * 0.09, p = [x, parY(x)];
+    const p = flyAt(i), x = p[0];
     let si = 0; for (let j = 1; j < pz.pts.length; j++) { if (pz.pts[j][0] >= x) { si = pz.s[j]; break; } }
-    const tq = penTime(pz, si / pz.L), r = 0.016;
+    const tq = penTime(pz, si / pz.L), r = 0.0165;
     const m = D.mark();
     D.at(tq);
-    circleStroke(D, p[0], p[1], r, { w: 2.4, d: 0.9, sweep: TAU * 1.05, wob: 0.3 * PX });
-    hatch(D, (x2, y2) => { const dx = (x2 - p[0]) / r, dy = (y2 - p[1]) / r; return dx * dx + dy * dy > 0.8 ? 0 : 0.45 + 0.6 * (dx * 0.6 + dy * 0.8); }, [p[0] - r, p[1] - r, p[0] + r, p[1] + r], { angle: 0.95, sp: 2.6, w: 1.1, d: 0.8, minLen: 2, thr: [0.2, 0.9], wet: true });
+    // the same pebble at equal times, tumbling as it flies (its long axis turning a little each time)
+    pebble(D, p, { rx: r * 1.18, ry: r * 0.95, rot: -0.6 + i * 0.95, seed: 61, d: 0.9, detail: 1, sp: 1.9, ow: 2.3, hw: 1.05, wet: true, breaks: 0.08, outlineFirst: true });
     D.fitTo(m, tq, tq + 0.04);
   }
   const pa = [apex[0] + 0.07, parY(apex[0] + 0.07)];
