@@ -122,6 +122,7 @@ export class Film {
   setClock(S) {
     this.G.globalUniforms = {
       uFull: [this.W, this.H], uTime: S.t, uLocal: S.local, uDur: S.dur, uU: S.u, uFrame: S.f, uSeed: S.seed,
+      uK: Math.min(this.W, this.H) / 1080,   // output pixel scale: 1 at 1080p; pixel-sized features multiply by it
     };
   }
 
@@ -206,6 +207,7 @@ export class Film {
     if (fx.fadeColor) p.fadeColor = fx.fadeColor;
     p.shake = [p.shake[0] + fx.shake[0], p.shake[1] + fx.shake[1], p.shake[2] + fx.shake[2]];
     p.mixB = mixB; p.mixMode = mixMode;
+    p.mg = this.plan.masterGrade || null;   // a whole-film grade for a master render (absent: the delivered look)
     if (overlayMode) { p.overlayMode = overlayMode === 'add' ? 1 : 2; }
     const hasTitles = drawTitles(this.tctx, this.plan.text || [], f, this.fps, this.W, this.H);
     if (hasTitles) this.titlesTex = this.G.canvasTexture(this.titlesTex, this.titles);

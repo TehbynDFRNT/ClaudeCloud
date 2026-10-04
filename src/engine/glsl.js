@@ -12,6 +12,7 @@ precision highp int;
 precision highp sampler3D;
 uniform vec2 uRes;          // render target size in pixels
 uniform vec2 uFull;         // full output frame size in pixels (e.g. 1920x1080)
+uniform float uK;           // output pixel scale: 1 at 1080p, 2 at 2160p (0 if unset: treated as 1)
 uniform float uTime;        // film time, seconds
 uniform float uLocal;       // seconds since shot start
 uniform float uDur;         // shot duration, seconds
@@ -121,9 +122,9 @@ vec3 starLayer(vec3 rd, float density, float seed, float pixAngle, float prob){
   return blackbody(temp) * core * (0.006 + 0.02 * b * b + 5.0 * mag);
 }
 // pixAngle argument kept for API stability; the render-target pixel angle is used so
-// stars stay ~1px whatever the render scale.
+// stars stay ~1px whatever the render scale (a 1080p pixel: uK scales it for larger output).
 vec3 starField(vec3 rd, float pixAngleUnused){
-  float pa = 2.0 * uTanHalfFov / uRes.y;
+  float pa = 2.0 * uTanHalfFov / uRes.y * max(uK, 1.0);
   return starLayer(rd, 70.0, 1.0, pa, 0.22) + starLayer(rd, 150.0, 2.0, pa, 0.07) * 0.7 + starLayer(rd, 300.0, 3.0, pa, 0.025) * 0.5;
 }
 // very restrained interstellar dust/glow: abyssal, mostly black

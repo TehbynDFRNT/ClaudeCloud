@@ -50,7 +50,8 @@ export function makeFingerprinter(plan) {
   const sceneHashes = new Map();
   const sceneHash = (id) => { if (!sceneHashes.has(id)) sceneHashes.set(id, moduleHash(path.join(ROOT, 'src/scenes', id + '.js'), read, depCache) + assetHash(id)); return sceneHashes.get(id); };
   const shotAt = (f) => shots.find((s) => f >= s.start && f < s.end) || shots[shots.length - 1];
-  const global = sha(JSON.stringify({ fps: plan.fps, w: plan.width, h: plan.height, format: plan.format, defaultPost: plan.defaultPost }));
+  // masterGrade is undefined for delivered plans, so their fingerprints are unchanged by its presence here
+  const global = sha(JSON.stringify({ fps: plan.fps, w: plan.width, h: plan.height, format: plan.format, defaultPost: plan.defaultPost, masterGrade: plan.masterGrade }));
   return function fingerprint(f, W = plan.width, H = plan.height) {
     const shot = shotAt(f);
     const active = (list, a = 'start', b = 'end') => (list || []).filter((e) => {

@@ -36,7 +36,7 @@ const PREVIEW = argv.includes('--preview');          // half-size work-in-progre
 const W = PREVIEW ? plan.width / 2 : plan.width, H = PREVIEW ? plan.height / 2 : plan.height;
 const CUT_DIR = plan.id ? `dist/${plan.id}${PREVIEW ? '-preview' : ''}` : (PREVIEW ? 'dist/preview' : 'dist/chunks');
 const CHUNKS = path.join(ROOT, CUT_DIR);
-const BLOCK = 240;                                   // fixed 10 s blocks aligned to frame 0
+const BLOCK = plan.block || 240;                     // fixed blocks aligned to frame 0 (10 s; a 4K plan uses shorter ones so every piece stays under GitHub's 100 MB)
 const fpOf = makeFingerprinter(plan);
 const blocks = () => { const out = []; for (let a = 0; a < plan.frames; a += BLOCK) out.push([a, Math.min(plan.frames, a + BLOCK)]); return out; };
 const blockName = (a, b) => `chunk_${pad(a)}_${pad(b)}`;
@@ -69,7 +69,7 @@ function blockState(a, b) {
 }
 // final video settings, shared by every chunk so they can be stream-copied together
 const X264 = ['-c:v', 'libx264', '-preset', 'slow', '-crf', opt('crf', argv.includes('--preview') ? '22' : '17'), '-tune', 'grain', '-pix_fmt', 'yuv420p',
-  '-profile:v', 'high', '-level', '4.1', '-x264-params', 'keyint=48:min-keyint=24:scenecut=40', '-r', plan.fps];
+  '-profile:v', 'high', '-level', plan.width * plan.height > 2048 * 1088 ? '5.1' : '4.1', '-x264-params', 'keyint=48:min-keyint=24:scenecut=40', '-r', plan.fps];
 
 function run(cmd, args, opts = {}) {
   const r = spawnSync(cmd, args, { stdio: 'inherit', cwd: ROOT, ...opts });

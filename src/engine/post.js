@@ -96,6 +96,7 @@ const FINAL = H + `
 uniform sampler2D uComp; uniform sampler2D uBloom; uniform sampler2D uStreak; uniform sampler2D uTitles; uniform float uHasTitles;
 uniform float uExposure, uBloomStrength, uStreakStrength, uHalation, uAberration, uVignette, uGrain;
 uniform float uSaturation, uContrast, uLetterbox, uFade, uFlash, uLift;
+uniform float uMGOn; uniform vec4 uMG; uniform vec4 uMG2;   // master grade: liftScale, blackPoint, toeGamma, toePivot | saturation, grainFloor0, grainFloor1, contrast
 uniform vec3 uStreakTint, uTint, uFadeColor;
 vec3 aces(vec3 x){ // Hill ACES fit
   const mat3 i = mat3(0.59719,0.07600,0.02840, 0.35458,0.90834,0.13383, 0.04823,0.01566,0.83777);
@@ -126,12 +127,25 @@ void main(){
   float l = luma(g);
   g = mix(vec3(l), g, uSaturation);
   g = (g - 0.5) * uContrast + 0.5;
-  g = g + uLift * vec3(0.02, 0.035, 0.07) * (1.0 - g);
+  float gf = 1.0;
+  if (uMGOn > 0.5){
+    // master grade: a smaller shadow lift, a black point, a smooth toe below the pivot, saturation and contrast trims,
+    // and no grain in true black (deep blacks stay black; grain lives in the image)
+    g = g + uLift * uMG.x * vec3(0.02, 0.035, 0.07) * (1.0 - g);
+    g = max(g - uMG.y, 0.0) / (1.0 - uMG.y);
+    vec3 toe = uMG.w * pow(max(g / uMG.w, 0.0), vec3(uMG.z));
+    g = mix(toe, g, smoothstep(0.0, uMG.w, g));
+    g = (g - 0.5) * uMG2.w + 0.5;
+    float lg = luma(g); g = max(mix(vec3(lg), g, uMG2.x), 0.0);
+    gf = smoothstep(uMG2.y, uMG2.z, lg);
+  } else {
+    g = g + uLift * vec3(0.02, 0.035, 0.07) * (1.0 - g);
+  }
   if (uHasTitles > 0.5){ vec4 tt = texture(uTitles, uv); g = g * (1.0 - tt.a) + tt.rgb; }
   // grain: two-hash triangular noise, luminance weighted, changes every frame
   float n1 = hash13(vec3(px, uFrame * 1.618)), n2 = hash13(vec3(px * 1.37 + 17.0, uFrame * 2.718 + 3.0));
   float grain = (n1 + n2 - 1.0);
-  g += grain * uGrain * mix(1.0, 0.45, l);
+  g += grain * uGrain * mix(1.0, 0.45, l) * gf;
   g = mix(g, uFadeColor, uFade);
   // letterbox (fraction of full height per bar)
   float y = px.y / uRes.y;
@@ -158,12 +172,15 @@ export class Post {
     this.pStreak = G.program(STREAK, 'post.streak');
     this.pFinal = G.program(FINAL, 'post.final');
     this.comp = G.target('comp', W, H);
+    // bloom and streak live at the 1080p-equivalent scale, so a larger render glows exactly like the 1080p one
+    this.k = Math.min(W, H) / 1080;
+    const bw = Math.round(W / this.k), bh = Math.round(H / this.k);
     this.levels = [];
-    let w = W >> 1, h = H >> 1;
+    let w = bw >> 1, h = bh >> 1;
     for (let i = 0; i < 7; i++) { this.levels.push(G.target('bloomD' + i, Math.max(2, w), Math.max(2, h))); w >>= 1; h >>= 1; }
     this.ups = this.levels.map((l, i) => G.target('bloomU' + i, l.w, l.h));
-    this.streakA = G.target('streakA', W >> 2, H >> 3);
-    this.streakB = G.target('streakB', W >> 2, H >> 3);
+    this.streakA = G.target('streakA', bw >> 2, bh >> 3);
+    this.streakB = G.target('streakB', bw >> 2, bh >> 3);
   }
 
   run(scene, sceneB, overlayTex, p, titlesTex = null) {
@@ -171,7 +188,9 @@ export class Post {
     const full = [this.W, this.H];
     G.draw(this.pComp, {
       uScene: scene, uSceneB: sceneB || scene, uMixB: sceneB ? p.mixB : 0, uMixMode: p.mixMode, uOverlay: overlayTex || scene,
-      uOverlayMode: overlayTex ? p.overlayMode : 0, uOverlayGain: p.overlayGain, uShake: p.shake, uBlur: p.blur, uZoomBlur: p.zoomBlur, uFull: full,
+      uOverlayMode: overlayTex ? p.overlayMode : 0, uOverlayGain: p.overlayGain, uZoomBlur: p.zoomBlur, uFull: full,
+      // shake and blur are authored in 1080p pixels
+      uShake: this.k === 1 ? p.shake : [p.shake[0] * this.k, p.shake[1] * this.k, p.shake[2]], uBlur: this.k === 1 ? p.blur : [p.blur[0] * this.k, p.blur[1] * this.k],
     }, this.comp);
     // bloom pyramid
     G.draw(this.pBright, { uSrc: this.comp, uThreshold: p.bloomThreshold, uKnee: p.bloomKnee, uFull: full }, this.levels[0]);
@@ -191,6 +210,9 @@ export class Post {
       uExposure: p.exposure, uBloomStrength: p.bloomStrength, uStreakStrength: p.streakStrength, uStreakTint: p.streakTint,
       uHalation: p.halation, uAberration: p.aberration, uVignette: p.vignette, uGrain: p.grain, uSaturation: p.saturation,
       uContrast: p.contrast, uLift: p.lift, uTint: p.tint, uLetterbox: p.letterbox, uFade: p.fade, uFadeColor: p.fadeColor, uFlash: p.flash,
+      uMGOn: p.mg ? 1 : 0,
+      uMG: p.mg ? [p.mg.liftScale ?? 1, p.mg.blackPoint ?? 0, p.mg.toeGamma ?? 1, p.mg.toePivot ?? 0.25] : [1, 0, 1, 0.25],
+      uMG2: p.mg ? [p.mg.saturation ?? 1, p.mg.grainFloor?.[0] ?? 0, p.mg.grainFloor?.[1] ?? 0, p.mg.contrast ?? 1] : [1, 0, 0, 1],
     }, null);
   }
 }

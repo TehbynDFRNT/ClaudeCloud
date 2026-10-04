@@ -12,6 +12,7 @@ vec3 dwarfColor(){ return vec3(0.62, 0.80, 1.0); }
 // (a point source), occluded if the ray is blocked before reaching it (pass maxT).
 // pixAngle: angular size of one pixel. Returns linear radiance.
 vec3 dwarfGlow(vec3 ro, vec3 rd, float maxT, float pixAngle){
+  pixAngle *= max(uK, 1.0);                                // a 1080p pixel, so larger renders glow alike
   vec3 d = uDwarfPos - ro;
   float t = dot(d, rd);
   if (t <= 0.0 || t > maxT) return vec3(0.0);
