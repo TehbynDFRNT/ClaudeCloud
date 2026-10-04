@@ -31,7 +31,7 @@ check(fs.existsSync(path.join(dir, 'notes.json')), 'serve.mjs creates an empty n
 
 // static + ranges + containment
 const files = JSON.parse(fs.readFileSync(path.join(dir, 'files.json'), 'utf8'));
-const clip = files.find((f) => f.endsWith('.mp4'));
+const clip = files.find((f) => /\.(mp4|webm)$/.test(f));
 let r = await fetch(base + clip, { headers: { range: 'bytes=0-99' } });
 check(r.status === 206 && (await r.arrayBuffer()).byteLength === 100 && /^bytes 0-99\//.test(r.headers.get('content-range')), `video byte ranges: ${clip} -> 206, 100 bytes`);
 r = await fetch(base + clip, { headers: { range: 'bytes=-50' } });
