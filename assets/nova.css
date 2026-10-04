@@ -135,7 +135,7 @@ html.viewing{overflow:hidden}
    device opens its own picker (the wheel on a phone) and the keyboard works as it always does */
 .film-opts{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px;width:min(calc(var(--sh)*9/16),calc(100vw - 32px));margin-top:16px}
 .film-opts[hidden],.opt[hidden]{display:none}
-.opt{position:relative;display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 12px 0 13px;border-radius:999px;border:1px solid var(--nv-border-strong);background:rgba(var(--nv-0-rgb),.42);color:var(--nv-text);font-size:13px;line-height:1;white-space:nowrap;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:border-color .2s var(--out),background .2s var(--out)}
+.opt{position:relative;display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 12px 0 13px;border-radius:999px;border:1px solid var(--nv-border-strong);background:rgba(var(--nv-0-rgb),.42);color:var(--nv-text);font-size:13px;line-height:1;white-space:nowrap;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:border-color .2s var(--out),background .2s var(--out)}
 .opt:hover{border-color:var(--nv-text);background:rgba(var(--nv-0-rgb),.6)}
 .opt:focus-within{outline:2px solid var(--lp-300);outline-offset:3px}
 .opt>svg{flex:none;color:var(--lp-300)}
@@ -151,6 +151,13 @@ html.viewing{overflow:hidden}
 @supports (height:100dvh){.film.viewer.has-opts{--sh:calc(100dvh - 88px)}}
 .film.viewer .film-opts{margin-top:14px}
 .film.viewer .opt-hint{display:none}
+/* sharing: Instagram (a story card through the share sheet) and X (a prefilled post) */
+.film-share{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px;width:min(calc(var(--sh)*9/16),calc(100vw - 32px));margin-top:12px}
+.opt.sh{text-decoration:none;font-weight:500;cursor:pointer}
+.opt.sh>svg{color:var(--nv-text)}
+.share-msg{flex-basis:100%;margin:0;min-height:0;text-align:center;font-size:13px;color:var(--nv-mute)}
+.share-msg:empty{display:none}
+.film.viewer .film-share{display:none}
 @media (max-width:420px){.opt-k{display:none}}
 
 /* ================= stills ================= */
