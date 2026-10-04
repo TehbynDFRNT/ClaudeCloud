@@ -128,7 +128,7 @@ if (mode === 'costs') {
   fs.mkdirSync(CHUNKS, { recursive: true });
   const push = (name) => {
     if (!argv.includes('--push')) return;
-    run('git', ['add', path.relative(ROOT, path.join(CHUNKS, name + '.mp4')), path.relative(ROOT, path.join(CHUNKS, name + '.json'))]);
+    run('git', ['add', '-f', path.relative(ROOT, path.join(CHUNKS, name + '.mp4')), path.relative(ROOT, path.join(CHUNKS, name + '.json'))]);
     run('git', ['commit', '-q', '-m', `Render block ${path.relative(ROOT, CHUNKS)}/${name}`]);
     for (let k = 0, d = 2; ; k++, d *= 2) {
       const r = spawnSync('git', ['push', '-q', '-u', 'origin', 'HEAD'], { stdio: 'inherit', cwd: ROOT });
@@ -194,7 +194,7 @@ if (mode === 'costs') {
     fs.writeFileSync(path.join(CHUNKS, name + '.json'), JSON.stringify(meta) + '\n');
     console.log(`${name}: ${blockState(a, b)} (${touched.length} piece(s) written)`);
     if (touched.length && argv.includes('--push')) {
-      run('git', ['add', '-A', path.relative(ROOT, CHUNKS)]);
+      run('git', ['add', '-A', '-f', path.relative(ROOT, CHUNKS)]);
       run('git', ['commit', '-q', '-m', `Render ${path.relative(ROOT, CHUNKS)}/${name} (${touched.length} piece(s))`]);
       for (let k = 0, d = 2; ; k++, d *= 2) {
         const r = spawnSync('git', ['push', '-q', '-u', 'origin', 'HEAD'], { stdio: 'inherit', cwd: ROOT });
