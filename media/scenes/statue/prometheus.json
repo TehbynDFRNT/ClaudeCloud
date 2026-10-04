@@ -10,35 +10,35 @@
   "attribution": "Giant from the Pergamon Altar frieze, plaster cast. 3D scan: SMK - Statens Museum for Kunst, Royal Cast Collection (open.smk.dk), public domain."
  },
  "counts": {
-  "vertices": 265281,
-  "triangles": 530632,
+  "vertices": 270315,
+  "triangles": 540700,
   "sourceTriangles": 791120
  },
  "layout": {
   "file": "prometheus.bin",
-  "byteLength": 12203768,
+  "byteLength": 12435332,
   "littleEndian": true,
   "interleaved": false,
   "attributes": {
    "position": {
     "offset": 0,
-    "byteLength": 3183372,
+    "byteLength": 3243780,
     "type": "float32",
     "components": 3,
     "stride": 12,
     "normalized": false
    },
    "normal": {
-    "offset": 3183372,
-    "byteLength": 1591686,
+    "offset": 3243780,
+    "byteLength": 1621890,
     "type": "int16",
     "components": 3,
     "stride": 6,
     "normalized": true
    },
    "bake": {
-    "offset": 4775060,
-    "byteLength": 1061124,
+    "offset": 4865672,
+    "byteLength": 1081260,
     "type": "uint8",
     "components": 4,
     "stride": 4,
@@ -52,47 +52,47 @@
    }
   },
   "index": {
-   "offset": 5836184,
-   "byteLength": 6367584,
+   "offset": 5946932,
+   "byteLength": 6488400,
    "type": "uint32",
    "components": 1,
-   "count": 1591896
+   "count": 1622100
   }
  },
  "bounds": {
   "min": [
-   -0.46861,
+   -0.45248,
    -0.95,
-   -0.89738
+   -0.85554
   ],
   "max": [
-   0.60946,
+   0.58848,
    0.5,
-   0.59384
+   0.58434
   ]
  },
  "frame": {
-  "units": "1.0 = chin-to-crown head height (vertical); source units per head = 39.0474",
+  "units": "1.0 = chin-to-crown head height (vertical); source units per head = 40.4396",
   "axes": "+Y up = vertical turn axis; +Z = measured gaze (a camera on +Z at eye height is stared at); +X = Y x Z = the figure's own left. L/R in anchor names = the figure's own left/right.",
   "origin": "head centre: halfway between chin and crown, on the turn axis through the neck between the ears",
   "sourceToHead": [
    [
-    0.01146,
+    0.01107,
     0.0,
-    -0.0229,
-    0.05919
+    -0.02211,
+    0.05715
    ],
    [
-    -0.00239,
-    0.02547,
-    -0.0012,
-    -2.60911
+    -0.00231,
+    0.02459,
+    -0.00116,
+    -2.50208
    ],
    [
-    0.02278,
-    0.00268,
-    0.0114,
-    -1.29338
+    0.02199,
+    0.00258,
+    0.01101,
+    -1.23791
    ],
    [
     0.0,
@@ -101,7 +101,7 @@
     1.0
    ]
   ],
-  "sourceUnitsPerHead": 39.04743,
+  "sourceUnitsPerHead": 40.43958,
   "levelPitchDeg": 6.0,
   "castUpInHead": [
    0.0,
@@ -116,6 +116,7 @@
    0.99451
   ],
   "profileSide": "-X",
+  "chin": "ESTIMATED (hidden in the beard): from the snapped stomion, stomion-to-chin = 1.68 x nose-tip-to-stomion (vertical) and 0.50 x that distance back, the proportions measured on david and sol",
   "cropY": -0.95,
   "cuts": [
    {
@@ -139,9 +140,9 @@
      -0.44507
     ],
     "point": [
-     -0.10113,
-     -2.6175,
-     -1.2136
+     -0.09765,
+     -2.51018,
+     -1.16087
     ]
    },
    {
@@ -152,9 +153,9 @@
      0.88937
     ],
     "point": [
-     0.76977,
-     -2.75754,
-     0.11877
+     0.74327,
+     -2.64539,
+     0.12563
     ]
    }
   ],
@@ -163,120 +164,122 @@
  "eyes": {
   "L": {
    "centre": [
-    0.11648,
-    -0.15411,
-    0.30736
+    0.11247,
+    -0.13159,
+    0.30773
    ],
-   "radius": 0.09065,
+   "radius": 0.08753,
    "gaze": [
     0.20289,
     -0.09947,
     0.97414
-   ]
+   ],
+   "measured": "visible cap centre (blank eye; biased downward by the overhanging upper lid, not a true gaze - the look direction is +Z by construction)"
   },
   "R": {
    "centre": [
-    -0.11653,
-    -0.11277,
-    0.32864
+    -0.11252,
+    -0.09168,
+    0.32827
    ],
-   "radius": 0.07822,
+   "radius": 0.07553,
    "gaze": [
     -0.20289,
     0.01945,
     0.97901
-   ]
+   ],
+   "measured": "visible cap centre (blank eye; biased downward by the overhanging upper lid, not a true gaze - the look direction is +Z by construction)"
   }
  },
  "anchors": {
   "noseTip": [
-   -0.02658,
-   -0.28543,
-   0.53348
+   -0.02567,
+   -0.25839,
+   0.52606
   ],
   "chin": [
-   -2e-05,
+   -0.0234,
    -0.5,
-   0.42128
+   0.39947
   ],
   "crown": [
-   0.18701,
+   0.18057,
    0.5,
-   -0.00621
+   0.00495
   ],
   "eyeballL": [
-   0.11648,
-   -0.15411,
-   0.30736
+   0.11247,
+   -0.13159,
+   0.30773
   ],
   "eyeL": [
-   0.13487,
-   -0.16313,
-   0.39567
+   0.13023,
+   -0.1403,
+   0.393
   ],
   "eyeballR": [
-   -0.11653,
-   -0.11277,
-   0.32864
+   -0.11252,
+   -0.09168,
+   0.32827
   ],
   "eyeR": [
-   -0.1324,
-   -0.11125,
-   0.40521
+   -0.12784,
+   -0.09021,
+   0.40221
   ],
   "mouth": [
-   -0.02423,
-   -0.37874,
-   0.44906
+   -0.0234,
+   -0.34854,
+   0.44455
   ],
   "beardTip": [
-   -0.02031,
-   -0.88554,
-   0.1319
+   -0.01842,
+   -0.84261,
+   0.13844
   ],
   "earL": [
-   0.37712,
-   -0.21344,
+   0.35883,
+   -0.19163,
    0.0
   ],
   "earR": [
-   -0.28552,
-   -0.21344,
+   -0.27295,
+   -0.19163,
    0.0
   ],
   "shoulderL": [
-   0.3714,
-   -0.70337,
-   0.42949
+   0.38583,
+   -0.67079,
+   0.41875
   ],
   "shoulderR": [
-   -0.3987,
-   -0.56021,
-   -0.65146
+   -0.38543,
+   -0.52503,
+   -0.61891
   ],
   "neckBase": [
-   -0.04997,
-   -0.63179,
-   -0.01407
+   -0.03159,
+   -0.62,
+   0.01358
   ]
  },
  "torso": {
   "forward": [
-   -0.86169,
+   -0.8511,
    0.0,
-   0.50743
+   0.525
   ],
   "left": [
-   0.50743,
+   0.525,
    -0.0,
-   0.86169
+   0.8511
   ],
   "neckAxisUp": [
-   0.0,
-   1.0,
-   0.0
+   0.05131,
+   0.95543,
+   -0.29074
   ],
-  "neckAxisFit": "fit unreliable (tilt > 40 deg), vertical used",
+  "neckAxisFit": "line fitted through 7 smooth-skin slab centroids under the jaw",
   "shoulders": {
    "shoulderL": "top of the shoulder 0.06 inside its outer edge",
    "shoulderR": "top of the shoulder 0.06 inside its outer edge"
@@ -295,13 +298,13 @@
   "Crop: one horizontal plane at y = -0.95, capped (flat cap facing -Y); keep it out of frame or in shadow.",
   "Turn: yaw about +Y through the origin. The 90-degree turn starts with the camera on the figure's RIGHT (-X side, face pointing screen-right) and ends on +Z (stared at).",
   "Ears: earL ESTIMATED: ear hidden by hair/beard; outer surface point beside the ear position estimated 0.318 behind the eyeball midpoint along the facial axis (ratio measured on david); earR ESTIMATED: ear hidden by hair/beard; outer surface point beside the ear position estimated 0.318 behind the eyeball midpoint along the facial axis (ratio measured on david)",
-  "Head units: 1.0 = 39.047 source units (raw STL units).",
+  "Head units: 1.0 = 40.440 source units (raw STL units).",
   "Mouth anchor (stomion): parted lips: centre of the opening at the depth of the lip fronts.",
   "relief ground slab (source z = 7) cap (outward normal [0.89427, 0.04678, -0.44507]) faces the camera on the turn arc: never",
   "slab return on the +X edge (source x = 62) cap (outward normal [0.44752, -0.09348, 0.88937]) faces the camera on the turn arc: yaw 0-63",
   "STAND-IN: the giant (Klytios?) from the Pergamon Altar Gigantomachy; no freely licensed scan of a marble Prometheus exists. Same Hellenistic pathos face family as Laocoon and Adam's Prometheus.",
   "Relief slab removed: cut at source z = 7 (relief ground, a big flat cap behind the head and back) and x = 62 (its return, which cuts through the figure's left shoulder: a slanted flat face beside the beard, lower right of frame at yaw 0). Approach the profile ONLY from the -X side (see the cap visibility notes and frame.cuts); keep the shoulder cap out of frame or in shadow in the last, frontal inserts. The arms are broken off (no hands).",
   "Blank eyes. Yaw = mean of the two eyeball caps (0.2 deg); pitch 6.0 deg chosen visually (renders at camera pitch -15..+25); head space is levelled.",
-  "The chin is hidden in the beard: anchors.chin is an ESTIMATE (see frame); anchors.beardTip is the lowest point of the beard. Head units therefore use an anatomical chin, not the beard."
+  "The chin is hidden in the beard: anchors.chin is an ESTIMATE (frame.chin); anchors.beardTip is the lowest point of the beard. Head units therefore use an anatomical chin, not the beard tip."
  ]
 }

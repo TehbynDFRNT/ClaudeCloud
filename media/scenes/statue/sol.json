@@ -116,6 +116,7 @@
    0.99398
   ],
   "profileSide": "-X",
+  "chin": "measured: most anterior-inferior point of the chin on the midline (gnathion); stomion-to-chin / nose-tip-to-stomion = 1.66 (vertical)",
   "cropY": -0.92,
   "cuts": [
    {
@@ -146,7 +147,8 @@
     0.15692,
     -0.37546,
     0.91346
-   ]
+   ],
+   "measured": "visible cap centre (blank eye; biased downward by the overhanging upper lid, not a true gaze - the look direction is +Z by construction)"
   },
   "R": {
    "centre": [
@@ -159,7 +161,8 @@
     -0.15692,
     -0.3644,
     0.91792
-   ]
+   ],
+   "measured": "visible cap centre (blank eye; biased downward by the overhanging upper lid, not a true gaze - the look direction is +Z by construction)"
   }
  },
  "anchors": {
@@ -372,7 +375,8 @@
   "Ears: earL ESTIMATED: ear hidden by hair/beard; outer surface point beside the ear position estimated 0.318 behind the eyeball midpoint along the facial axis (ratio measured on david); earR ESTIMATED: ear hidden by hair/beard; outer surface point beside the ear position estimated 0.318 behind the eyeball midpoint along the facial axis (ratio measured on david)",
   "Head units: 1.0 = 63.025 source units (raw STL units).",
   "Mouth anchor (stomion): closed lips: deepest point of the midline profile between the lips.",
-  "Blank (uncarved) eyes. Yaw = mean of the two eyeball caps (1.9 deg). The Hellenistic upturned gaze measured 6.0 deg above horizontal by visual judgement (renders at camera pitch 0..20 deg; the lid-aperture geometry is biased by the overhanging upper lid). CHOICE: levelled, so the blank eyes meet the lens at eye height for the final stare; the upward pathos remains in the face and the tilt of the head. frame.restoreCastPosture gives the original upturn back.",
+  "Blank (uncarved) eyes. Yaw = mean of the two eyeball caps (1.9 deg). Gaze pitch +6.0 deg (up), JUDGED from renders at camera pitch 0..20 deg (the lid aperture and the visible caps are biased downward by the heavy upper lid, so they cannot be used; the source notes estimate 10-15 deg for the whole upturned head). CHOICE: levelled - the head is tipped forward by that amount so the blank eyes meet a lens at eye height in the final stare; some of the Hellenistic upward pathos remains in the face and the lift of the chin. frame.restoreCastPosture restores the original upturn.",
+  "Diadem: see the diadem block. The two front holes (azimuth about -8 and +22) are shallow in the cast (partly filled); all seven are confirmed visually in out/statue-prep/sol-diadem.png. Rays should spring from anchors.rayHoles along rayHoleNormals tilted outward/upward off the ring (radial = hole - ring centre).",
   "Scanner orange-peel removed from broad, low-curvature skin (cheeks, brow, neck) by a masked Taubin smooth; lids, lips, nostrils and curls are masked out and stay crisp.",
   "The bust and nose tip are restorations (SMK). The bust back is hollow with a support post inside (only seen from behind)."
  ]

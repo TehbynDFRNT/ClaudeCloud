@@ -116,6 +116,7 @@
    0.95649
   ],
   "profileSide": "-X",
+  "chin": "measured: most anterior-inferior point of the chin on the midline (gnathion); stomion-to-chin / nose-tip-to-stomion = 1.69 (vertical)",
   "cropY": -0.85,
   "cuts": [
    {
@@ -147,6 +148,7 @@
     0.01164,
     0.97358
    ],
+   "measured": "pupil: eyeball centre -> carved pupil",
    "pupilDepth": 0.01166
   },
   "R": {
@@ -161,6 +163,7 @@
     -0.01164,
     0.97358
    ],
+   "measured": "pupil: eyeball centre -> carved pupil",
    "pupilDepth": 0.0162
   }
  },

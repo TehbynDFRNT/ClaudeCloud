@@ -20,19 +20,26 @@ HEAD SPACE (all three figures):
             Anchor suffix L/R = the figure's own left/right.
     units   1.0 = chin-to-crown head height (vertical, in head space)
 
+BINARY: one header-free little-endian file, non-interleaved blocks at 4-byte-aligned offsets (json layout):
+    position Float32x3, normal Int16x3 (normalised, /32767), bake Uint8x4 (ao, cavity, thickness, skin), index Uint32.
+
 Usage:
-    pip install trimesh pymeshlab embreex mapbox_earcut shapely scipy pillow
-    python3 tools/prepare_statues.py                 # all figures
+    pip install trimesh pymeshlab embreex mapbox_earcut shapely networkx scipy pillow
+    apt-get install libopengl0      # pymeshlab's meshing plugin (quadric decimation) links against libOpenGL.so.0
+    python3 tools/prepare_statues.py                 # all figures (~4 min on 4 cores)
     python3 tools/prepare_statues.py --figure sol    # one figure
-    python3 tools/prepare_statues.py --sheets        # also gridded measurement sheets (anchor hints)
-Previews go to out/statue-prep/ (not committed).
+Previews (embree ray-cast, black background) go to out/statue-prep/ (not committed):
+    <figure>-turn.png    yaw 90 / 45 / 0 with anchor markers (hidden markers = dim dots) and closer views
+    <figure>-eyes.png    ECU of the eyes straight down +Z, with and without markers
+    <figure>-bakes.png   ao, cavity, thickness, skin channels and triangle density
+    sol-diadem.png       diadem ring, ray holes and crown socket
+Anchor hints in FIGURES are approximate points in raw STL coordinates read off gridded measurement renders;
+every one is refined on the mesh (sphere fits, symmetry plane, profile analysis, ray casts).
 """
 import argparse
 import json
 import math
 import os
-import struct
-import sys
 import time
 from pathlib import Path
 
@@ -386,17 +393,19 @@ def head_transform(name, cfg, m, fr):
         chin = Vh[np.argmax(np.where(sel, Vh[:, 2] - Vh[:, 1], -1e18))]
         info['chin'] = 'measured: most anterior-inferior point of the chin on the midline (gnathion)'
     else:
-        # chin hidden in the beard: estimate from the mouth and nose (ratio measured on david & sol)
+        # chin hidden in the beard: PROVISIONAL estimate from the mouth hint; process() re-estimates it from the
+        # snapped stomion and rescales the head frame
         mouth = hint['mouth']
         k = CHIN_RATIO
-        chin = np.array([x_mid, mouth[1] - k * (nose[1] - mouth[1]), mouth[2] - 0.35 * (nose[1] - mouth[1])])
-        info['chin'] = 'ESTIMATED (under the beard): stomion-to-chin = %.2f x nose-tip-to-stomion, the ratio measured on david and sol' % k
+        chin = np.array([x_mid, mouth[1] - k * (nose[1] - mouth[1]), mouth[2] - CHIN_DZ * (nose[1] - mouth[1])])
+        info['chin'] = 'provisional'
     H = crown[1] - chin[1]
     y0 = 0.5 * (crown[1] + chin[1])
     return dict(Vh=Vh, H=H, y0=y0, x_mid=x_mid, chin=chin, crown=crown, nose=nose, eyeC=eyeC, info=info)
 
 
-CHIN_RATIO = 1.35  # stomion->gnathion / nose-tip->stomion, measured: david 1.29, sol 1.42
+CHIN_RATIO = 1.68  # stomion->gnathion / nose-tip->stomion (vertical, head space), measured: david 1.68, sol 1.68
+CHIN_DZ = 0.5      # gnathion lies this many (nose-tip->stomion) behind the stomion, measured: david 0.56, sol 0.43
 K_EAR = 0.26       # provisional origin depth only; the origin is then moved to the ear midpoint (ear_anchors)
 K_EAR_FW = 0.318   # ear midpoint behind the eyeball midpoint along the horizontal facial axis, head units (measured on david)
 EAR_DROP = 0.08    # concha below the eyeball centres, head units (measured on david)
@@ -798,6 +807,32 @@ def process(name, args):
             eyes_json[lab]['pupilDepth'] = e['pupil_depth'] / H
     Ph, f = midline_front_profile(Vc_full, fr['n'], fr['d'], fw, an['chin'][1] - 0.02, an['noseTip'][1], 0.006 * H, Rm, O_rot, H)
     an['mouth'], mouth_note = snap_mouth(Ph, f, th(fr['hint']['mouth'])[1], float(an['noseTip'] @ fw))
+    dnm = an['noseTip'][1] - an['mouth'][1]
+    if 'chin' in fr['hint']:
+        chin_note = ('measured: most anterior-inferior point of the chin on the midline (gnathion); stomion-to-chin / '
+                     'nose-tip-to-stomion = %.2f (vertical)' % ((an['mouth'][1] - an['chin'][1]) / dnm))
+        log('  ' + chin_note)
+    else:
+        # chin hidden in the beard: from the snapped stomion with the proportion measured on david and sol, then
+        # re-derive the head units (crown unchanged) and rescale everything measured so far
+        chin = an['mouth'] + np.array([0.0, -CHIN_RATIO * dnm, -CHIN_DZ * dnm])
+        dy = 0.5 * (an['crown'][1] + chin[1])
+        sc = an['crown'][1] - chin[1]
+        resc = lambda q: (np.asarray(q, float) - np.array([0.0, dy, 0.0])) / sc
+        an = {k_: resc(v_) for k_, v_ in an.items()}
+        an['chin'] = resc(chin)
+        for e_ in eyes_json.values():
+            e_['centre'] = resc(e_['centre'])
+            e_['radius'] = e_['radius'] / sc
+            if 'pupilDepth' in e_:
+                e_['pupilDepth'] /= sc
+        O_rot = O_rot + np.array([0.0, dy * H, 0.0])
+        H = H * sc
+        th = to_head_fn(Rm, O_rot, H)
+        chin_note = ('ESTIMATED (hidden in the beard): from the snapped stomion, stomion-to-chin = %.2f x '
+                     'nose-tip-to-stomion (vertical) and %.2f x that distance back, the proportions measured on david '
+                     'and sol' % (CHIN_RATIO, CHIN_DZ))
+        log('  chin re-estimated from the stomion: head units rescaled by %.4f, centre moved %.4f' % (sc, dy))
     if 'beard' in fr['hint']:
         bh = th(fr['hint']['beard'])
         Vh0 = th(Vc_full)
@@ -896,7 +931,7 @@ def process(name, args):
     for (nr, org), what in zip(cfg['preclip'], ('relief ground slab (source z = 7)', 'slab return on the +X edge (source x = 62)')):
         n_out = nrm(Rm @ -nrm(to_cast(nr, cfg['zup'])))
         cuts.append(dict(what=what, normal=r5(n_out), point=r5(th(to_cast(org, cfg['zup'])))))
-    res = dict(cuts=cuts, mouth_note=mouth_note, name=name, cfg=cfg, V=Vd, F=Fd, N=Nd, bake=bake, an=an, eyes=eyes_json, fr=fr, ht=ht, H=H, O_rot=O_rot,
+    res = dict(cuts=cuts, chin_note=chin_note, mouth_note=mouth_note, name=name, cfg=cfg, V=Vd, F=Fd, N=Nd, bake=bake, an=an, eyes=eyes_json, fr=fr, ht=ht, H=H, O_rot=O_rot,
                Rm=Rm, fw=fw, ear_notes=ear_notes, torso=torso, neck_top=neck_top, extra=extra, n_src=n_src,
                rough=rough, dense=(V, F), edge_src=edge, regions=dict(source=reg_counts, final=reg_final), t=time.time() - t_start)
     return res
@@ -1068,12 +1103,16 @@ def write_outputs(res):
             gazeYawFromFaceDeg=round(float(fr['yaw']), 3),
             facialForward=r5(res['fw']),
             profileSide='-X',
+            chin=res['chin_note'],
             cropY=cfg['crop_y'],
             cuts=res['cuts'],
             cutsNote='capped plane cuts: normal = outward normal of the flat cap (head space), point = a point on the '
                      'plane. A cap is seen only from cameras on its outward side.',
         ),
         eyes={k: dict(centre=r5(e['centre']), radius=round(float(e['radius']), 5), gaze=r5(e['gaze']),
+                      measured=('pupil: eyeball centre -> carved pupil' if 'pupilDepth' in e else
+                                'visible cap centre (blank eye; biased downward by the overhanging upper lid, not a '
+                                'true gaze - the look direction is +Z by construction)'),
                       **({'pupilDepth': round(float(e['pupilDepth']), 5)} if 'pupilDepth' in e else {}))
               for k, e in res['eyes'].items()},
         anchors=anchors,
@@ -1265,7 +1304,7 @@ def main():
         if not args.no_previews:
             previews(res)
         summary.append((name, j['counts']['triangles'], j['counts']['vertices'], os.path.getsize(OUT / (name + '.bin'))))
-        log('  %s done in %.0fs' % (name, time.time() - (time.time() - res['t'])))
+        log('  %s done (processing %.0fs)' % (name, res['t']))
     tot = 0
     for name, t, v, sz in summary:
         print('%-11s %8d tris %8d verts %7.2f MB' % (name, t, v, sz / 1e6))
@@ -1309,11 +1348,15 @@ def _notes_david(res):
 def _notes_sol(res):
     fr = res['fr']
     return _common_notes(res) + [
-        'Blank (uncarved) eyes. Yaw = mean of the two eyeball caps (%.1f deg). The Hellenistic upturned gaze measured %.1f '
-        'deg above horizontal by visual judgement (renders at camera pitch 0..20 deg; the lid-aperture geometry is biased '
-        'by the overhanging upper lid). CHOICE: levelled, so the blank eyes meet the lens at eye height for the final '
-        'stare; the upward pathos remains in the face and the tilt of the head. frame.restoreCastPosture gives the '
-        'original upturn back.' % (fr['yaw'], fr['pitch']),
+        'Blank (uncarved) eyes. Yaw = mean of the two eyeball caps (%.1f deg). Gaze pitch +%.1f deg (up), JUDGED from '
+        'renders at camera pitch 0..20 deg (the lid aperture and the visible caps are biased downward by the heavy upper '
+        'lid, so they cannot be used; the source notes estimate 10-15 deg for the whole upturned head). CHOICE: levelled '
+        '- the head is tipped forward by that amount so the blank eyes meet a lens at eye height in the final stare; '
+        'some of the Hellenistic upward pathos remains in the face and the lift of the chin. frame.restoreCastPosture '
+        'restores the original upturn.' % (fr['yaw'], fr['pitch']),
+        'Diadem: see the diadem block. The two front holes (azimuth about -8 and +22) are shallow in the cast (partly '
+        'filled); all seven are confirmed visually in out/statue-prep/sol-diadem.png. Rays should spring from '
+        'anchors.rayHoles along rayHoleNormals tilted outward/upward off the ring (radial = hole - ring centre).',
         'Scanner orange-peel removed from broad, low-curvature skin (cheeks, brow, neck) by a masked Taubin smooth; '
         'lids, lips, nostrils and curls are masked out and stay crisp.',
         'The bust and nose tip are restorations (SMK). The bust back is hollow with a support post inside (only seen '
@@ -1343,8 +1386,8 @@ def _notes_prometheus(res):
         'keep the shoulder cap out of frame or in shadow in the last, frontal inserts. The arms are broken off (no hands).',
         'Blank eyes. Yaw = mean of the two eyeball caps (%.1f deg); pitch %.1f deg chosen visually (renders at camera '
         'pitch -15..+25); head space is levelled.' % (fr['yaw'], fr['pitch']),
-        'The chin is hidden in the beard: anchors.chin is an ESTIMATE (see frame); anchors.beardTip is the lowest point '
-        'of the beard. Head units therefore use an anatomical chin, not the beard.',
+        'The chin is hidden in the beard: anchors.chin is an ESTIMATE (frame.chin); anchors.beardTip is the lowest point '
+        'of the beard. Head units therefore use an anatomical chin, not the beard tip.',
     ]
 
 
