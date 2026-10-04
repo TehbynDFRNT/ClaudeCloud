@@ -15,10 +15,16 @@ Accepted input (several cuts may be pasted one after another):
       The hands look weird
 Free text without that structure is kept as one note per paragraph, so nothing the director wrote is lost.
 
-The kind is a keyword guess (sound / edit / text / picture / standing rule): correct it before acting. Notes that
-apply to the whole film ("no hands", "never flash") are standing rules: they go into every later version and into
-the skill's director preferences, not just one shot; their entry lists every cut-specific variant to audit. Pure
-sound notes get the mix as their scope, with no scene re-render.
+The kind comes from the note's {tags} first: the Edit Room's tags are the director's own classification
+({Sound} -> sound, {Picture} -> picture, {Edit} -> edit, {Text} -> text). Only a note without such a tag gets a
+keyword guess (sound / edit / text / picture): correct it before acting. A note that applies to the whole film
+("no hands", "never flash") is also a standing rule, whatever its tag: it goes into every later version and into the
+skill's director preferences, not just one shot, and its entry lists every cut-specific variant to audit. A sound
+note ({Sound}, or "Explosion 15% lower" without tags) gets the mix as its scope, with no scene re-render.
+
+Plans: one per CUT. The default is every film-plan*.json at the repository root, minus size or master variants of a
+cut (a plan with a masterGrade, or an id ending in -<W>x<H> such as david-916-v4-2160x3840): they share the cut's
+shots and would list every David entry twice. Name such a plan with --plan to include it.
 
 Provenance: new for the create-js-video skill; the input format is the one src/review/editroom.html "Copy notes"
 and tools/editroom-serve.mjs notes.md produce in the "Nova, Episode 1" project (ClaudeCloud, Oct 2026).
@@ -36,19 +42,25 @@ DESCRIPTIVE = ('purpose', 'action', 'framing', 'note')   # shot fields the finge
 COPY = re.compile(r'^\s*(\d+)\.\s+(\S+)\s+\(frame\s+(\d+),\s*([^)]*)\)\s*(?:\[(\w+)\])?\s*(?:\{([^}]*)\})?\s*(?:@\s*(\d+)%\s*,\s*(\d+)%)?\s*$')
 MD = re.compile(r'^\s*-\s*\[( |x)\]\s*\*\*([^*]*)\*\*\s*\(frame\s+(\d+|\?)\)\s*·\s*([^·]*?)\s*(?:·\s*pin\s+(\d+)%\s*across,\s*(\d+)%\s*down)?\s*$')
 HEADER = re.compile(r'^(\S.*?)\s+\((.*?render.*?)\)\s*$')
+STANDING = r'\b(never|always|no more|don\'t ever|everywhere|whole film|all cuts|just do no|no hands?)\b'
 KINDS = [
-    ('standing rule', r'\b(never|always|no more|don\'t ever|everywhere|whole film|all cuts|just do no|no hands?)\b'),
-    ('sound', r'\b(loud|louder|quiet|quieter|volume|sound|music|audio|db|bass|mix|cannon|boom|silence|hit|score|tempo)\b'),
+    ('sound', r'\b(loud|louder|quiet|quieter|volume|sound|music|audio|db|bass|mix|cannons?|boom|silence|hit|score|tempo|'
+              r'explosion|stems?|cue|reverb|panning|binaural)\b|\d+\s*%\s*(lower|higher|louder|quieter|softer)\b'),
     ('edit', r'\b(cut|shorter|longer|hold|timing|earlier|later|beat|faster|slower|pace|trim|extend|order|move)\b'),
     ('text', r'\b(text|title|font|word|words|typo|spell|caption|credit|name)\b'),
 ]
+# the Edit Room's own tags: the director's classification, used before any keyword guess
+TAGS = {'sound': 'sound', 'audio': 'sound', 'music': 'sound', 'mix': 'sound', 'picture': 'picture', 'image': 'picture',
+        'look': 'picture', 'edit': 'edit', 'timing': 'edit', 'cut': 'edit', 'text': 'text', 'title': 'text', 'type': 'text'}
 
 
-def kind_of(text):
+def kind_of(text, tags=()):
     t = text.lower()
-    hits = [k for k, rx in KINDS if re.search(rx, t)]
-    if hits == ['standing rule']:
-        hits.append('picture')   # a rule about what is drawn ("no hands") is a picture change in every shot it touches
+    tagged = list(dict.fromkeys(TAGS[x.lower()] for x in tags if x.lower() in TAGS))
+    hits = tagged or [k for k, rx in KINDS if re.search(rx, t)]
+    if re.search(STANDING, t):
+        # a rule about what is drawn ("no hands") is a picture change in every shot it touches
+        hits = ['standing rule'] + (hits or ['picture'])
     return hits or ['picture']
 
 
@@ -95,17 +107,39 @@ def parse(lines):
     flush_para()
     for i, n in enumerate(notes):
         n['id'] = i + 1
-        n['kind'] = kind_of(n['text'])
+        n['kind'] = kind_of(n['text'], n['tags'])
     return notes
 
 
+SIZED = re.compile(r'-\d+x\d+$')   # a size variant's id: <cut id>-<W>x<H> (Nova: david-916-v4-2160x3840)
+
+
+def cut_key(plan):
+    """the cut a plan belongs to: plan.cut, else its id without a -<W>x<H> size suffix"""
+    return str(plan.get('cut') or SIZED.sub('', str(plan.get('id') or '')))
+
+
 def find_plans(given):
-    files = [f for g in given for f in g.split(',') if f.strip()]
-    if not files:
-        r = subprocess.run(['git', 'rev-parse', '--show-toplevel'], capture_output=True, text=True)
-        root = r.stdout.strip() if r.returncode == 0 and r.stdout.strip() else os.getcwd()
-        files = sorted(glob.glob(os.path.join(root, 'film-plan*.json')), key=lambda f: (os.path.basename(f) != 'film-plan.json', f))
-    return [(f, json.load(open(f))) for f in files]
+    files = [f.strip() for g in given for f in g.split(',') if f.strip()]
+    if files:   # named plans are read as given, size or master variants included
+        return [(f, json.load(open(f))) for f in files]
+    r = subprocess.run(['git', 'rev-parse', '--show-toplevel'], capture_output=True, text=True)
+    root = r.stdout.strip() if r.returncode == 0 and r.stdout.strip() else os.getcwd()
+    files = sorted(glob.glob(os.path.join(root, 'film-plan*.json')), key=lambda f: (os.path.basename(f) != 'film-plan.json', f))
+    out, seen = [], {}
+    for f in files:
+        plan = json.load(open(f))
+        if plan.get('masterGrade') is not None or SIZED.search(str(plan.get('id') or '')):
+            print(f'note: skipped {os.path.basename(f)} ({plan.get("id")}): a size or master variant of a cut '
+                  '(pass it with --plan to include it)', file=sys.stderr)
+            continue
+        k = cut_key(plan)
+        if k and k in seen:
+            print(f'note: skipped {os.path.basename(f)}: same cut as {os.path.basename(seen[k])} ({k})', file=sys.stderr)
+            continue
+        seen[k] = f
+        out.append((f, plan))
+    return out
 
 
 def label(path, plan):
