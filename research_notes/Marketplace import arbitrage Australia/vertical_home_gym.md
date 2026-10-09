@@ -21,7 +21,7 @@ Only weight-dense strength goods clear a usable margin at "Amazon-AU-floor minus
 
 #### 1. Adjustable dumbbells — 2 × 24 kg dial-select pair (2.5–24 kg each, 15 settings, trays)
 - **Amazon AU (search snapshots, 9 Oct 2026; seller/delivery not shown):** LSG V1 2.5–24 kg pair **A$249.00** (3.2★, 4 reviews) — [Amazon AU](https://www.amazon.com.au/Adjustable-Dumbbells-2-5kg-24kg-Training-Exercise/dp/B07BLK8927); Everfit 2×24 kg with holder A$262.95 and ADVWIN 24 kg×2 with tray A$299.99 — [Amazon AU search](https://www.amazon.com.au/adjustable-dumbbell-set-24kg/s?k=adjustable+dumbbell+set+24kg), [ADVWIN](https://www.amazon.com.au/ADVWIN-Adjustable-Dumbbell-Anti-Slip-Suitable/dp/B09HMSKXTK); FitnessLAB **single** 24 kg A$159 — [Amazon AU](https://www.amazon.com.au/FitnessLAB-Adjustable-Dumbbell-Dumbell-Exercise/dp/B09HPTHPPD); CORTEX Revolock V2 48 kg (pair, with bar/kettlebell handle) A$499; Fitness Master 48 kg (2×24) listed, price not in snapshot — [Amazon AU](https://www.amazon.com.au/Fitness-Master-Adjustable-Dumbbell-Equipment/dp/B0F4KYVVZH).
-- **Kogan:** Fortis 24 kg Smart Adjustable 2-pack A$259 (Kogan First price) vs A$338 "don't pay" total; 2-pack + stand A$379; single A$159 (search snapshot; undated) — [Kogan Fortis dumbbells](https://www.kogan.com/au/fortis/shop/category/sports-outdoors-travel/dumbbells/), [Kogan stand combo](https://www.kogan.com/au/buy/fortis-24kg-smart-adjustable-dumbbell-set-and-stand-combo/). An older OzBargain deal (~4 years old) had the Fortis 2-pack at A$199 delivered — [OzBargain](https://www.ozbargain.com.au/node/626326).
+- **Kogan:** Fortis 24 kg Smart Adjustable 2-pack A$259 (Kogan First price) vs A$338 "don't pay" total; 2-pack + stand A$379; single A$159 (search snapshot; undated; the exact page carrying the A$259 2-pack price was not identified — one result for the 2-pack was a kogan.com/nz URL) — [Kogan Fortis dumbbells](https://www.kogan.com/au/fortis/shop/category/sports-outdoors-travel/dumbbells/), [Kogan stand combo](https://www.kogan.com/au/buy/fortis-24kg-smart-adjustable-dumbbell-set-and-stand-combo/). An older OzBargain deal (~4 years old) had the Fortis 2-pack at A$199 delivered — [OzBargain](https://www.ozbargain.com.au/node/626326).
 - **Kmart Marketplace (third-party sellers, not Anko):** Everfit 24 kg pair (seller Aisle Six) A$259.95; Centra 24 kg **single** (Sello Products) A$136 (was A$144); Powertrain 24 kg (Klika Group) A$595; Fitness Master dumbbell stand (Salesbay) A$169.99 — [Everfit](https://www.kmart.com.au/product/everfit-24kg-dumbbells-adjustable-dumbbell-weight-plates-home-gym-multi-110070734/), [Centra](https://www.kmart.com.au/product/centra-24kg-adjustable-dumbbell-single-weight-plates-home-gym-fitness-exercise-110082303/), [Powertrain](https://www.kmart.com.au/product/powertrain-24kg-adjustable-dumbbell-home-gym-exercise-bench-weights-110082952/) (search snapshots). No Anko-branded 24 kg dial dumbbell found.
 - **Gumtree "brand new" asking prices (search snapshot of listing page):** 2×24 kg + rack A$399 firm, Leppington NSW, 01/10/2026; "24kg x 2 Smart Adjustable Dumbbell Weight Set Total 48kg With Stand" A$190, Sunshine West VIC, 31/03/2026, and A$539 negotiable, Tarneit VIC, 08/04/2026; A$350 "BRAND NEW & IN STOCK", 6-month warranty, Cannon Hill QLD; showroom retailer A$449 (A$569 with stand), Meadowbrook QLD, 04/12/2025; a Springvale VIC importer selling **"wholesale" A$190 per pair** + A$40 metro delivery (2025) — [Gumtree](https://www.gumtree.com.au/s-gym-fitness/adjustable+dumbbells+24kg/k0c18565).
 - **Factories (MIC, read directly):**
@@ -210,3 +210,316 @@ Only weight-dense strength goods clear a usable margin at "Amazon-AU-floor minus
 - **Carton CBM and gross weight are assumed** for bumper plates, 40 kg dial dumbbells, racks, benches, kettlebells, multi-gyms, boxing bags and power towers. The freight lines for those rows carry ±30% uncertainty.
 - **Defect and return rates are assumed**: no data for dial dumbbells or walking pads; flat 3% (6% tested).
 - **No data on Marketplace sell-through speed** for 200–575 units of one SKU in a metro area.
+
+## Is the post-COVID home-gym glut over in Australia in 2025–2026, and which items still sell fast new vs. are swamped by used units on Marketplace?
+
+### Takeaway
+The category-level hangover is over: Super Retail Group (rebel) told the ASX in August 2025 that "sporting equipment categories returned to growth after a period of consolidation post the COVID-19 period". But 2026 is soft. In May 2026, rebel reported a sports category with declining sales in March–April and "subdued" demand for higher-value sporting equipment, as fuel prices and rising rates bit. On the second-hand side, cardio machines are still cheap and plentiful: commercial and Peloton spin bikes were listed for about A$100 on Gumtree Sydney in Dec 2025–Feb 2026. Brand-new strength iron (dial dumbbells) is now being sold on classifieds by other small importers at A$190–399 a pair. So the competition for a new-goods Marketplace seller is increasingly other importers, not just used units. Free weights (plates, dial dumbbells, kettlebells) are the items where "new" still differentiates; spin bikes, treadmills/walking pads and rowers face the most used and dealer supply.
+
+### Cited Findings
+- **FY20, the COVID peak:** Super Retail Group said fitness and hardgoods were the strongest categories, as "COVID-19 restrictions led to strong demand for home fitness products" — [SRG FY20 ASX release, 24 Aug 2020](https://www.asx.com.au/asxpdf/20200824/pdf/44lt20sccm6c9x.pdf) (search snapshot). Gumtree reported a 411.2% rise in people browsing gym equipment at the peak of lockdowns — [Yahoo News AU](https://au.news.yahoo.com/gumtree-items-sell-210000616.html) (search snapshot).
+- **FY25 (year to 28 June 2025):** rebel total sales grew 4.8% to $1.4b and like-for-like sales 3.5%. "Growth was broad based, with strong contributions from footwear and licensed apparel, women's apparel and fitness tech. Sporting equipment categories returned to growth after a period of consolidation post the COVID-19 period." — [SRG FY25 results, 21 Aug 2025](https://announcements.asx.com.au/asxpdf/20250821/pdf/06n3rmq0c325lz.pdf) (read directly).
+- **FY26 trading update, 6 May 2026 (first 44 weeks):**
+  - rebel H2 like-for-like sales +1.4%; total sales +2.8% for weeks 27–44 and +4.0% for weeks 1–44.
+  - "rebel has gained market share and delivered a resilient performance despite operating in a sports category that recorded declining sales through March and April … Fitness tech contributed positively, supported by recent promotional activity. In contrast, demand for higher-value sporting equipment was subdued."
+  - Group-wide: sales were "adversely affected by the onset of the Middle East conflict. Inflationary pressures, including higher fuel prices and rising interest rates … weighed on consumer sentiment."
+  - Source: [SRG trading update](https://announcements.asx.com.au/asxpdf/20260506/pdf/06z9wq5spjzc4k.pdf) (read directly).
+- **Market size (sources conflict):**
+  - GlobalData: the commercial segment was 60.4% of the Australian fitness equipment market in 2025 (revenue 424.9m) — [GlobalData](https://www.globaldata.com/store/report/australia-fitness-equipment-market-analysis/) (search snapshot).
+  - IMARC: US$369.3m in 2024, rising to US$735.4m by 2033 (7.13% CAGR) — [IMARC](https://www.imarcgroup.com/australia-fitness-equipment-market) (search snapshot).
+  - SourceReady (appears AI-generated, low reliability): home fitness equipment ≈A$253.73m, growing about 2.5% a year to 2035 — [SourceReady](https://www.sourceready.com/report/detail/australia-home-fitness-equipment-market-2026).
+- **Used cardio supply (Gumtree Sydney, used spin bikes):**
+  - Star Trac V-Bike commercial spin bike A$100 (Leumeah, Feb 2026).
+  - Peloton A$100 negotiable (Glebe, Dec 2025; "cost me $2899", screen not turning on).
+  - Proform 405 SPX A$250 (Meadowbank, Jul 2025; bought for A$600).
+  - Celsius BK1 A$50.
+  - Source: [Gumtree](https://www.gumtree.com.au/s-gym-fitness/sydney/used+spin+bike/k0c18565l3003435) (search snapshot).
+- **New strength gear sold by small importers on Gumtree (2025–26):** 2×24 kg dial pairs at A$190, A$350, A$399 and A$539, a showroom at A$449, and "wholesale A$190 per pair" — [Gumtree](https://www.gumtree.com.au/s-gym-fitness/adjustable+dumbbells+24kg/k0c18565) (search snapshot).
+- **Walking pads on Gumtree:** brand-new Everfit pads from delivery-only dealers at A$200–254 with 1-year warranty; private "new" 3-in-1 pads at A$143–615 — [Gumtree](https://www.gumtree.com.au/s-gym-fitness/walking+pad/k0c18565) (search snapshot).
+- **Walking-pad trend (Europe, one retailer):** Galaxus says walking pads are now 90% of its treadmill sales and demand tripled year on year; half of buyers are under 35, two-thirds are women, and it describes a "TikTok effect" — [Galaxus](https://www.galaxus.de/en/page/walking-pads-booming-on-galaxus-39031) (search snapshot). An Australian buying guide says "the TikTok girlies are obsessed with them — especially the ones who work from home" — [Refinery29 AU](https://www.refinery29.com/en-au/best-walking-pads-australia) (search snapshot).
+- **Adjacent analogue (bikes, not gym gear):** used bicycle resale prices in Australia fell more than 25% over a year, and Facebook Marketplace is the dominant second-hand channel — [research.bike, Dec 2024](https://www.research.bike/2024/12/australian-used-second-hand-bicycle-sales/) (search snapshot).
+- **US opinion, unsourced (low reliability):** "iron, steel, and simple mechanics keep their worth remarkably well, while anything with a motor, a console, or a subscription screen depreciates faster" — [blog post](https://search.longren.com/en/posts/a2cc9db1).
+
+### Inferences
+- **The "glut" in the sense of collapsed new-equipment demand ended by FY25.** The 2026 headwind is macro: fuel prices, rate rises and the Middle East shock, with "higher-value" equipment weakest. That favours sub-A$400 new items and value-seeking Marketplace buyers. It penalises A$500+ items such as cable racks and multi-gyms.
+- **Swamped by used / cheap supply:**
+  - Spin bikes, including commercial and Peloton units at about A$100.
+  - Treadmills and rowers (inferred from the same depreciation pattern; not counted).
+  - Walking pads, where the supply is new dealer stock at A$200–254 rather than used units.
+- **Still sells new:** matched free-weight sets (dial dumbbells, bumper plates, kettlebells), where buyers value completeness, warranty and condition.
+- **The real competitor for a new-goods seller is other importers.** Gumtree already carries "brand new" 24 kg dial pairs from several small importers at A$190–399.
+
+### Gaps
+- Facebook Marketplace could not be read (login wall), so there are no listing counts, sold prices or time-to-sell figures by item. Gumtree search snapshots were used as a proxy.
+- No Australian Google Trends, ABS category or retailer data was found specifically for walking pads, dumbbells or plates.
+- rebel/Super Retail Group does not break out fitness-equipment numbers.
+
+## Which Chinese clusters and named factories make these, and what do they charge FOB at 50–500 unit MOQs?
+
+### Takeaway
+On Made-in-China, the listings cluster as follows:
+- **Nantong (Jiangsu):** strength gear — dial dumbbells, benches, racks, bumper plates, boxing bags (Vigor, Tengtai, Jingyang, Splendid, Ironman, Get-Fit, Wekeeping, Enerize, Gympro, Ok Sporting).
+- **Shandong:** Dezhou/Ningjin for multi-gyms, racks, water rowers and dumbbells (Ranao, Tianzhan, Eagle, Hengqing, Canxu); Rizhao for plates, kettlebells, boxing and rowers (Ape Fitness, F-Leader, Fine Fitness, Shangshuo); Qingdao for dumbbells, kettlebells and rowers (All Universe, Goldroad, Modun).
+- **Zhejiang:** walking pads, spin bikes and rowers — Jinhua/Yongkang (Ypoo, Chochi, Aoxu, Zhongteng), Ningbo-port suppliers (Todo, Mingni), and Deqing/Huzhou (Deqing Sister/JDM, who also make benches and power towers).
+- **Hebei (Dingzhou):** cast-iron kettlebells and plates.
+
+Typical listed FOB:
+
+| Product | FOB range (USD) | MOQ |
+|---|---|---|
+| 24 kg dial dumbbell (each) | 42–55 | 20–100 pcs |
+| Bumper plates | 1.00–1.50 per kg | 500–1,000 kg |
+| Cast-iron kettlebells | 0.90–1.43 per kg | 100–3,000 kg |
+| Walking pads | 55–130 | 10–200 |
+| Magnetic spin bikes | 51–98 | 50–224 |
+| Magnetic rowers | 56–88 | 10–500 |
+| FID benches | 43–117 | 20–100 |
+| Home power cages | 95–155 | 10–30 |
+| Multi-stations | 114–425 | 1–50 |
+| Freestanding bags | 35–112 | 10–200 |
+
+Third-party audit IDs are posted for several suppliers: Nantong Vigor and Nantong Jingyang (SGS); Zhejiang Ypoo, Jinhua Zhongteng, Deqing Sister and Rizhao Fine Fitness (TÜV Rheinland); Zhejiang Todo (BV). Many other "Diamond/Audited" sellers self-identify as trading companies.
+
+### Cited Findings
+- Full supplier-by-supplier evidence (URL, province, badges, audit IDs, price tiers, MOQ, cartons) is listed under each product in the core-objective section above. Highlights:
+  - **Nantong Vigor Sport Goods** (Nantong): SGS audit QIP-ASI264149; est. 2017; 3,362 m²; ISO 9001:2015. Prices: 24 kg dial dumbbell US$43–48.50; FID bench US$109–117; rower US$82–88; 20 kg spin bike US$204.60–224.70 — [MIC](https://vigfit.en.made-in-china.com/product/IYpUytirHScv/China-Adjustable-24kg-52lb-Dumbbell-Set-for-Home-Gym-Workouts.html).
+  - **Nantong Jingyang Machinery** (manufacturer): SGS QIP-ASI264243; 22 staff; power rack US$150–155; "about 1 year" exporting — [MIC](https://jy-fitness.en.made-in-china.com/product/PTIrmdFKXWYV/China-Fitness-Equipment-Squat-Rack-Power-Rack-and-Cage-Comprehensive-Fitness-Training-System.html).
+  - **Zhejiang Ypoo Health Technology**: TÜV Rheinland MIC-ASR2431394; est. 2012; walking pad US$74.99 at MOQ 100; 690 per 40HQ — [MIC](https://ypoosports.en.made-in-china.com/product/mOwTjiXHZhAG/China-Factory-Wholesale-Smart-Customized-Home-Gym-LED-Screen-Foldable-Walking-Pad.html).
+  - **Jinhua Zhongteng Fitness** (Bailongqiao, Wucheng District, Jinhua): TÜV Rheinland MIC-ASI263121; 10 kg-flywheel spin bike US$96–98 — [MIC](https://emmasports.en.made-in-china.com/product/bZKTvgaBAkVJ/China-2025new-Hot-Sell-Magnetic-Spin-Bike-10kg-Flywheel-Big-Size-Magnet.html).
+  - **Zhejiang Todo Hardware**: BV MIC-ASR243426; BSCI; Walmart audit; spin bike US$51–52.50 with an MOQ of one 20GP (224 pcs) — [MIC](https://todofit.en.made-in-china.com/product/DFAagouchvWf/China-New-Body-Building-Fitness-Magnetic-Exercise-Spinning-Gym-Home-Spin-Bike.html).
+  - **Deqing Sister Sports (JDM)**: founded 2010; TÜV Rheinland MIC-ASR253715. Prices: rower US$83.20–87.20; FID bench US$43–45; pulley station US$121.60–140; power towers US$46–74 — [MIC](https://jdmsports.en.made-in-china.com/product/hFzAgGcXhbtH/China-2025-Fitness-Equipment-Space-Saving-Foldable-Rower-Magnetic-Rowing-Machine.html).
+  - **Shandong Tianzhan Fitness Equipment** (Ningjin, Dezhou): manufacturer; ISO 9001/45001/14001; 3-station multi-gym US$329–369 — [MIC](https://dezhoutianzhan.en.made-in-china.com/product/QmMpbezKZqky/China-Ningjin-Popular-Home-Use-Gym-Equipment-Multi-Gym-3-Station.html).
+  - **Rizhao Fine Fitness**: TÜV Rheinland audited but only 6 employees; freestanding bag US$35 — [MIC](https://fine-fitness.en.made-in-china.com/product/ZtURpFTAJdrY/China-Free-Standing-Punching-Bag-Punching-Training-Equipment.html).
+- MIC category pages used (read directly):
+  - [24 kg adjustable dumbbell](https://www.made-in-china.com/products-search/hot-china-products/24kg_Adjustable_Dumbbell.html)
+  - [walking pad](https://www.made-in-china.com/products-search/hot-china-products/Walking_Pad.html)
+  - [magnetic spin bike](https://www.made-in-china.com/products-search/hot-china-products/Magnetic_Spin_Bike.html)
+  - [power rack](https://www.made-in-china.com/products-search/hot-china-products/Power_Rack.html)
+  - [adjustable bench](https://www.made-in-china.com/products-search/hot-china-products/Adjustable_Weight_Bench.html)
+  - [bumper plate](https://www.made-in-china.com/products-search/hot-china-products/Bumper_Plate.html)
+  - [kettlebell](https://www.made-in-china.com/products-search/hot-china-products/Cast_Iron_Kettlebell.html)
+  - [freestanding bag](https://www.made-in-china.com/products-search/hot-china-products/Free_Standing_Punching_Bag.html)
+  - [multi-station](https://www.made-in-china.com/products-search/hot-china-products/Home_Gym_Multi_Station.html)
+  - [water rower](https://www.made-in-china.com/products-search/hot-china-products/Water_Rowing_Machine.html)
+  - [home squat rack](https://www.made-in-china.com/products-search/hot-china-products/Home_Squat_Rack.html)
+  - [power tower](https://www.made-in-china.com/products-search/hot-china-products/Power_Tower.html)
+- An Alibaba seller blog on adjustable dumbbells gives no FOB or factory data; it only cites retail bands (US$150–250 for 5–50 lb sets) and says steel adds 30–50% to manufacturing cost versus cast iron — [Alibaba seller blog 2026](https://seller.alibaba.com/blogs/2026/southeast-asia/fitness-equipment/adjustable-dumbbell-configuration-guide-alibaba-b2b). Alibaba search pages returned no content to the fetcher.
+
+### Inferences
+- **Order-size fit:**
+  - For 50–500-unit orders, Nantong strength suppliers (MOQ 10–50) and the Zhejiang cardio makers (MOQ 50–100) fit.
+  - The cheapest cardio prices (Todo US$52.50 spin bike; F-Orchid US$56 rower) require 224–500 units, i.e. a full container of one SKU.
+  - Plate and kettlebell makers quote per kg with 500–3,000 kg MOQs. That is 5–30 100-kg sets, small enough for a first LCL order.
+- **Manufacturer vs. trader screening:**
+  - Treat as likely manufacturers: suppliers with a named third-party audit ID plus factory area and headcount (Vigor, Jingyang, Ypoo, Todo, Deqing Sister, Tianzhan).
+  - Treat as likely traders: firms named "Import & Export", "Trading" or "Commerce" (Hebei Dili, Shandong Dx Grandway, Ningbo Mingni, Dezhou Canxu, Yongkang Aoxu, Rizhao F-Leader, Rizhao Shangshuo).
+  - Some audited "factories" are tiny: Rizhao Fine Fitness has 6 staff, and Jingyang exported for only about a year with a mainly domestic market.
+
+### Gaps
+- No RFQs were sent, so there are no confirmed prices at exactly 50/100/200/500 units, no AU-plug/RCM-ready walking-pad quotes, and no 40 kg dial-dumbbell price line.
+- 1688 domestic prices, Global Sources (one snippet only) and ImportYeti were not checked in this vertical. US bill-of-lading data would be needed to see which factories ship to Bowflex/PowerBlock-type brands.
+- Alibaba Verified Manufacturer badges could not be read (Alibaba search returned an empty page).
+
+## Who dominates Amazon AU / eBay AU / Kmart / Rebel / Amart in this category, and at what prices?
+
+### Takeaway
+**Who holds the online floor:** the cheap end belongs to Australian importer brands sold across several marketplaces at once. These are:
+- Everfit — wholesaled through Dropshipzone and seen on Amazon AU, Kmart Marketplace, Bunnings Marketplace, Harvey Norman online, JB Hi-Fi and Woolworths.
+- Fitness Master, Powertrain (Klika Group), Centra (Sello Products), Advwin, FitnessLAB and LSG.
+- On Amazon only: CANPA, VEVOR, HCE, BRIXX, Proflex and Yes4All/Amazon Basics.
+- Kogan's own Fortis line, and Kmart's own Anko basics.
+
+Lifespan Fitness and its CORTEX strength sub-brand sit higher.
+
+**Typical prices:**
+
+| Product | Typical price (A$) |
+|---|---|
+| 2×24 kg dial dumbbells | 249–299 (Kogan Fortis 259) |
+| 2×40 kg dial dumbbells | 449–499 |
+| Walking pads | 169–214 |
+| Spin bikes | 159–199 |
+| Magnetic rowers | 253–320 |
+| FID benches | 96–100 |
+| Power cages | 216–241 |
+| Cable racks | 599–700 |
+| Multi-gyms | 430–840 |
+| 100 kg bumper sets | 400 |
+
+### Cited Findings
+- **Lifespan Fitness**: its brand family includes "CORTEX, delivering high-quality, affordable strength gear, and Regen8, introducing advanced recovery equipment" — [Lifespan Fitness](https://www.lifespanfitness.com.au/pages/about-us) (search snapshot). Amazon AU price points: Lifespan SM-120 spin bike A$429 (RRP A$549); CORTEX Revolock V2 48 kg A$499; CORTEX GS7 multi-station A$2,016.54 (search snapshots; see the product sections).
+- **Everfit**:
+  - Wholesaled on Dropshipzone's sports & fitness catalogue (e.g. an Everfit walking pad) — [Dropshipzone](https://resources.dropshipzone.com.au/sports-fitness.html?cat=1416) (search snapshot). Brand ownership was not confirmed.
+  - Seen at Harvey Norman (A$87/A$110), Bunnings marketplace (A$107), Kmart marketplace (A$114.90 for 40 kg sets; A$259.95 for the 2×24 kg dial pair; A$52.95 for a 16 kg kettlebell), JB Hi-Fi and Woolworths — [Harvey Norman](https://www.harveynorman.com.au/everfit-weight-adjustable-dumbbell-set-40kg.html), [JB Hi-Fi](https://www.jbhifi.com.au/products/everfit-40kg-adjustable-dumbbells-set-kettle-bell-weight-plates-barbells-gym), [Woolworths](https://www.woolworths.com.au/shop/productdetails/1123824995/everfit-40kg-adjustable-dumbbell-barbell-set-weight-plates-home-workout) (search snapshots).
+  - Amazon AU prices: spin bikes A$174.27–198.95, rowers A$285.95–319.95, 2×24 kg dial pair A$262.95.
+- **Kmart**:
+  - Own-brand Anko Electric Treadmill A$279 (was A$399).
+  - Kmart "Spin Bike" A$159 clearance (A$249 regular).
+  - 12 kg kettlebell A$29 clearance (A$39); Anko Adjustable Weight Kettlebell Set A$29.
+  - Third-party Marketplace sellers fill the rest: Everfit (Aisle Six), Centra (Sello Products), Powertrain (Klika Group; 24 kg dumbbell A$595, air rower A$699), Fitness Master (Salesbay), Advwin and Costway.
+  - Kmart's free delivery over A$65 excludes Marketplace-seller items.
+  - Links: [Kmart treadmill](https://www.kmart.com.au/product/electric-treadmill-43547005/), [Kmart spin bike](https://www.kmart.com.au/product/spin-bike-43527007), [Kmart kettlebell](https://www.kmart.com.au/product/kettle-bell---12kg/2666324) (search snapshots).
+- **Kogan Fortis**: walking pad A$204/A$214 (SRP A$389.99; other snapshots A$169–209); walking pad with incline A$189/A$199; 2×24 kg dial dumbbells A$259 (Kogan First) — [Kogan](https://www.kogan.com/au/buy/fortis-foldable-walking-pad-treadmill-fortis-b/) (search snapshot).
+- **Amazon AU, other recurring sellers** (prices as snapshotted in the product sections):
+  - Fitness Master, LSG, ADVWIN, FitnessLAB, CANPA, VEVOR.
+  - HCE (cable rack A$599 + A$44.99 delivery), BRIXX (100 kg bumpers A$400).
+  - Centra, Proflex, Yes4All, Amazon Basics, PROIRON (neoprene kettlebells from A$45.99), JOROTO, Merach, FINEX and Ouroad.
+- **Other channels:** Bunnings LSG Steps walking pad A$189 — [BuyWisely](https://buywisely.com.au/au/product/lsg-steps-walking-pad-under-desk-treadmill); eBay AU, a Brisbane seller's new Advwin 3-in-1 walking pad A$409.95 + A$10 postage (older snapshot) — [PriceMe/eBay summary](https://www.priceme.com.au/Advwin-Walking-Pad-Treadmill-Home-Treadmill/p-919599439.aspx) (search snapshot).
+
+### Inferences
+- **The floor is set by container-scale importers**, so there is no "brand premium" for a Marketplace importer to undercut except where the floor product is heavy and delivery-priced (plates, 40 kg dial pairs, racks), or where the AU floor is thin (2×40 kg dial pairs at A$449.99+).
+- **Kmart's own label sets a hard ceiling** on kettlebells (≈A$3.25/kg regular) and cheap cardio (A$159–279).
+- **Kogan's Fortis pricing (A$169–214) makes walking pads a parity market.**
+
+### Gaps
+- rebel's in-store/online fitness-equipment prices were not captured, and no 2025–26 Bowflex AU pricing or distribution data was found.
+- **Amart Sports**: not researched. I believe the stores were converted to rebel years ago (unverified), so it is likely not a current channel.
+- Temu AU prices could not be retrieved, and no Big W or current Aldi Special Buys fitness prices were found.
+- Market shares by brand are unavailable; the above is inferred from listing presence only.
+
+## How does the freight weight/measure rule (LCL revenue tonne = 1 CBM or 1,000 kg, whichever is greater) and 20ft payload limits change landed cost for dumbbells/plates? Quantify.
+
+### Takeaway
+The weight rule only bites hard on genuinely dense iron.
+
+**LCL:**
+- Cast-iron plates (≈2,550 kg/CBM shipped) are billed per tonne at ≈2.5× what their volume would cost.
+- Bumper plates (≈1,030 kg/CBM) and kettlebells (≈1,070 kg/CBM) are ≈1.03–1.07×.
+- Dial dumbbells (≈870 kg/CBM) are billed on volume.
+
+**FCL:** the binding constraint is the road/container cargo limit (21.8–24.3 t for a 20GP depending on state). A 20GP of plates or dumbbells "fills" at ≈21–25 t, using only ≈8 CBM (cast iron) to ≈21–25 CBM (bumpers, dial dumbbells) of ≈28 usable CBM.
+- Base cost is ≈A$0.25–0.27 per kg all-in (≈A$25–28 per 100 kg set; ≈A$24 per 2×40 kg pair; ≈A$15 per 2×24 kg pair), i.e. 9–12% of landed cost.
+- A 40ft is the wrong box for iron: Australian cargo limits for 40GP/40HC (20.0–22.8 t) are no higher than a 20GP, so the cost per kg nearly doubles (≈A$0.43–0.49/kg).
+
+### Cited Findings
+- **ICE Cargo state limits** ("general guide only"):
+
+  | Container | NSW | VIC | QLD/SA/WA/TAS |
+  |---|---|---|---|
+  | 20ft GP cargo max | 24.3 t | 23.8 t | 21.8 t |
+  | 40ft GP cargo max | 22.8 t | 22.3 t | 20.3 t |
+  | 40ft HC cargo max | 22.5 t | 22.0 t | 20.0 t |
+  | Max gross incl. container | 26.5 t | 26 t | 24 t |
+
+  A 6-axle semi-trailer is limited to 42.5 t total, and loads must be evenly distributed. The Tasmanian 40ft figures on the page look erroneous. Source: [ICE Cargo](https://icecargo.com.au/transport-options/) (read directly).
+- **LCL billing:** LCL minimum and billing are "1 cbm or 1,000 kg, whichever is greater" (undated price list cited in the parallel landed-cost notes) — [australiatrade.com.au](https://australiatrade.com.au/shipping/price/imports/index.html).
+- **2026 ocean rates:**
+  - 20GP USD 2,205–2,695 and 40GP USD 4,320–5,280 (Oct 2026) — [Sino-Shipping](https://www.sino-shipping.com/country-guides/freight-from-China-to-australia/).
+  - 40HQ USD 4,100–4,600 (29 Jun 2026) — [KLN](https://info.oceania.kln.com/customer-advisory/fcl-shipping-rates-from-china-to-australia-july-2026-outlook).
+  - LCL USD 50–150/cbm — [Welltrans](https://welltrans-logistics.com/?p=3741) (search snapshot) — and USD 60–280/cbm — [ExFreight](https://www.exfreight.com/shipping-from-china-to-australia/) (search snapshot).
+- **Listed container loads:**
+  - Walking pad: 690 per 40HQ (Ypoo).
+  - Magnetic rower: 200 per 20GP and 480 per 40HQ (Deqing Sister).
+  - Spin bike: 224 per 20GP and 544 per 40HQ (Todo).
+  - Sources: [Ypoo](https://ypoosports.en.made-in-china.com/product/mOwTjiXHZhAG/China-Factory-Wholesale-Smart-Customized-Home-Gym-LED-Screen-Foldable-Walking-Pad.html), [Deqing Sister](https://jdmsports.en.made-in-china.com/product/hFzAgGcXhbtH/China-2025-Fitness-Equipment-Space-Saving-Foldable-Rower-Magnetic-Rowing-Machine.html), [Todo](https://todofit.en.made-in-china.com/product/DFAagouchvWf/China-New-Body-Building-Fitness-Magnetic-Exercise-Spinning-Gym-Home-Spin-Bike.html).
+
+### Inferences
+These use the base freight assumptions from the core section: 20GP all-in A$5,964; 40HQ all-in ≈A$9,695 (USD 4,500 + A$3,200 destination, an assumption); LCL A$244/RT + A$900 per shipment.
+
+**Per-kg freight by box:**
+
+| Box | All-in cost per kg | Load basis |
+|---|---|---|
+| 20GP | A$0.274 | 21.8 t (QLD/SA/WA) |
+| 20GP | A$0.251 | 23.8 t (VIC) |
+| 20GP | A$0.245 | 24.3 t (NSW) |
+| 40HQ | A$0.43–0.49 | 20.0–22.5 t, about 1.75× the 20GP per kg |
+
+**LCL variable charge per unit:**
+
+| Item | Shipped density | Billed basis | Charge | Volume-only charge | Uplift |
+|---|---|---|---|---|---|
+| 100 kg cast-iron plate set (0.04 CBM, 102 kg) | ≈2,550 kg/CBM | 0.102 RT (weight) | A$24.92 | A$9.77 | ×2.55 |
+| 100 kg bumper set (0.10 CBM, 103 kg) | ≈1,030 kg/CBM | 0.103 RT | A$25.17 | — | ×1.03 |
+| 2×24 kg dial pair (0.06 CBM, 52 kg) | ≈870 kg/CBM | 0.06 RT (volume) | A$14.66 | — | ×1.00 |
+| Walking pad | ≈260 kg/CBM | volume | — | — | none |
+
+**20GP capacity at 21.8 t (vs ≈28 usable CBM):**
+
+| Item | Units by weight | Units by volume | CBM used | Binding limit |
+|---|---|---|---|---|
+| 100 kg cast-iron sets | 213 | 700 | ≈8.5 (≈70% of the box empty) | weight |
+| 100 kg bumper sets | 211 | 280 | ≈21 | weight |
+| 2×24 kg dial pairs | 419 | 466 | — | weight (both limits close) |
+| Walking pads | 854 | 284 | — | volume |
+
+**Freight as a share of landed cost (base case):**
+
+| Item | 20GP | LCL |
+|---|---|---|
+| 100 kg bumper set | A$28.40 (12%) | A$43.17 (17%, 50 sets) |
+| 2×40 kg dial pair | A$24.34 (9%) | A$42.43 (14%, 50 pairs) |
+| 2×24 kg dial pair | A$14.91 (10%) | A$23.66 (14%, 100 pairs) |
+
+**Practical rules:**
+- Ship iron in 20GPs, not 40s.
+- Mix dense iron with a bulky light SKU only if the light SKU is itself profitable (none in this category is).
+- Fill to the destination state's limit: NSW/VIC allow ≈2–2.5 t more cargo than QLD/WA, i.e. ≈8–10% lower freight per kg.
+- Overweight boxes trigger road permits or transloading.
+- For Marketplace resale, the same weight is an advantage: buyers collect, while online rivals pay courier freight on 50–100 kg parcels. HCE charges A$44.99 delivery on a cable rack, and some Amazon steel listings add ≈A$50–130 (search snapshot, see product 4).
+
+### Gaps
+- Carton CBM and weight per 100 kg bumper set, cast-iron set and 40 kg dial pair are assumptions.
+- No 2026 per-W/M Australian CFS tariff was found.
+- Whether specific carriers impose overweight surcharges on 20GPs above ≈18–20 t on the China–Australia lane was not checked.
+
+## Are walking pads/treadmills in scope for EESS/RCM? Do any Anti-Dumping Commission measures on Chinese steel products apply?
+
+### Takeaway
+**Walking pads.**
+- They are mains-powered household equipment, so they are **in-scope electrical equipment** under the EESS.
+- The EESS risk-level schedule (v4.2, aligned to AS/NZS 4417.2:2020) lists no treadmill or exercise-equipment class, so they default to **Level 1**. That still requires:
+  - an Australian Responsible Supplier registered on the EESS database (A$231.91/yr from 1 Jul 2025);
+  - RCM marking;
+  - English-language evidence that the product meets the relevant standard (kept 5 years);
+  - EMC compliance under the same RCM scheme.
+- Walking-pad remotes that use coin cells also trigger the **ACCC mandatory button/coin battery standards** (in force since 22 Jun 2022).
+- Spin bikes and rowers with battery consoles are outside EESS (under 50 V) but the same battery rule applies if they use coin cells.
+
+**Anti-dumping.**
+- The 2026 Dumping Commodity Register lists Chinese **steel inputs** — rebar, hot-rolled coil, certain flat-rolled steel, corner beads/angles, welded mesh, precision pipe and tube.
+- No measure covers finished fitness equipment (tariff 9506.91), so no anti-dumping duty is expected on dumbbells, plates, racks or benches. Importers must still self-assess.
+
+### Cited Findings
+- **EESS scope and levels:**
+  - In-scope equipment is rated above 50 V AC RMS (or 120 V ripple-free DC) and below 1,000 V AC RMS, and is "designed or marketed as suitable for household, personal or similar use".
+  - Level 1 equipment must "be electrically safe and meet the relevant standard", "be marked with the Regulatory Compliance Mark (RCM)", "have documentary evidence in English, to show that the item meets the relevant standard", and "be linked to the registered responsible supplier"; evidence is kept for 5 years.
+  - Level 2 adds equipment registration and a compliance folder; Level 3 adds a certificate of conformity.
+  - The equipment-class list (air conditioners … massage appliance … power supply or charger … water heater) contains no treadmill or exercise class.
+  - Where wording differs, "the current latest published AS/NZS 4417.2 wording overrides".
+  - Source: [EESS In-scope equipment definitions and risk levels v4.2 (PDF)](https://www.eess.gov.au/wp-content/uploads/2023/02/EESS-Inscope-Equipment-Definitions-and-Risk-Levels-v4.2-.pdf) (read directly; text-searched for "treadmill", "exercise", "fitness" — none found).
+- **Level 1 page:** Level 1 equipment "can only be offered for sale by a Responsible Supplier registered in the EESS Registration Database"; product listing is voluntary — [EESS Level 1](https://www.eess.gov.au/registration/registration-in-scope-electrical-equipment/level-1/) (search snapshot).
+- **Who can register:** the Responsible Supplier must be an AU/NZ entity with an ABN (or NZ IRD number); overseas companies and "agents" cannot register — [EESS Responsible Supplier](https://www.eess.gov.au/registration/registration-responsible-supplier/) (search snapshot).
+- **Fees from 1 July 2025:** Responsible Supplier A$231.91/yr; Level 2/3 equipment registration A$86.91 (1 yr), A$173.83 (2 yr), A$434.56 (5 yr) — [EESS fees](https://www.eess.gov.au/registration/registration-fees/) (search snapshot).
+- **2026 amendment:** AS/NZS 4417.2:2020 Amendment 1:2026, published 12 Feb 2026, adds five categories to the Level 2/3 list with a 12-month transition. The excerpt seen named EV charging equipment, battery storage and portable power supplies, not treadmills; the full list was not seen — [JJR Lab](https://www.jjrlab.com/news/as-nzs-4417-2-2020-amd-1-2026-australia-and-new-zealand.html) (search snapshot).
+- **Certification cost reference (dated):** a 2017 certifier offer to certify safety and EMC for an inclusive A$865 — [SAA Approvals newsletter 2017](https://www.saaapprovals.com.au/newsletter-1-2017/) (search snapshot).
+- **Supplier certifications:** the Ypoo walking pad lists CE/RoHS/GS/EN957/CCC but not SAA/RCM — [MIC](https://ypoosports.en.made-in-china.com/product/mOwTjiXHZhAG/China-Factory-Wholesale-Smart-Customized-Home-Gym-LED-Screen-Foldable-Walking-Pad.html). Zhejiang Todo lists SAA among company certifications — [MIC](https://todofit.en.made-in-china.com/product/DFAagouchvWf/China-New-Body-Building-Fitness-Magnetic-Exercise-Spinning-Gym-Home-Spin-Bike.html).
+- **Button/coin batteries:**
+  - The ACCC mandatory standards apply to products and accessories containing button/coin batteries "such as remote controls", for new and second-hand items supplied from 22 June 2022 (one-off private consumer sales excepted).
+  - They require secure battery compartments, warnings and compliance testing — [ACCC Product Safety](https://www.productsafety.gov.au/business/search-mandatory-standards/button-and-coin-batteries-mandatory-standards/products-containing-button-and-coin-batteries-mandatory-safety-standard) (search snapshot).
+  - Penalties were cited in 2021 as up to A$10m for businesses — [Clayton Utz](https://www.claytonutz.com/insights/2021/july/countdown-continues-until-strict-button-battery-standards-become-mandatory) (search snapshot; current maxima not re-checked).
+- **ACCC walking-pad recalls:** none found on productsafety.gov.au in search results (only mobility and baby-walker recalls appeared) — [productsafety.gov.au search](https://www.productsafety.gov.au/node/18027) (search snapshot).
+- **ADC Dumping Commodity Register, China entries (2026):**
+  - Steel reinforcing bar: IDD 13 Apr 2026 → 13 Apr 2031 — [DCR rebar](https://www.industry.gov.au/sites/default/files/adc/measures/2026-09/dcr-steel-reinforcing-bar.pdf).
+  - Hot-rolled coil (incl. alloy/patterns in relief): IDD/ICD from 4–5 May 2026 → 2031 — [DCR HRC](https://www.industry.gov.au/sites/default/files/adc/measures/2026-06/hot-rolled-coil-steel-alloy-and-patterns-in-relief.pdf).
+  - Certain flat rolled steel products: DSA/CSA 24 Jun 2026 — [DCR flat rolled](https://www.industry.gov.au/sites/default/files/adc/measures/2026-07/dcr-certain-flat-rolled-steel-products.pdf).
+  - Steel corner beads and angles: IDD/ICD 4 May 2026 → 2031 — [DCR corner beads](https://www.industry.gov.au/sites/default/files/adc/measures/2026-09/dcr-steel-corner-beads-angles.pdf).
+  - Certain welded steel mesh sheets: DSA 8 Aug 2026 — [DCR mesh](https://www.industry.gov.au/sites/default/files/adc/measures/2026-09/dcr-certain-welded-steel-mesh-sheets.pdf).
+  - Precision pipe and tube — [DCR PPT](https://www.industry.gov.au/sites/default/files/adc/measures/2025-04/dcr_-_precision_pipe_and_tube_steel.docx).
+  - All via search snapshots. The register says the Commission does not advise whether particular goods are covered, so importers self-assess. Some 2026 files reportedly use the name "Australian Trade Remedies Commission" (not verified).
+- **Tariff:** 9506.91.00 is shown at 5% general / Free under ChAFTA with origin evidence — [Treayo](https://treayo.com/en/hs/australia/95069990) (search snapshot; official Schedule 3 page returned 403).
+
+### Inferences
+- **Walking-pad compliance cost:**
+  - Budget is A$1,500–8,000 per model (base A$4,000; an assumption — the only price found is the dated A$865 bundle) to obtain or verify a test report to AS/NZS 60335.1 plus the applicable Part 2 and EMC, and to RCM-label it.
+  - Add A$231.91/yr Responsible Supplier registration and 3–8 weeks lead time (assumption).
+  - Coin-cell remote: either fund compliance testing and secure, screw-fastened compartments with warnings (≈A$1,000–2,500, assumption), or specify an AAA-powered remote. AAA cells are not button/coin cells — an inference to confirm against the standard's definition.
+  - No lithium battery, so no dangerous-goods shipping for mains walking pads. App/Bluetooth models also need ACMA radiocommunications compliance under the same RCM regime.
+- **Other SKUs:** spin bikes and rowers need only a check that consoles use AA/AAA, not CR2032. Free weights, racks, benches and bags have no mandatory Australian standard identified. Wooden water rowers may draw DAFF timber scrutiny (covered by the landed-cost researcher).
+- **Anti-dumping:** no anti-dumping or countervailing duty is expected on finished 9506.91 fitness goods. The risk would only arise if someone imported loose steel tube or plate as raw stock, or if the ADC extended a measure to downstream goods (no evidence of that).
+
+### Gaps
+- Could not read the full AS/NZS 4417.2 Amendment 1:2026 category list (paid standard), so whether treadmills moved to Level 2/3 in 2026 is unconfirmed.
+- The exact AS/NZS 60335 Part 2 applicable to motorised walking pads was not established.
+- No 2026 Australian lab quote for walking-pad RCM testing was found.
+- The ABF Schedule 3 rate for 9506.91.00 was not read on the official page. It is also unknown whether 9506 lines were among the 457 "nuisance" tariffs abolished on 1 July 2024; if so the general rate would be Free, which matters only for the no-CoO sensitivity.
