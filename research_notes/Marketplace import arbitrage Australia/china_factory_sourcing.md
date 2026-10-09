@@ -14,18 +14,23 @@
 ## 1. Per-product: named suppliers, factory-direct FOB price ranges, carton data, and industrial clusters
 
 ### Takeaway
-Made-in-China.com (MIC) and Alibaba listing pages give a dense, citable price map. For most target categories, factory-gate list prices sit well below an AUD $100–400 resale point:
+Made-in-China.com (MIC) and Alibaba listing and detail pages give a dense, citable price and carton map. For most target categories, factory-gate list prices (USD) sit well below an AUD $100–400 resale point:
 - walking pads ~$40–75
 - gaming chairs ~$17–40
 - mesh office chairs ~$25–60
 - dual-basket air fryers ~$27–46
 - spin bikes ~$51–76
 - 3×3 m gazebos ~$22–85
+- 12" portable gas pizza ovens from ~$47.50
 - compressor camping fridges ~$82–166
 - robot vacuums ~$85–115
 - mid-range massage chairs ~$210–550
 
-Bulky goods carry heavy freight per unit: rooftop tents measure ~0.86 m³ and 83 kg per carton. Many low-MOQ listings come from traders, and the self-reported company data on audited pages is often internally inconsistent.
+Freight intensity (m³ of carton per US$100 of FOB value) differs by more than an order of magnitude across categories, from ~0.01–0.02 to ~0.4–0.7:
+- **Freight-light**: robot vacuums (2,900/40HQ), power stations, compressor fridges (355–375/40HQ), desk frames
+- **Freight-heavy**: office/gaming chairs, 8D massage chairs (56/40HQ), kids 24V UTVs (120/40HQ), rooftop tents (~79/40HQ)
+
+Many low-MOQ listings come from traders. Even TÜV/SGS/BV-audited supplier pages often contain contradictory self-reported staff, area and capacity figures.
 
 ### Cited Findings
 
@@ -243,6 +248,15 @@ Bulky goods carry heavy freight per unit: rooftop tents measure ~0.86 m³ and 83
   - Ningbo YoungHunter industrial and trading: $519–699
   - Shaoxing Yingfei Leisure Products (MIC-Mfr+Trd): hydraulic $719–832
 
+#### Camping: canvas swags (suppliers seen in Tianjin, Ningbo, Qingdao)
+- **CNtrail Camp & Outdoor Products Co., Ltd.** (Tianjin; type n/s; **not audited**) lists many explicitly "Australia Style" canvas swags:
+  - double swag CSW9002 $95–200, MOQ 1
+  - "King Double Dome Swag" CSW9001 $98–200, MOQ 1
+  - single, heavy-duty and printed swags, MOQ 10–20 (negotiable or $150–300)
+- Ningbo YoungHunter industrial and trading Co., Ltd (Audited, **Name flag**): "Australian Market" 2-person canvas swag tent $99–139, MOQ 1
+- Qingdao Smart Industrial: double camping tent swag, negotiable, MOQ 100
+- — [MIC Camping Swag](https://www.made-in-china.com/products-search/hot-china-products/Camping_Swag.html)
+
 #### Camping: pop-up gazebos (cluster: Ningbo/Shaoxing/Hangzhou in Zhejiang)
 - Range of listings:
   - Ningbo Unitent Outdoor Products Co., Ltd. (MIC-Mfr+Trd, Audited): 3×3 m pop-up with side walls $33, MOQ 100 sets
@@ -298,7 +312,17 @@ Bulky goods carry heavy freight per unit: rooftop tents measure ~0.86 m³ and 83
   - Suzhou Tuoshenghe (MIC-Mfr+Trd): portable $59.90, MOQ 500
   - Jiangmen SHT Metal Products (**MIC-Mfr**): built-in 5-burner $295–495
   - Foshan Shunde Deyao Outdoor Metal Products (MIC-Mfr+Trd): 4-burner countertop $262.75–298.58; stainless gas pizza oven/BBQ $603–636.50
-- Pizza ovens: the MIC page was dominated by commercial deck/conveyor ovens (e.g., Guangzhou Astar gas deck $366; Heavybao electric $72.99–75.99). No consumer portable (Ooni-style) factory pricing was captured — [MIC Pizza Oven](https://www.made-in-china.com/products-search/hot-china-products/Pizza_Oven.html)
+- Pizza ovens: the generic MIC "Pizza Oven" page was dominated by commercial deck/conveyor ovens (e.g., Guangzhou Astar gas deck $366; Heavybao electric $72.99–75.99) — [MIC Pizza Oven](https://www.made-in-china.com/products-search/hot-china-products/Pizza_Oven.html)
+- **Consumer portable gas pizza ovens (Ooni-style category)** — [MIC Portable Pizza Oven](https://www.made-in-china.com/products-search/hot-china-products/Portable_Pizza_Oven.html):
+  - **Guangzhou Hengfu Hardware Technology** (**MIC-Mfr**, Audited): 12" portable gas pizza oven **$47.50–49, MOQ 200**
+  - Suzhou Rdit Commercial (Audited): 12" tabletop gas oven $70–90, MOQ 738
+  - Guangzhou R&M Machinery: pellet/LPG mini oven $108–117, MOQ 1
+  - BestBake Machinery Technology (Zhaoqing) (MIC-Mfr+Trd): portable gas oven $120–150, MOQ 370
+  - Shandong Shenglang Kitchen (MIC-Mfr+Trd): portable outdoor oven $125–130, MOQ 50
+  - GGMGASTRO (Qingdao) International (**Name flag**): 16" stainless gas oven $174–188, MOQ 50
+  - Guangzhou Rebenet Catering Equipment Manufacturing: 16" 27,000 BTU gas oven $201–213, MOQ 5
+  - HeCheng Co., Ltd (MIC-Mfr+Trd): $550–600, MOQ 5
+  - None of the listings was described as Ooni-style, and size is rarely stated
 
 #### Office: ergonomic and gaming chairs (cluster: Anji, Huzhou, Zhejiang; also Foshan, Tianjin, Langfang/Bazhou in Hebei)
 - Ergonomic mesh chairs — [MIC Ergonomic Office Chair](https://www.made-in-china.com/products-search/hot-china-products/Ergonomic_Office_Chair.html):
@@ -503,6 +527,10 @@ Bulky goods carry heavy freight per unit: rooftop tents measure ~0.86 m³ and 83
   - Changzhou Merry Ebike (MIC-Mfr+Trd, CE noted 2021): 750W/1000W fat-tyre $700–1,000
   - **No listing showed EN 15194**
   - — [MIC Electric Bike](https://www.made-in-china.com/products-search/hot-china-products/Electric_Bike.html)
+- **E-scooters (kick-style)**: MIC results are dominated by moped-style, EEC and 1500W/72V "scooters" from Wuxi (Jiangsu) and Shanghai. Kick-scooter-type listings:
+  - Wuyi Jinyue Engine Science and Technology (Zhejiang, Audited): fat-tyre kick scooter, 30 km range, $138–150, MOQ 1
+  - Zhejiang Yongkang Sportward Enterprises (MIC-Mfr+Trd, Audited): $296, MOQ 50
+  - — [MIC Electric Scooter](https://www.made-in-china.com/products-search/hot-china-products/Electric_Scooter.html)
 - Australian compliance:
   - In December 2025 the Commonwealth agreed to reinstate EN 15194 for imports (25 km/h motor cut-off, 250W limit, pedal-assist only, no throttle) — [Bicycle Network](https://bicyclenetwork.com.au/newsroom/2025/12/03/feds-return-to-euro-e-bike-standard/)
   - Industry experts warn that once a bike is imported it can be sold without meeting safety benchmarks, and that the import check is effectively a self-declaration — [Lilydale Star Mail](https://lilydale.mailcommunity.com.au/news/2026/02/17/new-e-bike-regulations-fall-short-due-to-loophole-industry-experts-warn/)
@@ -520,20 +548,20 @@ Bulky goods carry heavy freight per unit: rooftop tents measure ~0.86 m³ and 83
 
 | Product | Typical listed band (MOQ) | Strong candidates (label) |
 |---|---|---|
-| Adjustable dumbbell 24–40 kg (per set/piece, unit ambiguous) | $32–56 (10–500) | Hefei Bodyup; Nantong Get-Fit; Nantong Vigor (MIC-Mfr+Trd) |
-| Home power rack | $150–305 (10–30) | Nantong Jingyang (MIC-Mfr); Linefar (MIC-Mfr+Trd) |
+| Adjustable dumbbell 24–40 kg (likely per single dumbbell; ~27 kg cartons) | $32–56 (10–500); a pair ≈ 2× | Hefei Bodyup ($38.80→$32 tiers; 13 staff); Nantong Get-Fit; Nantong Vigor (MIC-Mfr+Trd) |
+| Home power/half rack | $95–305 (10–30) | Nantong Tengtai half rack $95–105 (claims 150 staff, has a trading arm); Linefar (MIC-Mfr+Trd); Nantong Jingyang $150–155 (MIC-Mfr but 22 staff) |
 | Adjustable bench | $50–117 (20–50) | Nantong Wekeeping, Nantong Vigor, Nova Fitness (MIC-Mfr+Trd) |
 | Rowing machine | $82–85 magnetic (100); $130–400 water/air | Zhejiang Ypoo (MIC-Mfr+Trd) |
 | Walking pad | $40–75 (10–200); premium $86–130 | Topko; Yongkang Chochi; Zhejiang Ypoo; Zhejiang Todo |
-| Spin bike | $51–76 (50–224) | Todo; Tingjian; Deqing Sister (MIC-Mfr+Trd) |
-| 12V compressor fridge (~30–60 L) | $82–166 (10–100) | Foshan Alpicool; Huzhou Transtec (MIC-Mfr+Trd) |
+| Spin bike | $51–76 (50–224) | Todo; Tingjian; Deqing Sister ($64.50→$61.80; 523/40HQ) |
+| 12V compressor fridge (~30–60 L) | $82–166 (10–100); Secop-compressor 35 L ≈ $268–295 | Foshan Alpicool; Huzhou Transtec 92 L $145–149 (52 staff); Qingdao Smad (Secop/Danfoss) |
 | Power station ~1 kWh LiFePO4 | $288–502 (10–20) | Shenzhen Meco; Mica Power (data conflicts) |
 | Rooftop tent | $399–965 (5–10) | Shanghai Remaco; Changzhou Ruizhan |
 | 3×3 m pop-up gazebo | $22–85 (10–100) | Ningbo Unitent; Shaoxing ShunXin (MIC-Mfr+Trd) |
 | Rattan dining/lounge set | $80–190 (10–100) | Shaoxing OLE; Foshan Shunde Ciao |
 | Sun lounger | $65–90 (20–50) | Guangdong Maryard; Foshan Shunde Ciao |
 | Gas BBQ 3–5 burner | $89–153 (200–536) | Guangzhou Hengfu (MIC-Mfr); Zhongshan Jinchen |
-| Ergonomic mesh chair | $25–60 (10–100) | Foshan Boke; Foshan Yolanda |
+| Ergonomic mesh chair | $25–60 (10–100) | Foshan Boke ($40→$35 tiers; 0.279 m³ carton); Foshan Yolanda |
 | Gaming chair | $17–40 (50–200) | Anji Yike ($24→$20 tiers) |
 | Electric standing desk | $38–79 single-motor; $89–209 dual (10–200) | Jiecang frame; Lumi Legend; Prorials |
 | Robot vacuum | $85–115 (100–1,000) | Ultron Foshan; Huizhou Simba |
@@ -545,17 +573,47 @@ Bulky goods carry heavy freight per unit: rooftop tents measure ~0.86 m³ and 83
 | Large/heavy-duty dog crate | $38–92 (100–500) | Tianjin Smart Pets; Suzhou Xinyue |
 | Cat tree | $14.68–38.50 (50–500) | Hangzhou Tianyuan; Hangzhou Rena |
 | Massage gun (mid) | $23–59 (2–1,000) | Wenzhou Hexi; Tianjin Konbest; Shenzhen Welltek |
-| Massage chair (mid) | $210–550 (1–15) | Fujian Jingtuo; Fuan Leercon |
+| Massage chair (mid) | $210–550 (1–128) | Fujian Jingtuo 8D $250→$210 at 50+; Fuan Leercon 4D $500→$445 at 128+ (both ~0.9 m³ cartons) |
+| Portable gas pizza oven 12–16" | $47.50–213 (5–738) | Guangzhou Hengfu (MIC-Mfr) $47.50–49 at MOQ 200; Shandong Shenglang $125–130 |
+| Canvas swag (double) | $95–200 (1–20) | CNtrail (Tianjin, not audited); Ningbo YoungHunter $99–139 |
+| E-scooter (kick-style) | $138–296 (1–50) | Wuyi Jinyue; Zhejiang Yongkang Sportward (MIC-Mfr+Trd) |
 
-- **Carton economics** (my calculations; I assume ~68 m³ usable in a 40HQ, ~58 m³ in a 40GP and ~28 m³ in a 20GP, which are rules of thumb, not sourced):
-  - Gaming chair 0.092 m³ → ~740 per 40HQ
-  - Advwin walking pad 0.083 m³ → ~820
-  - generic walking pad 0.120 m³ → ~565
-  - WalkingPad G1 0.205 m³ → ~330
-  - 1 kWh power station 0.0525 m³ → ~1,295 by volume (≈17 t, within payload)
-  - Rooftop tent 0.860 m³ → only ~79 per 40HQ
-  - Ultron's "1200/2450/2900" loading figures match its small 0.0234 m³ carton across 20GP/40GP/40HQ (28/0.0234≈1,200; 58/0.0234≈2,480; 68/0.0234≈2,900)
-  - Freight per unit therefore varies by ~10× across these categories. Low-CBM items (walking pads, gaming chairs, air fryers, massage guns, power stations) suit a sea-freight arbitrage model far better than rooftop tents or rattan sets.
+- **Carton economics.** CBM figures are computed from the cited cartons. "Units/40HQ" is supplier-stated where marked (S). Otherwise it is my estimate using ~68 m³ usable volume (V) or an assumed ~26 t payload (W), whichever binds. Both are rules of thumb, not sourced.
+  - Supplier-stated loads imply that ~68 m³ is realistic for mid-size cartons:
+    - Deqing Sister 523 × 0.130 = 68.0 m³
+    - Zhehua 120 × 0.567 = 68.0 m³
+    - Ultron 2,900 × 0.0234 = 67.9 m³
+  - Bulky items load less:
+    - Smad fridge 375 × 0.161 = 60.3 m³
+    - Jingtop massage chair 56 × 0.953 = 53.4 m³
+  - Ultron's "1200/2450/2900" figures match its small 0.0234 m³ carton across 20GP/40GP/40HQ.
+
+| Product (supplier) | Carton m³ / gross kg | FOB unit (USD) | Units per 40HQ | m³ per US$100 FOB (freight intensity) |
+|---|---|---|---|---|
+| Robot vacuum (Ultron) | 0.023 small carton (large carton 0.045 / 6.8 kg) | 106.50–115 | 2,900 (S, small carton) | 0.02 (0.04 large carton) |
+| Power station 1 kWh (Mica) | 0.053 / 13 | 502 | ~1,295 (V); DG cargo | 0.01 |
+| Compressor fridge 35 L (Smad, Secop) | 0.161 / 20.7 | 268–295 | 375 (S) | 0.06 |
+| Desk frame (Jiecang R12R-TH) | 0.069 / 35 | 100–110 | ~740 (W) | 0.07 |
+| Rooftop tent (Wuyi Sensuo) | 0.860 / 83 | 705–750 | ~79 (V) | 0.12 |
+| Compressor fridge 92 L (Transtec) | 0.202 / 22 | 145–149 | 355 (S) | 0.14 |
+| Home half rack (Nantong Tengtai) | 0.137 / 55 | 95–105 | ~470 (W) | 0.14 |
+| Walking pad (Advwin carton, Kmart AU) | 0.083 / 19 | ~40–75 (listings) | ~820 (V) | ~0.15 |
+| Spin bike (Ypoo F2) | 0.193 / ~38+ | 116–139 | ~350 (V) | 0.15 |
+| Adjustable dumbbell (Bodyup, per "set") | 0.055 / 27 | 32–38.80 | ~960 (W) | 0.16 |
+| 3×3 m gazebo (Unitent) | 0.055 / 13.5 | 33 | ~1,236 (V) | 0.17 |
+| Massage chair 4D (Leercon) | 0.913 / 77 | 445–500 | ~60–70 (V) | 0.19 |
+| Air fryer 10 L (Yuecheng) | 0.064 / 7.5 | 33.50 | ~1,060 (V) | 0.19 |
+| Spin bike 6 kg flywheel (Deqing Sister) | 0.130 / 29 | 61.80–64.50 | 523 (S) | 0.21 |
+| Kids 24V 2-seat UTV (Zhehua) | 0.567 / 59.6 | 138–150 | 120 (S) | 0.39 |
+| Massage chair 8D (Jingtop) | 0.953 / 57 | 210–250 | 56 (S) | 0.41 |
+| Gaming chair (Anji Yike) | 0.092 / 12 | 20–24 | ~740 (V) | 0.42 |
+| Mesh office chair (Foshan Boke) | 0.279 / 16.75 | 35–40 | ~244 (V) | 0.74 |
+
+  - **How to read the table.** Per-unit sea freight = container cost ÷ units per 40HQ. Higher "m³ per $100 FOB" means freight is a larger share of landed cost.
+  - Cheap-but-bulky goods are freight-heavy (office/gaming chairs, 8D massage chairs, kids UTVs, low-end spin bikes).
+  - Electronics and appliances are freight-light (robot vacuums, power stations, compressor fridges, desk frames).
+  - Heavy items (dumbbells, racks, desk frames) are weight-bound, not volume-bound.
+  - **Dumbbell price unit**: Bodyup's 27 kg gross per "set" suggests one 24 kg dumbbell per carton. An AU-saleable pair would therefore cost ~2× ($64–78 FOB), and the same weight logic applies to Get-Fit's 25 kg carton. This is an inference to confirm with suppliers.
 - **Hard-to-verify claims**: "manufacturer" labels on MIC are frequently paired with weak evidence. Examples are Wuyi Sensuo (8 staff, founded April 2025) and Mica (18 vs 500 staff). Name flags such as "International Trade" or "Import & Export" sometimes appear alongside MIC-Mfr+Trd labels. Business-type labels should therefore be a first filter only, never proof.
 - **Battery products**: lithium items (power stations, e-bikes, massage guns, robot vacuums) carry dangerous-goods shipping constraints. Mica lists UN38.3, the transport test certification. This adds freight cost and forwarder friction; landed-cost researchers should confirm DG surcharges.
 - **Clusters by listing geography**:
@@ -573,9 +631,17 @@ Bulky goods carry heavy freight per unit: rooftop tents measure ~0.86 m³ and 83
 ### Gaps
 - **Alibaba prices are thin.** Only 4 listings per countrysearch page were readable, and the Alibaba badge tier (Verified vs Verified Manufacturer) could not be read because it renders as an image.
 - **No 1688 CNY prices were collected.** 1688 is Chinese-only and was not fetched, and the search budget ran out.
-- Carton/packing data were **not** found for compressor fridges (only net product dimensions), adjustable dumbbells, power racks, standing desks, air fryers, kids ride-ons, rattan sets, massage chairs, dog crates or trampolines.
-- No factory pricing for **consumer portable pizza ovens** (Ooni-style): the MIC results were commercial ovens, and ImportYeti blocked the Ooni lookup.
-- **Swags** and **aluminium-only dining sets** were not researched separately.
+- Carton/packing data were **not** found for:
+  - complete standing desks with tabletops (only Jiecang's frame carton)
+  - Lumi Legend desks
+  - Jewin air fryers (product size only)
+  - rattan/wicker sets (Queensven gave none; Foshan Sunny's "1 m³ / 10 kg" is implausible)
+  - dog crates, cat trees, trampolines (Lingsha gave none), BBQs, power racks from Jingyang
+  - Alpicool fridges (retail net dimensions only)
+- Global Sources search pages returned HTTP 429 (rate-limited) twice, so no Global Sources "Verified Manufacturer" listings or prices were captured — [Global Sources search](https://www.globalsources.com/searchList/products?keyWord=walking%20pad)
+- Consumer portable pizza ovens: factory list prices were found ($47.50–213 for 12–16" gas units), but no carton data. Ooni's actual supplier is unknown because the ImportYeti Ooni lookup was blocked.
+- Swags: prices come mostly from one non-audited Tianjin supplier (CNtrail) and one Ningbo trader. Canvas weight (gsm) and carton data were not captured.
+- **Aluminium-only dining sets** were not researched separately.
 - Dumbbell prices are ambiguous between per piece and per pair; this needs confirming with suppliers.
 - Cluster share figures (Anji export share, Linhai output, Yongkang treadmill share, Cixi air-fryer share) are contested or unavailable. No official Yongkang walking-pad share was found.
 - The AU gas-appliance certification requirement for BBQs and the electrical-safety (RCM/EESS) requirements for appliances were not researched here.
@@ -594,7 +660,13 @@ Gold Supplier status, plain "Verified" status and Trade Assurance say little abo
 ### Cited Findings
 - **Alibaba business-type disclosure**:
   - Suppliers must disclose manufacturer vs trading company on the Company Profile. A supplier with a factory and an export licence may list both types; one without a factory should be "Trading Company" — [Sino-Shipping guide](https://www.sino-shipping.com/alibaba-step-by-step-sourcing-guide/)
-  - Badge criteria should be confirmed in Alibaba's Help Center. Buyers should open the full verification report and check date, legal entity, assessed address, business type and production lines — [Sino-Shipping guide](https://www.sino-shipping.com/alibaba-step-by-step-sourcing-guide/)
+  - the same guide also suggests reading the company name for its registration city and business focus, and asking follow-up questions about machinery counts — [Sino-Shipping guide](https://www.sino-shipping.com/alibaba-step-by-step-sourcing-guide/)
+- **Badge meaning and registry matching** (Tianwen Network Technology Team guide, 26 Jul 2026):
+  - Gold Supplier is "Not a factory or quality audit. Says the company exists, not that it's good"
+  - Verified Supplier covers "100+ items across eight categories such as production capability, R&D and QC"; "The audit is real but supplier-funded and point-in-time"; "Both badges are programs the supplier pays for"
+  - ask for a colour scan of the business licence (营业执照) with its 18-digit Unified Social Credit Code, and match registered name, legal representative, registered capital, business scope and operating status on GSXT, which has no official English version
+  - "A 'factory' whose business scope only lists wholesale and trading is a trading company"; a "factory address" that isn't the registered one is a warning sign
+  - — [Tianwen Wangluo, "Is Alibaba legit"](https://tianwenwangluo.com/en/is-alibaba-legit/)
 - **Alibaba Verified Supplier mechanics** (Alibaba seller page):
   - a membership tier where a third-party inspection company verifies on site
   - inspection covers business licence, facilities, QC process and R&D capability
@@ -626,6 +698,24 @@ Gold Supplier status, plain "Verified" status and Trade Assurance say little abo
 - **Audited pages still contain contradictory self-reported data.** Examples:
   - Mica: 18 vs 500 employees; 1,982 vs 15,000 m²; founded 2013 vs 2009 — [MIC Mica](https://micapower.en.made-in-china.com/product/RJBpzOYdEkhs/China-Mica-1000W-LiFePO4-Lithium-Cell-Camping-Solar-Generator-Portable-Power-Station-Outdoor-Camping-Home-Power-Bank.html)
   - Wuyi Sensuo: labelled Manufacturer/Factory & Trading with 8 employees, founded April 2025 — [MIC Wuyi Sensuo](https://cnsengsuo.en.made-in-china.com/product/sRLYbixjnohe/China-High-Density-Quick-Setup-Roof-Top-Tent-with-Customized-Configuration-and-Factory-Price.html)
+  - Nantong Jingyang: labelled **Manufacturer/Factory** and **SGS-audited (QIP-ASI264243)** for power racks, yet shows 22 employees, a 1,200 m² plant, 1 QA/QC inspector, 1 year of exports, main market "Domestic", and lists racks outside its main products — [MIC Jingyang](https://jy-fitness.en.made-in-china.com/product/PTIrmdFKXWYV/China-Fitness-Equipment-Squat-Rack-Power-Rack-and-Cage-Comprehensive-Fitness-Training-System.html)
+  - Fuan Leercon: 29 employees vs "300 skilled employees"; 13,000 vs 20,000 m² (TÜV Rheinland MIC-ASR267311) — [MIC Leercon](https://leercon.en.made-in-china.com/product/cPlURYhjbpVy/China-Leercon-4D-Full-Body-Massage-Chair-with-U-Headrest-Pillow-and-LED-Ambience.html)
+  - Fujian Jingtuo: 50 vs ">200" employees; says "We are factory" while labelled Mfr+Trading (TÜV Rheinland MIC-ASR247630) — [MIC Jingtop](https://jingtop.en.made-in-china.com/product/cGHUxKJOaehY/China-Jingtop-8d-Message-Chair-Whole-Body-Massage-Smart-Shiatsu-Vibrating-Zero-Gravity-Recliner.html)
+  - Zhejiang Ypoo: 108 vs 260 employees; 8 vs 4 production lines (TÜV Rheinland MIC-ASR2431394) — [MIC Ypoo](https://ypoosports.en.made-in-china.com/product/vAOpEVSGheWU/China-Ypoo-Spinning-Bikes-6kg-Flywheel-Home-Fitness-Exercise-Spin-Bike-F2-Factory-Price.html)
+  - Hefei Bodyup: 13 employees but claims 10,000–100,000 sets/month (TÜV Rheinland MIC-ASR2591334) — [MIC Bodyup](https://bodyupsports.en.made-in-china.com/product/PfMYiKvhMFcw/China-Adjustable-Dumbbell-24kg-52-5lb-40kg-90lb-Gym-Dumbbell-Fitness-Equipment.html)
+  - Nantong Get-Fit: an office-tower address (12F, 288 Yongfu Rd) despite claiming a >20,000 m² factory (TÜV Rheinland MIC-ASI2541816) — [MIC Get-Fit](https://get-fit.en.made-in-china.com/product/JRUYzwdjnoWi/China-Gym-Equipment-24kg-40kg-Adjustable-Weights-Dumbbell-Sets-for-Body-Building.html)
+- **Which audit firms appear on MIC audited-supplier pages** (observed):
+  - **TÜV Rheinland** (Ultron, Lingsha, Mica, Bodyup, Get-Fit, Transtec, Jiecang, Ypoo, Jingtop, Leercon)
+  - **SGS** (Jingyang QIP-ASI264243; Lumi Legend QIP-ASR2331269; Ningbo Yuecheng QIP-ASI2631401)
+  - **Bureau Veritas** (Shenzhen Zhehua MIC-ASR2221558; Ningbo Jewin MIC-ASR243117)
+  - **CTI** (Wuyi Sensuo)
+  - Several "Audited Supplier" pages name **no auditor and no report ID**, only "audited by an independent third-party inspection agency": Tengtai, Deqing Sister, Unitent, Foshan Boke, Foshan Sunny, Qingdao Smad, Ningbo Fantasticar
+  - — [MIC Lumi Legend](https://lumi2007.en.made-in-china.com/product/RAZrqnXObQpN/China-OEM-ODM-125kg-3-Stage-Brushless-Dual-Motor-Computer-Standing-Table-Ergonomic-Smart-Electric-Height-Adjustable-Sit-Stand-Desk.html); [MIC Zhehua](https://zhehuatoys.en.made-in-china.com/product/WAyRoIiDXlkH/China-24V-Ride-Car-Kids-4X4-Electric-2-Seat-EVA-Wheels-Wholesale-Power-UTV-for-Children.html); [MIC Jewin](https://cnqinyou.en.made-in-china.com/product/kphrcgPTOfVX/China-Hot-Selling-9-5L-Dual-Basket-Air-Fryer-New-Design-Large-Capacity-Visual-Window-High-Quality-Best-Value.html); [MIC Unitent](https://unitent.en.made-in-china.com/product/xGRrBDsHXhkw/China-3X3-Portable-Pop-up-Canopy-Folding-Gazebo-with-Side-Walls.html)
+- **Factory + trading-arm structures are disclosed in some profiles.** Nantong Tengtai (manufacturer, Xianfeng Industrial Park) describes a separate trading company, "Nantong T&T International Co., Ltd.", so the contracting entity may differ from the factory — [MIC Tengtai](https://tt-sports.en.made-in-china.com/product/iJXrVNvHZUWc/China-Gym-Home-Multi-Functional-Fitness-Equipment-Power-Rack-Half-Rack-Squat-Cage.html)
+- **Listing-quality red flags** typical of resellers:
+  - template errors: Ningbo Fantasticar's fridge listing typed as "Microfiber Cleaning Cloth" and "Designed for OLIVER vehicles" — [MIC Fantasticar](https://fantasticlean.en.made-in-china.com/product/FdBGfmtTaZaR/China-Fantasticlean-Portable-45L-Cooler-Box-Caravan-Camping-Boat-Marine-Fishing-12-Volt-Compressor-Car-Fridge-Freezer-20c-to-10c.html)
+  - material mismatches: Queensven's "rattan" set listed as aluminium, with only a "verified business license" badge — [MIC Queensven](https://queensven.en.made-in-china.com/product/JmkUOxadgXrs/China-Rattan-Garden-Sectional-Sofa-Set-Outdoor-Patio-Wicker-Sofa-Garden-Furniture.html)
+- **Counter-example with verifiable scale**: Zhejiang Jiecang (desk frames) shows a Shanghai Stock Exchange listing (Sept 2018), 1,549 employees, a 69,452 m² plant and RMB 382M registered capital (TÜV Rheinland MIC-ASR2531986). Listed status can be cross-checked in exchange filings — [MIC Jiecang](https://jiecang.en.made-in-china.com/product/KOqfYgsblSWR/China-Jiecang-R12r-Th-Electric-Height-Adjustable-Standing-Desk-Frame.html)
 - **GSXT registry check**:
   - GSXT is the national registry run by SAMR; look up the 18-digit Unified Social Credit Code
   - confirm the business scope (经营范围) covers what the supplier claims to make, including import/export rights
@@ -635,13 +725,13 @@ Gold Supplier status, plain "Verified" status and Trade Assurance say little abo
   - the licence QR code should resolve to the GSXT record
   - the registered address may be an office, not the factory
   - — [NewBuyingAgent](https://www.newbuyingagent.com/resources/how-to-read-a-chinese-business-license-and-verify-a-supplier); [FDI China](https://fdichina.com/blog/chinese-business-registration-number-verification/); [QCC KYC on GSXT](https://www.qcckyc.com/blog-detail/gsxt-necips-china-business-registry); [China Justice Observer](https://chinajusticeobserver.com/a/how-to-check-chinese-company-registration-certificate)
-- **Qichacha/Tianyancha**: data is usually cached and not real-time, so critical legal status should be verified against GSXT — [Skillselion Tianyancha skill page](https://skillselion.com/skills/skills.volces.com/tianyancha-cn)
+- **Qichacha/Tianyancha** are commercial aggregators of Chinese registry data. Tianyancha documents an official API at open.tianyancha.com — [PyPI tianyancha SDK](https://pypi.org/project/tianyancha). GSXT is the official SAMR registry — [QCC KYC on GSXT](https://www.qcckyc.com/blog-detail/gsxt-necips-china-business-registry)
 - **US customs data as evidence**: ImportYeti aggregates US bills of lading and shows each supplier's US customers and shipment counts (see Section 5) — [ImportYeti Nantong Ironman](https://www.importyeti.com/supplier/nantong-ironman-sporting-industrial)
 
 ### Inferences
 - **Practical checklist** (ranked by cost-effectiveness):
   1. Prefer suppliers whose MIC/Alibaba audit report names the auditor and has a verifiable ID. Read the report's production-line and headcount pages, not the badge.
-  2. Get the USCC from the business licence and check GSXT. Read 经营范围: production verbs (生产/制造/加工) suggest manufacturing scope; sales-only verbs (销售/批发/贸易) suggest a trader. This keyword heuristic is my own reading — sources only say the scope must cover the claimed products.
+  2. Get the USCC from the business licence and check GSXT. Read 经营范围: production verbs (生产/制造/加工) suggest manufacturing scope; sales-only verbs (销售/批发/贸易) suggest a trader. The Tianwen guide supports the core rule (a scope listing only wholesale/trading means a trading company); the specific Chinese keyword list is my own extension.
   3. Compare the registered address with the factory address in the audit report.
   4. Check self-reported data for contradictions (staff/area/founding).
   5. Look the supplier up on ImportYeti for US brand customers.
@@ -649,11 +739,13 @@ Gold Supplier status, plain "Verified" status and Trade Assurance say little abo
   7. Commission a third-party factory audit (~$210–290/man-day, see Section 6) before the first container.
 - Being a trader is not disqualifying, but it adds margin. Section 4 shows the 1688-vs-Alibaba gap includes trading-company margins. Under-$400 AUD retail items have thin margins, so removing one intermediary layer matters.
 - Years on platform (e.g., Alpicool 11 yrs; Colku 18 yrs; Topko 11–13 yrs) indicate longevity, not factory ownership.
+- Commercial aggregators (Qichacha/Tianyancha) are useful for lawsuits, shareholder links and related-company graphs, which help detect "factory + trading arm" structures like Tengtai/T&T. Legal status should still be confirmed on GSXT itself, because aggregator data may lag. This is my recommendation, not a sourced finding.
 
 ### Gaps
 - I could not access Alibaba's official Help Center definitions of "Verified Manufacturer" vs "Verified Supplier" vs "Verified Pro". Third-party sources disagree on how strict they are.
-- No source confirmed that SGS, Intertek or Bureau Veritas currently perform Alibaba Verified Supplier inspections. Only TÜV Rheinland was named for Alibaba; TÜV Rheinland and CTI were seen on MIC.
-- No authoritative source gives a keyword method for reading 经营范围 to separate manufacturers from traders.
+- No source confirmed which firms currently perform **Alibaba** Verified Supplier inspections beyond TÜV Rheinland. On **Made-in-China**, TÜV Rheinland, SGS, Bureau Veritas and CTI were all observed as auditors (Section 2 findings); Intertek was not seen.
+- The audit report IDs were not verified on the auditors' websites, and the audit reports themselves (production-line photos, headcount verification) were not opened.
+- No authoritative (government/registry) source gives a keyword method for reading 经营范围 to separate manufacturers from traders. Only a sourcing guide states the "wholesale/trading-only scope = trading company" rule.
 
 ## 3. APIs and data sources for programmatic sourcing (free vs paid, cost, what they return)
 
@@ -665,11 +757,11 @@ There is no clean, free official API for factory discovery:
 - Australian shipment-level import data is not publicly available in the way US manifests are.
 
 ### Cited Findings
-- **Alibaba.com Open Platform**:
-  - onboarding: register as developer, apply for review, get app credentials, request specific API permissions
-  - the official catalog includes `alibaba.procurement.supplier.items.get`, which lets buyers pull products from suppliers
-  - — [Aliyun developer article](https://developer.aliyun.com/article/1685611)
-  - developer articles describe `alibaba.product.search` at `api.alibaba.com/openapi/rest` (signed requests, ~2 calls/sec) and a different `gw.api.alibaba.com` route. Sources conflict on method names, hosts and signing — [Aliyun](https://developer.aliyun.com/article/1685611); [Juejin](https://juejin.cn/post/7513183180091260963); [Aliyun product.get](https://developer.aliyun.com/article/1678046)
+- **Alibaba.com Open Platform**: Chinese developer articles describe
+  - a keyword search call `alibaba.product.search` at `api.alibaba.com/openapi/rest` (app key plus access token, signed requests, ~2 calls/sec) — [Aliyun developer article](https://developer.aliyun.com/article/1685611)
+  - a different `/v4/openapi/param2/api/product/search` route on `gw.api.alibaba.com` using OAuth 2.0 — [Juejin](https://juejin.cn/post/7513183180091260963)
+  - a product-detail call `alibaba.product.get` with a different signing scheme — [Aliyun product.get](https://developer.aliyun.com/article/1678046)
+  - These sources conflict on method names, hosts and signing. The source pages could not be re-opened for verification (Aliyun returned 503 on recheck).
   - third-party connectors (e.g., Odoo) use app key/secret to sync listings, orders and inquiries; this is mostly seller-side — [Ecosire Odoo docs](https://docs.ecosire.com/odoo-modules/alibaba)
 - **1688 Open Platform**:
   - has a Partner Development Agreement (2025 V1, updated 7 Nov 2025) with English alongside Chinese — [1688 agreement](https://terms.alicdn.com/legal-agreement/terms/suit_bu1_b2b/suit_bu1_b2b202002111645_28701.html)
@@ -684,9 +776,8 @@ There is no clean, free official API for factory discovery:
   - matyas $7.00/1,000
   - — [Apify memo23](https://apify.com/memo23/alibaba-scraper); [Apify matyas](https://apify.com/matyas/alibaba-scraper/api); [Apify scrapeflow](https://apify.com/scrapeflow/alibaba-scraper); [Apify easyapi](https://apify.com/easyapi/alibaba-product-search-scraper/api)
 - **Chinese company registries**:
-  - Tianyancha official open platform at open.tianyancha.com (API list); per-call fees; no public price found — [PyPI tianyancha SDK](https://pypi.org/project/tianyancha)
+  - Tianyancha official open platform at open.tianyancha.com, with an API list; no public price found — [PyPI tianyancha SDK](https://pypi.org/project/tianyancha)
   - Apify Tianyancha scrapers at $3.00/1,000 records (unofficial) — [Apify Tianyancha](https://apify.com/spider_studio/tianyancha-dynamics)
-  - no official Qichacha pricing found; bulk access is reportedly paid enterprise API — [Skillselion](https://skillselion.com/skills/skills.volces.com/tianyancha-cn)
 - **Customs (bill-of-lading) data**:
   - **ImportYeti**: free version with unlimited searches; covers the United States only — [Capterra ImportYeti](https://www.capterra.co.uk/software/1044829/importyeti)
   - **ImportGenius**: Essentials $125/user/month (25 searches/day, 1 seat); Business $399/user/month — [Capterra ImportGenius](https://www.capterra.com/p/10032153/ImportGenius/reviews/). Plans are tiered Starter/Plus/Premium by data depth and searches/day — [ImportGenius support](https://support.importgenius.com/portal/en/kb/articles/what-are-the-subscription-plans-available-and-what-features-do-they-include)
@@ -704,7 +795,13 @@ There is no clean, free official API for factory discovery:
   - SEO "hot-china-products" pages are fetchable and return price range, MOQ, supplier, business type, audited status and province
   - product detail pages return package size and gross weight, ports, lead time and audit report IDs
   - — [MIC Walking Pad page](https://www.made-in-china.com/products-search/hot-china-products/Walking_Pad.html); [MIC Anji Yike detail](https://ecobeauty.en.made-in-china.com/product/CfGRsNIyXJWp/China-Free-Shipping-Executive-Gaming-Best-Ergonomic-Office-Chairs-with-Lumbar-Support-Headrest.html)
-- **Blocked or limited endpoints** (observed): Alibaba showroom HTTP 410 — [Alibaba showroom](https://www.alibaba.com/showroom/adjustable-dumbbell.html); ImportYeti company pages HTTP 403 — [ImportYeti Ooni](https://www.importyeti.com/company/ooni)
+- **Blocked or limited endpoints** (observed):
+  - Alibaba showroom HTTP 410 — [Alibaba showroom](https://www.alibaba.com/showroom/adjustable-dumbbell.html)
+  - Alibaba `trade/search` returned a blank JavaScript shell with no listings — [Alibaba trade search](https://www.alibaba.com/trade/search?SearchText=adjustable+dumbbell)
+  - Global Sources search returned HTTP 429 (rate-limited) on repeated attempts — [Global Sources search](https://www.globalsources.com/searchList/products?keyWord=walking%20pad)
+  - ImportYeti company pages HTTP 403 — [ImportYeti Ooni](https://www.importyeti.com/company/ooni)
+  - MIC product URLs need the full slug; a code-only URL returned 404 — [MIC code-only URL](https://leercon.en.made-in-china.com/product/WzwUjqiKSRhC/)
+- **Australia's EESS (Electrical Equipment Safety System)** has a free public search covering "EESS equipment registrations / certifications and registered responsible suppliers", with no login needed. The search runs at eessplatform.eess.gov.au; the older equipment.erac.gov.au registration search was replaced by the EESS Platform in October 2024 — [EESS](https://www.eess.gov.au/)
 - **Prompt-injection risk** (observed): one MIC product page contained embedded text addressed to automated extraction tools, which the fetch tool flagged and ignored — [MIC Lingsha detail](https://lsfunjump.en.made-in-china.com/product/zYiUnrVHahkO/China-Funjump-12FT-14FT-16FT-Outdoor-Indoor-Mini-Fitness-Child-Kids-Jumping-Commercial-Recreational-Bungee-Trampoline-for-Sale.html)
 
 ### Inferences
@@ -723,6 +820,8 @@ There is no clean, free official API for factory discovery:
 - Not researched because the search budget ran out: RapidAPI Alibaba/1688 endpoints and pricing, Oxylabs/Bright Data e-commerce scraper pricing, the Aiqicha API, Qichacha official pricing, DHgate, Global Sources API access, and official ImportYeti paid-tier pricing.
 - Volza/ImportGenius coverage of Australian import data (whether real bill-of-entry data or mirror data) was not confirmed. No government source confirming whether AU importer names are publicly released was found.
 - No official, authoritative Alibaba.com API reference was retrieved; developer articles conflict.
+- Third-party guides reportedly describe Alibaba Open Platform onboarding (register as developer, review, app credentials, per-API permission requests) and a buyer-side `alibaba.procurement.supplier.items.get` method. The page carrying these claims could not be identified or re-opened (one candidate returned HTTP 403), so they are unverified.
+- Whether Alibaba.com's terms of service prohibit scraping or systematic retrieval was not verified against the actual terms.
 
 ## 4. 1688 domestic prices vs Alibaba export prices, and how buyers use agents to buy from 1688
 
@@ -730,7 +829,7 @@ There is no clean, free official API for factory discovery:
 1688 listing prices are commonly cited as ~4–30% below Alibaba, and occasionally up to ~40% on commodities, but the gap is poorly measured. Much of it disappears on small orders once these are added:
 - VAT treatment
 - domestic freight
-- agent commission (typically quoted at 5–10%)
+- agent commission (published tiers run ~2–15% by order size; 5–10% is most common)
 - consolidation and inspection
 
 Foreign buyers generally need an agent: 1688 has no official English site and foreigners register as individuals.
@@ -742,16 +841,20 @@ Foreign buyers generally need an agent: 1688 has no official English site and fo
   - WorldFirst's own 1688-vs-Alibaba page says "Sometimes, yes and sometimes no"
   - an illustrative 500 ml bottle example: Alibaba $4.80 vs 1688 $2.70 (~44%), explicitly labelled illustrative
   - — [Yakkyofy, 14 Aug 2026](https://yakkyofy.com/1688-vs-alibaba/)
-  - a WorldFirst comparison table elsewhere gives 10–30% — [Yakkyofy](https://yakkyofy.com/1688-vs-alibaba/); [Fulfillbot](https://fulfillbot.com/blog/alibaba-vs-1688/)
+  - a separate guide also cites WorldFirst's "typically 4–15%, sometimes up to 40%", notes it is a single-source figure from a company that profits when buyers use 1688, says Alibaba's own comparison "concedes 1688 carries more products at lower prices", and says no rigorous side-by-side comparison has been published — [Tianwen Wangluo, 23 Jul 2026](https://tianwenwangluo.com/en/1688-in-english/)
 - **VAT and export rebates**: most 1688 suppliers quote ex-VAT by default; a VAT invoice adds 6–13%. Export quotes are typically zero-rated with refunds of 0–13%. From 1 Dec 2024, export rebates were cancelled for aluminium and copper products and cut from 13% to 9% for certain other categories — [Yakkyofy](https://yakkyofy.com/1688-vs-alibaba/)
-- **Payment/platform fees** (as published July 2026): WorldFirst payment fee up to 0.8% per order, 1688 platform fee 0.2%, card top-up fee 3% — [Tianwen Wangluo guide](https://tianwenwangluo.com/?p=10419)
+- **Payment/platform fees** (WorldFirst rates "accessed July 2026"): WorldFirst payment fee up to 0.8% per order, 1688 platform fee 0.2%, card top-up fee 3%. The 1688 Global app is "the closest thing to an official English 1688" — [Tianwen Wangluo, 23 Jul 2026](https://tianwenwangluo.com/en/1688-in-english/)
 - **1688 buyer protection**: pays 5% of the order, capped at ¥3,000 — [Yakkyofy](https://yakkyofy.com/1688-vs-alibaba/)
 - **Small orders**: agent and forwarder fees "can exceed the saving entirely"; the gap widens again with volume — [Yakkyofy](https://yakkyofy.com/1688-vs-alibaba/)
-- **Agent types**:
-  - "shopping agents" (Superbuy, CSSBuy, Sugargoo, Oopbuy) target individual buyers and small orders, with platform fees shown per order in-app
-  - full-service sourcing agents charge 5–10%, lower on larger orders (e.g., Supplyia 5–10%; Union Source 5–7% on ~$5,000)
+- **Published 1688 agent fees** (Sino-Shipping comparison, updated July 2026, fees "checked October 2026"; the publisher ranks itself first in the forwarder category):
+  - **Superbuy**: no set percentage, fees shown per order in the app; suits first-time buyers wanting English self-service with no minimums
+  - **Yoybuy**: 2–5% by account tier, plus 5% on external purchases; suits small mixed orders
+  - **Supplyia**: 5–10%, lower on larger orders
+  - **Union Source**: 5–7% with a practical minimum of $5,000 (~7% on $5,000–30,000 orders)
+  - **Jingsourcing**: 5% follow-up/QC fee (minimum $100); stock products $50 minimum per SKU
+  - **LeelineSourcing**: $100 flat under $500, 15% at $500–1,000, falling to 4% above $100k
   - — [Sino-Shipping (Swedish) agent comparison](https://www.sino-shipping.com/sv/inkop-upphandling-kina/hitta-leverantorer/basta-1688-agenter/)
-  - purchasing agents typically charge a 5–10% service fee plus shipping — [Supplyia](https://www.supplyia.com/superbuy-1688/)
+- Superbuy consolidates items from multiple sellers in its China warehouse and supports cards/PayPal. Freight forwarders "are generally less expensive than sourcing agents" because they only provide logistics — [Supplyia, 16 Jul 2026](https://www.supplyia.com/superbuy-1688/)
 - **Access constraints**: no official English 1688.com — [Tianwen Wangluo](https://tianwenwangluo.com/en/1688-in-english/); foreign companies must register as individuals — [SupDropshipping](https://www.supdropshipping.com/how-to-register-a-1688-account/)
 
 ### Inferences
@@ -763,7 +866,8 @@ Foreign buyers generally need an agent: 1688 has no official English site and fo
 ### Gaps
 - No product-level 1688 CNY prices were collected for any target product, so no measured gap exists for these categories.
 - No independent survey of agent commission rates; all figures come from agents or payment companies.
-- No Australia-specific 1688 agent fee or shipping data, and no current Superbuy/Sugargoo fee schedules.
+- No Australia-specific 1688 agent fee or shipping data, and no current Superbuy/Sugargoo/CSSBuy fee schedules. Superbuy publishes fees only per order in-app.
+- A "WorldFirst comparison table giving 10–30%" was reported in search snippets but not verified on a source page, so it is excluded from the findings.
 - Which product categories were in the 13%→9% rebate cut was not confirmed (e.g., whether lithium batteries were included).
 
 ## 5. Which factories supply known Australian/US brands in these categories
@@ -797,7 +901,8 @@ For **Australian-only** brands (Lifespan Fitness, Everfit, Kogan, Kings), no sup
 ### Inferences
 - The Nantong suppliers above already pass US commercial-gym buyers' requirements (Hoist, Synergee, BSN). They are higher-confidence factory candidates for racks, benches and plates than anonymous low-MOQ listings, though likely with higher MOQs and prices.
 - Picea's position shows that branded robot vacuums come from a small set of large Shenzhen-area ODMs. Generic "robot vacuum" listings at $85–115 are likely from smaller ODMs or traders reselling ODM models.
-- For AU brands, the most practical attribution route is physical: buy a unit and read the compliance label, manufacturer code or QC sticker, or check Australian electrical registration databases for responsible-supplier and manufacturer names. The registration-database idea is a suggestion I have not verified.
+- For AU brands, the most practical attribution route is physical: buy a unit and read the compliance label, manufacturer code or QC sticker.
+- For electrical products (air fryers, coffee machines, robot-vacuum chargers, massage chairs), the free EESS public search lists equipment registrations, certifications and registered **responsible suppliers** — [EESS](https://www.eess.gov.au/). Whether records also name the overseas manufacturer was not confirmed, because the EESS app is dynamic and was not queried. Certificates usually cite a test report from the manufacturer's lab, which may reveal the factory; this is unverified.
 - Lifespan Fitness distributing a Chinese brand (Kingsmith) suggests AU fitness "brands" often mix their own private label with distributed Chinese brands. Competing on Marketplace with a factory-direct equivalent of these products is plausible.
 
 ### Gaps
@@ -811,7 +916,7 @@ For **Australian-only** brands (Lifespan Fitness, Everfit, Kogan, Kings), no sup
 Plan on these costs:
 - **pre-shipment inspection** ~US$200–350 per man-day (commonly ~$250–300; one all-inclusive quote was $268)
 - **factory audits** ~$210–290 per man-day
-- **sourcing agents** ~5–10% commission
+- **sourcing agents** ~5–10% commission (published tiers span ~2–15%; small orders pay the highest rates or flat minimums)
 - **sample units** at 1–1.5× the unit price
 
 Factory terms seen on detail pages are a 30% deposit with 70% before loading, and 15–45 day production lead times.
@@ -823,7 +928,13 @@ Factory terms seen on detail pages are a 30% deposit with 70% before loading, an
   - $199–299 per working day, with the lower rate applying within ~60 km of the inspector's office — [Cogoport](https://www.cogoport.com/blogs/quality-control-and-inspections-in-china-a-complete-guide)
   - one provider advertises a flat $268 per man-day anywhere in China, travel and hotel included (undated) — [HKTDC listing](https://www.hktdc.com/event/hkgiftspremiumfair/en/product/1X21RR0R)
   - pre-shipment inspection at $300–320 per man-day — [Yakkyofy](https://yakkyofy.com/1688-vs-alibaba/)
-- **Agent commission**: full-service sourcing agents charge 5–10%, lower on larger orders, e.g., 5–7% on ~$5,000 — [Sino-Shipping (Swedish)](https://www.sino-shipping.com/sv/inkop-upphandling-kina/hitta-leverantorer/basta-1688-agenter/); purchasing agents charge 5–10% plus shipping — [Supplyia](https://www.supplyia.com/superbuy-1688/)
+- **Agent commission** (published tiers):
+  - Supplyia 5–10% (lower on larger orders)
+  - Union Source 5–7% with a ~$5,000 practical minimum
+  - Yoybuy 2–5% plus 5% on external purchases
+  - Jingsourcing 5% QC/follow-up fee (minimum $100)
+  - LeelineSourcing $100 flat under $500, 15% at $500–1,000, down to 4% above $100k
+  - — [Sino-Shipping (Swedish), fees checked Oct 2026](https://www.sino-shipping.com/sv/inkop-upphandling-kina/hitta-leverantorer/basta-1688-agenter/)
 - **Sample prices**:
   - rooftop tent $765 vs $705–750 unit price — [MIC Wuyi Sensuo](https://cnsengsuo.en.made-in-china.com/product/sRLYbixjnohe/China-High-Density-Quick-Setup-Roof-Top-Tent-with-Customized-Configuration-and-Factory-Price.html)
   - power station $520 vs $502 — [MIC Mica](https://micapower.en.made-in-china.com/product/RJBpzOYdEkhs/China-Mica-1000W-LiFePO4-Lithium-Cell-Camping-Solar-Generator-Portable-Power-Station-Outdoor-Camping-Home-Power-Bank.html)
