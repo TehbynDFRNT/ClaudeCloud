@@ -41,6 +41,20 @@ Bulky goods carry heavy freight per unit: rooftop tents measure ~0.86 m³ and 83
   - "Quick Twist" 1 kg/2 kg increments: $95–115 at MOQ 1 set
   - — [MIC Adjustable Dumbbell](https://www.made-in-china.com/products-search/hot-china-products/Adjustable_Dumbbell.html)
 - Nantong Get-Fit Sports Co., Ltd. (Jiangsu), type n/s, Audited: 24 kg/40 kg sets at $52 (MOQ 10 pieces); 50 kg set with 2 kg increments at $175 (MOQ 4 pieces) — [MIC Adjustable Dumbbell](https://www.made-in-china.com/products-search/hot-china-products/Adjustable_Dumbbell.html)
+- **Detail page — Hefei Bodyup 24/40 kg adjustable dumbbell:**
+  - price tiers: **$38.80 (10–499 sets) / $35.80 (500–999) / $32.00 (1,000+)**, priced per "set"; product MOQ stated as 100 sets
+  - carton **56×34×29 cm (≈0.055 m³), 27 kg gross**; FOB Nantong/Shanghai; 25–35 days
+  - TÜV Rheinland audit MIC-ASR2591334
+  - established 2012 but only **13 employees** (Hefei, Anhui)
+  - claimed capacity conflicts: 100,000 vs 10,000 sets/month
+  - — [MIC Bodyup detail](https://bodyupsports.en.made-in-china.com/product/PfMYiKvhMFcw/China-Adjustable-Dumbbell-24kg-52-5lb-40kg-90lb-Gym-Dumbbell-Fitness-Equipment.html)
+- **Detail page — Nantong Get-Fit 24/40 kg:**
+  - $52–85 per "piece", MOQ 10
+  - carton **40×40×30 cm (0.048 m³), 25 kg gross**
+  - TÜV Rheinland audit MIC-ASI2541816
+  - the listed address is an office-tower floor (12F, Building 1, 288 Yongfu Rd, Chongchuan District, Nantong)
+  - founding claims conflict (FAQ says "started 2017", elsewhere 18/20/23 years); claims a >20,000 m² factory
+  - — [MIC Get-Fit detail](https://get-fit.en.made-in-china.com/product/JRUYzwdjnoWi/China-Gym-Equipment-24kg-40kg-Adjustable-Weights-Dumbbell-Sets-for-Body-Building.html)
 - Nantong Qimai Sports Technology Co., Ltd., **MIC-Trd**, Audited: adjustable set $56.50 at MOQ 500 — [MIC Adjustable Dumbbell](https://www.made-in-china.com/products-search/hot-china-products/Adjustable_Dumbbell.html)
 - TIANJIN SWOCH TECHNOLOGY CO., LTD., type n/s, Audited: 40 kg set $44–49 at MOQ 1 — [MIC Adjustable Dumbbell](https://www.made-in-china.com/products-search/hot-china-products/Adjustable_Dumbbell.html)
 - Asialink International (HK) Limited (Guangdong), type n/s, not audited, **Name flag (HK entity)**: 24 kg $38–48 at MOQ 50 — [MIC Adjustable Dumbbell](https://www.made-in-china.com/products-search/hot-china-products/Adjustable_Dumbbell.html)
@@ -61,6 +75,20 @@ Bulky goods carry heavy freight per unit: rooftop tents measure ~0.86 m³ and 83
   - Linefar Fitness (Nantong) Co., Ltd. (**MIC-Mfr+Trd**, Audited): $298–305, MOQ 20 sets
   - — [MIC Power Rack](https://www.made-in-china.com/products-search/hot-china-products/Power_Rack.html)
 - Smith/cable combo racks: Nantong Wekeeping (MIC-Mfr+Trd) $635–1,250; Nantong Vigor (MIC-Mfr+Trd) $1,180–1,250; Shandong Yuwei (MIC-Mfr+Trd) $820–860; Qingdao Modun $2,100–2,400. Nantong Ok Sporting (**MIC-Trd**) offers a commercial rack at $1,200–1,300 — [MIC Power Rack](https://www.made-in-china.com/products-search/hot-china-products/Power_Rack.html)
+- **Detail page — Nantong Jingyang power/squat rack:**
+  - **$155 (10–49) / $152 (50–99) / $150 (100+)**; no carton data
+  - labelled **MIC-Mfr** and **SGS-audited (QIP-ASI264243)**, yet the profile shows established July 2019, **22 employees, 1,200 m² plant, RMB 1M capital, 1 QA/QC inspector, 1 year of exports, main market "Domestic"**
+  - its main products are listed as dumbbell/plate racks, and power racks do not appear in its FAQ product list
+  - claims 2,000 pieces/day capacity
+  - registered address Xingren Town, Tongzhou District, Nantong
+  - — [MIC Jingyang detail](https://jy-fitness.en.made-in-china.com/product/PTIrmdFKXWYV/China-Fitness-Equipment-Squat-Rack-Power-Rack-and-Cage-Comprehensive-Fitness-Training-System.html)
+- **Detail page — Nantong Tengtai home "power rack / half rack / squat cage":**
+  - $95–105, MOQ 30 (sample $200)
+  - carton **216×41×15.5 cm (≈0.137 m³), 55 kg gross (52 kg net), 1 piece per carton**; assembled size 106×162×204 cm
+  - claims 150 workers, 20 engineers, a 20,000 m² plant in Xianfeng Industrial Park, Nantong
+  - discloses a **separate trading entity, "Nantong T&T International Co., Ltd."**
+  - auditor not named
+  - — [MIC Tengtai detail](https://tt-sports.en.made-in-china.com/product/iJXrVNvHZUWc/China-Gym-Home-Multi-Functional-Fitness-Equipment-Power-Rack-Half-Rack-Squat-Cage.html)
 
 #### Fitness: weight benches
 - Range of listings:
@@ -120,6 +148,22 @@ Bulky goods carry heavy freight per unit: rooftop tents measure ~0.86 m³ and 83
   - Zhejiang Ypoo (MIC-Mfr+Trd): magnetic $116–139, MOQ 100
   - GuangZhou BFT Fitness (MIC-Mfr+Trd): commercial $360–377
   - — [MIC Spin Bike](https://www.made-in-china.com/products-search/hot-china-products/Spin_Bike.html)
+- **Detail page — Deqing Sister Sports (SISTERUNION), 6 kg-flywheel home spin bike:**
+  - **$64.50 (50–499) / $61.80 (500+)**; MOQ shown as 100 (conflict)
+  - carton **92.5×18.5×76 cm (≈0.130 m³), 29 kg gross (25 net)**
+  - **215 pcs/20GP, 446/40GP, 523/40HQ**
+  - near Shanghai/Ningbo ports; FAQ places it in Hangzhou city
+  - auditor not named
+  - — [MIC Deqing Sister detail](https://jdmsports.en.made-in-china.com/product/MTernlOxaghc/China-Premium-Spin-Bike-for-Home-Use-with-Adjustable-Seating.html)
+- **Detail page — Zhejiang Ypoo F2 spin bike** (also relevant to Ypoo's walking pads and rowers):
+  - $116–139, MOQ 100
+  - packed 1085×225×790 mm (≈0.193 m³), 37.5 kg product weight
+  - **TÜV Rheinland audit MIC-ASR2431394**; established 2012-10-31
+  - located in **Wuyi County, Jinhua, Zhejiang** (Baiyang Street / Niubeijin Industry Zone)
+  - makes treadmills, ellipticals, rowers, walking pads and strength gear; 12 yrs exporting
+  - terms 30% deposit, 70% before delivery; 30–60 days
+  - **self-reported conflicts**: 108 vs 260 employees; 48,000 vs ~66,000 m²; 8 vs 4 production lines
+  - — [MIC Ypoo detail](https://ypoosports.en.made-in-china.com/product/vAOpEVSGheWU/China-Ypoo-Spinning-Bikes-6kg-Flywheel-Home-Fitness-Exercise-Spin-Bike-F2-Factory-Price.html)
 
 #### Camping: 12V compressor fridges/freezers (cluster: Foshan/Shunde/Sanshui, Guangdong; Zhejiang; Jinan, Shandong is mostly traders)
 - **Foshan Alpicool Holding Group Co., Ltd.**:
@@ -208,6 +252,12 @@ Bulky goods carry heavy freight per unit: rooftop tents measure ~0.86 m³ and 83
   - Hangzhou Max Garden Outdoor Products: $40–50, MOQ 200
   - Ningbo Xusheng Leisure Products: $10–45, MOQ 100
   - — [MIC Pop up Gazebo](https://www.made-in-china.com/products-search/hot-china-products/Pop_up_Gazebo.html)
+- **Detail page — Ningbo Unitent 3×3 m steel pop-up gazebo with side walls:**
+  - $33/set, MOQ 100 sets
+  - carton **119×22×21 cm (≈0.055 m³), 13.5 kg gross (12.5 net)**
+  - established 2013-12-04, 160 employees
+  - auditor not named; no lead time or port stated
+  - — [MIC Unitent detail](https://unitent.en.made-in-china.com/product/xGRrBDsHXhkw/China-3X3-Portable-Pop-up-Canopy-Folding-Gazebo-with-Side-Walls.html)
 
 #### Outdoor furniture and sun loungers (clusters: Foshan, Guangdong; Linhai/Taizhou, Ningbo and Shaoxing in Zhejiang)
 - Rattan/aluminium sets — [MIC Rattan Outdoor Furniture](https://www.made-in-china.com/products-search/hot-china-products/Rattan_Outdoor_Furniture.html):
@@ -219,6 +269,18 @@ Bulky goods carry heavy freight per unit: rooftop tents measure ~0.86 m³ and 83
   - Foshan Kingwell Industry: aluminium lounge/dining $125.88–348.88, MOQ 2 sets
   - Foshan Kingmake Industry (Audited): round table + rattan chairs $119–199; garden sofa sets $190–259 and up
   - Ningbo Greenall Furniture: $30–300, MOQ 10
+- **Detail page — Jiangmen Queensven rattan sectional:**
+  - **$189.60 (30–99 sets) / $163.40 (100–499) / $144.10 (500+)**; MOQ 30 sets or one 40HQ; 15–35 days production
+  - located in Heshan, Jiangmen, Guangdong
+  - listing material is **aluminium**, despite the "rattan/wicker" title
+  - only a "verified business license" badge (no factory audit); no carton or CBM data
+  - — [MIC Queensven detail](https://queensven.en.made-in-china.com/product/JmkUOxadgXrs/China-Rattan-Garden-Sectional-Sofa-Set-Outdoor-Patio-Wicker-Sofa-Garden-Furniture.html)
+- **Detail page — Foshan Sunny Furniture 5-piece set:**
+  - $200–500; MOQ 3 sets (FAQ says 1)
+  - package "100×100×100 cm, 10 kg" (≈1.0 m³), which is implausible and unclear whether per set or per carton
+  - frame listed as metal/aluminium, not rattan
+  - established 2007; >10,000 m² workshop in Shunde; auditor not named
+  - — [MIC Foshan Sunny detail](https://mfsunny.en.made-in-china.com/product/hAsUtlnPOWYC/China-5PCS-Outdoor-Garden-Rattan-Home-Hotel-Wicker-Patio-Sofa-Furniture-Set.html)
 - Sun loungers — [MIC Sun Lounger](https://www.made-in-china.com/products-search/hot-china-products/Sun_Lounger.html):
   - Guangdong Maryard Furniture (MIC-Mfr+Trd, Audited): sling mesh sunbed $65–90, MOQ 50 sets
   - Foshan Shunde Ciao: S-shape rattan lounger $69–83, MOQ 20
@@ -248,6 +310,12 @@ Bulky goods carry heavy freight per unit: rooftop tents measure ~0.86 m³ and 83
   - Foshan Hanlong Furniture: $43–54, MOQ 2
   - SpaceUnited Furniture: $106.74–116.23
   - FOSHAN MZUO FURNITURE (MIC-Mfr+Trd): $112.90–113
+- **Detail page — Foshan Boke mesh office chair (model 652A, trademark HUASHI):**
+  - **$40 (30–99) / $37 (100–499) / $35 (500+)**; FAQ says no MOQ on the first order, then 20 units
+  - carton **75×60×62 cm (≈0.279 m³), 16.75 kg gross**; 5–15 days after deposit
+  - claims 30,000 pcs/yr; warranty claims conflict (3–5 yrs vs 2–3 yrs)
+  - auditor not named
+  - — [MIC Boke detail](https://bokeof.en.made-in-china.com/product/URepATdjhJkO/China-Hot-Sale-Ergonomic-Living-Meeting-Leisure-Conference-Mesh-Office-Chair.html)
 - **Anji Yike Decoration Material Technology Co., Ltd.** (Anji County, Huzhou), MIC-Mfr+Trd, audited (auditor not named):
   - executive gaming chair price tiers: **$24 (50–499 pcs), $23 (500–999), $22 (1,000–4,999), $21 (5,000–49,999), $20 (50,000+)**
   - carton **63×28×52 cm, 12 kg**; FOB Shanghai/Ningbo; ~30 days lead time
@@ -316,6 +384,20 @@ Bulky goods carry heavy freight per unit: rooftop tents measure ~0.86 m³ and 83
   - Ningbo Longbank Intelligence Appliance: 10 L stacked stainless $41, MOQ 1,000
   - Shanghai BM Industrial: $33–33.99, MOQ 500
   - Hangzhou Galileo Technology (**MIC-Trd**): visible-window $53–59, MOQ 1,000
+- **Detail page — Ningbo Yuecheng 10 L dual-zone (8019D):**
+  - $33.50 at MOQ 500 (sample $50)
+  - carton **41×41×38 cm (≈0.064 m³), 7.5 kg gross**; plug type customisable
+  - spec conflicts: 1350W vs 2000W; 10 L vs 5.5 L
+  - **SGS audit QIP-ASI2631401**; established 2019-11-11, 11–50 staff, RMB 1M capital
+  - the "About" text names a different company ("Eytronic"), likely a copy error
+  - — [MIC Yuecheng detail](https://yuecheng2026.en.made-in-china.com/product/ogHUEIWcvLhx/China-Dual-Zone-10L-Digital-Air-Fryer-with-Double-Basket.html)
+- **Detail page — Ningbo Jewin 9.5 L dual basket (900AP):**
+  - **$37.00 (100–999) / $36.60 (1,000–7,999) / $35.50 (8,000+)**
+  - product size 412×380×310 mm (no carton data)
+  - certifications ISO9001, CE, RoHS, GS, LFGB; **no SAA/RCM listed**
+  - **BV audit MIC-ASR243117**; 120 workers, 8 production lines; Diamond Member since 2007
+  - capacity (3,000 vs 30,000/month) and wattage (2500W vs 1700W) conflict
+  - — [MIC Jewin detail](https://cnqinyou.en.made-in-china.com/product/kphrcgPTOfVX/China-Hot-Selling-9-5L-Dual-Basket-Air-Fryer-New-Design-Large-Capacity-Visual-Window-High-Quality-Best-Value.html)
 - Cixi cluster: China Daily calls Cixi one of China's three major household-appliance bases, alongside Qingdao and Shunde/Foshan. Its claim that Cixi makes "60 percent of all appliances globally" is implausible as stated — [China Daily Zhejiang](https://zhejiang.chinadaily.com.cn/2023-10/16/c_930961.htm)
 - Stand mixers (sparse household listings) — [MIC Stand Mixer](https://www.made-in-china.com/products-search/hot-china-products/Stand_Mixer.html):
   - Ultron Technology (Foshan): Murenking MK-36A $28.50–29.38, MOQ 500
@@ -337,6 +419,15 @@ Bulky goods carry heavy freight per unit: rooftop tents measure ~0.86 m³ and 83
   - Hua Dong Plastic Toys & Electronic (MIC-Mfr+Trd): $94.15–100.86, MOQ 10
   - Ningbo Junxiang E-Commerce (**Name flag**): 24V UTV $179, MOQ 20
   - Pinghu United Vehicles (MIC-Mfr+Trd, CCC): 48V 4-seat UTV $594, MOQ 10
+- **Detail page — Shenzhen Zhehua 24V 4x4 two-seat UTV (ZH666-E7):**
+  - $138–150, MOQ 20 per model (sample $250)
+  - 24V 14Ah battery, 4×350W motors, 18–20 km/h
+  - carton **147.5×84.5×45.5 cm (≈0.567 m³), 59.6 kg gross**, 1 per carton
+  - **44 pcs/20GP, 120 pcs/40HQ**
+  - ports Shanghai/Shenzhen/Shantou; 30% deposit, 70% against copy of B/L
+  - certification fields list EN71, EN62115, ASTM F963, CPSIA, CE
+  - **Bureau Veritas audit MIC-ASR2221558**; exporting since 2007; address in Futian District, Shenzhen (a CBD district, so possibly an office rather than the plant)
+  - — [MIC Zhehua detail](https://zhehuatoys.en.made-in-china.com/product/WAyRoIiDXlkH/China-24V-Ride-Car-Kids-4X4-Electric-2-Seat-EVA-Wheels-Wholesale-Power-UTV-for-Children.html)
 - Pingxiang cluster scale:
   - China Daily coverage describes 145 million units/yr, ~50% of China's domestic market and ~40% of the global market — [China Daily (govt)](https://govt.chinadaily.com.cn/s/202507/02/WS687b6522498edec913cde897/pingxiang-fuels-worlds-children-vehicles.html)
   - a March 2026 report cites >RMB 34bn revenue, >5,000 bicycle-related businesses and 155 million units/yr — [chinaservicesinfo](https://chinaservicesinfo.com/s/202603/04/WS69a7d2e4498e36855033af79/innovation-transforming-chinas-bicycle-heartland.html)

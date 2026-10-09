@@ -42,6 +42,10 @@ In mid/late 2026, indicative China→east-coast ocean rates were about USD 1,500
   - Door to door: air express 4–7 days, air freight 6–10, FCL 20–35, LCL 30–45.
   - Direct services to Sydney and Melbourne are faster than transhipment via SE Asian hubs.
   - Demurrage and detention clocks start on landing, and biosecurity holds add storage costs. — [ExFreight](https://www.exfreight.com/shipping-from-china-to-australia/)
+- Freightos China→Australia guide (updated October 2026; no price figures):
+  - Sea becomes cheaper than air above roughly 500 kg; standard air is cheapest for about 150–500 kg.
+  - Ocean freight is about 30–40 days door to door; air freight 8–10 days; express about 3 days plus pickup.
+  - Chinese New Year, Golden Week, the Dragon Boat Festival and the holiday peak cause delays and price spikes. — [Freightos](https://www.freightos.com/freight-resources/shipping-from-china-to-australia/)
 
 **Destination charges: FCL**
 - Maersk destination Terminal Handling Service (DHC), effective 1 Oct 2026 — [Maersk rate announcement, 1 Sep 2026](https://www.maersk.com/news/articles/2026/09/01/maersk-terminal-handling-service-australia):
@@ -183,7 +187,7 @@ GST-registered importers recover import GST as an input tax credit (and some can
 ### Gaps
 - **ATO pages not read:** the ATO's own GST-registration and "Are you in business?" pages could not be fetched (HTTP 403), so the AUD 75k threshold is sourced from a secondary site.
 - **No broker fee schedule:** no representative 2025–26 Australian customs broker fee schedule was found; the worked example uses an assumption of AUD 250–450.
-- **FOB basis not confirmed from the ABF:** the ABF valuation page stating the FOB basis explicitly was not retrieved because the search budget ran out.
+- **FOB basis not confirmed from the ABF:** the ABF "Valuation of imported goods" page (last updated 23/09/2026) was retrieved but does not state how international freight and insurance are treated. It cites Customs Act ss 154–161L and says "production assists" must be included in customs value: materials, dies, moulds and tools the importer supplies to the factory free or at reduced cost. — [ABF valuation](https://www.abf.gov.au/importing-exporting-and-manufacturing/trade-and-goods-compliance/valuation-of-imported-goods) So the FOB basis remains an inference from the GST formula.
 - **Abolished tariff lines not itemised:** the full list of tariff lines abolished in 2024 was not retrieved. Check the HS code in the ABF Working Tariff / Schedule 3.
 - **Penalty not verified:** the current penalty for invalid preference claims was not verified.
 
@@ -193,8 +197,9 @@ GST-registered importers recover import GST as an input tax credit (and some can
 Any mains-powered household product (above 50 V AC) is "in-scope" under the Electrical Equipment Safety System (EESS) and must carry the Regulatory Compliance Mark (RCM). The supplier must be a registered Responsible Supplier (AUD 231.91 a year).
 
 Equipment is graded Level 1, 2 or 3 by risk:
-- **Level 3** needs a Certificate of Conformity from a recognised certifier and national database registration (AUD 86.91 for 1 year up to 434.56 for 5 years). Level 3 includes many likely Marketplace products: portable cooking appliances (air fryers), kettles, toasters, fans, room heaters, vacuum cleaners, hair-care and massage appliances, extension sockets, portable lights, decorative lighting, power tools, and power supplies/chargers.
-- **Level 2** also requires database registration.
+- **Level 3** needs a valid Australian- or NZ-issued Certificate of Conformity and national database registration (AUD 86.91 for 1 year up to 434.56 for 5 years). A foreign test report alone is not enough. Level 3 includes many likely Marketplace products: portable cooking appliances (air fryers), kettles, toasters, fans, room heaters, vacuum cleaners, hair-care and massage appliances, extension sockets, portable lights, decorative lighting, power tools, and power supplies/chargers.
+- **Level 2** (currently only TV receivers) needs database registration plus a compliance folder.
+- **Level 1** (everything else in scope) needs English-language evidence of compliance kept for 5 years, linked to a registered Responsible Supplier.
 
 Wi-Fi and Bluetooth products also need ACMA compliance: test evidence, a Supplier's Declaration of Conformity, responsible-supplier registration and the RCM. From 4 March 2026, internet-connectable consumer devices also need a cyber-security statement of compliance.
 
@@ -203,6 +208,29 @@ Wi-Fi and Bluetooth products also need ACMA compliance: test evidence, a Supplie
   - Level 1: low or unknown risk (any in-scope item not in Level 2 or 3).
   - Level 2: medium risk.
   - Level 3: high risk, as defined in AS/NZS 4417.2. — [EESS risk-level definition](https://www.eess.gov.au/equipment/risk-level-definition/)
+- **Official per-level obligations** (EESS "In-scope electrical equipment definitions and risk levels", v4.3, July 2024, aligned to AS/NZS 4417.2:2020) — [EESS v4.3 PDF](https://www.eess.gov.au/wp-content/uploads/2024/07/EESS-Inscope-Equipment-Definitions-and-Risk-Levels-v4.3-Approved.pdf):
+  - **Level 3:** be electrically safe and meet the relevant standard; RCM-marked; hold "a valid Australian or New Zealand issued certificate of conformity"; be registered in the national EESS database and linked to the registered Responsible Supplier.
+  - **Level 2:** electrically safe and to standard; RCM-marked; registered in the database and linked to the Responsible Supplier; a compliance folder kept by the Responsible Supplier and produced within 10 days on request.
+  - **Level 1:** electrically safe and to standard; RCM-marked; English-language documentary evidence that it met the standard when made or imported, kept 5 years; linked to the registered Responsible Supplier.
+  - The relevant standard is the edition in force on the certification date.
+- **EESS v4.3 classification** (my parse of the PDF table; spot-checked) — [EESS v4.3 PDF](https://www.eess.gov.au/wp-content/uploads/2024/07/EESS-Inscope-Equipment-Definitions-and-Risk-Levels-v4.3-Approved.pdf):
+  - **Level 3 (61 types),** grouped:
+    - **Kitchen and laundry:** bread toaster; clothes dryer; cooking appliance—portable type; dishwashing machine; kitchen machine; liquid heating appliance; microwave oven; range; range hood; refrigerating appliance; washing machine.
+    - **Heating, cooling and water:** air conditioner with flammable refrigerant; evaporative cooler; fan; room heater; immersion heater; water heater; blanket; over blanket/duvet/wrap; electric hot water bottle.
+    - **Personal care:** beauty care lamp; hair care appliance; iron; massage appliance; razor/hair clipper.
+    - **Lighting:** decorative lighting outfit; luminaire—portable type; LED lamps (self-ballasted and double-capped); nightlight; inspection handlamp; lampholders and adaptors; fluorescent ballasts and starters.
+    - **Plugs, cords, switches and power:** appliance connector; cord extension socket; cord-line switch; plug; socket-outlet; outlet device; supply flexible cord; wall switch; power supply or charger; residual current device; miniature circuit breaker; DC isolator; control or conditioning device; building wiring cable.
+    - **Tools, garden and other:** tool—portable type; glue gun; soldering iron; lawn care appliance; hedge clipper; arc welding machine; vacuum cleaner; insect electrocutor; fence energizer; submersible pump; swimming pool/spa equipment.
+  - **Level 2:** television receivers (CRT and non-CRT).
+  - **Level 1 (listed):** air conditioner with non-flammable refrigerant; floor polisher/scrubber; flexible heating pad; power-line communication device; projector; recessed LED luminaire; sewing machine; simple portable luminaire; video and image display device; water bed heater. In-scope equipment not otherwise listed is Level 1.
+- **Class specifications** (same document):
+  - **Cooking appliance—portable type** (household, portable, for cooking or warming food) is tested to:
+    - grillers/roasters/ovens incl. breadmakers: AS/NZS 60335.2.9
+    - frying pan, deep fryer or wok: AS/NZS 60335.2.13
+    - outdoor (electric) barbecue: AS/NZS 60335.2.78
+  - **Fan:** AS/NZS 60335.2.80; includes mist fans.
+  - **Vacuum cleaner:** household, portable, suction; AS/NZS 60335.2.2; hand-held garden type AS/NZS 60335.2.100.
+  - **Power supply or charger:** a household device with output up to 50 V AC / 120 V DC, for charging batteries or supplying separate equipment. Battery chargers are tested to AS/NZS 60335.2.29. IT/AV equipment whose output also carries data is excluded.
 - **Level 3 obligations:** the item must be linked to a registered Responsible Supplier, registered on the National Database, hold a valid Certificate of Conformity from a recognised certifier, and be marked with the RCM. All Level 1/2/3 items must show brand or trade name, model number and the RCM. Level 3 "may mean the product must be tested by an accredited laboratory". — [WA Building & Energy factsheet](https://www.wa.gov.au/system/files/2025-09/electrical_appliances_and_equipment_selling_hiring_or_advertising_factsheet.pdf)
 - **Level 3 list** (extract of AS/NZS 4417.2:2020 Appendix B, Table B.4) — [WA factsheet](https://www.wa.gov.au/system/files/2025-09/electrical_appliances_and_equipment_selling_hiring_or_advertising_factsheet.pdf):
   - **Kitchen and laundry:** bread toaster; cooking appliance – portable type; dishwashing machine; kitchen machine; liquid heating appliance; microwave oven; range; range hood; refrigerating appliance; washing machine; clothes dryer.
@@ -248,10 +276,12 @@ Wi-Fi and Bluetooth products also need ACMA compliance: test evidence, a Supplie
 - **Marking and listings:** the RCM must be on the product and the registration is publicly searchable. Showing the RCM in Marketplace photos and keeping certificate numbers on file is low-cost evidence. WA penalties apply to "advertising" as well as selling.
 
 ### Gaps
-- **Level 2 list not retrieved:** the current official "EESS In-scope Equipment Definitions and Risk Levels v4.3" list was not retrieved, so the Level 2 list is unknown.
+- **Classification check:** the v4.3 list was parsed by script from the PDF layout. Spot checks matched the WA extract, but confirm the level of any specific product on the EESS site before relying on it.
 - **No testing or certificate costs:** no published typical cost for Australian testing plus a Certificate of Conformity (e.g. AS/NZS 60335-2-x for an air fryer or heater) was found. Quotes are needed from certifiers and labs.
 - **Power stations:** EESS classification of portable power stations is not confirmed.
-- **Responsible Supplier eligibility:** whether a Responsible Supplier must be an Australian or NZ legal entity, and whether a Chinese factory's existing certificate can be used under the importer's registration, was not confirmed from an official source.
+- **Responsible Supplier eligibility:** EESS v4.3 confirms Level 3 needs an Australian- or NZ-issued certificate, so a Chinese CB/IEC test report alone is not enough; an AU/NZ certifier must issue the certificate. Still unconfirmed from an official source:
+  - whether the Responsible Supplier must be an Australian/NZ legal entity;
+  - how an importer can register equipment under an existing certificate held by someone else (the factory or another importer).
 - **ACMA detail:** ACMA compliance levels for Wi-Fi/Bluetooth short-range devices and RF-exposure (EME) obligations were not retrieved.
 
 ## 4. Lithium batteries: dangerous-goods shipping, NSW/VIC/federal e-micromobility rules, e-bike standards, and whether e-bikes/scooters are realistic
