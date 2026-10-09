@@ -468,6 +468,20 @@ Bulky goods carry heavy freight per unit: rooftop tents measure ~0.86 m³ and 83
   - Fujian Forwell Health Tech: $550–650
   - Jinhua Comfort Health Technology: $829–939
   - Yijie (Fujian) Electronics Technology (MIC-Mfr+Trd): $1,050–1,200
+- **Detail page — Fujian Jingtuo (Jingtop) 8D zero-gravity chair:**
+  - **$250 (1–49) / $210 (50+)**; OEM MOQ 54 pcs (mixed styles allowed)
+  - carton **113×76×111 cm (≈0.953 m³), 57 kg gross (50.2 net)**; **56 pcs per 40HQ**
+  - 110/220/240V supported; certifications claimed CE/CB/FCC; bulk lead time 10–25 working days
+  - **TÜV Rheinland audit MIC-ASR247630**
+  - located at No. 3 Huifeng Rd, Chengyang Town, **Fu'an**, Fujian; established 2020-10-13; 10,038 m²; RMB 10M capital
+  - **self-reported conflicts**: 50 employees vs ">200"; 50,000 vs >100,000 units/yr; main market "Central Asia" vs claimed NA/EU exports
+  - — [MIC Jingtop detail](https://jingtop.en.made-in-china.com/product/cGHUxKJOaehY/China-Jingtop-8d-Message-Chair-Whole-Body-Massage-Smart-Shiatsu-Vibrating-Zero-Gravity-Recliner.html)
+- **Detail page — Fuan Leercon 4D full-body chair:**
+  - **$500 (1–29) / $470 (30–127) / $445 (128+)**
+  - carton **143×76×84 cm (≈0.913 m³), 77 kg gross**; nearest port Xiamen; ~30 days
+  - **TÜV Rheinland audit MIC-ASR267311**; established 2009-07-06; located on Century Avenue, Fu'an, Ningde
+  - **self-reported conflicts**: 29 employees vs "300 skilled employees"; 13,000 vs 20,000 m²; 60,000 vs 200,000 units/yr
+  - — [MIC Leercon detail](https://leercon.en.made-in-china.com/product/cPlURYhjbpVy/China-Leercon-4D-Full-Body-Massage-Chair-with-U-Headrest-Pillow-and-LED-Ambience.html)
 - Self-reported capacity claims:
   - Fuan Guoheng: 12,000 m² factory, 100+ workers, 10,000 units/month — [Global Sources profile](https://ghmassager.manufacturer.globalsources.com/company-profile_6003002355839.htm)
   - Fuan Realfun: 100,000 massage chairs/yr — [MIC company page](https://m.made-in-china.com/company-fjrealfun/)
