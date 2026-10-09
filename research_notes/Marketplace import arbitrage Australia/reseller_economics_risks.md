@@ -96,7 +96,7 @@ Local-pickup Marketplace sales carry no Facebook fee. Profit is therefore decide
 
 **Fees and payments**
 - US guides agree that local-pickup sales carry no fee. They disagree on shipped checkout orders: one says 5%, another says 10% of the total with a US$0.80 minimum — [SaleHoo](https://www.salehoo.com/learn/facebook-marketplace-dropshipping); [Voolist](https://www.voolist.com/blog/facebook-marketplace-fees-2026)
-- When Marketplace launched in Australia (around 2016), Facebook said it would not facilitate payment or delivery and payment would happen off-platform. This is old; current features should be checked — [SmartCompany](https://www.smartcompany.com.au/marketing/facebook-marketplace-launches-need-know/)
+- When Marketplace launched in Australia (SmartCompany, 4 Oct 2016), Facebook said it would not facilitate payment or delivery, and "payment will happen off-platform in the way the buyer and seller agree". Users had to be 18 or older. This is old; current features should be checked — [SmartCompany](https://www.smartcompany.com.au/marketing/facebook-marketplace-launches-need-know/)
 - An undated ChannelNews piece reported that Facebook would "soon begin testing product shipping options for the Marketplace in Australia" — [ChannelNews](https://www.channelnews.com.au/facebook-marketplace-threatens-ebay-gumtree/)
 
 **Margin arithmetic (US shipped-order context, not Australian local pickup)**
@@ -140,6 +140,7 @@ Facebook fees are zero only for local pickup. Freight and FOB inputs should come
 - Then add:
   - about US$300 per inspection
   - EESS fees if any item is electrical (see Q6)
+  - public and products liability insurance, indicatively about $80-150+ a month for an importer (see Q6)
   - storage from day one
   - a launch boost budget (for example $35 per test listing)
   - about 10% FX headroom
@@ -390,6 +391,7 @@ Where Dropshipzone-type brands already deliver bulky items cheaply, the local-pi
 - As a business seller, the importer must honour ACL consumer guarantees.
 - As importer of goods whose maker has no Australian place of business, it can be treated as the manufacturer.
 - Product-safety exposure is severe in battery, electrical and children's categories.
+- One broker indicates public and products liability cover costs about $80-150+ a month for importers, against $30-60 a month for lower-risk small businesses.
 
 ### Cited Findings
 **Tax**
@@ -403,7 +405,14 @@ Where Dropshipzone-type brands already deliver bulky items cheaply, the local-pi
   [ATO protocol](https://ato.gov.au/about-ato/commitments-and-reporting/in-detail/privacy-and-information-gathering/how-we-use-data-matching/online-selling-data-matching-program-protocol); [ATO data-matching programs](https://www.ato.gov.au/about-ato/commitments-and-reporting/information-and-privacy/data-and-analytics/specific-data-matching-programs)
 - The named data providers were eBay Australia and New Zealand and Amazon Australia. Data covers ID, date of birth, IP address, linked PayPal account and sales values (2020 report) — [Accountants Daily](https://www.accountantsdaily.com.au/tax-compliance/15127-ato-extends-ebay-amazon-data-matching-program)
 - GST registration is required when current GST turnover (this month plus the previous 11) or projected turnover reaches $75,000. Turnover is total business income, not profit. Voluntary registration is allowed, with a 12-month minimum. (This ATO page is aimed at overseas sellers but states the same threshold.) — [ATO](https://www.ato.gov.au/other-languages/information-in-other-languages/gst/goods-and-services-tax-gst-when-you-sell-to-australia)
-- Hobby or business: profit intent and regular, repeated selling point to a business. Buying items specifically to resell at a profit would probably be a business. A hobby is not eligible for an ABN — [business.gov.au](https://business.gov.au/planning/new-businesses/difference-between-a-business-and-a-hobby); [business.gov.au](https://business.gov.au/planning/new-businesses/a-business-or-a-hobby)
+- Hobby or business, per business.gov.au:
+  - Business indicators: "You intend to make a profit – or genuinely believe you will make a profit from the activity"; "You repeat similar types of activities"; and the activity is "planned, organised and carried out in a businesslike manner".
+  - "You are not eligible for an ABN for a hobby."
+  - Business income must be declared to the ATO. Hobby income need not be declared, and hobby losses can't be deducted.
+  - Anyone who sells goods must follow Australian Consumer Law.
+
+  [business.gov.au](https://business.gov.au/planning/new-businesses/difference-between-a-business-and-a-hobby)
+- The page has no example about buying goods to resell. A search summary said that buying items specifically to resell at a profit "would probably be a business"; I could not trace this to a verified page, but it follows from the indicators above — [business.gov.au](https://business.gov.au/planning/new-businesses/a-business-or-a-hobby)
 - An ABN is needed once you are in business, whatever your revenue. The $75k figure is the GST threshold, not an ABN threshold — [Lawpath](https://lawpath.com.au/blog/do-i-need-an-abn-to-sell-on-shopify)
 
 **Consumer guarantees and the private-seller line**
@@ -422,33 +431,49 @@ Where Dropshipzone-type brands already deliver bulky items cheaply, the local-pi
 
   [LegalVision](https://legalvision.com.au/legal-considerations-of-importers-under-australian-consumer-law)
 - Finder (9 Apr 2026) confirms the deemed-manufacturer rule and says insurance is "typically priced by risk". It gives no premium figures — [Finder](https://www.finder.com.au/business-insurance-for-importers)
+- upcover (29 Jun 2026; an online insurance broker, figures indicative and not quotes):
+  - Small-business Public & Products Liability "may start from around $30 to $60 per month" for lower-risk operations.
+  - Higher-risk products (food, cosmetics, supplements, children's goods) or importing goods may cost "$80 to $150 per month or more".
+  - Premiums depend on occupation, product type, turnover, cover limit, claims history, insurer and policy terms. No cover-limit amounts or excesses are given.
+  - Under ACL s7, an importer may be treated as the manufacturer where the overseas maker has no Australian place of business.
+  - Under s147, an importer may become directly liable to a consumer if it cannot identify the manufacturer within 30 days of a request.
+
+  [upcover](https://www.upcover.com/blog/product-liability-insurance-what-it-covers-and-who-needs-it)
+- Steadfast (17 Oct 2022; older): "Under Australian law, an importer of goods is in some situations deemed to be the manufacturer". A broker is quoted saying importers "can be liable for defects in the products they import". No premium figures — [Steadfast](https://www.steadfast.com.au/well-covered/business-insurance/what-does-product-liability-insurance-cover-and-when-do-you-need-it/)
 
 **Product-safety penalties**
 - Button batteries:
   - From 1 Jan 2023, an infringement notice costs $165,000 for listed corporations, $16,500 for non-listed entities and $3,300 for individuals.
   - Court penalties can reach the greater of $50m, 3x the benefit obtained or 30% of turnover. Individuals face up to $2.5m.
-  - The Reject Shop paid $133,200 for failing to test products before sale. Dusk paid $106,560 (eight notices).
-  - The standards apply to anyone who imports, distributes or retails button-battery products.
+  - The Reject Shop paid $133,200 under one infringement notice. It sold over 20,000 units of a Halloween LED pumpkin and "failed to perform safety tests prior to its sale".
+  - Dusk paid $106,560 across eight notices for "selling over 7700 units of non-compliant BB products": four for not testing before sale, and four for missing safety information and warnings.
+  - The standards apply to anyone who will "manufacture, import, distribute or retail BBs or BB products within Australia or for the Australian market".
 
-  [JWS](https://www.jws.com.au/insights/articles/2023-articles/pressing-ahead-first-penalties-issued-for-button); [KWM](https://pulse.mallesons.com/in-competition/consumer-protection-agencies-powering-up-against-non-compliant-button-batteries-products/)
+  [JWS, 23 May 2023](https://jws.com.au/what-we-think/pressing-ahead-first-penalties-issued-for-button-battery-standard-breaches)
+- The ACCC has said it will look for non-compliant button-battery products both online and in stores — [KWM](https://pulse.mallesons.com/in-competition/consumer-protection-agencies-powering-up-against-non-compliant-button-batteries-products/)
 - The ACCC later took Dusk to court over tens of thousands of allegedly non-compliant button-battery products — [ACCC](https://www.accc.gov.au/media-release/dusk-in-court-over-sale-of-thousands-of-allegedly-non-compliant-button-battery-products)
 
 **Electrical equipment (EESS)**
-- Fees under the schedule from 1 Jul 2025:
-  - Responsible Supplier registration: $231.91 a year.
-  - Level 2 or 3 equipment registration: $86.91 for 1 year, $173.83 for 2 years, $434.56 for 5 years.
-  - Level 1 equipment is free to list.
+- Fees under the schedule effective 1 Jul 2026 (verified on the EESS site):
+  - Responsible Supplier registration: $239.74 a year.
+  - Level 2 or 3 equipment registration: $89.85 for 1 year, $179.70 for 2 years, $449.25 for 5 years.
+  - Fees are GST-free. The previous schedule (from 1 Jul 2025) was $231.91 and $86.91.
 
   [EESS fees](https://www.eess.gov.au/registration/registration-fees/)
+- Level 1 in-scope equipment is free to register or list, according to an EESS registration page quoted in a search summary (not re-verified) — [EESS registration](https://eess.gov.au/registration/registration-in-scope-electrical-equipment)
 - Level 3 equipment needs a Certificate of Conformity, and the supplier must be registered before the equipment can be — [EESS Level 3](https://www.eess.gov.au/registration/registration-in-scope-electrical-equipment/level-3/)
 - In NSW, all electrical products sold must meet AS/NZS 3820, the essential safety standard (May 2024) — [NSW Parliament QON answers](https://www.parliament.nsw.gov.au/ladocs/other/20239/Answers%20to%20QONs%20-%20NSW%20Fair%20Trading%20-%2022%20May%202024.pdf)
 
 **NSW e-micromobility (e-bikes, e-scooters and their lithium-ion batteries)**
-- These are declared electrical articles. Prescribed safety standards have applied since 1 Feb 2025; from 23 May 2025 they are limited to electrical safety clauses.
-- An information standard applies from 19 Feb 2025, enforced from 1 Aug 2025, with fines of up to $5,500 per breach.
+- The NSW Government page (last updated 18 Feb 2026) says:
+  - E-micromobility products, including their lithium-ion batteries and chargers, are "declared electrical articles" under the Gas and Electricity (Consumer Safety) Act 2017. This covers certain e-bikes, e-scooters, e-skateboards and self-balancing scooters.
+  - Products for sale must be certified and approved in NSW. The battery, charger and vehicle each need their own Certificate of Approval and safety approval mark, based on testing by an accredited laboratory such as one accredited by NATA. Changing the battery or charger creates a new model that needs separate certification.
+  - The mark must be "placed in a legible and permanent manner on the product itself, not just on product packaging", and must appear on every website that lists an e-micromobility vehicle.
+  - Breaches of the Information Standard can attract fines of up to $5,500 each. Non-compliant products can attract fines of up to $825,000.
+  - Current safety standards were gazetted on 17 Jul 2026. Certain UL standards are accepted until 1 Feb 2027.
 
-[NSW Government](https://www.nsw.gov.au/housing-and-construction/safety-home/electrical-safety/lithium-ion-battery-safety/new-standards-for-lithium-ion-batteries-e-micromobility-devices)
-- An industry report puts maximum penalties at up to $825,000 for corporations — [NIBA](https://www.niba.com.au/news/new-lithium-ion-battery-standards-effect-nsw)
+  [NSW Government](https://www.nsw.gov.au/housing-and-construction/safety-home/electrical-safety/lithium-ion-battery-safety/new-standards-for-lithium-ion-batteries-e-micromobility-devices)
+- Industry reporting says the regime began phasing in from 1 Feb 2025 and puts maximum penalties at $825,000 for corporations — [NIBA](https://www.niba.com.au/news/new-lithium-ion-battery-standards-effect-nsw)
 
 **UK comparables**
 - eBay UK banned private sales of e-bikes and e-bike batteries from 31 Oct 2024; only eligible business sellers can list — [FPA](https://www.thefpa.co.uk/news/ebay-take-action-over-e-bike-battery-sales)
@@ -465,7 +490,8 @@ Import declarations made under the importer's ABN probably create a separate gov
 **Category consequence.** Electrical, lithium-battery, button-battery and children's products carry certification costs and penalty exposure that can exceed a small importer's whole margin. Non-electrical, non-children's goods carry much lighter compliance.
 
 ### Gaps
-- I found no Australian premium figures for public and products liability insurance for small importers. The broker and insurer pages found publish no prices, and the search budget ran out before more could be tried. The report writer should not invent a figure. Advise getting broker quotes, noting that importers carry manufacturer-level exposure.
+- Only one broker's indicative premium ranges were found (upcover, June 2026). There are no premiums by cover limit ($5m, $10m, $20m), no excess data and no recall-insurance pricing. Advise getting broker quotes, noting that importers carry manufacturer-level exposure.
+- Several official pages were inaccessible to automated fetches and could not be verified directly: productsafety.gov.au (the mandatory standards list), ato.gov.au and the Whirlpool forums all returned HTTP 403.
 - I found no ACCC or state guidance specific to "trader" disclosure on Facebook Marketplace.
 - Customs duty, import GST and ChAFTA certificate-of-origin rules were not covered here (they belong to the landed-cost stream).
 - Category-specific mandatory standards (toys for children up to 36 months, trampolines, toppling furniture and so on) were not exhaustively checked.
@@ -484,7 +510,7 @@ I found no formal published framework specific to importing for Marketplace. The
 ### Cited Findings
 - Bulky items such as home gyms, treadmills and exercise bikes "can actually resell for pretty good prices". Marketplace is "Great for selling items locally", with no fees and no built-in payment processing (US) — [Side Hustle Nation](https://www.sidehustlenation.com/best-items-to-flip/)
 - Australian sellers say Gumtree is "great for getting rid of larger items by local pickup". Facebook "isn't the place to sell electronics", although another seller found it "good for portable electronics" (conflicting anecdotes) — [OzBargain](https://www.ozbargain.com.au/node/839186)
-- Certification burden: electrical, telecom and many toys need certification costing "thousands" — [Whirlpool](https://forums.whirlpool.net.au/archive/1939680). Hot glue guns had to be abandoned because they could not legally be sold without certification — [OzBargain](https://www.ozbargain.com.au/node/954147). For EESS fees, button-battery penalties and NSW lithium rules, see Q6 — [EESS](https://www.eess.gov.au/registration/registration-fees/); [JWS](https://www.jws.com.au/insights/articles/2023-articles/pressing-ahead-first-penalties-issued-for-button); [NSW Government](https://www.nsw.gov.au/housing-and-construction/safety-home/electrical-safety/lithium-ion-battery-safety/new-standards-for-lithium-ion-batteries-e-micromobility-devices)
+- Certification burden: electrical, telecom and many toys need certification costing "thousands" — [Whirlpool](https://forums.whirlpool.net.au/archive/1939680). Hot glue guns had to be abandoned because they could not legally be sold without certification — [OzBargain](https://www.ozbargain.com.au/node/954147). For EESS fees, button-battery penalties and NSW lithium rules, see Q6 — [EESS](https://www.eess.gov.au/registration/registration-fees/); [JWS](https://jws.com.au/what-we-think/pressing-ahead-first-penalties-issued-for-button-battery-standard-breaches); [NSW Government](https://www.nsw.gov.au/housing-and-construction/safety-home/electrical-safety/lithium-ion-battery-safety/new-standards-for-lithium-ion-batteries-e-micromobility-devices)
 - Avoid commodity items; look for a cheap supplier, a marketing angle and a moat; test demand with ads (the $71 CPA example) before ordering; build a full landed-cost and overhead pricing formula — [OzBargain](https://www.ozbargain.com.au/node/954147)
 - Durability: racks and free weights last 15-20+ years. Cardio and wear parts (cables, belts, electronics, upholstery) fail sooner, and low-cost imports often fail within 3-5 years — [Verve Fitness](https://www.vervefitness.com.au/blogs/all/gym-equipment-wholesale-australia-guide)
 - Demand signals (2020; older): Gumtree's most-searched categories were bikes, exercise equipment, gaming consoles, computers, tablets, desks, kitchen and dining, furniture, DIY tools, and books and games — [Yahoo Finance AU](https://au.finance.yahoo.com/news/gumtree-items-sell-210000616.html)
@@ -525,7 +551,7 @@ I found no formal published framework specific to importing for Marketplace. The
   - Against: post-WFH demand normalisation (Kogan-type overstock), colour variants, Officeworks and Kmart private-label anchors, and mechanical wear parts (not quantified).
   - Verdict: conditional; low differentiation.
 - **E-bikes and e-scooters**
-  - Against: NSW mandatory standards since 2025, penalties up to $825k, supplier exits, and UK platforms restricting private sales.
+  - Against: NSW certification and marking (battery, charger and vehicle each need approval, and the mark must appear on every website listing), penalties up to $825k, supplier exits, and UK platforms restricting private sales.
   - Verdict: no-go.
 
 ### Gaps
