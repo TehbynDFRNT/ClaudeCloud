@@ -140,6 +140,29 @@ Bulky goods carry heavy freight per unit: rooftop tents measure ~0.86 m³ and 83
   - Hangzhou Creato Machinery (**MIC-Trd**): Waycool WG65 58 L $178.03–192.27, MOQ 100
   - Zhongshan Kwangna Global Supply Chain (**Name flag**): $90, MOQ 100
 - Outlier: Shanghai Huaqi Industrial (**MIC-Trd**) lists a "22 Litre Compressor Cooler and Warmer" at $16.89–17.15 (MOQ 250). That price is implausible for a compressor unit — [MIC Compressor Car Fridge](https://www.made-in-china.com/products-search/hot-china-products/Compressor_Car_Fridge.html)
+- **Detail page — Qingdao Smad Electric Appliances, 35 L battery-powered compressor fridge (SRY-B-35PX):**
+  - $268–295 (sample $368)
+  - **SECOP/Danfoss PBC-2.0 compressor**
+  - carton **70.5×46.5×49.0 cm (≈0.161 m³), 20.7 kg gross**
+  - **loading 144 pcs/20GP, 300/40GP, 375/40HQ**; MOQ 375 (one 40HQ) vs "144 PCS/1×20'" in the description
+  - lead time 45 workdays
+  - certification lists include CE/EMC/LFGB/ERP/RoHS/**SAA**/CB
+  - Qingdao (Shibei District); auditor not named
+  - — [MIC Smad detail](https://qdsmad.en.made-in-china.com/product/OKHnazCMXoUt/China-Mini-Compressor-Car-Refrigerator-35L-Battery-Powered-Mini-Fridge.html)
+- **Detail page — Huzhou Transtec 92 L (BC-92) solar compressor fridge:**
+  - $149 (1–9) / $147 (10–49) / $145 (50+); sample fee 1.5× unit, refundable on order
+  - "Sikelan" compressor, R600a
+  - packing 500×465×870 mm (≈0.202 m³), 22 kg gross (the description conflicts: 16 kg gross)
+  - **355 pcs/40HQ** (spec) vs 414 (description)
+  - ports Shanghai/Ningbo; 25–30 days
+  - TÜV Rheinland audit MIC-ASI2631250
+  - established 2015-10-22, **52 employees, 3,074 m²**, Deqing, Zhejiang; RMB 2M registered capital
+  - — [MIC Transtec detail](https://hztranstec.en.made-in-china.com/product/FaOrdMAyLsUJ/China-Solar-Compressor-Fridge-90L-for-Household-RV-Outdoor-Car-Use.html)
+- **Detail page — Ningbo Fantasticar FT-CF-45 (45 L):**
+  - $120 (10–499) / $100 (500+); CE; no carton data
+  - the page carries template errors (Basic Info type "Microfiber Cleaning Cloth"; "Designed for OLIVER vehicles"; capacity stated as 45 L / 55 L / >20 L)
+  - auditor not named. These are red flags for a trading or reseller listing
+  - — [MIC Fantasticar detail](https://fantasticlean.en.made-in-china.com/product/FdBGfmtTaZaR/China-Fantasticlean-Portable-45L-Cooler-Box-Caravan-Camping-Boat-Marine-Fishing-12-Volt-Compressor-Car-Fridge-Freezer-20c-to-10c.html)
 - Ningbo Iceberg Electronic Appliance Co., Ltd. advertises OEM/ODM, but its range is mostly thermoelectric/mini fridges (4–15 L) plus a 12V 33 L cooler — [SourceReady](https://www.sourceready.com/supplier/list/best-compact-refrigerator-manufacturers)
 - Net product dimensions only (no carton data found):
   - Alpicool CR90X: ~24 kg, 418 W × 975 H × 500 D mm — [Clearcut Conversions](https://clearcutconversions.co.uk/product/alpicool-fridge-cr90x-100-litre-12v-compressor-fridge/)
@@ -252,6 +275,21 @@ Bulky goods carry heavy freight per unit: rooftop tents measure ~0.86 m³ and 83
   - Lumi Legend Corporation (Zhejiang): brushless dual-motor 125 kg $89–129 (MOQ 50); single-motor with drawer $99–139 (MOQ 100); dual-motor $105–135 (MOQ 200)
   - Egrospace Kejing furniture (Guangdong): single-motor $69.06–78.93; dual-motor $182.81–208.93; MOQ 2 sets
   - — [MIC Electric Standing Desk](https://www.made-in-china.com/products-search/hot-china-products/Electric_Standing_Desk.html)
+
+- **Detail page — Zhejiang Jiecang R12R-TH desk frame:**
+  - **$110 (10–99) / $105 (100–499) / $100 (500+)**
+  - package listed as "1060×270×240 cm", evidently mm, i.e. **≈106×27×24 cm (≈0.069 m³), 35 kg gross**
+  - ports Ningbo/Shanghai; ~1 month
+  - certifications claimed: CE, TÜV, UL, PSE, KC, **SAA**, RoHS
+  - TÜV Rheinland audit MIC-ASR2531986
+  - **listed on the Shanghai Stock Exchange (Sept 2018)**; Xinchang County, Shaoxing; 1,549 employees (profile says >2,600); 69,452 m² plant; registered capital RMB 382.2M
+  - this is the strongest-evidenced genuine manufacturer in this dataset
+  - — [MIC Jiecang detail](https://jiecang.en.made-in-china.com/product/KOqfYgsblSWR/China-Jiecang-R12r-Th-Electric-Height-Adjustable-Standing-Desk-Frame.html)
+- **Detail page — Lumi Legend Corporation (Yinzhou District, Ningbo):**
+  - 125 kg brushless dual-motor desk $89–129, MOQ 50 (sample $129)
+  - whether the tabletop is included is not stated; no packing data
+  - **SGS audit QIP-ASR2331269**; trading since 2005; claims 50,000 pcs/month; ~45 days after payment
+  - — [MIC Lumi Legend detail](https://lumi2007.en.made-in-china.com/product/RAZrqnXObQpN/China-OEM-ODM-125kg-3-Stage-Brushless-Dual-Motor-Computer-Standing-Table-Ergonomic-Smart-Electric-Height-Adjustable-Sit-Stand-Desk.html)
 
 #### Appliances: robot vacuums (cluster: Guangdong, i.e. Shenzhen/Foshan/Huizhou)
 - **Ultron Technology (Foshan) Co., Ltd.** (Chancheng, Foshan; est. 2009; TÜV Rheinland audit MIC-ASR241821; Diamond Member since 2020):
