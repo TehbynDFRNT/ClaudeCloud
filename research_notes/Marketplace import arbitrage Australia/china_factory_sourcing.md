@@ -355,9 +355,11 @@ Many low-MOQ listings come from traders. Even TÜV/SGS/BV-audited supplier pages
   - Foshan Keno Furniture (MIC-Mfr+Trd, CE): $30, MOQ 10 sets
   - Jyx Home Furnishing: $49–51
 - Anji cluster scale:
-  - roughly one in three chairs sold in China is made in Anji
-  - county chair manufacturing was worth RMB 31.19bn in 2024 (inside a RMB 39.11bn "green home" industry), per data cited by China Daily — [China Daily via chinaservicesinfo](https://investinchina.chinaservicesinfo.com/s/202509/09/WS68bfaab3498e368550334e58/how-smart-chair-manufacturing-in-east-china-county-sits-at-heart-of-sustainability.html)
-  - a sponsored CIFF guide claims 30%+ domestic share, >1/3 of China's chair exports, >1,000 furniture enterprises and 160 million chairs/yr. Export share is cited elsewhere as "half", so the export figure is contested — [CIFF Click2Connect](https://click2connect.ciff-gz.com/blogs/69a6973f3932394cd9a49b22)
+  - Xinhua (republished 9 Sep 2025): Anji makes "one in every three chairs made in China", and about half of those chairs are exported
+  - Anji's green-home industry was worth RMB 39.11bn in 2024 (+7.7%), with chair manufacturing at RMB 31.19bn
+  - >1,700 green-home enterprises; home-furnishing exports of RMB 22.37bn were 62.5% of the county's exports
+  - — [Xinhua via Invest in China](https://investinchina.chinaservicesinfo.com/s/202509/09/WS68bfaab3498e368550334e58/how-smart-chair-manufacturing-in-east-china-county-sits-at-heart-of-sustainability.html)
+  - a sponsored CIFF guide claims 30%+ domestic share, >1/3 of China's chair exports, >1,000 furniture enterprises and 160 million chairs/yr. These figures are unverified against official data — [CIFF Click2Connect](https://click2connect.ciff-gz.com/blogs/69a6973f3932394cd9a49b22)
 
 #### Office: electric standing desks (cluster seen: Zhejiang; also Foshan)
 - Range of listings:
@@ -422,7 +424,13 @@ Many low-MOQ listings come from traders. Even TÜV/SGS/BV-audited supplier pages
   - **BV audit MIC-ASR243117**; 120 workers, 8 production lines; Diamond Member since 2007
   - capacity (3,000 vs 30,000/month) and wattage (2500W vs 1700W) conflict
   - — [MIC Jewin detail](https://cnqinyou.en.made-in-china.com/product/kphrcgPTOfVX/China-Hot-Selling-9-5L-Dual-Basket-Air-Fryer-New-Design-Large-Capacity-Visual-Window-High-Quality-Best-Value.html)
-- Cixi cluster: China Daily calls Cixi one of China's three major household-appliance bases, alongside Qingdao and Shunde/Foshan. Its claim that Cixi makes "60 percent of all appliances globally" is implausible as stated — [China Daily Zhejiang](https://zhejiang.chinadaily.com.cn/2023-10/16/c_930961.htm)
+- Cixi cluster (China Daily, 16 Oct 2023):
+  - "one of China's three major household appliance manufacturing bases (the other two are Qingdao… and the Shunde district of Foshan)"
+  - >2,000 household-appliance manufacturers and nearly 10,000 supporting enterprises
+  - "within half an hour, you can find at least 99 percent of the components"
+  - irons >60M units/yr (>60% of national export volume)
+  - its headline claim that Cixi "produces 60 percent of all appliances globally" is implausible as stated
+  - — [China Daily Zhejiang](https://zhejiang.chinadaily.com.cn/2023-10/16/c_930961.htm)
 - Stand mixers (sparse household listings) — [MIC Stand Mixer](https://www.made-in-china.com/products-search/hot-china-products/Stand_Mixer.html):
   - Ultron Technology (Foshan): Murenking MK-36A $28.50–29.38, MOQ 500
   - Foshan Xuanmai Machinery (MIC-Mfr+Trd): 380W 7 L $190–220
@@ -453,9 +461,9 @@ Many low-MOQ listings come from traders. Even TÜV/SGS/BV-audited supplier pages
   - **Bureau Veritas audit MIC-ASR2221558**; exporting since 2007; address in Futian District, Shenzhen (a CBD district, so possibly an office rather than the plant)
   - — [MIC Zhehua detail](https://zhehuatoys.en.made-in-china.com/product/WAyRoIiDXlkH/China-24V-Ride-Car-Kids-4X4-Electric-2-Seat-EVA-Wheels-Wholesale-Power-UTV-for-Children.html)
 - Pingxiang cluster scale:
-  - China Daily coverage describes 145 million units/yr, ~50% of China's domestic market and ~40% of the global market — [China Daily (govt)](https://govt.chinadaily.com.cn/s/202507/02/WS687b6522498edec913cde897/pingxiang-fuels-worlds-children-vehicles.html)
-  - a March 2026 report cites >RMB 34bn revenue, >5,000 bicycle-related businesses and 155 million units/yr — [chinaservicesinfo](https://chinaservicesinfo.com/s/202603/04/WS69a7d2e4498e36855033af79/innovation-transforming-chinas-bicycle-heartland.html)
-  - Xinhua coverage cites >RMB 30bn in 2023 and ~4,800 manufacturers. Enterprise counts vary from 4,800 to 8,000 by source — [China Daily (govt)](https://govt.chinadaily.com.cn/s/202501/08/WS678a333c498eec7e1f72d894/bikes-made-in-hebei-county-find-global-popularity.html)
+  - China Daily (2 Jul 2025): 145 million units/yr, 50% of China's domestic market and 40% of the global market; >8,000 enterprises; 120,000 workers; exports to >100 countries — [China Daily (govt)](https://govt.chinadaily.com.cn/s/202507/02/WS687b6522498edec913cde897/pingxiang-fuels-worlds-children-vehicles.html)
+  - China Daily (4 Mar 2026): annual revenue >RMB 34bn (per a Pingxiang bureau deputy director), >5,000 bicycle-related businesses and 155 million units/yr of bicycles, children's vehicles and toys — [chinaservicesinfo](https://chinaservicesinfo.com/s/202603/04/WS69a7d2e4498e36855033af79/innovation-transforming-chinas-bicycle-heartland.html)
+  - Xinhua (8 Jan 2025): >RMB 30bn revenue in 2024; 4,800 makers of children's bikes, strollers and electric toy cars; 145 million units; >80 export countries; named firms Goodbaby and local brand Montresor. Enterprise counts vary from 4,800 to 8,000 by source — [China Daily (govt)](https://govt.chinadaily.com.cn/s/202501/08/WS678a333c498eec7e1f72d894/bikes-made-in-hebei-county-find-global-popularity.html)
 - Balance bikes — [MIC Balance Bike](https://www.made-in-china.com/products-search/hot-china-products/Balance_Bike.html):
   - Hangzhou Yongdi Bicycle (Audited): 12-inch $25–28, MOQ 100
   - Qingdao Vold Machinery Manufacturer (MIC-Mfr+Trd): steel 2-in-1 $15, MOQ 300
@@ -540,7 +548,12 @@ Many low-MOQ listings come from traders. Even TÜV/SGS/BV-audited supplier pages
   - E-micromobility is one of the ACCC's four product-safety priorities for 2026–27 — [Maddocks](https://www.maddocks.com.au/insights/e-bikes-e-scooters-and-e-commerce-what-you-need-to-know-about-the-acccs-2026-27-product-safety-priorities)
 
 #### Fitness cluster scale: Ningjin County (Dezhou, Shandong)
-- Ningjin's fitness-equipment output reached RMB 13.9bn in 2024 and the industry employs >40,000 people. Nearly 3,000 fitness/sports-equipment companies are based there. Local data claims ~3 in 10 commercial fitness machines sold worldwide are made in Ningjin. Named leader: MBH (Shandong Maibaohe) — [China Daily Shandong](https://subsites.chinadaily.com.cn/shandong/2025-07/31/c_1113586.htm)
+- China Daily (31 Jul 2025) on Ningjin:
+  - 2024 fitness-equipment output of RMB 13.9bn; >40,000 employees; "nearly 3,000 fitness and sports equipment companies"
+  - Ningjin accounts for ">70 percent of China's domestic fitness equipment market" and exports to >170 countries and regions
+  - named firms: MBH, Shandong DHZ Fitness Equipment Co Ltd, Shandong Brightway Fitness Equipment Co Ltd
+  - — [China Daily Shandong](https://subsites.chinadaily.com.cn/shandong/2025-07/31/c_1113586.htm)
+  - A "~3 in 10 commercial fitness machines worldwide" figure seen in search snippets is **not** in this article and is unverified.
 - Ningjin received the "China Fitness Equipment Production Base" title in 2016; a 2023 count gives >2,000 fitness-equipment factories, 28 of them above designated size — [EqualOcean](https://equalocean.com/news/2023092520245-chinas-international-city-fitness-equipment-production-base-ningjin-county)
 
 ### Inferences
