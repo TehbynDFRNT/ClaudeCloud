@@ -107,7 +107,7 @@ Big flat-pack furniture fails without an unusually cheap, verified knock-down (K
     - Bunnings Jumbuck 4 Burner Portland Hooded AUD 229 ([PriceHipster](https://pricehipster.com/product/AZD0lYLScACuLfj2AtV3Fw)). Jumbuck 4 Burner Delta Flat AUD 199 ([PriceHipster](https://pricehipster.com/product/AZFblFvNcAC56Usqz11rcQ)).
     - Amazon AU: the top-30 freestanding BBQs include no generic 4-burner. The cheapest gas model is a Weber Baby Q at AUD 389 ([Amazon AU](https://www.amazon.com.au/dp/B0CKQHT29V)).
 11. **Steel fire-pit table, 3-in-1** (grill, lid, tabletop)
-    - Amazon AU #1 in Fire Pits: "60cm Round Fire Pit with Grill Wooden Tabletop 3 in 1", AUD 199.99, 367 ratings ([Amazon AU](https://www.amazon.com.au/dp/B0H44MPFJ2)). Grillz 26" square AUD 79.95 ([Amazon AU](https://www.amazon.com.au/dp/B0776TBC7B)).
+    - Amazon AU #1 in Fire Pits: "60cm Round Fire Pit with Grill Wooden Tabletop 3 in 1", AUD 199.99, no rating count shown, so likely a new listing ([Amazon AU](https://www.amazon.com.au/dp/B0H44MPFJ2)). Grillz 26" square AUD 79.95 ([Amazon AU](https://www.amazon.com.au/dp/B0776TBC7B)).
     - Grillz Fire Pit BBQ Grill 2-in-1 Table AUD 144.95 via Crazy Sales ([PriceHipster](https://pricehipster.com/product/AZu5TQ8hcAWKYzLf0Szs9A)).
     - Bunnings: Fraser steel fire pit with outdoor table AUD 119, was AUD 169 ([PriceHipster](https://pricehipster.com/product/AZ0hNXGIcAC7zmpn9LP05A)); Glow Canyon AUD 79 ([PriceHipster](https://pricehipster.com/product/AZzoX0XIcACuL2rcxrfrlg)).
     - Kmart folding Firepit AUD 49 ([Kmart](https://www.kmart.com.au/product/firepit-43627714/), via search summary).
@@ -281,7 +281,7 @@ Timing is the other problem. A purchase order placed in mid-October 2026 lands a
 - **Saturation:** "Most saturated: mattresses, kids' ride-ons, egg chairs and wicker lounge sets, gas-lift beds, iSUPs". "Moderately saturated: … gazebos". Dropshipzone house brands (Gardeon for outdoor lounges and egg chairs) appear identically across cities on Gumtree and Marketplace. This is from the parallel demand notes, based on [Gumtree](https://www.gumtree.com.au/s-garden/4+piece+wicker+outdoor+lounge+setting/k0c18398) and [Gumtree egg chairs](https://www.gumtree.com.au/s-garden/hanging+egg+chair/k0c18398) listings.
 - **Amazon AU Best Sellers rank and ratings (9 Oct 2026), a proxy for sell-through:**
   - Gardeon 270L storage box is #1 in Patio Seating with 173 ratings ([Amazon AU](https://www.amazon.com.au/gp/bestsellers/garden/10467674051)).
-  - The 60cm 3-in-1 fire pit with tabletop is #1 in Fire Pits with 367 ratings ([Amazon AU](https://www.amazon.com.au/gp/bestsellers/garden/5707573051)).
+  - The 60cm 3-in-1 fire pit with tabletop is #1 in Fire Pits with no rating count shown. A COOZOOM 5.5" tabletop pit at AUD 43.56 is #2 with 367 ratings ([Amazon AU](https://www.amazon.com.au/gp/bestsellers/garden/5707573051)).
   - CROWN SHADES 3×3 gazebo is #2 with 4,847 ratings ([Amazon AU](https://www.amazon.com.au/gp/bestsellers/garden/5737254051)).
   - MOKANI outdoor rug is #3 with 2,695 ratings ([Amazon AU](https://www.amazon.com.au/gp/bestsellers/garden/14652554051)).
   - Weber Original Kettle Premium has 12,498 ratings ([Amazon AU](https://www.amazon.com.au/gp/bestsellers/garden/5707628051)).
@@ -439,7 +439,7 @@ All listings below are Made-in-China.com, observed 9 Oct 2026. Prices are list F
 - **Foshan Kingwell:** tiers US$110/90.88/80.88 at MOQ 10; HS 6601100000. — [listing](https://kingwellfurniture.en.made-in-china.com/product/hgPUXOfubYkM/China-Cantilever-Umbrella-for-Patio-Silk-Screen-Printing-UV-Resistant-Outdoor-Umbrella.html)
 
 **Shade sails, deck boxes and rugs**
-- **Zhejiang Lvyuan:** polyester shade sail US$16 at MOQ 3,000. — [listing](https://zjlvyuan.en.made-in-china.com/product/yewxKoBvpCWa/China-Polyester-Sail-Waterproof-Shade-Sail-Sun-Shade.html)
+- **Zhejiang supplier on the "zjlvyuan" subdomain** (company name not shown in the search card; "Manufacturer/Factory & Trading", Gold, Audited): polyester shade sail US$16 at MOQ 3,000. — [listing](https://zjlvyuan.en.made-in-china.com/product/yewxKoBvpCWa/China-Polyester-Sail-Waterproof-Shade-Sail-Sun-Shade.html)
 - **Hangzhou Cheers Technology** ("Trading Company"): HDPE cushion box US$34.20–41.80 at MOQ 100; 122×62×64 cm; flat carton 130×71×16.5 cm (0.152 CBM), 22 kg. — [listing](https://aicathlonoutdoor.en.made-in-china.com/product/KZUGwCidlutL/China-Wooden-Design-Outdoor-Garden-Large-Cushion-HDPE-Storage-Box.html)
 - **Little Dolphin (Jiangsu):** recycled-PP outdoor rug US$2.98–12.98 at MOQ 500; "20*40hq Per Month". — [listing](https://aizhiweier.en.made-in-china.com/product/xEsrnBXWYyRu/China-Little-Dolphin-Wanmi-Factory-Waterproof-100-Recycled-Polypropylene-Plastic-Outdoor-Rug.html)
 
