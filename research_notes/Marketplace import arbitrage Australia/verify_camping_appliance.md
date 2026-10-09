@@ -1,25 +1,62 @@
 # Independent verification: camping/4WD and appliance shortlist (recovery kit, camp kitchen, pressure washer)
 
-*Verifier notes, started 2026-10-09. Scope: re-check price floors, factory FOB/CBM and compliance for the three shortlisted SKUs from vertical_camping_4wd.md and vertical_appliances_emobility.md, recompute GP on the shared base assumptions, and give CONFIRMED / REVISED / BROKEN verdicts. All prices are as observed on the date stated. "ASSUMPTION" marks uncited inputs. (In progress: sections are filled as research proceeds.)*
+*Verifier notes, 2026-10-09.*
+
+**Scope:** re-check price floors, factory FOB/CBM and compliance for the three shortlisted SKUs from vertical_camping_4wd.md and vertical_appliances_emobility.md; recompute GP on the shared base assumptions; give CONFIRMED / REVISED / BROKEN verdicts. All prices are as observed on the date stated (AUD incl. GST at retail). "ASSUMPTION" or "ESTIMATE" marks uncited inputs.
+
+**Access on 2026-10-09:**
+- *Fetched directly:* BCF, Supercheap Auto, Aldi, Made-in-China, legislation.gov.au, the EESS PDF, and OzBargain RSS.
+- *Fetched in part:* Amazon AU Best Sellers. Product pages carried no buy-box offers to this fetcher (location), and later requests got "Server Busy"/503 bot pages, which were not bypassed. 4WD Supacentre came via WebFetch.
+- *Blocked:* Bunnings, Kmart, Kogan, Repco, productsafety.gov.au and ACMA (403 or empty reply); Anaconda (redirect loop). Data for these comes from search summaries, labelled.
 
 ## Q1. Shared base cost model used for every SKU
 
 ### Takeaway
-(pending)
+All three SKUs were recomputed with one script (econ_verify.py) on the coordinator's shared base, so results are comparable across verification files. The SKU-specific inputs and costs are listed below, and every uncited input is labelled. The main change from the original notes is not the freight model. It is (a) lower live price floors and (b) compliance and testing lines the originals left out or under-costed.
 
 ### Cited Findings
-(pending)
+- **FX:** RBA F11.1, AUD/USD 0.6956 on 8 Oct 2026, so US$1 = A$1.4376. — [RBA F11.1 CSV](https://www.rba.gov.au/statistics/tables/csv/f11.1-data.csv) (as recorded in vertical_appliances_emobility.md)
+- **EESS fees** from 1 Jul 2026: Responsible Supplier A$239.74/yr; Level 2/3 equipment registration A$89.85/yr. — [EESS registration fees](https://www.eess.gov.au/registration/registration-fees/) (via vertical_appliances_emobility.md)
+- **ChAFTA:** 100% tariff elimination since 1 Jan 2019, but only with a valid Certificate of Origin held at import. — [DFAT ChAFTA guide](https://www.dfat.gov.au/trade/agreements/in-force/chafta/doing-business-with-china/guide-to-using-chafta-to-export-or-import) (via vertical_camping_4wd.md)
+- **Shared base** (from the coordinator's brief, not re-derived here):
+  - 40HQ A$148/CBM × 68 CBM usable = A$10,064 per box
+  - 20GP A$211/CBM × 28 CBM usable = A$5,908 per box
+  - LCL A$244 per W/M (greater of CBM or tonnes) + A$900 per shipment
+  - Duty 0% (5% sensitivity); net revenue = price ÷ 1.1; no Marketplace fee
+  - Inspection A$400 per factory per order; handling A$5/unit
+  - Defect allowance 3% of landed cost (5% used for the pressure washer)
 
 ### Inferences
-(pending)
+**Formula used**
+- Landed/unit = FOB × 1.4376 + duty + freight ÷ units + inspection ÷ units + fixed compliance ÷ units + per-unit compliance (labels/plugs)
+- Total cost/unit = landed × (1 + defect %) + A$5 handling
+- GP = price ÷ 1.1 − total cost; GP% is of net revenue
+- Cash = FOB + per-unit compliance + duty + freight + inspection + fixed compliance, all ex-GST. Recoverable import GST is not included.
+
+**SKU-specific inputs**
+
+| SKU | CBM / kg per unit (source) | Per-unit compliance | Fixed compliance per order |
+|---|---|---|---|
+| Recovery kit | 0.025 / 10 (ESTIMATE from X-BULL 11-pc Amazon package 0.0237 CBM, 11.9 kg) | US$1 labels/print (ASSUMPTION) | A$2,500 break tests (ASSUMPTION) + A$1,500 liability cover (ASSUMPTION); grid also shows A$1,000 |
+| Camp kitchen | 0.0547 / 12 (Eto/Dashing listings) | none | none |
+| Pressure washer | supplier listing per model | US$1 AU plug/RCM label (ASSUMPTION) | Scenario A A$739.74 (RS A$239.74 + A$500 review); Scenario B + A$5,000 testing (ASSUMPTION) |
+
+**Mode choice**
+- **Recovery kit:** LCL is cheaper than a 20GP up to about 800 kits.
+- **Camp kitchen:** a 20GP wins at 500 units (27 CBM).
+- **Pressure washer:** LCL at 300–500 units; a 20GP holds about 1,300 TOLHIT units.
 
 ### Gaps
-(pending)
+- Freight rates are the brief's shared assumptions, not new quotes.
+- Liability insurance is shown only for the recovery kit, where safety exposure is highest. For the others, add about A$1,500 ÷ units if insured.
 
 ## Q2. SKU 1: 4WD recovery kit (8–11 piece): price floors, factories, landed GP
 
 ### Takeaway
-(pending)
+**REVISED (downgraded). Score 6 → 4.**
+- **Price floor:** the cheapest comparable new kit is now the Super Retail Group house-brand **XTM 7-piece at A$119.99** (Club price, free sign-up; BCF and Supercheap, 191 reviews). On Amazon AU the cheapest is a **Kings Hercules kit + LED light at A$148.95**. The original's A$169–179.90 Amazon anchor could not be found live. The A$139 target therefore breaks the brief's own pricing rule; the realistic Marketplace price is A$99–119.
+- **Compliance:** adding the mandatory strap-labelling regime (Q3), independent break tests and liability cover takes **100 kits to −10% GP at A$119**. Positive margins need **200+ kits** (about 15% at A$119, about 7% at A$109) or a full 20GP (about 41% at A$119, about 30% at A$99; A$63k cash).
+- **Supplier risk:** Thinkwell's US$35 kit is unitemised. A fully itemised kit with a snatch block (Tianshun, US$80–90) is loss-making at any realistic price.
 
 ### Cited Findings
 **Price floors (all observed 2026-10-09; prices include GST)**
@@ -272,16 +309,108 @@ The original analysis said recovery gear had "no specific mandatory standard …
 ## Q4. SKU 2: Aluminium folding camp kitchen with cupboards: price floors, FOB ladder, 100–200 unit route
 
 ### Takeaway
-(pending)
+**The core economics hold at MOQ 500:**
+- At **A$99**: **about 31% GP** (Welfull US$29.50 in one full 20GP, about A$27.5k cash).
+- At A$109: 38%.
+- The live floor is lower than the original's A$109 target implies. Super Retail Group's house-brand Wanderer Premium Series Dual Cupboard Kitchen is **A$99 clearance at Supercheap** and **A$129.99 Club at BCF** (229 reviews). Kmart's simpler camp kitchen is A$70 RRP. So **A$99 is the realistic Marketplace price**.
+
+**The original's 100-unit fallback is worse than stated.**
+- Ningbo General Union is a trading company. Its real ladder is US$41 at 100–1,999 (US$36 only at 2,000+), and its carton is 0.121 CBM.
+- Result: **−7% to −22% GP**, not +8%.
+
+**Viable smaller routes exist:**
+- About 300 units by LCL from Ningbo Eto (identical 146×46 cm spec, US$12–30 range, MOQ 300): about **25% GP at A$99** if quoted at ≤US$30.
+- About 200 units from Yongkang Dashing, only if it quotes its US$34.71 low end: about **15% at A$99**.
 
 ### Cited Findings
-(pending)
+**Price floors (observed 2026-10-09 unless stated)**
+- **Wanderer Premium Series Dual Cupboard Kitchen** (PLU 520333)
+  - BCF: **A$199.99, or A$129.99 Club Price** (free Club sign-up). Flagged "bulky item", so excluded from free shipping over A$120; 1-hour Click & Collect. — [BCF Wanderer Dual Cupboard](https://www.bcf.com.au/p/wanderer-premium-series-dual-cupboard-kitchen/520333.html)
+  - Supercheap: **A$99.00, marked Clearance** (229 reviews). — [Supercheap search "camp kitchen"](https://www.supercheapauto.com.au/search?q=camp%20kitchen); [Supercheap product](https://www.supercheapauto.com.au/p/wanderer-wanderer-premium-series-dual-cupboard-kitchen/520333.html)
+  - Spec:
+    - "twin hanging storage cupboards with mesh doors"
+    - 30 kg capacity
+    - "Aluminium slat top and shelf"
+    - "powder coated steel frame"
+    - "removable windshield"
+    - open 172×49×110 cm; packed 50×82×16 cm; about 15 kg — same pages
+- **Other BCF camp kitchens:**
+  - Wanderer Lightweight Kitchen Station A$179.99 (**A$99.99 Club**): aluminium, windshield, 4 side tables, no cupboards; packed 96×22×50 cm; 11.8 kg; 12-month warranty
+  - Wanderer Lightweight Premium Camp Kitchen A$249.99 (A$159.99 Club)
+  - XTM X-Lite Camp Kitchen A$120 (a 32 kg fridge-slide unit; not comparable)
+  - — [BCF Lightweight Kitchen Station](https://www.bcf.com.au/p/wanderer-lightweight-kitchen-station/695963.html); [BCF search "camp kitchen"](https://www.bcf.com.au/search?q=camp%20kitchen&srule=price-low-to-high)
+- **Kmart** "Camp Kitchen" (SKU 43566358): **A$30, was A$70**, clearance, online only. Zip side cupboard, MDF shelves, 3 bench tops (via search summary; undated). — [Kmart camp kitchen](https://www.kmart.com.au/product/camp-kitchen-43566358)
+- **Amazon AU:** could not be re-verified.
+  - Every camp-kitchen request (sporting-goods Best Sellers, the vidaXL B01F1UBEOY page, a search) returned Amazon's "Server Busy" bot page or HTTP 503 on 2026-10-09. These were not bypassed.
+  - The original's figures (Costway A$101.90–149.95; vidaXL A$105.99; VEVOR with cupboard A$130.99) came from undated search summaries. — [vertical_camping_4wd.md citing Amazon AU search](https://www.amazon.com.au/camping-kitchen/s?k=camping+kitchen)
+- **Others:** no Aldi camp kitchen is current (Aldi search 2026-10-09). Anaconda redirect-looped (bot protection). 4WD Supacentre previously showed no camp kitchen with cupboards. OzBargain's camp-kitchen tag has no deals since 2019. — [Aldi search](https://www.aldi.com.au/results?q=camp%20kitchen); [OzBargain tag feed](https://www.ozbargain.com.au/tag/camp-kitchen/feed)
+
+**FOB ladder (Made-in-China.com, fetched 2026-10-09)**
+- **Welfull Group Co., Ltd.** (Hangzhou; Gold member since 2010; "audited by BV")
+  - CT016 146×46×80 cm, 19 mm aluminium tube, windscreen + 3 storage cupboards, 30 kg load: **US$25.00–29.50, MOQ 500**.
+  - "One PC in One Carry Bag, 10PCS in One Carton" (carton size not given); 30,000 pcs/month; lead time one month peak / 15 working days off-peak; Ningbo/Shanghai. — [Welfull CT016](https://welfull-outdoors.en.made-in-china.com/product/kfFpBKvoLRhH/China-Camping-Kitchen-Table-Aluminum-Portable-Outdoor-Cooking-Table-with-Windscreen-and-3-Storage-Cupboards-for-Outdoor-Activities.html)
+  - Other Welfull kitchens: US$23 single removable-cabinet 60×51×98 cm (MOQ 1,000); US$35 3-tier organiser (MOQ 1,000). — [Welfull US$23](https://welfull-outdoors.en.made-in-china.com/product/RtHYrKjyZfVZ/China-Aluminum-Camping-Kitchen-Table-Portable-Cooking-Table-Folding-Kitchen-Cabin-with-Removable-Cabinet-for-Picnic-BBQ-Cooking.html)
+- **Ningbo Eto Outdoor Supplies Co., Ltd.** (Audited; member since 2019; address is an office suite in Yinzhou District, so likely a trader)
+  - "Kitchen Table with Windshield and Storage Organizer … Camp Cupboard", 146×46×70/80/110 cm: **US$12.00–30.00, MOQ 300**.
+  - Package 80×57×12 cm (0.055 CBM), 11 kg; HS 9403200000; 50,000 pcs/month. — [Ningbo Eto](https://eto-outdoors.en.made-in-china.com/product/KmupNtEHOCcT/China-Kitchen-Table-with-Windshield-and-Storage-Organizer-Portable-Folding-Adjustable-Cooking-Table-for-BBQ-Picnic-Camp-Cupboard.html)
+- **Ningbo General Union Co., Ltd.** (**Trading Company**; Diamond since 2022; Audited)
+  - Aluminium kitchen station with cupboard cabinet: **US$41.00 for 100–1,999; US$36.00 for 2,000+**.
+  - Package 40×55×55 cm (0.121 CBM), 18 kg. — [Ningbo General Union](https://mugeneralunion.en.made-in-china.com/product/qmoretMWaSRn/China-Outdoor-Portable-Aluminum-Kitchen-Station-Folding-Camping-Table-with-Cupboard-Cabinet.html)
+- **Yongkang Dashing Leisure Products Factory** (Audited; member since 2025)
+  - 175×46×70 cm aluminium kitchen table: **US$34.71–45.56, MOQ 100** (the original reported US$28.64–45.56).
+  - Carton 80×12×57 cm, 13.45 kg; "20GP:470pcs; 40GP:1120pcs; 40HQ:1320pcs". — [Dashing 175 cm](https://dashingleisure.en.made-in-china.com/product/DriYToZJYaks/China-Outdoor-Aluminum-Lightweight-Collapsible-Portable-Kitchen-Table-for-Camping-Picnic.html)
+  - 120×47 cm table with storage bag/cabinet: US$21.32–25.63, MOQ 50; package 49×11×63 cm, 7.5 kg; claims BSCI/WCA audits. — [Dashing 120 cm](https://dashingleisure.en.made-in-china.com/product/srCpXdFukEWl/China-Wholesale-Outdoor-Camping-Hiking-Picnic-Folding-Portable-Kitchen-Cooking-Table-with-Storage-Bag.html)
+- **Other listings (search page):**
+  - GOOD SELLER Co. (Trading; Diamond since 2010): compact single-cabinet camping kitchen table 20×24×32.3 in, US$20 at 50 units / US$18.90 at 52+ — [GOOD SELLER](https://goodseller-camping.en.made-in-china.com/product/GQHYPwgvqmUV/China-Picnics-BBQ-RV-Traveling-Blue-Cooking-Storage-Cabinet-Kitchen-Camping-Table.html)
+  - Market Union Co. aluminium cooking table US$31.86–38.23 (MOQ 200)
+  - Ningbo High-Sunway US$22–32 (MOQ 500)
+  - Jinjiang Baojia US$28.99–29.99 (MOQ 500)
+  - Suzhou Tuoshenghe US$32.80–45.90 (MOQ 50)
+  - — [MIC search "Camping Kitchen Table"](https://www.made-in-china.com/products-search/hot-china-products/Camping_Kitchen_Table.html)
 
 ### Inferences
-(pending)
+**Price to beat**
+- A comparable unit (≥146 cm, windscreen, 2–3 fabric cupboards) faces the Wanderer at A$129.99 Club (BCF) and A$99 clearance (Supercheap), with Click & Collect and returns.
+- Under the brief's 10–20% rule against Wanderer's A$129.99 Club price, the target is A$104–117. The SCA clearance price, Kmart's A$70 simpler unit and the uncertain Amazon floor (about A$102–131) argue for **A$99** as the realistic Marketplace price, with A$109 as an upside test.
+
+**Shared-base recomputation**
+- Inputs: 0.0547 CBM and 12 kg per unit, an ESTIMATE from the identical-spec Eto/Dashing packages. No specific compliance cost (no mandatory standard identified).
+- **Worked example, Welfull US$29.50, 500 units in one 20GP:**
+  - 27.4 CBM fills the box (A$5,908)
+  - FOB A$42.41 + freight A$11.82 + inspection A$0.80 = landed A$55.03; × 1.03 + A$5 = **A$61.68**
+  - At A$99: net A$90.00 → **GP A$28.32 (31.5%)**
+  - At A$109: A$37.41 (37.8%). At A$89: A$19.23 (23.8%).
+  - Cash A$27.5k ex-GST; break-even price A$67.84.
+  - 20GP beats LCL here (freight/unit A$11.82 vs A$15.15).
+
+| Supplier / order | A$109 | A$99 | A$89 | Cash ex-GST |
+|---|---|---|---|---|
+| Welfull US$29.50, 500 units, 20GP | 37.41 (37.8%) | **28.32 (31.5%)** | 19.23 (23.8%) | 27,513 |
+| Welfull US$25 (low end), 500 units, 20GP | 44.08 (44.5%) | 34.99 (38.9%) | 25.90 (32.0%) | 24,278 |
+| Welfull US$25, full 40HQ (1,243 units) | 48.40 (48.8%) | 39.31 (43.7%) | 30.22 (37.4%) | 55,137 |
+| **Ningbo Eto US$30 (top of range), 300 units LCL** | 31.46 (31.7%) | **22.37 (24.9%)** | 13.28 (16.4%) | 18,242 |
+| Dashing US$34.71 (if quoted at 200), 200 units LCL | 22.25 (22.5%) | 13.16 (14.6%) | 4.07 (5.0%) | 13,949 |
+| Dashing US$45.56, 100 units LCL | −0.51 (−0.5%) | −9.60 (−10.7%) | −18.69 | 9,184 |
+| General Union US$41, 100 units LCL (0.121 CBM) | −10.42 (−10.5%) | −19.51 (−21.7%) | −28.60 | 10,147 |
+| General Union US$41, 200 units LCL | −3.72 (−3.8%) | −12.81 (−14.2%) | −21.91 | 18,993 |
+
+- **5% duty sensitivity** (Welfull, 500 units, A$99): GP A$26.14 (29.0%).
+- **Verdict: REVISED (new numbers). Score held at 5.**
+  - **Holds:** the MOQ-500 thesis (≈31% at A$99; ≈38% at A$109).
+  - **Fails:** the 100-unit fallback; it is loss-making.
+  - **Best smaller route:** about 300 units LCL (A$18k), conditional on a firm quote ≤US$30 from Ningbo Eto or a Welfull concession.
+  - **Factors:**
+    - Bulky (0.055 CBM), so local pickup is a real advantage; Wanderer is flagged bulky and excluded from BCF free shipping.
+    - No compliance burden.
+    - Competitor is a well-reviewed SRG house brand whose clearance price already hits A$99.
+    - 500 units is a full 20GP (27 CBM) to store and sell through in a seasonal category; storage beyond the A$5/unit allowance is not modelled.
 
 ### Gaps
-(pending)
+- Amazon AU camp-kitchen floor and delivery fees are unverified (bot page).
+- Welfull's carton size and Ningbo Eto's real price within US$12–30 need quotes. CBM is estimated from the Eto/Dashing listings.
+- Whether Dashing's 175 cm unit includes cupboards was not confirmed from its listing text.
+- Whether SCA's A$99 clearance is a one-off was not established; BCF Club is A$129.99 the same day.
+- Kmart and Anaconda live prices could not be fetched.
 
 ## Q5. SKU 3: Electric pressure washer (~1800–2000W): price floors, factories, landed GP
 
@@ -453,13 +582,72 @@ A A$119–139 no-name Marketplace washer is not competitive; the realistic price
 ## Q7. Verdicts and revised scores
 
 ### Takeaway
-(pending)
+None of the three is BROKEN outright, but two are materially weaker than ranked.
+- **Recovery kit: REVISED, 6 → 4.**
+- **Camp kitchen: REVISED numbers, score held at 5.** It is now the strongest of the three.
+- **Pressure washer: REVISED, 5 → 3.**
+- **Common cause:** Super Retail Group house brands (XTM, Wanderer, ToolPRO at BCF/Supercheap, with free Club pricing) and Aldi/Bunnings/Kmart set price floors at or below the original targets. The original analyses anchored on Amazon AU only.
+- **Kit + tracks bundle at A$199:** BROKEN at 100 bundles (9% GP at A$199, but A$199 is above the A$167–188 rule price; −1% at A$179). It only works at 200+ bundles.
 
 ### Cited Findings
-(pending)
+**Recovery kit**
+- XTM 7-piece A$119.99 Club / A$149.99 (BCF) / A$169.99 (Supercheap) — [BCF](https://www.bcf.com.au/p/xtm-7-piece-recovery-kit/600254.html); [Supercheap](https://www.supercheapauto.com.au/p/xtm-4x4-accessories-xtm-7-piece-recovery-kit/600254.html)
+- Kings Hercules kit + light A$148.95 on Amazon AU; A$179.16 direct; 11-piece A$199 — [Amazon AU BS Recovery Straps](https://www.amazon.com.au/gp/bestsellers/automotive/14632514051); [4WD Supacentre](https://www.4wdsupacentre.com.au/4wd/winches-recovery.html)
+- Mandatory strap standard in force — [F2017L01560](https://www.legislation.gov.au/F2017L01560/latest/text)
+- Thinkwell US$35 (100–499) / US$32 (500+) — [Thinkwell](https://thinkwell.en.made-in-china.com/product/LoUEjqrvhwtf/China-4X4-off-Road-Recovery-Tow-Strap-Recovery-Kit.html)
+
+**Camp kitchen**
+- Wanderer Dual Cupboard A$99 clearance (Supercheap) / A$129.99 Club (BCF) — [Supercheap](https://www.supercheapauto.com.au/search?q=camp%20kitchen); [BCF](https://www.bcf.com.au/p/wanderer-premium-series-dual-cupboard-kitchen/520333.html)
+- Welfull US$25–29.50 at MOQ 500 — [Welfull](https://welfull-outdoors.en.made-in-china.com/product/kfFpBKvoLRhH/China-Camping-Kitchen-Table-Aluminum-Portable-Outdoor-Cooking-Table-with-Windscreen-and-3-Storage-Cupboards-for-Outdoor-Activities.html)
+- Ningbo Eto US$12–30 at MOQ 300 — [Ningbo Eto](https://eto-outdoors.en.made-in-china.com/product/KmupNtEHOCcT/China-Kitchen-Table-with-Windshield-and-Storage-Organizer-Portable-Folding-Adjustable-Cooking-Table-for-BBQ-Picnic-Camp-Cupboard.html)
+
+**Pressure washer**
+- Aldi Ferrex 1600W A$89.99 (on sale 17 Oct 2026) and 2000W A$149 — [Aldi 1600W](https://www.aldi.com.au/product/ferrex-high-pressure-washer-1600w-000000000000739767); [Aldi 2000W](https://www.aldi.com.au/product/ferrex-high-pressure-washer-000000000000734502)
+- ToolPRO 1595 PSI A$89.99 — [Supercheap](https://www.supercheapauto.com.au/search?q=pressure%20washer&srule=price-low-to-high)
+- Ozito 1800W A$99 (Bunnings, via search summary) — [Bunnings](https://www.bunnings.com.au/our-range/tools/power-tools/pressure-washers)
+- EESS v4.2 has no pressure-washer entry, so Level 1 — [EESS v4.2](https://www.eess.gov.au/wp-content/uploads/2023/02/EESS-Inscope-Equipment-Definitions-and-Risk-Levels-v4.2-.pdf)
+- Goldsen TOLHIT 2000W US$34 at MOQ 500 — [Goldsen](https://goldsen.en.made-in-china.com/product/OnRpWvrdEUcw/China-Tolhit-220V-125bar-2000W-Portable-Electric-Power-Adjustable-High-Pressure-Car-Washer.html)
 
 ### Inferences
-(pending)
+**Summary table** (GP at the realistic price, shared base, first order unless stated)
+
+| SKU | Original claim | Verified price to beat (2026-10-09) | Realistic MP price | First order | Full container | Verdict | Score |
+|---|---|---|---|---|---|---|---|
+| 4WD recovery kit (8–11 pc) | Score 6; A$139; 29–42% GP; A$8–14k | XTM 7-pc A$119.99 Club (BCF/SCA); Amazon Kings Hercules + light A$148.95 | A$109–119 | 200 kits LCL with A$4k compliance: **15.1% at A$119 / 7.3% at A$109**; A$16.9k. (100 kits: −10% at A$119.) | 1,120 kits / 20GP: **41.4% at A$119; 29.6% at A$99**; A$63k | **REVISED** | **4** |
+| Kit + tracks bundle | A$199; about 31% | Amazon generic 15-pc A$209; X-Bull 13-pc A$219; BCF XTM kit + boards A$217.98 Club | A$169–179 | 100: −1% to −7%; 200: 12–17% | 387 bundles / 20GP: 24.5–28.7% | **BROKEN at 100; marginal at 200** | 3 |
+| Aluminium camp kitchen + cupboards | Score 5; A$109; 36% at MOQ 500; 8% at 100 | Wanderer Dual Cupboard A$99 clearance (SCA) / A$129.99 Club (BCF); Kmart simpler unit A$70 RRP | A$99 (A$109 upside) | 300 units LCL via Ningbo Eto at ≤US$30: **24.9%**, A$18k (quote-dependent). 100 units: negative. | Welfull 500 / 20GP: **31.5% at A$99** (37.8% at A$109), A$27.5k; 40HQ 1,243 units at US$25: 43.7% | **REVISED (numbers)** | **5** |
+| Electric pressure washer 1800–2000W | Score 5; A$119–139; 17–30%; Level 1 inferred | ToolPRO 1595 PSI A$89.99 (SCA, everyday); Ferrex 1600W A$89.99 (Aldi, 17 Oct); Ozito 1800W A$99 (Bunnings); Ferrex 2000W A$149; Kmart 1600W A$55–89; Bosch 1500W A$169 (Amazon) | A$89–99 | Goldsen 2000W ×500 LCL: **24.9% (A) / 13.2% (B) at A$99; 16.5% / 3.5% at A$89**; A$30–35k. EBIC 2000W ×200: negative. | Goldsen ×1,300 / 20GP: 30.3% at A$99 (Scenario A); A$71.5k | **REVISED**; Level 1 **CONFIRMED** | **3** |
+
+**Recovery kit: 4/10**
+- **What changed:** the cheapest comparable new kit is now a branded, AS/NZS 2741-shackle, 191-review XTM 7-piece. It costs A$119.99 at BCF/Supercheap for anyone who signs up for the free Club, with 1-hour Click & Collect. On Amazon, Kings sells its Hercules kit + work light at A$148.95.
+- **What the original missed:** a federal mandatory standard governs the strap's labels, instructions and packaging. Credible MBS claims need break tests, and the importer carries deemed-manufacturer liability for a product whose own legal warning cites deaths.
+- **Economics:** once about A$4k of fixed compliance and liability cost is spread, 100 kits lose money at A$119. 200 kits earn about 7–15% at A$109–119. Only container volumes (A$63k) give 30–40%.
+- **Still in favour:** small cube, no EESS, no DG, a 10–20-day supplier, and a clear need.
+- **Next step:** get an itemised Thinkwell quote (contents, nylon strap, MBS test report) and a lab quote before any order.
+
+**Camp kitchen: 5/10, now the best of the three**
+- **What holds:** the MOQ-500 economics, about 31% at A$99 in a full 20GP. The product has no compliance burden and real pickup advantage (bulky; BCF excludes it from free shipping).
+- **What is weaker:** the ceiling. SRG's Wanderer is A$99 on clearance and A$129.99 Club, so A$109 is an upside test, not the base.
+- **Small orders:** the original's 100-unit fallback is loss-making, because General Union's carton is 0.121 CBM and its price is US$41.
+- **Middle route:** about 300 units by LCL (A$18k, about 25%), if Ningbo Eto quotes ≤US$30 for the identical 146 cm spec.
+- **Risks:** sell-through and storage of 300–500 bulky units in a seasonal category, and Wanderer price moves.
+
+**Pressure washer: 3/10**
+- **Level 1 is confirmed** from the EESS risk-level document: no certificate of conformity, only RS registration, RCM and test-report evidence. That is the one positive.
+- **Price failed:** the Bosch A$169 anchor is irrelevant. Supercheap (A$89.99), Aldi (A$89.99/A$149) and Bunnings (Ozito A$99) sell comparable branded units with returns.
+- **Original supplier was mis-specified:** the EBIC "1500W" is a 1200W brush unit with a European plug.
+- **Economics:** only a 2000W induction unit at about US$34 with MOQ 500 (A$30k+) clears 15–25% at A$89–99, and only if a CB/EMC report can be reused. With new testing it is 4–13%.
+- **Other negatives:** thin price advantage over walk-in retail, pump and seal warranty exposure, and seasonal, sporadic Aldi competition.
 
 ### Gaps
-(pending)
+**Quotes needed before committing capital:**
+- Thinkwell kit contents, MBS and test reports
+- NATA lab break-test pricing
+- Liability insurance for recovery gear
+- Welfull/Eto carton size and firm prices at 300/500
+- Goldsen (or its factory) CB report with AU differences and an EMC report
+
+**Data not captured:**
+- Amazon AU floors for camp kitchens and the Pressure Washers best-seller page 1 (bot pages)
+- Bunnings and Kmart prices beyond search snippets (undated)
+- Facebook Marketplace realised prices and sell-through for any of the three SKUs (login wall)
