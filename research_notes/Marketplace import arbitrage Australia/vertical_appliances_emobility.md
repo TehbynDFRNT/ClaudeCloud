@@ -330,13 +330,13 @@ MIC listings confirm the expected clusters: **Ningbo/Cixi/Yuyao/Shaoxing (Zhejia
 
 | Rank | Product | Score | Rationale |
 |---|---|---|---|
-| 1 | Electric pressure washer (1500–1800 W) | **5** | Only Level 1 (inferred) appliance with an Amazon floor (A$169) far above landed cost (A$64–84); 17–30% GP, A$13–18k cash, payback ≈130–145 units of 200. Risks: Bunnings/Ozito/Aldi floors unverified (at A$99 it loses money), pump/seal warranty claims, moderate bulk (7–11 kg) gives some pickup advantage. |
+| 1 | Electric pressure washer (1500–1800 W) | **5** | Only Level 1 (inferred) appliance with an Amazon floor (A$169) far above landed cost (A$64–92 across certification scenarios); 17–30% GP, A$13–18k cash, payback ≈130–145 units of 200. Risks: Bunnings/Ozito/Aldi floors unverified (at A$99 it loses money), pump/seal warranty claims, moderate bulk (7–11 kg) gives some pickup advantage. |
 | 2 | Cordless stick vacuum (high-volume generic) | **3** | 18–22% GP only at A$89 with a 900-unit MOQ (A$50k cash); strict Amazon rule (A$62.99 floor) and Kmart A$79 push price to a loss; Level 3 charger + DG; compact (no pickup edge). |
 | 3 | Dual-basket air fryer (9–10 L) | **3** | 20% GP only with a full 20GP (400u) **and** an authorised AU certificate; 7.5% at 200u; negative to 9% if certifying. Saturated (Ninja, Philips, Healthy Choice, Kmart, Temu); compact. |
 | 4 | Portable evaporative cooler | **3** | Best compliance profile (Level 1) and bulky (pickup edge), but Amazon floor A$76.49 makes it a loss under the brief's pricing rule; 22% GP if Marketplace buyers pay Gumtree-like A$119 (unproven); A$62k for two 40HQs; strongly seasonal/dry-climate only. |
 | 5 | Espresso machine (15–20 bar) | **2** | 7–15% GP with authorised cert, ≤5% if certifying; MOQ 500 (A$36–41k); De'Longhi Stilosa A$129 and Kmart ≈A$89 anchors; pump/leak warranty risk. |
 | 6 | E-scooter (350 W) | **2** | 19–21% GP only by skipping NSW certification (non-NSW sales) — legally fragile; −8.6% with NSW certs; DG >100 Wh; fire/deemed-manufacturer liability; rider legality varies by state; national ACCC standard coming. |
-| 7 | Portable AC (9000 BTU) | **2** | ≤6% GP even at a 680-unit MOQ (A$142k cash); GEMS + Level 3/SGG; heavy (23–24 kg) is the only plus; short season. |
+| 7 | Portable AC (9000 BTU) | **2** | ≤6% GP even at a 680-unit MOQ (A$131–142k cash); GEMS + Level 3/SGG; heavy (23–24 kg) is the only plus; short season. |
 | 8 | LiDAR robot vacuum + self-empty base | **2** | Verifiable LiDAR+base supply (US$219–315) exceeds the A$255 target; only an unverified US$72 offer works; ACMA radio + cyber + Level 3 base + DG; brands (roborock A$366.99, EUREKA A$299) own the segment. |
 | 9 | Foot massager (shiatsu/air/heat) | **2** | Loss at A$65 vs Amazon A$75.99 (basic units A$39); Level 3 massage appliance. Premium foot+calf (RENPHO A$156.99) not modelled. |
 | 10 | LiDAR robot vacuum (no base) | **1** | FOB alone (A$158) exceeds the A$145 target; Lefant/dreame/Kogan/Kmart own sub-A$270. |
