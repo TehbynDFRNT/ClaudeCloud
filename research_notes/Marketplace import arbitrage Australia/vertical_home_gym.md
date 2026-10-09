@@ -88,3 +88,125 @@ Only weight-dense strength goods clear a usable margin at "Amazon-AU-floor minus
 - **Amazon AU (search snapshots):** COMINGFIT **A$89.99** — [Amazon AU](https://www.amazon.com.au/COMINGFIT-Adjustable-Multi-Function-Exercise-Equipment/dp/B0CZJJJSDZ); PASYOU A$104.99 (4.2★, 45) — [Amazon AU](https://www.amazon.com.au/PASYOU-Adjustable-Multifunctional-Standing-Equipment/dp/B0DGXF8JZY); XIN 5-in-1 A$149.95 — [Amazon AU](https://www.amazon.com.au/Power-Tower-Chin-Station-Raise/dp/B0CMZBDXYC); BangTong&Li A$199.99 (4.3★, 6,815 ratings) — [Amazon AU](https://amazon.com.au/BangTong-Li-Adjustable-Multi-Function-Equipment/dp/B07HF36TC1); JOROTO foldable A$279.99 — [Amazon AU](https://www.amazon.com.au/JOROTO-Foldable-Adjustable-Strength-Equipment/dp/B0F7QXK79S).
 - **Factory (MIC):** Deqing Sister Sports — 12 power-tower models US$46.20–74 (MOQ not shown on search page) — e.g. [MIC](https://jdmsports.en.made-in-china.com/product/laHpbDxjhihv/China-Premium-Adjustable-Power-Tower-for-Home-Gym-Workouts.html) (US$50–55).
 
+### Inferences
+
+#### Assumptions used in every row (all labelled; change them and re-run — the arithmetic is linear)
+- **FX** USD 1 = A$1.4434 (cited above). Sensitivity: AUD 5% weaker (A$1.519).
+- **20GP all-in (port-to-door, Sydney/Melbourne metro), base A$5,964** = ocean USD 2,400 (A$3,464; mid of the cited USD 1,500–2,695 range plus Q3/Q4 GRIs) + destination A$2,500 (carrier DHC ≈A$600–625, terminal levy ≈A$225–235, booking/side-loader ≈A$150, DO/docs, broker, IPC A$152, DAFF A$71, metro side-loader cartage). Low A$4,315 (USD 1,500 + A$2,150); high A$6,890 (USD 2,695 + A$3,000). FOB terms, so origin THC is the seller's. *Assumption built from cited ranges.*
+- **LCL, base**: ocean USD 100 per revenue tonne (RT = greater of CBM or gross tonnes) = A$144, + destination depot/CFS A$100/RT, + A$900 fixed per shipment (DO/docs, broker, IPC, DAFF, tailgate pallet delivery). Low: USD 60 + A$80/RT + A$700. High: USD 200 + A$120/RT + A$1,200. *Assumption.*
+- **Duty** 0% with a ChAFTA certificate of origin (A$60 per shipment assumed for the CoO); 5% general rate as sensitivity. **No anti-dumping duty** on any SKU (see compliance section).
+- **Pre-shipment inspection** 1 man-day per factory per order at V-Trust's USD 268 = A$387.
+- **Defect/damage allowance** 3% of (FOB + freight + duty); 6% as sensitivity.
+- **Local handling/storage** A$3 per unit + A$60 per CBM (≈3 months in a self-storage unit plus handling). *Assumption.*
+- **Selling**: Facebook Marketplace local pickup, no platform or payment fee (assumption — fees are covered by the Marketplace-demand researcher). GST-registered: net revenue = price ÷ 1.1; import GST (10% of customs value + duty + international freight) is reclaimed, shown only as a cash float.
+- **Compliance amortised over the first order**: walking pad A$5,732 (A$4,000 RCM/EESS evidence testing or verification + A$1,500 button/coin-battery compliance for the remote + A$231.91 EESS Responsible Supplier fee) — the testing and remote figures are assumptions; spin bike A$300 (labels/manual; assumes an AA-battery console); everything else A$0.
+- **Unit shipping basis (CBM / gross kg per sellable unit)**: 2×24 kg dial pair 0.060/52 (Vigor 56×35×30 cm carton assumed to hold a pair); 2×40 kg dial pair 0.10/88 (assumption); 100 kg bumper set 0.10/103 (assumption, pallet share incl.); home power cage 0.25/75 (assumption); cable cage 0.45/140 (assumption); light FID bench 0.08/20 (assumption); heavy FID bench 0.19/46 (Vigor listing); magnetic rower 0.144/25 (Deqing listing); water rower 0.30/45 (assumption); walking pad 0.0983/25.5 (Ypoo listing); spin bike 0.163/26 (Todo listing; Zhongteng assumed 0.163/30); kettlebell set 0.035/37.5 (assumption); multi-station 0.45/140 (assumption); boxing bag 0.15/20 (assumption — the Rizhao listing's 100×80×80 cm/100 kg is not credible per unit); power tower 0.12/28 (assumption).
+- **Target sell price rule**: 10–20% below the cheapest Amazon AU comparable, and not above the Kogan/Kmart floor.
+
+#### Ranked results (A$ per unit; GP = net revenue ex-GST minus landed cost)
+
+| Rank | Product (SKU) | Price to beat (Amazon AU) | Target Marketplace price | Landed: 20GP / LCL | GP per unit: 20GP (LCL) | GP %: 20GP (LCL) | First-order cash: 20GP / LCL | Score /10 |
+|---|---|---|---|---|---|---|---|---|
+| 1 | Bumper plates, 100 kg set | 400.00 (BRIXX) | 339 | 233.65 (210 sets) / 255.67 (50) | 74.53 (52.51) | 24.2% (17.0%) | 49.1k / 12.8k | 6 |
+| 2 | Dial dumbbells 2×40 kg | 449.99 (Fitness Master) | 379 | 273.77 (245 pairs) / 299.52 (50) | 70.78 (45.03) | 20.5% (13.1%) | 67.1k / 15.0k | 6 |
+| 3 | Kettlebell set 8+12+16 kg | ≈144 (A$4.00/kg Amazon Basics); Kmart 12 kg A$39 (A$29 clearance) | 109 | 78.11 (575 sets) / 89.83 (100) | 20.98 (9.27) | 21.2% (9.4%) | 44.9k / 9.0k | 4 |
+| 4 | Dial dumbbells 2×24 kg | 249.00 (LSG V1) | 199 | 156.88 (400 pairs) / 169.24 (100) | 24.03 (11.67) | 13.3% (6.4%) | 62.8k / 16.9k | 4 |
+| 5 | Magnetic rower (foldable) | 252.80 (FINEX) | 219 | 174.23 (200) / 205.00 (50) | 24.86 (−5.91) | 12.5% (−3.0%) | 34.8k / 10.3k | 3 |
+| 6 | Magnetic spin bike | 174.27 (Everfit) | 149 | 121.59 (224, Todo) / 232.98 (50, Zhongteng) | 13.86 (−97.52) | 10.2% (−72%) | 27.2k / 11.6k | 2 |
+| 7 | Walking pad | 189.90 (Advwin) | 159 | 168.87 (280) / 220.66 (100) | −24.32 (−76.11) | −16.8% (−52.7%) | 47.3k / 22.1k | 2 |
+| 8 | Power rack, no pulley | 215.99 (CANPA) | 189 | 226.58 (110) / 275.38 (30) | −54.76 (−103.56) | −31.9% | 24.9k / 8.3k | 2 |
+| 9 | FID bench (light) | 96.04 (Centra) | 85 | 93.18 (330) / 107.09 (100) | −15.91 (−29.81) | −20.6% | 30.8k / 10.7k | 1 |
+| 10 | Multi-station gym | 429.95 (Costway) | 379 | 407.44 (60) / 479.55 (20) | −62.89 (−135.00) | −18.3% | 24.4k / 9.6k | 1 |
+| 11 | Power rack + cable pulley | 599 + 44.99 delivery (HCE) | 499 (outside band) | 511.51 (60) / 583.62 (20) | −57.87 (−129.98) | −12.8% | 30.7k / 11.7k | 1 |
+| 12 | Water rower | 339.99 (MINYII, "magnetic/water") | 299 | 346.96 (90) / 395.03 (30) | −75.14 (−123.22) | −27.6% | 31.2k / 11.9k | 1 |
+| 13 | Power tower (pull-up/dip) | 89.99 (COMINGFIT) | 79 | 113.19 (230) / 142.21 (50) | −41.37 (−70.39) | −57.6% | 26.0k / 7.1k | 1 |
+| 14 | Freestanding boxing bag | 79.99 (Genki 185 cm) | 69 | 100.65 (180) / 129.26 (50) | −37.92 (−66.53) | −60.4% | 18.1k / 6.5k | 1 |
+
+#### Per-SKU worked rows (base case; breakdown = FOB + freight + duty + PSI/CoO/compliance + defects + handling)
+
+**1. Bumper plates, 100 kg Olympic set — score 6/10**
+- SKU: 2×5, 2×10, 2×15, 2×20 kg rubber bumpers, 50 mm steel/brass hub. Price to beat A$400.00 (BRIXX 100 kg set, Amazon AU, seller/delivery not visible, search snapshot 9 Oct 2026); next floor A$360 for rubber-coated cast iron (not bumper). Target **A$339** (15% below; under the A$360 iron set).
+- Factory basis: US$1.30/kg → **US$130/set** (Nantong Tengtai US$1.00/kg is the low end; Nantong Ironman US$1.29–1.49/kg; Hebei Dili and Shandong Dx Grandway are trading companies).
+- 20GP, 210 sets (≈21.6 t, ≈21 CBM — weight-limited): 187.64 + 28.40 + 0 + 2.13 + 6.48 + 9.00 = **A$233.65**; net revenue A$308.18 → **GP A$74.53 (24.2%)**. Cash ≈A$49.1k plus import-GST float ≈A$4.3k; the whole outlay comes back after **160 of 210** sets.
+- LCL, 50 sets (5.15 RT, charged on weight): landed A$255.67 → GP A$52.51 (17.0%); cash ≈A$12.8k (+≈A$1.0k GST float); payback 42 of 50.
+- Sensitivity (20GP GP/unit): FOB +15% A$45.5; price −10% (A$305) A$43.7; high freight A$70.0; no CoO (5% duty) A$64.9; AUD −5% A$63.5.
+- Compliance: no mandatory standard identified; ISPM-15 pallets. Rationale: best margin, near-zero defect risk, very heavy (online sellers must pay courier freight, Marketplace buyers collect). Used plates hold value, so expect used competition, and capital sits in a slow-turning heavy SKU.
+
+**2. Dial dumbbells, 2 × 40 kg pair (the "32–40 kg" SKU) — score 6/10**
+- SKU: two 5–40 kg dial-select dumbbells (17 settings) with trays. Price to beat ≈A$449.99 (Fitness Master 2×40 kg, Amazon AU snapshot), then A$499 (FitnessLAB). Target **A$379** (16% below; inside the A$100–400 band).
+- Factory basis: **US$160/pair (estimate)** — no listing itemises a 40 kg price; the listed ranges that include 40 kg are US$50–85 (Dezhou Ranao), US$35–65 (Hefei Merrybody, MOQ 200) and US$68–188 (All Universe).
+- 20GP, 245 pairs (≈21.6 t, 24.5 CBM): 230.94 + 24.34 + 0 + 1.82 + 7.66 + 9.00 = **A$273.77** → **GP A$70.78 (20.5%)**; cash ≈A$67.1k (+≈A$6.0k GST float); payback 195 of 245.
+- LCL, 50 pairs (5.0 RT): landed A$299.52 → GP A$45.03 (13.1%); cash ≈A$15.0k; payback 44 of 50.
+- FOB range: at US$130/pair GP is A$115 (20GP) / A$90 (LCL); at US$190/pair A$26 / A$0. **The FOB quote decides this SKU.**
+- Rationale: wide gap to the Amazon floor, few A$379 new competitors seen, heavy (pickup advantage). Risks: dial/locking-mechanism failures and returns, "not for overhead use" warnings (FitnessLAB listing), FOB unknown until quoted.
+
+**3. Kettlebell set, 8 + 12 + 16 kg (36 kg) — score 4/10**
+- Price to beat: no identical set in the snapshots; the Amazon Basics 20 kg at A$79.90 = A$4.00/kg → ≈A$144 for 36 kg; Kmart's 12 kg is A$39 (A$29 clearance) ≈ A$3.25/kg. Target **A$109** (≈A$3.03/kg, kept at or under Kmart's per-kg level).
+- Factory basis: US$1.15/kg → **US$41.40/set** (Hebei Dili US$0.90–1.10, Hefei Bodyup US$0.95–1.05, Qingdao Goldroad US$1.05–1.25, Dingzhou Yunlingyu US$1.00–1.40).
+- 20GP, 575 sets (≈21.6 t, ≈20 CBM): **A$78.11** → **GP A$20.98 (21.2%)**; cash ≈A$44.9k; payback 454 of 575. LCL, 100 sets (3.75 RT): A$89.83 → GP A$9.27 (9.4%); cash ≈A$9.0k.
+- Rationale: fine as weight filler in a mixed container, but the ticket is below the A$100–400 band unless bundled, 575 sets is a lot of local sell-through, and Kmart's own clearance pricing caps the price.
+
+**4. Dial dumbbells, 2 × 24 kg pair — score 4/10**
+- Price to beat **A$249.00** (LSG V1 pair, Amazon AU snapshot); Kmart marketplace Everfit pair A$259.95; Kogan Fortis 2-pack A$259 (Kogan First). Gumtree "brand new" pairs from **A$190** (incl. a Springvale importer selling "wholesale" at A$190/pair). Target **A$199** (20% below Amazon), which is still above the Gumtree importer price.
+- Factory basis: US$45/dumbbell → **US$90/pair** (Nantong Vigor US$43–48.50; Nantong Tengtai US$42–43; Dezhou Ranao and All Universe US$50–55; Hefei Bodyup US$32–38.80).
+- 20GP, 400 pairs (20.8 t, 24 CBM): 129.91 + 14.91 + 0 + 1.12 + 4.34 + 6.60 = **A$156.88** → **GP A$24.03 (13.3%)**; cash ≈A$62.8k; payback 347 of 400. LCL, 100 pairs (6.0 RT): A$169.24 → GP **A$11.67 (6.4%)**; cash ≈A$16.9k; payback 94 of 100.
+- FOB sensitivity: at US$70/pair (Hefei Bodyup-level pricing) GP is A$53.77 (20GP) / A$41.40 (LCL); at US$110/pair (All Universe) it is −A$5.70 / −A$18.07.
+- Rationale: proven demand but already crowded with small importers on Gumtree at A$190–399; margin only exists with the cheapest (least-proven) factories.
+
+**5. Magnetic rower, foldable — score 3/10**
+- Price to beat **A$252.80** (FINEX 16-level, Amazon AU snapshot); caveat: an unverified "basic magnetic rower" at A$127.97 also appeared. Target **A$219**.
+- Factory basis: Deqing Sister ES-1710 at US$87.20 (the 200–479 tier is US$85.50, so the 20GP row is slightly conservative).
+- 20GP, 200 units (listing says 200/20GP): **A$174.23** → **GP A$24.86 (12.5%)**; cash ≈A$34.8k; payback 176 of 200. LCL, 50 units: A$205.00 → **GP −A$5.91**.
+- Rationale: profit only at a full container of one SKU; 200 rowers is a long Marketplace sell-through; cardio machines face heavy used supply (see the glut section).
+
+**6. Magnetic spin bike — score 2/10**
+- Price to beat **A$174.27** (Everfit 8-level, Amazon AU); Kmart's own 13 kg-flywheel bike A$159 clearance (A$249 regular). Target **A$149**.
+- Zhejiang Todo at US$52.50 with the MOQ of 224 = one 20GP: **A$121.59** → **GP A$13.86 (10.2%)**; cash ≈A$27.2k; payback 202 of 224. Jinhua Zhongteng 10 kg flywheel at US$98 via 50-unit LCL: A$232.98 → **GP −A$97.52**.
+- Rationale: thin even at the cheapest container-MOQ factory; used commercial spin bikes sell for about A$100 on Gumtree; Kmart undercuts.
+
+**7. Walking pad — score 2/10**
+- Price to beat **A$189.90** (Advwin, Amazon AU); Kogan Fortis A$204/A$214 (snapshots as low as A$169); Kmart marketplace and Bunnings ≈A$189–190. Target **A$159**.
+- Factory basis: Zhejiang Ypoo M4538 US$74.99 + US$3 assumed for AU plug and remote changes = **US$78**.
+- 20GP, 280 units (27.5 CBM): 112.59 + 21.30 + 0 + 22.07 (PSI/CoO + A$5,732 compliance ÷ 280) + 4.02 + 8.90 = **A$168.87** → **GP −A$24.32 (−16.8%)**; a repeat order without compliance cost is still −A$3.85. LCL, 100 units: A$220.66 → GP −A$76.11. Cash ≈A$47.3k for 280 units; the outlay is not recovered on the first container at A$159.
+- Best case: Yongkang Chochi-level FOB (US$57 + US$3 = US$60) gives A$2.44 (1.7%) on the first order and A$22.91 (15.8%) on repeats at A$159. Pricing at A$179 gives A$20.62 / A$41.09, but A$179 is only 6% under Amazon and above Kogan's A$169 snapshot, so it breaks the pricing rule.
+- Rationale: trend product, but the AU floor sits at import parity, it needs RCM/EESS and button-battery compliance, Gumtree is saturated with dealer listings, and motor/belt returns are a risk.
+
+**8. Power rack without pulley — score 2/10**
+- Price to beat **A$215.99** (CANPA, Amazon AU); target **A$189**. Factory basis US$100 (Nantong Tengtai half rack US$95–105; Nantong Jingyang full rack US$150).
+- 20GP, 110 units: A$226.58 → **GP −A$54.76**; LCL 30: −A$103.56.
+- Caveat: if CANPA's delivered price carries the A$50–130 heavy-steel shipping seen on some listings, a fair "delivered" comparator is ≈A$270–350; at A$299 the 20GP row would make ≈A$45 (17%). This is unverified, so the base verdict stands.
+
+**9–14. Loss-making at the target price (score 1/10 each)**
+- **FID bench**: the A$96.04 Centra floor implies A$85, below the band. The cheapest factory (Deqing Sister, US$44) lands at A$93.18 (20GP) → −A$15.91. The heavy-duty Vigor BT010 (US$114, 46 kg) against the heavy-duty A$139.98 floor lands at A$230.95 → −A$117.
+- **Multi-station gym**: assumed FOB US$180, landed A$407.44 (20GP of 60) vs a A$379 target → −A$62.89.
+- **Cable-pulley rack**: needs ≈A$479–539 (outside the band); assumed FOB US$250 lands at A$511.51 → −A$57.87.
+- **Water rower**: US$170 FOB lands at A$346.96 vs A$299 → −A$75.14. Wooden frames also add biosecurity exposure.
+- **Power tower**: US$50 FOB lands at A$113.19 vs A$79 → −A$41.37.
+- **Boxing bag**: US$35 FOB lands at A$100.65 vs A$69 → −A$37.92.
+- Common pattern: low A$/kg value and bulky cartons, so freight and handling eat 30–60% of the price, and the Amazon floor sellers buy by the 40HQ.
+
+#### Recommended configuration: one weight-limited mixed 20GP of strength iron
+- 100 × 2×40 kg dial pairs + 100 × 100 kg bumper sets + 70 kettlebell sets = **21,725 kg, 22.4 CBM**. That fits the 21.8 t QLD/SA/WA limit and leaves headroom in NSW (24.3 t) and VIC (23.8 t).
+- Freight allocated by weight: A$0.275/kg.
+- Landed and GP per unit:
+
+  | Item | Landed | GP | GP % |
+  |---|---|---|---|
+  | 2×40 kg dial pair | A$276.70 | A$67.85 | 19.7% |
+  | 100 kg bumper set | A$237.18 | A$71.00 | 23.0% |
+  | Kettlebell set | A$79.36 | A$19.73 | 19.9% |
+
+- Total cash ≈ **A$56.9k**, plus ≈A$5.0k import-GST float. Total GP ≈ **A$15.3k** if everything sells at target.
+- Three factory inspections are included. Buyer's-consolidation fees at the origin CFS are not (est. USD 100–300).
+- This is the only configuration in the category that combines double-digit margins with a full container.
+
+### Gaps
+- **Amazon AU data**: amazon.com.au blocked direct reads (503), so seller names, delivery fees and capture dates of the "price to beat" listings are unknown. Delivery fees matter most for the steel items.
+- **Other channel floors not established**: Temu AU, Big W, current Aldi Special Buys and eBay AU importer listings. rebel prices were not captured.
+- **FOB prices are listing ranges, not quotes** (no RFQs by instruction):
+  - No 40 kg-specific dial-dumbbell price.
+  - Several dumbbell listings don't say whether a "piece" is one dumbbell or a pair.
+  - The AU-plug/RCM premium for walking pads is assumed.
+- **Carton CBM and gross weight are assumed** for bumper plates, 40 kg dial dumbbells, racks, benches, kettlebells, multi-gyms, boxing bags and power towers. The freight lines for those rows carry ±30% uncertainty.
+- **Defect and return rates are assumed**: no data for dial dumbbells or walking pads; flat 3% (6% tested).
+- **No data on Marketplace sell-through speed** for 200–575 units of one SKU in a metro area.

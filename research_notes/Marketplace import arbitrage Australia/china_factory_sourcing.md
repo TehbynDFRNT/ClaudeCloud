@@ -141,7 +141,7 @@ Many low-MOQ listings come from traders. Even TÜV/SGS/BV-audited supplier pages
   - A generic 2.55 HP model packs at 40.5×24.2×7.5 in (~103×61.5×19 cm) and 51.6 lb (~23.4 kg) gross — [Walmart listing](https://www.walmart.com/ip/17331005149)
   - Kingsmith WalkingPad P1 gross weight is 31 kg (net 28 kg) — [WalkingPad](https://www.walkingpad.com/products/kingsmith-walkingpad-p1-foldable-treadmill)
   - The WalkingPad G1 double-fold, sold at Myer under "Lifespan Fitness", has packaging of 107×80×24 cm — [Myer AU](https://www.myer.com.au/p/lifespan-fitness-walkingpad-g1-double-fold-walking-and-running-treadmill-in-black)
-- China's treadmill exports reached about USD 698 million in H1 2025, up 12.75% YoY per China Customs (cited in a Canton Fair press release) — [PR Newswire/Canton Fair](https://tools.prnewswire.com/en-us/live/20813/release/20251106EN17411)
+- In H1 2025 China exported USD 2.78bn of fitness equipment (+19.63%) and USD 698m of treadmills (+12.75%), per China Customs as cited in a Canton Fair press release dated 7 Nov 2025 — [PR Newswire/Canton Fair](https://tools.prnewswire.com/en-us/live/20813/release/20251106EN17411)
 
 #### Fitness: spin bikes
 - Range of listings:
@@ -173,8 +173,13 @@ Many low-MOQ listings come from traders. Even TÜV/SGS/BV-audited supplier pages
 #### Camping: 12V compressor fridges/freezers (cluster: Foshan/Shunde/Sanshui, Guangdong; Zhejiang; Jinan, Shandong is mostly traders)
 - **Foshan Alpicool Holding Group Co., Ltd.**:
   - Alibaba listing "Portable ABS Plastic Camping Fridge 12V Compressor": $82–90 at MOQ 100 units, 11 yrs on Alibaba, Ali-badge(img), certification icons KC/E-mark/CCC/RoHS/GS — [Alibaba countrysearch compressor car fridge](https://www.alibaba.com/countrysearch/CN/compressor-car-fridge.html)
-  - IFA Berlin exhibitor profile: founded 2013, "leading manufacturer in portable refrigerator industry", ~1,600 staff — [IFA Berlin](https://www.ifa-berlin.com/exhibitors/alpicool)
-  - A B2B directory cites 2.7 million units/yr capacity, a 140,000 m² facility and 17 production lines — [B2Brazil hotsite](https://b2brazil.com/hotsite/foshanalpicool)
+  - B2B directory hotsite (listed as "Industry / Manufacturer"):
+    - "established in 2013", a "global leader in the portable refrigeration industry"
+    - "over 1,200 employees"
+    - "annual production capacity of 2.7 million units", a "140,000-square-meter factory" and "17 advanced production lines"
+    - specialises in car refrigerators, camping fridges and customised cooling solutions; OEM/ODM not mentioned
+    - — [B2Brazil hotsite](https://b2brazil.com/hotsite/foshanalpicool)
+  - Alpicool exhibits at IFA Berlin (Mobility area, booth CCBB-127). The current exhibitor page carries no company description; a ~1,600-staff figure seen in search snippets is unverified — [IFA Berlin](https://www.ifa-berlin.com/exhibitors/alpicool)
   - CB Insights gives a 2016 founding year and a Shunde address, which conflicts with the 2013 date — [CB Insights](https://www.cbinsights.com/company/alpicool)
   - Status: manufacturer per several directories, but not independently verified here
 - Other Alibaba listings (Ali-badge(img)): Foshan Sanshui Colku Electrical Appliance Limited (18 yrs), 8 L console compressor fridge $130–159 at MOQ 1; Henan Cold King Refrigeration Equipment (5 yrs), 30 L drawer fridge $95–110 at MOQ 3; Jinan Retek Industries Inc (15 yrs), dual-zone $86.60–99.99 at MOQ 10 — [Alibaba countrysearch compressor car fridge](https://www.alibaba.com/countrysearch/CN/compressor-car-fridge.html)
@@ -540,9 +545,17 @@ Many low-MOQ listings come from traders. Even TÜV/SGS/BV-audited supplier pages
   - Zhejiang Yongkang Sportward Enterprises (MIC-Mfr+Trd, Audited): $296, MOQ 50
   - — [MIC Electric Scooter](https://www.made-in-china.com/products-search/hot-china-products/Electric_Scooter.html)
 - Australian compliance:
-  - In December 2025 the Commonwealth agreed to reinstate EN 15194 for imports (25 km/h motor cut-off, 250W limit, pedal-assist only, no throttle) — [Bicycle Network](https://bicyclenetwork.com.au/newsroom/2025/12/03/feds-return-to-euro-e-bike-standard/)
-  - Industry experts warn that once a bike is imported it can be sold without meeting safety benchmarks, and that the import check is effectively a self-declaration — [Lilydale Star Mail](https://lilydale.mailcommunity.com.au/news/2026/02/17/new-e-bike-regulations-fall-short-due-to-loophole-industry-experts-warn/)
-  - NSW mandatory e-micromobility standards: Stage 1 from 1 Feb 2025; mandatory testing/certification Aug 2025; mandatory labelling Feb 2026; penalties up to $825,000 — [NSW Government](https://www.nsw.gov.au/ministerial-releases/nation-leading-safety-and-information-standards-for-lithium-ion-battery-products-now-effect)
+  - On 3 Dec 2025 the Commonwealth decided to "re-instate" the European e-bike standard EN-15194, first introduced in Australia in 2014; the latest version will probably be adopted — [Bicycle Network](https://bicyclenetwork.com.au/newsroom/2025/12/03/feds-return-to-euro-e-bike-standard/)
+  - Local press (Feb 2026; the page returned 403 on recheck, so this is unverified) reports:
+    - EN 15194 imports require 25 km/h motor cut-off, a 250W limit, pedal-assist only (no throttle) and anti-tamper conditions
+    - once imported, bikes can be sold without meeting safety benchmarks
+    - the import check is effectively a self-declaration
+    - — [Lilydale Star Mail](https://lilydale.mailcommunity.com.au/news/2026/02/17/new-e-bike-regulations-fall-short-due-to-loophole-industry-experts-warn/)
+  - NSW e-micromobility rules (release dated 19 Feb 2025):
+    - Stage One from 1 Feb 2025: only devices "with components that comply with the newly prescribed safety standards" may be sold
+    - mandatory testing/certification and labelling stages follow in Aug 2025 and Feb 2026
+    - penalties up to $825,000 for selling non-compliant vehicles, and up to $5,500 per breach of the information standard (in effect 19 Feb 2025)
+    - — [NSW Government](https://www.nsw.gov.au/ministerial-releases/nation-leading-safety-and-information-standards-for-lithium-ion-battery-products-now-effect)
   - A freight forwarder cites AS/NZS 60335.2.114 for e-bikes — [Goodhope Freight](https://goodhopefreight.com/dg/australia-nsw-emobility.html)
   - A Victorian document lists IEC 62133-2 / UL 2271 for batteries and a proposed AS 15194:2026 — [Energy Safe Victoria PDF](https://www.energysafe.vic.gov.au/sites/default/files/2026-01/The-Electric-Bicycle-Co-Electric-Bicycle-Safety.pdf)
   - E-micromobility is one of the ACCC's four product-safety priorities for 2026–27 — [Maddocks](https://www.maddocks.com.au/insights/e-bikes-e-scooters-and-e-commerce-what-you-need-to-know-about-the-acccs-2026-27-product-safety-priorities)
@@ -907,7 +920,7 @@ For **Australian-only** brands (Lifespan Fitness, Everfit, Kogan, Kings), no sup
 - **Shenzhen PICEA Robotics** (with Santrum Hong Kong): iRobot's secured lender and primary contract manufacturer, which acquired 100% of iRobot in a Chapter 11 process closing 23 Jan 2026 — [iRobot press release](https://media.irobot.com/2026-01-23-iRobot-Completes-Court-Supervised-Transaction-with-Picea,-Enabling-the-Next-Chapter-of-Growth); [SEC 8-K exhibit](https://www.sec.gov/Archives/edgar/data/1159167/000119312525318337/d97115dex991.htm)
 - **Lifespan Fitness × Kingsmith WalkingPad**: Myer AU sells a "Lifespan Fitness WalkingPad G1 Double Fold" treadmill, indicating Lifespan retails/distributes Kingsmith's WalkingPad product in Australia — [Myer AU](https://www.myer.com.au/p/lifespan-fitness-walkingpad-g1-double-fold-walking-and-running-treadmill-in-black)
 - **Adventure Kings (4WD Supacentre) fridges**: an AK 28.6 L fridge (model AKFR-FR30L_A_01) lists country of origin China — [eBay AU](https://www.ebay.com.au/itm/166118910784); a 2018 release says the range uses Secop compressors — [24-7 Press Release](https://www.24-7pressrelease.com/press-release/454869/brand-new-range-of-adventure-kings-fridgefreezers-just-launched). No factory is named.
-- **Alpicool** is primarily a branded maker of its own fridges; whether it does OEM work for other brands was not confirmed by sources — [IFA Berlin](https://www.ifa-berlin.com/exhibitors/alpicool)
+- **Alpicool** presents itself as a manufacturer of its own-brand car and camping fridges. Its directory profile does not mention OEM/ODM, and no source confirmed OEM work for other (e.g., Australian) brands — [B2Brazil hotsite](https://b2brazil.com/hotsite/foshanalpicool)
 - **Yotrio (Linhai)** sells outdoor furniture mainly to the US, Germany and **Australia** — [Yahoo Finance profile](https://uk.finance.yahoo.com/quote/002489.SZ/profile)
 - **ImportYeti coverage limits**: US-only — [Capterra](https://www.capterra.co.uk/software/1044829/importyeti); some records show partial "coverage" and stale dates — [ImportYeti Nantong Titanium](https://www.importyeti.com/supplier/nantong-titanium-strength-systems)
 
