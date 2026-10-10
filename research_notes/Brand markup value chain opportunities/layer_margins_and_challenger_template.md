@@ -1,6 +1,6 @@
 # Australian product value chains, layer by layer: what each layer earns, how trade distribution works, which lean challengers took a layer, which barriers protect the layers, and a scoring rubric for new categories
 
-*Research date: 2026-10-10. AUD unless stated. Status: written incrementally; this file is the framework and layer-margin evidence. Sibling researchers cover specific categories.*
+*Research date: 2026-10-10. AUD unless stated. Status: complete (written incrementally); this file is the framework and layer-margin evidence. Sibling researchers cover specific categories. WebSearch quota ran out early in this round, so most evidence after Q1 comes from direct fetches of company, regulator and ASX pages, plus facts already sourced in sibling notes (flagged "via sibling notes").*
 
 *Conventions:*
 - *"Agg." means figures from the stockanalysis.com income-statement pages (an aggregator that restates company accounts; fetched 2026-10-10). Primary filings are cited where I downloaded and read them.*
@@ -54,7 +54,7 @@ The "thick" layer for an importer is therefore the **brand owner + importer** la
 | Metcash (Apr-26) | Wholesaler/franchisor to independents (IGA, Mitre 10, Home Hardware, Total Tools) | A$17,354.0m group | 13.4% group (food-dominated) | 1.15× | Hardware & Tools: revenue ~A$3.7bn, EBIT A$177.3m (A$184.2m normalised), about 4.8–5.0% | [Metcash FY26 results release](https://announcements.asx.com.au/asxpdf/20260622/pdf/070vqhtcmk3bw7.pdf); [Agg. MTS](https://stockanalysis.com/quote/asx/MTS/financials/income-statement/) |
 | Wesfarmers – Bunnings (Jun-26) | Big-box retail + trade (own brands and exclusives) | A$20,399m | not disclosed (group 33.6% agg.) | – | EBT A$2,455m = 12.0% ex-property; ROC 69.2% | [Wesfarmers FY26 results](https://announcements.asx.com.au/asxpdf/20260827/pdf/0738z7fxb48k84.pdf) |
 | Wesfarmers – Industrial & Safety (Blackwoods + Workwear Group) (Jun-26) | Industrial/safety distribution (MRO, PPE) | A$1,758m | not disclosed | – | EBIT A$81m (4.6%); **EBT A$76m = 4.3%**; ROC 9.8% | [Wesfarmers FY26 results](https://announcements.asx.com.au/asxpdf/20260827/pdf/0738z7fxb48k84.pdf) |
-| Wesfarmers – Kmart Group (Jun-26) | Retailer that captured brand + importer layers (direct-sourced own brand) | A$11,751m | not disclosed | – | EBT A$1,109m = 9.4% | [Wesfarmers FY26 results](https://announcements.asx.com.au/asxpdf/20260827/pdf/0738z7fxb48k84.pdf) |
+| Wesfarmers – Kmart Group (Jun-26) | Retailer with a dominant house brand (Anko), i.e. a retailer that internalised the brand layer (direct-sourcing extent not verified here) | A$11,751m | not disclosed | – | EBT A$1,109m = 9.4% | [Wesfarmers FY26 results](https://announcements.asx.com.au/asxpdf/20260827/pdf/0738z7fxb48k84.pdf) |
 
 **International distribution-layer and brand-owner calibration (CY2025 unless stated; agg.)**
 - Distributors:
@@ -151,7 +151,7 @@ The "thick" layer for an importer is therefore the **brand owner + importer** la
   - Kogan's gross margin includes commission-based marketplace and membership revenue.
   - Harvey Norman's company revenue excludes A$6.58bn of franchisee sales.
   - Wesfarmers does not disclose divisional gross margins.
-- **Kmart (9.4% EBT on A$11.8bn) is the scale proof (inference).** A retailer that internalises the brand and importer layers (direct-sourced own brand) out-earns a retailer of third-party brands (JB Hi-Fi 6.6% EBIT at 22.4% GM).
+- **Kmart (9.4% EBT on A$11.8bn) is the scale proof (inference).** A retailer that internalises the brand layer through a dominant house brand (Anko) out-earns a retailer of third-party brands (JB Hi-Fi 6.6% EBIT at 22.4% GM). The two are not perfectly comparable (different categories and EBT vs EBIT).
 
 ### Gaps
 - Reece and GWA do not show gross margin in the results documents I read. Their figures above are aggregator-derived (cost of sales from the statutory accounts). Reece's and GWA's FY26 annual reports were not downloaded.
@@ -309,7 +309,7 @@ They show a DTC/own-channel brand can hold retailer-level gross margins (60–69
 | **Koala (ASX: KOA)**, mattress/furniture DTC | Brand + importer + DTC retail (no wholesaler, no store retailer) | No mandatory certification barrier. The barriers were brand, logistics (knock-down/compressed product) and warranty ("up to 10 years") | Founded Nov 2015 by Dany Milham and Mitch Taylor. Listed 31 Mar 2026 at A$3.40, ~A$340m market cap (Wikipedia citing AFR). **FY26 revenue A$332.3m (FY25 A$276.7m; FY24 A$195.1m); gross margin 65.2% (FY25 62.3%); EBIT A$24.2m = 7.3%** (agg.) | [Wikipedia: Koala (company)](https://en.wikipedia.org/wiki/Koala_(company)); [Agg. KOA](https://stockanalysis.com/quote/asx/KOA/financials/income-statement/); [Koala About](https://au.koala.com/pages/about-us) |
 | **Ecosa**, mattress DTC | Brand + importer + DTC (now with stores) | Same as Koala, plus CHOICE endorsement | "Founded in Melbourne, 2015"; "a 200-strong Dream Team, spanning five countries"; CHOICE "Australia's Best Mattress Brand… in 2025 and 2026". No financials | [Ecosa About](https://www.ecosa.com.au/about-us) |
 | **Temple & Webster private label** | Online retailer adding importer + brand layers | China sourcing office; private label = "imported directly by Temple & Webster" | 51% of FY26 revenue from private label + exclusive drop-ship; private-label penetration 28% in home improvement (in line with core furniture & homewares); delivered margin 30.2% | [TPW Annual Report 2026](https://announcements.asx.com.au/asxpdf/20260929/pdf/074n0zggpwv77d.pdf) |
-| **Kmart / Anko** (retailer captures brand + importer layers) | Retail + own brand + direct sourcing | Scale buying | Kmart Group FY26 revenue A$11,751m, EBT A$1,109m (9.4%). "Anko is Kmart Australia's house brand… introduced as an umbrella brand in 2019" | [Wesfarmers FY26](https://announcements.asx.com.au/asxpdf/20260827/pdf/0738z7fxb48k84.pdf); [Wikipedia: Kmart Australia](https://en.wikipedia.org/wiki/Kmart_Australia) |
+| **Kmart / Anko** (retailer captures the brand layer) | Retail + house brand | Scale and private-label range (direct-sourcing extent not verified here) | Kmart Group FY26 revenue A$11,751m, EBT A$1,109m (9.4%). "Anko is Kmart Australia's house brand… introduced as an umbrella brand in 2019" | [Wesfarmers FY26](https://announcements.asx.com.au/asxpdf/20260827/pdf/0738z7fxb48k84.pdf); [Wikipedia: Kmart Australia](https://en.wikipedia.org/wiki/Kmart_Australia) |
 | **Reece house/exclusive brands** (merchant captures brand layer) | Distributor + exclusive brand | Merchant shelf and spec control | Thermann is Reece's exclusive heat-pump/water-heater brand; SolarQuotes reports Stiebel Eltron and Dux units rebranded to Thermann (sibling notes). Reece amortises the acquired "Metalflex brand name" | [SolarQuotes Thermann review](https://www.solarquotes.com.au/hot-water/heat-pump/reviews/thermann-review.html); [Reece FY26 presentation](https://announcements.asx.com.au/asxpdf/20260824/pdf/07333d16gqvr31.pdf) |
 | **iStore (owned by Solargain, an installer)** | Installer captures brand layer (Chinese-made to spec) | Heat-pump certification and registers; "made in China by Huawei… to iStore's specifications" (SolarQuotes). 5-year parts-and-labour warranty | 2026 installer survey: iStore 63% "for your own home" (sibling notes) | [SolarQuotes iStore review](https://www.solarquotes.com.au/hot-water/heat-pump/reviews/istore-review.html); [SolarQuotes, 25 Aug 2026](https://www.solarquotes.com.au/blog/best-heat-pump-hot-water-2026/) |
 | **Ozito** (exclusive brand at a big-box; *not* Bunnings-owned) | Brand + importer, exclusive to one retailer | Retailer exclusivity | "Our power tools are available through Bunnings Warehouse stores across Australia and New Zealand"; site footer "© 2026 Einhell Australia Pty Ltd". "In 2013, Einhell took over Ozito, an Australian company supplying Bunnings DIY products" | [Ozito About](https://www.ozito.com.au/about-us/); [Wikipedia: Einhell](https://en.wikipedia.org/wiki/Einhell) |
@@ -353,6 +353,7 @@ They show a DTC/own-channel brand can hold retailer-level gross margins (60–69
   - Lighting Illusions: robots.txt disallows Claude agents.
 - Kaboodle's ownership (claimed to be Bunnings) was not verified: kaboodlekitchen.com.au did not respond.
 - ABI Interiors' and Meir's WaterMark status was not verified. The ABCB database is disallowed for Claude agents, and their fetched pages make no WaterMark statement.
+- "SolarQuotes-era" solar retailers (lean installers that became brand or retailer layers in PV) were not researched beyond iStore/Solargain (heat pumps).
 - WebSearch quota was exhausted mid-task, so news coverage of challengers' revenue (AFR, SmartCompany, Inside Retail) could not be searched.
 
 ## Q4. Barrier taxonomy with "clearability" for a small operator (water/plumbing business with an install channel)
@@ -388,7 +389,7 @@ They show a DTC/own-channel brand can hold retailer-level gross margins (60–69
 | Barrier | What the rule requires (cited) | Cost to clear (cited) | Time (cited) | Can a private label ride an existing certificate? | Source |
 |---|---|---|---|---|---|
 | **WaterMark** (plumbing products incl. POU/POE water filters, AS 3497:2021) | Product must be certified and listed. The marking must show the "Approved User's name, brand or trademark", WaterMark, licence number and spec. The Approved User can be "a manufacturer, assembler, distributor, retailer or importer". Installing an uncertified Schedule product is non-compliant plumbing work; the **plumber** is liable. QBCC: plumbed-in purifiers "require a WaterMark Licence" to be offered for sale, sold or installed in QLD | ABCB licence fee A$525 per licence (passed through by the certifier). Certifier application, annual and **endorsement** fees "available upon request". Type testing not published | IAPMO: "a few months to 12 months plus" (new certification). Licence 12 months, renewed after surveillance; certificate max 5 years. Lead-free: new certifications lead-free from 1 May 2026; non-lead-free stock not authorised for installation from 1 May 2028 | **Yes, two routes.** (A) Brand endorsement: the OEM licensee asks its certifier to add your brand/model to its schedule. Certificates list "Brand Name" and "Date Endorsed" (EBOS example), and one licence can carry several resellers' brands (licence 080071 carries 4 AU brands). (B) Own licence: needs the manufacturer's written authorisation, accepts current traceable reports, and transfer = new application | [WaterMark Manual 2016.1](https://abcb.gov.au/sites/default/files/resources/2022/Manual-for-WaterMark-certification-scheme.pdf); [IAPMO POL-100](https://iapmooceania.org/media/a5dfckvx/pol-100-wmk-governance-rules.pdf); [IAPMO WaterMark page](https://iapmooceania.org/certification-services/watermark-product-certification); [EBOS certificate](https://www.eboshealthcare.com.au/globalassets/product-images/v/watermark-certificate-2020-2024-updated.pdf); [QBCC FSG0074 via sibling notes](https://www.qbcc.qld.gov.au/sites/default/files/documents/guide-ncbp-watermark-certification.pdf) (all as recorded in sibling notes; ABCB hosts disallow Claude agents) |
-| **EESS / RCM** (mains electrical equipment) | Responsible Supplier must be an AU/NZ entity with ABN. Level 3 needs "a valid Australian or New Zealand issued certificate of conformity" plus national database registration. Level 2 needs registration plus a compliance folder; Level 1 needs documentary evidence. EV chargers and home batteries become Level 3 ~Feb 2028 (AS/NZS 4417.2 Amd 1:2026) | From 1 Jul 2026: Responsible Supplier A$239.74/yr; Level 2/3 registration A$89.85 (1 yr), A$179.70 (2 yrs), A$449.25 (5 yrs). Certificate-of-conformity and lab fees not published | Not published | **Partly.** The Level 3 certificate is issued to the AU responsible supplier for a model. A private label generally needs its own certificate, or a re-issue/"family" listing based on the OEM's CB/IEC reports (sibling inference) | [EESS fees](https://www.eess.gov.au/registration/registration-fees/); [EESS v4.3 PDF](https://www.eess.gov.au/wp-content/uploads/2024/07/EESS-Inscope-Equipment-Definitions-and-Risk-Levels-v4.3-Approved.pdf) (via sibling notes) |
+| **EESS / RCM** (mains electrical equipment) | Responsible Supplier must be an AU/NZ entity with ABN. Level 3 needs "a valid Australian or New Zealand issued certificate of conformity" plus national database registration. Level 2 needs registration plus a compliance folder; Level 1 needs documentary evidence. EV chargers and home batteries become Level 3 ~Feb 2028 (AS/NZS 4417.2 Amd 1:2026, 24-month transition; per sibling notes citing [Standards NZ A1](https://www.standards.govt.nz/shop/ASNZS-4417-22020-A1) and [UL Feb 2026](https://au-nz.ul.com/news/compliance-insights-february-2026)) | From 1 Jul 2026: Responsible Supplier A$239.74/yr; Level 2/3 registration A$89.85 (1 yr), A$179.70 (2 yrs), A$449.25 (5 yrs). Certificate-of-conformity and lab fees not published | Not published | **Partly.** The Level 3 certificate is issued to the AU responsible supplier for a model. A private label generally needs its own certificate, or a re-issue/"family" listing based on the OEM's CB/IEC reports (sibling inference) | [EESS fees](https://www.eess.gov.au/registration/registration-fees/); [EESS v4.3 PDF](https://www.eess.gov.au/wp-content/uploads/2024/07/EESS-Inscope-Equipment-Definitions-and-Risk-Levels-v4.3-Approved.pdf) (via sibling notes) |
 | **ACMA** (radio/EMC; cyber for connected devices) | Supplier's Declaration of Conformity kept on file, responsible-supplier registration, RCM. From 4 Mar 2026, connectable consumer devices need a cyber-security statement of compliance | ACMA-only registration "has no fee" | – | Yes: the SDoC is the supplier's own declaration, supported by the OEM's test reports | [ACMA "Know what you must do"](https://www.acma.gov.au/know-what-you-must-do); [EESS ACMA/RCM page](https://www.eess.gov.au/rcm/acma-requirements-use-of-rcm/) (via sibling notes) |
 | **GEMS / MEPS** (ACs, heat pumps, fridges, gas water heaters, motors etc.) | Registration of each model | Fee bands A$440 / A$540 / A$670 / A$780. ACs, heat pumps, refrigerators, gas water heaters and motors are Band 3 (A$670). Renewal equals the initial fee | – | Registration is per brand/model; a family/rebadge may be possible (not verified) | [GEMS registration help: payment](https://reg.energyrating.gov.au/application/help/payment/) (as recorded in sibling notes) |
 | **CEC Approved Products list** (PV modules, inverters, batteries; gate to SRES, DNSPs and rebates incl. the Cheaper Home Batteries Program) | "Manufacturers or nominated Australian-based agents can apply". Lab tests and certificates are reviewed by CEC engineers. From 1 May 2026, new PV-module applications must be certified to IEC 61730:2023. Approved documents must be uploaded to "the manufacturer's and importers' websites" | **A$5,500 + GST** per application (inverters ≤10 models; batteries ≤10; PV ≤20 models); PCE A$1,100 + GST. Only a partial refund if rejected, none at engineering stage | Sept 2026: **20 weeks** from invoice payment to start of engineering assessment for inverters and batteries; 7 weeks for PV. "Full accreditation typically takes a further 2 to 6 months" | An agent can list the OEM's product, but a new brand name probably needs its own listing (inference) | [CEC: Apply to the Approved Products list](https://www.cleanenergycouncil.org.au/industry-programs/products-program/apply); [CEC products](https://www.cleanenergycouncil.org.au/industry/products) |
@@ -436,3 +437,117 @@ They show a DTC/own-channel brand can hold retailer-level gross margins (60–69
 - CodeMark and AFRDI current fee schedules are quote-only.
 - I could not verify whether CEC, GEMS or CER accept a rebadged model on the OEM's existing listing/registration, or what that costs.
 - ABCB sites (WaterMark/CodeMark) disallow Claude agents. WaterMark details here come from sibling notes that fetched the documents before noticing the rule, plus certifier sites.
+- Not covered:
+  - PPE (AS/NZS 1337, 1801, 2210 etc.), ladders (AS/NZS 1892) and racking (AS 4084): whether certification is mandatory, and its cost (CMI lists "PPE Certification" as a service: [CMI](https://cmicert.com.au/scheme-codemark-australia-certificate/)).
+  - Electrician, gasfitter and builder licensing costs outside QLD plumbing/contractor licences.
+
+## Q5. Scoring framework for sibling researchers' categories (comparable rubric)
+
+### Takeaway
+Score every category on **eight 1–5 sub-scores**, using **fixed input definitions** so results are comparable:
+- (a) ladder multiple
+- (b) capturable-layer thickness
+- (c1) barrier protection
+- (c2) barrier clearability for this operator
+- (d) annuity
+- (e) liability severity
+- (f) incumbent reaction risk
+- (g) channel fit
+
+Inputs are fixed as follows:
+- prices ex GST;
+- landed cost at RBA F11.1 AUD/USD 0.6956 (8 Oct 2026);
+- the sale mode the operator would actually use (installed vs supply-only).
+
+Weight the sub-scores (capturable layer 20%, clearability 15%, channel fit 15%, the other five 10% each) into an index of 20–100. Then apply **four gates**: commodity, liability, clearability and unit economics.
+
+Calibrated on the evidence in Q1–Q4, the operator's whole-house filter scores about **77 (range 70–88)**. A Kings-dominated 12V fridge scores about **35** and is gated as commodity. A split-system AC, using the sibling's own sub-scores, scores about **60**.
+
+### Cited Findings
+These are the calibration anchors used to set the bands. Sources are in Q1–Q4.
+- **Layer gross margins** (anchor for band (b)):
+  - pure distributor 25–32% GM / 3–9% EBIT (Reece 28.9% / ANZ 8.6%);
+  - brand owner 35–50% GM / 10–19% EBIT (GWA 40.6% / 18.5%; Waterco 50.4% / 9.6%);
+  - vertically integrated brand + channel 60–83% GM / 7–23% EBIT (Beacon 68.6% / 14.1%; Koala 65.2% / 7.3%; Nick Scali 65.6% / 23.4%; Lovisa 82.6% / 18.2%).
+  - Sources: [Reece FY26 results](https://announcements.asx.com.au/asxpdf/20260824/pdf/073339wfnfjcqp.pdf); [GWA FY26 presentation](https://cdn.gwagroup.com.au/v3/assets/bltad292a6aa65b6a42/blt3cd706759491a200/6a823f810e035ced1bb86a48/3103265.pdf); [Beacon FY26 presentation](https://bulletin.webull.com/qbd/announcement/20260827/499501693/4ea705569d36ea87ff3b7ced5280a2c8.pdf); [Agg. KOA](https://stockanalysis.com/quote/asx/KOA/financials/income-statement/); [Agg. NCK](https://stockanalysis.com/quote/asx/NCK/financials/income-statement/); [Agg. LOV](https://stockanalysis.com/quote/asx/LOV/financials/income-statement/); [Agg. WAT](https://stockanalysis.com/quote/asx/WAT/financials/income-statement/)
+- **FX base:** AUD/USD 0.6956 on 08-Oct-2026 (0.6979 on 09-Oct-2026). — [RBA F11.1](https://www.rba.gov.au/statistics/tables/csv/f11.1-data.csv)
+- **Water-filter calibration inputs** (sibling notes):
+  - Installed whole-house filter A$2,200–3,000 (operator brief).
+  - 2-stage professional installation A$500–800; 3-stage A$500–1,000 — [TrueFlow](https://trueflowplumbing.net.au/whole-house-water-filters/)
+  - Landed cost about A$486/unit at 0.6956 for the PWF-203BC (sibling landed-cost model; see `Purezzo whole house filter check/whole_house_filter_market_economics.md`).
+  - Cartridge annuity gross profit about A$84–213 per customer-year — [AquaSafe cartridges](https://aquasafe.com.au/collections/whole-house-filter-cartridges); [Puretec WH2-55](https://www.puretec.com.au/WH2-55) (as compiled in sibling notes)
+- **Commodity calibration** (sibling notes): Kings Escape 50 fridge sold at A$179–349 on 9 Oct 2026, against a modelled landed cost of about A$239.9 — [4WD Supacentre fridges](https://www.4wdsupacentre.com.au/fridge-freezers.html) (see `Marketplace import arbitrage Australia/vertical_camping_4wd.md`)
+- **Split-AC sub-scores** set by the sibling installed-products researcher: "ladder 4, capturable layer 2 (brand) / 3 (installer), clearability 3, annuity 3, liability 3, incumbent risk 2, channel fit 3". The sibling notes give the ARC, GEMS and EESS evidence — [GEMS registration help: payment](https://reg.energyrating.gov.au/application/help/payment/); [HVACR News](https://hvacrnews.com.au/news/licence-requirements-for-hot-water-heat-pumps/)
+- **Barrier fee anchors** (Q4):
+  - WaterMark licence fee A$525/licence/yr;
+  - EESS A$239.74/yr + A$89.85–449.25 per model;
+  - GEMS A$440–780 per model;
+  - CEC A$5,500 + GST per application, with a 20-week queue;
+  - ARC RTA A$280/yr;
+  - QLD plumber licence A$248.75–602.99.
+  - Sources: [IAPMO POL-100](https://iapmooceania.org/media/a5dfckvx/pol-100-wmk-governance-rules.pdf); [EESS fees](https://www.eess.gov.au/registration/registration-fees/); [CEC apply page](https://www.cleanenergycouncil.org.au/industry-programs/products-program/apply); [ARC RTA fees](https://www.arctick.org/refrigerant-trading-authorisation/authorisation-fees/); [QBCC plumbing fees](https://www.qbcc.qld.gov.au/licences/apply-licence/licence-fees/licence-fees-occupational-plumbing-drainage)
+
+### Inferences
+*(The rubric below is my construction. Bands are calibrated to the cited anchors above.)*
+
+**1. Standard inputs. Every sibling records these with a source and date:**
+- `P_end`: end-customer price **ex GST** in the operator's real sale mode. Use "installed" if the operator's crew installs; otherwise "supply-only". Take the median of ≥3 observations within 30 days. Record inc-GST and ex-GST values.
+- `P_supply`: supply-only retail price, median of ≥3 observations. Record it even when the sale mode is installed.
+- `FOB_AUD`: factory price × (1 ÷ 0.6956). Record "quote" or "listing", with MOQ and Incoterm.
+- `Landed`: the sibling landed-cost model if available. Otherwise default to **1.17 × FOB_AUD** (calibrated from the filter: A$486 ÷ A$417; LCL, about 64 units) and flag it as a default.
+- `Direct costs`: install labour and sundries (if installed), a 3% warranty reserve (default, flag it), and compliance amortisation (one-off certification/testing ÷ first-year units + annual fees ÷ annual units).
+- `Annuity GP`: recurring consumable/service gross profit per installed unit per year, plus a retention assumption (default 60% over 3 years, flagged).
+
+**2. Sub-scores (1 = worst, 5 = best):**
+
+| Code | Dimension | Definition | 1 | 2 | 3 | 4 | 5 |
+|---|---|---|---|---|---|---|---|
+| a | Ladder multiple | L = P_end ÷ Landed | <1.8 | 1.8–2.5 | 2.5–3.5 (a normal stacked chain, Q1) | 3.5–5.0 | >5.0 |
+| b | Capturable layer thickness | T = (P_end − Landed − install labour − sundries − warranty reserve − compliance amortisation) ÷ P_end. Contribution **before** customer-acquisition cost and overheads | <15% | 15–25% | 25–40% (≈ distributor GM) | 40–55% (≈ brand-owner GM) | >55% (≈ integrated brand + channel) |
+| c1 | Barrier protection | How strongly a rule or gate keeps uncertified/unlicensed sellers away from *this* end customer | none (commodity) | trust only (warranty, reviews, voluntary standard) | channel-enforced (merchant/retailer requires cert; spec list; panel) | mandatory product cert/registration **or** mandatory licensed install | mandatory cert **and** licensed install **and** installer/supplier liability (e.g. WaterMark + plumber + QLD NCBP) |
+| c2 | Clearability for this operator | One-off + first-year cost and time to sell lawfully under own brand | impractical (TGA higher class, ADR vehicle approval, structural CodeMark) | >A$40k or >12 months, or a new regulated function (gas certification; CEC queue + crowded list) | ≤A$40k or ≤12 months, or needs one partner trade (electrician, ARC tech) | ≤A$15k and ≤6 months | ≤A$5k and ≤3 months using licences already held (e.g. WaterMark brand endorsement on a listed OEM licence) |
+| d | Annuity | A = (Annuity GP × 3 yrs × retention) ÷ initial-sale contribution (T × P_end) | none | <15% | 15–40% | 40–80% | >80%, or legally mandated recurring service (e.g. AS 1851 fire servicing) |
+| e | Liability severity (5 = least severe) | Worst credible failure × who carries it (ACL deemed manufacturer; QLD NCBP chain of responsibility) | gas appliances, lithium batteries/ESS, medical devices, structural/fire-rated building products, vehicle safety parts | EESS Level 3, life-safety (smoke alarms), safety-critical gear, nursery, pressure/hot-water | EESS Level 1–2, motors/pumps, moderate injury pathway | property-damage pathway (leak) but certified and installer-installed (filters, tapware) | negligible injury/property pathway (blinds, décor, non-child furniture) |
+| f | Incumbent reaction risk (5 = least risk) | Who can respond, and how | a dominant incumbent already sells at or below a small importer's landed cost (e.g. Kings in 4WD), or a crowded rebate list with collapsing prices | the channel owner runs its own/exclusive brand in the category (Reece Thermann, Kmart Anko, Bunnings exclusives such as Ozito), or global majors under own names | strong national brand(s) and dealer networks but no channel exclusivity | several mid-size brands, no channel own-brand | fragmented; no brand >~20%; no channel own-brand |
+| g | Channel fit (operator already has it) | How much of the sale rides the existing water/plumbing install channel | unrelated channel (fashion, government furniture panels, auto) | different buyer reachable via existing B2B ties (strata, facilities, builders) | same customers but a different trade needed (electrician: EVSE, smoke alarms; ARC: split AC) | plumber-installed adjacent category needing a minor added licence or partner (heat-pump HW, rainwater/pumps) | plumber-installed in homes/sites already serviced, sold in the same visit (water treatment, hot water, tapware, backflow) |
+
+**3. Weights and index:** S = 0.10a + 0.20b + 0.10c1 + 0.15c2 + 0.10d + 0.10e + 0.10f + 0.15g (range 1–5). **Index = 20 × S** (20–100).
+
+Rationale for the weights:
+- (b), (c2) and (g) carry most weight because the thesis is about a layer the *small operator* can actually capture with its own channel.
+- (a) is down-weighted because a high multiple that is mostly installer labour is not capturable margin; (b) already nets out labour.
+
+**4. Gates (applied after scoring):**
+- **G1 Commodity:** if c1 ≤ 2, label "commodity / Marketplace-contested" and cap the index at 60. Rationale: Q1–Q4 show barrier-free ladders get competed down to retailer-of-third-party-brand margins (~22–31% GM).
+- **G2 Liability:** if e = 1, exclude unless a certified product *and* specialist insurance quotes are in hand.
+- **G3 Clearability:** if c2 = 1, exclude.
+- **G4 Unit economics:** for consult-led or installed sales, contribution per job (T × P_end) should be ≥ ~A$500 (my threshold, flag it). The sibling filter model assumed about A$300 marketing cost per sale.
+
+**5. Reporting template:** one row per category, so that the report writer can rank across siblings.
+
+`Category | Sale mode | P_end inc/ex GST (n, date, links) | P_supply | FOB (quote/listing, MOQ) | Landed (method) | L | T | a | b | c1 | c2 | d | e | f | g | S | Index | Gates | Key barrier and private-label route | Evidence links`
+
+Also report **low/base/high** cases: P_end low/high; Landed ±10%; FX 0.65 / 0.6956 / 0.73.
+
+**6. Worked calibration examples (inference; inputs flagged):**
+
+| Example | Inputs | a | b | c1 | c2 | d | e | f | g | S | Index |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Whole-house filter, installed by the operator | P_end ex GST A$2,000–2,727 (mid A$2,364); Landed A$486; labour A$650 (TrueFlow A$500–800) + sundries A$200 + 3% warranty + A$40 compliance amortisation (assumption) → **L = 4.9; T ≈ 39% (28–47%)**; annuity A$84–213 GP/yr → A ≈ 16–42% | 4 | 3 | 5 | 4 | 3 | 4 | 3 | 5 | 3.85 | **77** (low 70 / high 88) |
+| 12V 45–50 L compressor fridge (Marketplace commodity) | P_end A$249 inc (A$226 ex) vs Landed A$239.9 → L = 0.94; Kings at A$179–349 | 1 | 1 | 2 | 4 | 1 | 3 | 1 | 1 | 1.75 | **35** (G1 commodity) |
+| Split-system AC (mapping the sibling's own sub-scores) | Sibling: ladder 4, capturable 2–3 (taken as 2.5), clearability 3, annuity 3, liability 3, incumbent 2, channel 3. I added c1 = 4 (GEMS + EESS + ARC-licensed install) | 4 | 2.5 | 4 | 3 | 3 | 3 | 2 | 3 | 3.0 | **60** |
+
+Reading the filter result:
+- It scores well because protection (c1 = 5) and channel fit (g = 5) are maximal, and the brand/importer + installer layers are captured together.
+- Its weak points are incumbent reaction (f = 3: Puretec's dealer network, CHF's Culligan/Zip link, WAA, PWS) and annuity (d = 3, unless the cartridge is proprietary).
+- Moving from Route B (own licence) to Route A (endorsement on a listed OEM licence) raises c2 to 5. That lifts the index by ~3 points but increases dependence on the OEM's licence.
+
+**7. How to use the Q1–Q4 evidence when scoring:**
+- If the channel owner already sells an own/exclusive brand in the category (Reece, Kmart, Bunnings/Ozito, TPW private label), set f ≤ 2.
+- If the category's protection is only a voluntary standard (no WaterMark/EESS/GEMS/licensed install), set c1 ≤ 2 and expect G1.
+- If the sale needs merchant ranging to reach installers (rather than the operator's own crew), cap c2 at 2–3 for the credit, rebate and DIFOT burden (Q2), even when certification is cheap.
+
+### Gaps
+- The bands and weights are my calibration. They are not validated against realised outcomes. Siblings should report raw inputs (L, T, A) so the report writer can re-weight.
+- Defaults (landed = 1.17 × FOB_AUD, 3% warranty reserve, 60% three-year retention, A$500 contribution threshold) come from one product's model. Category-specific values should replace them where siblings have evidence.
+- Customer-acquisition cost is deliberately excluded from T. Consult-led categories with high CAC (no published CAC figures found; the sibling model assumed A$300/sale for filters) may need a CAC-adjusted T as a sensitivity.
