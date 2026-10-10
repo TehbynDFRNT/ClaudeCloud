@@ -44,18 +44,18 @@ Customs records and IPO prospectuses link specific Western brands to specific ma
 - UPLIFT (The Human Solution), Fully/Jarvis, HAT Contract and AMQ buy from Jiecang.
 - ESI/Fellowes and Teknion buy from Kaidi.
 - FlexiSpot is Loctek's own brand, and Loctek's 2026 report names IKEA and Walmart among its overseas ODM customers.
-- Vari buys from Taiwanese makers.
+- Vari buys from Taiwanese makers, plus a Vietnamese assembler.
 - Autonomous uses Aoke frames with TiMOTION electronics.
 
 Prorials and Lumi are metal-fabrication and assembly factories, not column/motor makers. Desktops are a separate board-maker supply chain, mainly in Shandong and Jiangsu, with bamboo in Zhejiang and Fujian; Loctek is the exception, with in-house board processing.
 
 **ImportGenius bills of lading (fetched 10 Oct 2026) confirm the brand-to-maker links directly:**
 - UPLIFT's "adjustable table parts" come from **Jiecang's Malaysian plant**, JSTAR MOTION SDN BHD (616 containers to "The Human Solution - Uplift Desk", last 2025-01-12).
-- FlexiSpot US imports from **Loctek's Vietnam, Ningbo and Guangxi entities only**.
+- FlexiSpot US: all of its top-5 suppliers (out of 10 trading partners) are **Loctek entities** in Vietnam, Ningbo and Guangxi, and the sample bills also show "GUANGXI BEIBU GULF LOCTEK".
 - Teknion receives "STEEL FRAME / CONTROL BOX / HANDSET" from **Kaidi** (last 2026-09-28).
 - VIVO's largest supplier group is **LUMI** (Lumi Legend Corporation / HK / Group; more than 2,700 containers in total).
 - Autonomous's frames came from **Ningbo Aoke Office Equipment**; recent frame lots came through a Ningbo trading office and an Anji chair maker.
-- Vari's frames and legs come from **Taiwanese makers**.
+- Vari's frames and legs come from **Taiwanese makers** (Der Yih; formerly Invention Global). Recent complete-desk lots come from Vietnamese assembler Tan Phong An.
 - Jiecang's export arm ships kits to J-Star Motion (its own US subsidiary), HAT/Human Active Technology, AMQ, Fully (to 2018), Bush, Secretlab and 247 Workspace.
 
 ### Cited Findings
@@ -174,7 +174,7 @@ Prorials and Lumi are metal-fabrication and assembly factories, not column/motor
   - Fittings: FETON LTD; storage: CHYN FUH (Taiwan); a smaller Lumi Legend lot (27).
 - **Fully** ("Fully Enterprise Corp"; the page mixes in an unrelated apparel importer) — [ImportGenius Fully Enterprise](https://www.importgenius.com/importers/fully-enterprise-corp):
   - Suppliers: HANGZHOU ECOMAX BAMBOO (109), XINCHANG JIECANG IMPORT AND EXPORT (80, last 2018-01-28), NINGBO ERGOVIDA HEALTH TECHNOLOGY (52; LUMI group member, monitor brackets and "WORKSTATION"), JSTAR MOTION SDN BHD (50, last 2022-02-13).
-- **HAT Contract / Human Active Technology LLC (San Jose)** — [ImportGenius HAT Contract](https://www.importgenius.com/importers/hat-contract), [ImportGenius Human Active Technology](https://www.importgenius.com/importers/human-active-technology-llc):
+- **HAT Contract / Human Active Technology LLC (San Jose).** The two importer names share suppliers (Jiecang, Lumi, Steelrix) and the "HAT" initials. That they are the same firm is my inference; the pages do not say so — [ImportGenius HAT Contract](https://www.importgenius.com/importers/hat-contract), [ImportGenius Human Active Technology](https://www.importgenius.com/importers/human-active-technology-llc):
   - Suppliers: XINCHANG JIECANG I&E (413), JSTAR MOTION SDN BHD (456), Lumi Legend HK (151) and Group (142), Zhejiang Steelrix.
 - **ESI Ergonomic Solutions** — [ImportGenius ESI](https://www.importgenius.com/importers/esi-ergonomic-solutions-llc):
   - Top supplier CHANGZHOU KAIDI ELECTRICAL INC (328).
@@ -182,7 +182,7 @@ Prorials and Lumi are metal-fabrication and assembly factories, not column/motor
 - **Element Ergo:** JSTAR MOTION SDN BHD (76) — [ImportGenius Element Ergo](https://www.importgenius.com/importers/element-ergo). **Desktronic US:** UAB Desktronic (Lithuania), Zhejiang Yueqiang, Lumi Legend Corporation — [ImportGenius Desktronic](https://www.importgenius.com/importers/desktronic-us-inc).
 - **Lumi Legend Corporation (supplier page; address "24/f., Building 1, Lisi Plaza, Huifeng East Road, Ningbo", an office tower)**
   - 5,682 shipments; customers VIVO (725), Transform Partners (515), Stand Steady (154), Inland Products (100).
-  - Recent bills: monitor brackets to Workrite Ergonomics, ACCO Brands and Safco; TV brackets to **ATDEC DISTRIBUTION USA PTY LTD** (Atdec is an Australian mounting brand); a mixed desk-accessory lot to DESKTRONIC US.
+  - Recent bills: monitor brackets to Workrite Ergonomics, ACCO Brands and Safco; TV brackets to **ATDEC DISTRIBUTION USA PTY LTD** (Atdec is, to my background knowledge, a Sydney-based mounting brand; the "PTY LTD" suffix is consistent, but this is not sourced here); a mixed desk-accessory lot to DESKTRONIC US.
   - Source: [ImportGenius Lumi Legend Corp](https://www.importgenius.com/suppliers/lumi-legend-corporation)
 - **Lumi Legend HK** (Kwun Tong, HK; customers VIVO 769, StarTech, Monoprice, Human Active Technology) and **Lumi Legend Group** (Wan Chai, HK; customers VIVO, Human Active Technology) — [ImportGenius Lumi HK](https://www.importgenius.com/suppliers/lumi-legend-hk-limited), [ImportGenius Lumi Group](https://www.importgenius.com/suppliers/lumi-legend-group-limited)
 - **Zhejiang Weise Technology** ("Building 1 No 11 Meigui Road Qixing Street Xinchang"): exactly **1** US shipment ever, "ELECTRIC STANDING DESK, MONITOR ARM" to Micronetbd Inc, 2023-06-23 — [ImportGenius Weise](https://www.importgenius.com/suppliers/zhejiang-weise-technology-co-ltd)
@@ -254,7 +254,7 @@ Six companies clear the "two independent A/B items" bar as manufacturers: Jiecan
 Customs pages add more:
 - **Lumi:** a direct shipper to VIVO, Workrite, ACCO and Atdec.
 - **TiMOTION:** a direct shipper of "DESK LIFT FRAMES" to a North American seating maker.
-- **Ningbo Aoke:** a frame assembler that supplied Autonomous, Bush, Bestar and Schiavello. It qualifies as a manufacturer (customs plus a BTOD description), though it uses TiMOTION electronics.
+- **Ningbo Aoke:** a frame assembler that supplied Autonomous, Bush, Bestar and a "SCHIAVELLO GWS PTY LTD" consignee. It qualifies as a manufacturer (customs plus a BTOD description), though it uses TiMOTION electronics.
 
 Under-evidenced:
 - **Xinyi:** one regulated-filing mention plus platform claims.
@@ -299,7 +299,7 @@ Under-evidenced:
   - VIVO link: CA3028426C is assigned to Lumi Legend HK, while the same-priority US20220192364A1 is assigned to "Cknapp Sales, Inc. D/B/A Vivo".
   - Evidence B: own site with factory tour ("Standing Desks Manufacturing Center"); ICP备17059849号-1; LUMI-branded desks sold by NZ retailers (search summary).
   - Terms: M08-23DE complete dual desk at US$99–129, MOQ 100, about 45 days after payment.
-  - **Evidence A (customs):** Lumi Legend Corp / HK / Group are direct shippers to VIVO (725 + 769 + 994 containers), Human Active Technology, Monoprice, StarTech, Workrite, ACCO, Desktronic and ATDEC (Australian mounts brand).
+  - **Evidence A (customs):** Lumi Legend Corp / HK / Group are direct shippers to VIVO (725 + 769 + 994 containers), Human Active Technology, Monoprice, StarTech, Workrite, ACCO, Desktronic and ATDEC ("…USA PTY LTD"; an Australian mounts brand per background knowledge, unsourced).
     - VIVO bills include "WORKSTATION TABLE TOP", "BAMBOO TABLE TOP" and "CONTROL BOX".
     - Group member Ningbo Ergovida shipped to Fully.
     - Sources: [ImportGenius Lumi Legend Corp](https://www.importgenius.com/suppliers/lumi-legend-corporation), [ImportGenius Lumi Group](https://www.importgenius.com/suppliers/lumi-legend-group-limited)
@@ -312,7 +312,7 @@ Under-evidenced:
   - Earlier round: Ws-Sg2bj-01 dual-motor at US$87.40 (30–299) / 84.10 / 82.60 — [MIC Weisetech](https://weisetech.en.made-in-china.com/product/AdXaNiyhClGE/China-Ws-Sg2bj-01-Dual-Motor-Electric-Ergonomic-Height-Adjustable-Standing-Desk.html)
 
 - **9. Ningbo Aoke Office Equipment Co., Ltd (Chinese name not found) — Science & Technology Park, Jiangshan Town, Yinzhou, Ningbo.**
-  - Evidence A: customs as direct shipper of "METAL HEIGHT ADJUSTABLE DESK FRAME… HAND CONTROL CONTROL BOX" to Autonomous (180 containers to 2022), Meubles Burotic, Bestar, Bush and SCHIAVELLO GWS PTY LTD (Australian office-furniture group) — [ImportGenius Aoke](https://www.importgenius.com/suppliers/ningbo-aoke-office-equipment-co-lt)
+  - Evidence A: customs as direct shipper of "METAL HEIGHT ADJUSTABLE DESK FRAME… HAND CONTROL CONTROL BOX" to Autonomous (180 containers to 2022), Meubles Burotic, Bestar, Bush and SCHIAVELLO GWS PTY LTD (Schiavello is, to my background knowledge, an Australian office-furniture group; unsourced here) — [ImportGenius Aoke](https://www.importgenius.com/suppliers/ningbo-aoke-office-equipment-co-lt)
   - Evidence B/C: BTOD says "Aoke currently manufacturers their frame components while using TiMotion for all of their electronic components" — [BTOD](https://www.btod.com/blog/autonomous-pro-vs-jarvis-desk)
   - Classification: frame assembler fitting TiMOTION drive electronics. MOQ and price not found.
 - **10. Ningbo Yunqi Innovation Intelligent — "Room 1204-1, Haoru International No.468 Taikang Middle Road" (office suite).**
@@ -417,7 +417,7 @@ Under-evidenced:
 - **What the EESS database shows:** "Details, including the brand and model number, of in-scope electrical equipment categorised as Risk Level 2 & 3". Responsible-supplier details are "recorded on the database but not viewable publicly". The old database was replaced by the "EESS Platform" from 14 Oct 2024 — [EESS registration database](https://www.eess.gov.au/registration/eess-registration-database/)
 - **Access:** both public search endpoints failed from here (legacy erac endpoint: proxy CONNECT rejected; new eessplatform.eess.gov.au Pega app: login/JS shell only) — [EESS home](https://www.eess.gov.au/)
 - **FlexiSpot AU:** Loctek's 100%-owned FlexiSpot PTY. LTD. (Australia, est. 2023) — [Loctek 2026 H1](https://pdf.dfcfw.com/pdf/H2_AN202608280006758408_1.pdf)
-- **Australian-company links found outside EESS (US customs and filings, not AU data):**
+- **Possible Australian-company links found outside EESS** (entities with "Pty Ltd" names, seen in US customs and in filings; this is not AU import data):
   - SCHIAVELLO GWS PTY LTD is consignee of "METAL HEIGHT ADJUSTABLE DESK FRAME" from Ningbo Aoke Office Equipment (2026-06-12) — [ImportGenius Aoke](https://www.importgenius.com/suppliers/ningbo-aoke-office-equipment-co-lt)
   - ATDEC DISTRIBUTION USA PTY LTD receives TV brackets from Lumi Legend Corporation (2026-09-30) — [ImportGenius Lumi Legend Corp](https://www.importgenius.com/suppliers/lumi-legend-corporation)
   - Jiecang's 2018 prospectus lists "Haworth Australia Pty Ltd." within its Haworth customer group — [Jiecang prospectus](https://pdf.dfcfw.com/pdf/H2_AN201808191180596187_1.pdf)
@@ -513,7 +513,8 @@ Under-evidenced:
 - No confirmed written quote. Jiecang's 100–499 tier is a list price, and no RFQ was sent (contacting suppliers was out of scope).
 - Kaidi, Loctek and TiMOTION small-order MOQ and price.
 - Whether Jiecang's SAA certificates cover the JC35TS desk kit specifically.
-- Current (2026) customs unit values for Jiecang, Kaidi and Loctek shipments; the ImportYeti detail pages are blocked.
+- Current (2026) customs unit values for Jiecang, Kaidi and Loctek shipments. ImportGenius public pages show weights and carton counts but no values, and full data is paywalled; ImportYeti is blocked.
+- Weight per carton does fit dual-motor frame kits, e.g. an UPLIFT lot of 1,248 cartons at 40,098 kg ≈ 32 kg/carton (my arithmetic). Prorials lists 25 kg gross for its frame carton.
 
 ---
 
@@ -546,7 +547,7 @@ Spec sheets converge as a result: Prorials and Lumi both list 620–1280 mm thre
 - The identical storefront frames are most likely a few kit designs (Jiecang JC35/JCB35-type, Kaidi, TiMOTION, Xinyi and others) wrapped in similar fabricated steel by several assemblers and trading offices.
 - Customs show the same Jiecang Malaysia kit reaching at least four US brands. Assembler Aoke uses TiMOTION electronics. A Ningbo trading office ships "lifting column + hand controller + desk top" sets to several small brands.
 - The identical 620–1280 mm figure on Prorials' and Lumi's three-stage frames points to a common column stroke from shared column suppliers. This is inference, not proof.
-- To find the true source of a given SKU, ask for the control-box and handset model numbers and the column maker's label photo before ordering. For example, a "JCB…"/"JCHT…" prefix indicates Jiecang. Then cross-check against the maker's catalogue and certificates.
+- To find the true source of a given SKU, ask for the control-box and handset model numbers and the column maker's label photo before ordering. For example, a "JCB…" control-box prefix is Jiecang's naming (as in UPLIFT's JCB35N2 and Jiecang's JCB35M11C). Then cross-check against the maker's catalogue and certificates.
 
 ### Gaps
 - No teardown, label photo or bill of materials was obtained for Prorials, Lumi, Weise or any other storefront frame. The column maker behind the common storefront design is therefore inferred, not traced.
