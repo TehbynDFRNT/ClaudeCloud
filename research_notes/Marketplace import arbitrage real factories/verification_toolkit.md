@@ -21,6 +21,48 @@ Status: IN PROGRESS (written incrementally). All probes run 2026-10-10 UTC from 
 | Datamyne (Descartes) | [robots](https://www.datamyne.com/robots.txt) | robots 200 (370 B): Crawl-delay 3, only /wp-admin/ disallowed | Subscription | No public company pages found | allowed | Not checked |
 
 
+### Patents — tested 2026-10-10
+
+| Source | URL tested | Exact outcome | Login/captcha | robots.txt stance | Cost |
+|---|---|---|---|---|---|
+| Google Patents | [robots.txt](https://patents.google.com/robots.txt) via curl | HTTP 503, Google "Sorry... your computer or network may be sending automated queries" page (this cloud egress IP is flagged) | Google bot-check | Read via WebFetch: "User-agent: * / Disallow: /* / Allow: /$ / Allow: /advanced$ / Allow: /patent/ / Allow: /sitemap/" — i.e. search-result URLs (/?q=, /?assignee=) are off-limits to automation; individual /patent/ pages are allowed | Free |
+| CNIPA 专利检索及分析 (pss-system) | [pss-system.cponline.cnipa.gov.cn](https://pss-system.cponline.cnipa.gov.cn/) | robots.txt path returns the SPA's HTML (8,086 B), so no robots file; search requires a registered login (not attempted) | Login | Unknown (no robots file served) | Free with registration |
+| CNIPA 公布公告 (epub) | [epub.cnipa.gov.cn](https://epub.cnipa.gov.cn/) | TLS handshake timed out (no response) | — | Not retrieved | Free |
+| Espacenet | [robots.txt](https://worldwide.espacenet.com/robots.txt) | HTTP 403, 1-byte body | — | Unavailable | Free |
+| Lens.org | [robots.txt](https://www.lens.org/robots.txt) | HTTP 200: groups naming anthropic-ai, Claude-Web, GPTBot etc. get "Disallow: /"; '*' disallows /lens/search, /lens/patent | — | Disallowed for AI agents | Free |
+| WIPO PATENTSCOPE | [robots.txt](https://patentscope.wipo.int/robots.txt) | HTTP 200, 68 B: only a Sitemap line (nothing disallowed) | See worked example | Allowed | Free |
+
+### Chinese company registry and mirrors — tested 2026-10-10
+
+| Source | Exact outcome | robots.txt |
+|---|---|---|
+| GSXT 国家企业信用信息公示系统 ([gsxt.gov.cn](https://www.gsxt.gov.cn/)) | HTTP 403 on every path tried, body: "请求异常 当前IP请求异常，请更换IP地址进行访问，或访问地址（https://shiming.gsxt.gov.cn）实名注册/登录后再进行访问" (abnormal IP; change IP or register with real name at shiming.gsxt.gov.cn) | robots.txt itself returns that 403 |
+| 信用中国 creditchina.gov.cn | TLS reset right after CONNECT (proxy log: tunnel closed after 3 s, 517 B sent, 39 B received) | Not retrievable |
+| 中国海关企业进出口信用信息公示平台 credit.customs.gov.cn | Same TLS reset pattern | Not retrievable |
+| Qichacha / Tianyancha / Aiqicha | Not re-tested (blocked 2026-10-09: 405 challenge, HTTP 419 region block, access-restriction redirect — see sourcing_api_access_test.md) | Keyword-search paths disallowed |
+| 启信宝 Qixin ([robots](https://www.qixin.com/robots.txt)) | HTTP 451: "根据相关法律规定，当前所在地区暂不支持访问 / access is temporarily not supported in your current location" | Unavailable |
+| 水滴信用 shuidi.cn | robots 200 (85 B), rules not tied to any user-agent line | Effectively allowed; pages not tested (no company URLs known) |
+| 名录集 gongshang.mingluji.com | robots 200 (60,747 B, 53 Disallow lines, mostly specific company pages) | Mostly allowed |
+| 11467.com | robots 200: Allow / but Disallow /*?*, /k-*, /web/*, /chanpin/ (no keyword search) | Company pages allowed |
+| WebSearch snippets of Qichacha/Aiqicha pages | Chinese-name queries for Lingsha, Zhongran, Tengtai and Xusheng Leisure returned no registry snippets (the search tool is US-based); a 南通铁人 query returned only a brand-directory page (cnpp.cn) with a non-registry company description | — |
+
+### Certification and audit databases — tested 2026-10-10
+
+| Source | Exact outcome | robots.txt | What it can show |
+|---|---|---|---|
+| TÜV Rheinland Corporate Identity Verification ([verified.chn.tuv.com](https://www.verified.chn.tuv.com/en/)) — the "Verify Now" target on MIC TÜV-audited profiles | Homepage 200 (32,001 B). Search form POSTs to /Home/Search; results are filled by POST /Home/AjaxSearch {title: <name or report no.>}. One call for MIC-ASR2531608 returned JSON (474 B); a second call (MIC-ASR2531986) was reset by the host and not retried | robots.txt 404 (none) | Report no., supplier name, audit type, audit date, validity, address (often "-"), file link (null here) |
+| Bureau Veritas China ([bvcerchina.cn](https://www.bvcerchina.cn/)) — the "Verify Now" target on MIC BV-audited profiles | TLS reset (no response) | Not retrievable | Not tested |
+| TÜV Rheinland Certipedia ([certipedia.com](https://www.certipedia.com/)) | Homepage 200 (59,289 B) | [robots](https://www.certipedia.com/robots.txt): Disallow /search?, /search$, /search/matching_*; Crawl-delay 10 | Certificate/mark pages by ID are allowed; name search is manual-only |
+| SGS Certified Client Directory ([page](https://www.sgs.com/en/certified-clients-and-products/certified-client-directory)) | HTTP 403 "Access Denied" (453 B, Akamai-style) | robots allows except /en-cn, /zh-cn, /*/search-results | Not tested |
+| Intertek Directories ([directories.intertek.com](https://directories.intertek.com/)) | Proxy CONNECT 502 twice (egress policy or upstream failure) | Not retrievable | Not tested |
+| UL Product iQ ([productiq.ulprospector.com](https://productiq.ulprospector.com/)) | HTTP 403 "You have been blocked… security service" (293,998 B) even for robots.txt; Product iQ also needs a free login | Unavailable | Not tested |
+| IECEE CB certificates ([iecee.org](https://www.iecee.org/)) | robots.txt returned HTTP 202 with an empty JS-challenge body | Treated as challenge | Not tested |
+| CNCA/CQC certification search ([cx.cnca.cn](https://cx.cnca.cn/)) | robots.txt HTTP 521 (862 B), then TLS resets | Not retrievable | Not tested |
+| IAF CertSearch ([iafcertsearch.org](https://www.iafcertsearch.org/)) | Homepage 200 (15,033 B) with captcha markers | [robots](https://www.iafcertsearch.org/robots.txt): '*' and ClaudeSearchBot disallow /certified-entity/ and /certification/ (the detail pages) | Manual lookups only |
+| FSC certificate search ([search.fsc.org](https://search.fsc.org/en/)) | 307→308→200 (303,886 B app shell) | [robots](https://search.fsc.org/robots.txt): Disallow /api (the data calls). Old [info.fsc.org](https://info.fsc.org/robots.txt): Disallow / | Manual lookups only |
+| amfori BSCI | robots.txt 404 (no file) | Allowed | Audit results sit on the members-only amfori platform (not tested) |
+| Australia EESS ([eess.gov.au](https://www.eess.gov.au/)) | Homepage 200 (74,942 B). Its [registration-database page](https://www.eess.gov.au/registration/eess-registration-database/) says: "The Registration database will no longer be available from 18:00 (AEDST) Friday, 11 October. It will be replaced by the EESS Platform from 8:00 (AEDST) Monday, 14 October 2024." The old database host equipment.erac.gov.au failed (proxy CONNECT 502; WebFetch "getaddrinfo ENOTFOUND") | [robots](https://www.eess.gov.au/robots.txt): Disallow /*? (all query URLs), Crawl-delay 3 | New platform URL not found (search quota exhausted) |
+
 ## Q2. Worked examples on the test companies
 
 (draft — being filled)
