@@ -1,10 +1,10 @@
 # ASX/NZX brand, distributor and retail layer margins (FY25/FY26)
 
-Prepared 2026-10-10 for the brand-markup value-chain research. Every figure is either disclosed (d) in the cited document or computed (c) by me from figures on the cited page(s). n/d = not disclosed or not captured in the extracted text. Page references ("p") are PDF page indices from pdftotext, not printed page numbers. Source IDs (S1-S46) are listed at the end. FY26 documents were used with their FY25 comparatives; FY25 annual reports were not downloaded separately.
+Prepared 2026-10-10 for the brand-markup value-chain research. Every figure is either disclosed (d) in the cited document or computed (c) by me from figures on the cited page(s). n/d = not disclosed or not captured in the extracted text. Page references ("p") are PDF page indices from pdftotext, not printed page numbers. Source IDs are listed at the end. FY26 documents were used with their FY25 comparatives; FY25 annual reports were not downloaded separately.
 
 Method and limits (short):
 - Filing discovery used the ASX Markit Digital announcement API, which returns only the latest five items per query, so a market-sensitive filter was used to surface results releases. PDFs were fetched from ASX announcement and file endpoints, from company IR sites (Wesfarmers, Metcash, Universal Store, James Hardie) and from two third-party mirrors (investorpa.com, bulletin.webull.com), which are flagged where used.
-- robots.txt was checked for asx.com.au, metcash.com, wesfarmers.com.au and fphcare.com; no disallowed paths were used. investsmart.com.au returned HTTP 403 for the ARB page and was not retried or bypassed.
+- robots.txt was checked for asx.com.au, metcash.com, wesfarmers.com.au and fphcare.com; no disallowed paths were used (investorpa.com and bulletin.webull.com returned no robots.txt content; their PDFs were fetched only where linked from search results or from the mirror page itself). investsmart.com.au returned HTTP 403 for the ARB page and was not retried or bypassed.
 - The per-turn WebSearch budget (200 calls, shared across agents) was exhausted before the remaining searches. ARB primary filings, NZ-listed names, CSR and Johns Lyng status, GUD FY26 and Pental could not be resolved.
 - Column order was verified from statement headers or narrative for every figure used. FPH (p131), Kogan (p12) and Ansell (p13) present FY25 first; the others read FY26 first.
 
@@ -168,6 +168,9 @@ GM and margin definitions differ by company and by period. Cross-company compari
 - Secondary-only: ARB. Two secondary sources give FY26 revenue of A$702.0m and A$711.5m. Neither was verified, so ARB is excluded from the figures.
 - GM definitions differ (for example, the cost of goods sold line may or may not include freight, duty and distribution). These were not normalised.
 
+### Inferences
+- The caveats above lower confidence in cross-company GM comparisons. The largest distortions are Wesfarmers segment mixing, the non-IFRS denominators at Accent and Myer, and the Metcash revenue basis. The directional pattern in Section 1 (own-brand retail above 40%, multi-brand electronics below 25%) should survive these caveats; the exact levels should not be relied on.
+
 ### Gaps (scope)
 - Not covered: NZ-listed names (The Warehouse Group, Hallenstein Glasson, Briscoe Group) because the WebSearch budget was exhausted.
 - CSR and Johns Lyng: the ASX Markit API returned no announcements for either code. Their status is unverified and no figures were extracted.
@@ -178,7 +181,7 @@ GM and margin definitions differ by company and by period. Cross-company compari
 - ARB: primary filings not retrieved (investsmart returned 403; the WebSearch budget was exhausted).
 - Group GM not disclosed or not captured: Reece, Harvey Norman, Metcash, James Hardie, Wesfarmers (segment GM), Myer.
 
-## Sources (S-IDs used above; "p" = PDF page index)
+### Source register (S-IDs used above; "p" = PDF page index)
 
 - S1 Reece FY26 ASX results release, 24 Aug 2026 (4pp): https://announcements.asx.com.au/asxpdf/20260824/pdf/073339wfnfjcqp.pdf
 - S2 Reece FY26 second ASX document, 24 Aug 2026 (27pp): https://announcements.asx.com.au/asxpdf/20260824/pdf/07333d16gqvr31.pdf
