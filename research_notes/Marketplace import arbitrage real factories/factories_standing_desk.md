@@ -349,6 +349,7 @@ Under-evidenced:
 - Its registered capital of RMB 382.2M (earlier round) — [MIC Jiecang frame](https://jiecang.en.made-in-china.com/product/KOqfYgsblSWR/China-Jiecang-R12r-Th-Electric-Height-Adjustable-Standing-Desk-Frame.html)
 - The 2025 annual report lists 新昌县捷昌进出口有限公司 ("货物进出口、技术进出口", RMB 5M capital, 2025 revenue RMB 1.134bn) as a wholly owned subsidiary — [Jiecang 2025 AR](https://pdf.dfcfw.com/pdf/H2_AN202604271821616543_1.pdf)
 - US customs (search summary) show "Xinchang Jiecang Import & Export" as the shipper to HAT Contract — [ImportYeti HAT](https://www.importyeti.com/company/hat-contract)
+- **Confirmed directly on ImportGenius:** XINCHANG JIECANG IMPORT AND EXPORT (No.19-1 Xintao Road, Qixing Street, Xinchang) has 4,596 US shipments. Its consignees are Jiecang's own J-STAR MOTION CORPORATION (4,101 containers), HAT Contract, AMQ, Fully, Bush, Secretlab and 247 Workspace. The listed company itself (ZHEJIANG JIECANG LINEAR MOTION, High-tech Park Xinchang) also appears as a shipper — [ImportGenius Xinchang Jiecang I&E](https://www.importgenius.com/suppliers/xinchang-jiecang-import-and-export), [ImportGenius Zhejiang Jiecang](https://www.importgenius.com/suppliers/zhejiang-jiecang-linear-motion)
 
 **Prorials**
 - **Chinese name:** "Copyright ©浙江普锐新材料有限公司" — [cn.prorials.com](https://cn.prorials.com/)
@@ -357,7 +358,7 @@ Under-evidenced:
 - **Patent claim on its own site:** "33 utility model patents, covering key production devices such as automatic feeding, stamping, punching and tapping devices" — [Prorials profile](https://www.prorials.com/company-profile.html)
 - **Self-description:** "一家深耕新材料及家具配套产品领域的企业"; 2025 output value "超过1.1亿美元" (self-claim) — [cn.prorials.com](https://cn.prorials.com/)
 - **MIC membership:** "Diamond Member Since 2024" ("3 yrs") — [MIC Prorials](https://chinapurui.en.made-in-china.com/)
-- **Customs:** no ImportYeti page surfaced for "Prorials" (search summary).
+- **Customs:** no ImportYeti page surfaced for "Prorials" (search summary). No ImportGenius supplier page exists under four "Zhejiang Prorials Advanced Materials" slug variants, so no US customs footprint was found under its name. It may export under another entity or a forwarder, or mainly to non-US markets; that is unverified.
 - **Registry business scope:** not retrievable. Shuidi and Qixin returned geo-block pages — [Shuidi block](https://shuidi.cn/pc-search?key=%E6%B5%99%E6%B1%9F%E6%99%AE%E9%94%90%E6%96%B0%E6%9D%90%E6%96%99%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8)
 
 **Lumi**
@@ -368,6 +369,12 @@ Under-evidenced:
 - **Loctek's view:** Loctek's 2017 prospectus names "宁波渠成进出口有限公司" as a domestic competitor in large-screen mounts — [Loctek prospectus](https://pdf.dfcfw.com/pdf/H2_AN201711201053206901_1.pdf)
 - **Patents:** 宁波渠成进出口有限公司 holds 215 patents, e.g. CN204949963U "Electric lift table's elevating system" and CN204861796U "Electric lift table" (control-box housing) — [Google Patents](https://patents.google.com/xhr/query?url=assignee%3D%E5%AE%81%E6%B3%A2%E6%B8%A0%E6%88%90%E8%BF%9B%E5%87%BA%E5%8F%A3%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8%26num%3D100&exp=)
 - **Customs (search summary):** "Lumi Legend Corp" (Lisi Plaza, Ningbo) is a supplier to My Cable Mart and Tecnologia Alterco; the product type is not visible — [ImportYeti Lumi Legend Electrical](https://www.importyeti.com/supplier/lumi-legend-electrical)
+- **Customs, direct on ImportGenius:**
+  - LUMI LEGEND CORPORATION ("24/f., Building 1, Lisi Plaza, Huifeng East Road, Ningbo") has 5,682 US shipments; top customer C KNAPP SALES DBA VIVO (725 containers). Lumi Legend HK and Lumi Legend Group (both Hong Kong addresses) ship to VIVO (769 and 994 containers) and to Human Active Technology.
+  - VIVO-bound bills include "WORKSTATION TABLE TOP", "BAMBOO TABLE TOP", "CONTROL BOX" and "TV BRACKET OF STEEL".
+  - Lumi entities also ship brackets to Workrite, ACCO, Fellowes Canada, StarTech, Monoprice and ATDEC Distribution USA Pty Ltd.
+  - Sources: [ImportGenius Lumi Legend Corp](https://www.importgenius.com/suppliers/lumi-legend-corporation), [ImportGenius Lumi HK](https://www.importgenius.com/suppliers/lumi-legend-hk-limited), [ImportGenius Lumi Group](https://www.importgenius.com/suppliers/lumi-legend-group-limited)
+- **All shipper addresses are office or HK addresses:** Lisi Plaza office tower; Kwun Tong and Wan Chai in Hong Kong. That is consistent with Lumi Legend being the group's export/invoicing entity rather than the production site.
 
 ### Inferences
 - **Jiecang's MIC storefront = "factory".** It has more than two independent A items: filings, patents, and customs via its own subsidiary. It is not a reseller.
@@ -377,6 +384,8 @@ Under-evidenced:
   - But it has no evidence of making motors, controllers or column drives. Treat its dual-motor kit as bought in until a factory audit or bill of materials shows otherwise.
   - Flag: the patents only start in 2024, and MIC membership dates from 2024. This suggests the current legal entity may be newer than the "founded 2006" claim. That is unverified and needs a GSXT check.
 - **Lumi Legend = "factory's own trading arm".** The MIC seller is the group's export/ODM company at its HQ office address; the group owns fabrication plants.
+  - Customs make it an A-grade direct shipper to Western brands: VIVO, a major US desk and mount brand, is its biggest account.
+  - Its pages show "CONTROL BOX" and "TABLE TOP" lines to VIVO but no motor or column lines. That supports the inference that Lumi integrates bought-in drive kits.
   - For desks, Lumi is closer to an ODM integrator (frame fabrication plus bought-in drive kits; the latter is inference), with a documented US-brand link (VIVO).
   - It is not a "fifth middleman", but it is one layer above the column maker.
 
@@ -466,6 +475,11 @@ Under-evidenced:
   - Foshan Hanlong: US$239–258 (MOQ 2).
   - Sources: [MIC Egrospace](https://egrospace.en.made-in-china.com/product/iAjUPLGbhycH/China-Egrospace-Sit-Electric-Stand-Height-Adjustable-Table-Electrically-Dual-Motor-Standing-Desk.html), [MIC Electric Standing Desk](https://www.made-in-china.com/products-search/hot-china-products/Electric_Standing_Desk.html)
 - **Desktop input:** Wanhua Ecoboard office desk top US$12–28 (MOQ 1) — [MIC Ecoboard](https://ecoboard.en.made-in-china.com/product/oXTQvkrSazYA/China-Modern-Office-Desk-Top-Modern-Office-Table-Top.html)
+- **Jiecang's US channel today runs through its own subsidiaries (ImportGenius)** — [ImportGenius Xinchang Jiecang I&E](https://www.importgenius.com/suppliers/xinchang-jiecang-import-and-export), [ImportGenius Jstar Motion](https://www.importgenius.com/suppliers/jstar-motion-sdn-bhd):
+  - XINCHANG JIECANG IMPORT AND EXPORT → J-STAR MOTION CORPORATION: 4,101 containers, latest 2026-10-08.
+  - JSTAR MOTION SDN BHD (Malaysia) → J-Star Motion Corp (909), HAT/Human Active Technology (456), UPLIFT (616).
+  - Smaller brands (Element Ergo 76, 247 Workspace, Secretlab) also receive direct lots.
+- **Kaidi ships direct to brands in container lots:** about 22 t per lot to Teknion, "STEEL FRAME / CONTROL BOX / HANDSET", 2026-09 — [ImportGenius Kaidi](https://www.importgenius.com/suppliers/changzhou-kaidi-electrical-inc)
 - **Kaidi channel:** "直销" is 100% of main-business revenue — [Kaidi 2025 AR](https://pdf.dfcfw.com/pdf/H2_AN202604291821754028_1.pdf)
 - **Jiecang distributors:** regional distributors SAPEC, Ahti Vesalainen Oy, Mehr Pooyan and BIBUS on "买断式销售" terms — [Jiecang prospectus](https://pdf.dfcfw.com/pdf/H2_AN201808191180596187_1.pdf). No Australian distributor was named.
 - **Loctek:** "与 ODM/OEM 客户签订线上渠道限制条款" — [Loctek prospectus](https://pdf.dfcfw.com/pdf/H2_AN201711201053206901_1.pdf). Its FlexiSpot PTY. LTD. sells in Australia — [Loctek 2026 H1](https://pdf.dfcfw.com/pdf/H2_AN202608280006758408_1.pdf)
@@ -487,6 +501,9 @@ Under-evidenced:
 
 **Practical route**
 - Ask Jiecang's regional sales for a 100–274-set quote on a standard kit. As a fallback, buy from Prorials or Lumi, but require them to name the column/controller maker and supply its certificates.
+- **Scale check:** the brands Jiecang and Kaidi serve directly import tens to thousands of containers each (UPLIFT 616 from JSTAR, Teknion 133 from Kaidi). Small brands like Element Ergo (76 containers) do get direct Jiecang shipments.
+  - A 100–274-desk order is roughly 0.4–1 × 20GP. That makes it a "sample/trial" order in this channel: accepted at list price via MIC, unlikely to win ODM terms.
+  - Ningbo Yunqi-type trading offices exist precisely to aggregate such small orders. This is inference from the customs pattern.
 
 ### Gaps
 - No confirmed written quote. Jiecang's 100–499 tier is a list price, and no RFQ was sent (contacting suppliers was out of scope).
@@ -514,10 +531,16 @@ Spec sheets converge as a result: Prorials and Lumi both list 620–1280 mm thre
 - **Converging spec sheets:**
   - Prorials dual frame: "620-1280mm", 120 kg, 25 mm/s, 50×80 mm legs, 1.5 mm wall, 6-button handset with 2 presets. Its attribute block says "Stages 2" while its spec says "3 Stages" — [MIC Prorials](https://chinapurui.en.made-in-china.com/product/JRbUSIKobqVf/China-Fast-Lift-Dual-Motor-Electric-Height-Adjustable-Standing-Office-Desk-Frame.html)
   - Lumi M08-23DE: "620~1280mm", three-stage, columns "40X70, 45X75, 50X80mm", 100 kg, 38 mm/s — [MIC Lumi desk](https://lumi2007.en.made-in-china.com/product/MolxpvyJXUDj/China-Modern-Home-Office-Furniture-Wholesale-3-Stage-Dual-Motors-Electric-Standing-Table-Gaming-Desk.html)
+- **One kit maker shipping to many US desk brands under different names (ImportGenius, 2024–26):**
+  - Jiecang Malaysia → UPLIFT, HAT/Human Active Technology, Element Ergo, BestQi.
+  - Jiecang China → J-Star (redistribution), Secretlab, 247 Workspace, Bush — [ImportGenius Jstar Motion](https://www.importgenius.com/suppliers/jstar-motion-sdn-bhd), [ImportGenius Xinchang Jiecang I&E](https://www.importgenius.com/suppliers/xinchang-jiecang-import-and-export)
+  - Kaidi → Teknion, ESI; TiMOTION → "DESK LIFT FRAMES" to Ergo Industrial Seating — [ImportGenius Kaidi](https://www.importgenius.com/suppliers/changzhou-kaidi-electrical-inc), [ImportGenius TiMOTION](https://www.importgenius.com/suppliers/timotion-technology-co-ltd)
+  - Trading office Ningbo Yunqi ships "LIFTING COLUMN HAND CONTROLLER DESK TOP" to several small US brands (Uncaged Ergonomics, Autonomous, Clouds Grande) — [ImportGenius Yunqi](https://www.importgenius.com/suppliers/ningbo-yunqi-innovation-intelligent)
 - **Other brands use other kits:** Autonomous uses TiMOTION electronics on Aoke frames — [BTOD](https://www.btod.com/blog/autonomous-pro-vs-jarvis-desk). Vari buys from Taiwanese suppliers — [ImportYeti Varidesk](https://www.importyeti.com/company/varidesk)
 
 ### Inferences
-- The identical storefront frames are most likely a few kit designs (Jiecang JC35/JCB35-type, Kaidi, Xinyi and others) wrapped in similar fabricated steel by several assemblers.
+- The identical storefront frames are most likely a few kit designs (Jiecang JC35/JCB35-type, Kaidi, TiMOTION, Xinyi and others) wrapped in similar fabricated steel by several assemblers and trading offices.
+- Customs show the same Jiecang Malaysia kit reaching at least four US brands. Assembler Aoke uses TiMOTION electronics. A Ningbo trading office ships "lifting column + hand controller + desk top" sets to several small brands.
 - The identical 620–1280 mm figure on Prorials' and Lumi's three-stage frames points to a common column stroke from shared column suppliers. This is inference, not proof.
 - To find the true source of a given SKU, ask for the control-box and handset model numbers and the column maker's label photo before ordering. For example, a "JCB…"/"JCHT…" prefix indicates Jiecang. Then cross-check against the maker's catalogue and certificates.
 
