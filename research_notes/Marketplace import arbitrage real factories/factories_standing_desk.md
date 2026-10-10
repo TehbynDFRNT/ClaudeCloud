@@ -19,7 +19,7 @@
   - Shopify product JSON for Australian brands.
   - The NeoCon exhibitor page.
 - **Blocked (none bypassed):**
-  - ImportYeti: Cloudflare "Just a moment" challenge. Customs facts below come from **search-result summaries of ImportYeti pages** and are labelled that way.
+  - ImportYeti: Cloudflare "Just a moment" challenge. Customs facts marked "ImportYeti" come from **search-result summaries of ImportYeti pages** and are labelled that way. Customs facts marked "ImportGenius" were read directly from the page.
   - Justia: Cloudflare challenge.
   - Google Patents via plain curl: "automated queries" page.
   - Global Sources: HTTP 429 (twice).
@@ -417,6 +417,10 @@ Under-evidenced:
 - **What the EESS database shows:** "Details, including the brand and model number, of in-scope electrical equipment categorised as Risk Level 2 & 3". Responsible-supplier details are "recorded on the database but not viewable publicly". The old database was replaced by the "EESS Platform" from 14 Oct 2024 — [EESS registration database](https://www.eess.gov.au/registration/eess-registration-database/)
 - **Access:** both public search endpoints failed from here (legacy erac endpoint: proxy CONNECT rejected; new eessplatform.eess.gov.au Pega app: login/JS shell only) — [EESS home](https://www.eess.gov.au/)
 - **FlexiSpot AU:** Loctek's 100%-owned FlexiSpot PTY. LTD. (Australia, est. 2023) — [Loctek 2026 H1](https://pdf.dfcfw.com/pdf/H2_AN202608280006758408_1.pdf)
+- **Australian-company links found outside EESS (US customs and filings, not AU data):**
+  - SCHIAVELLO GWS PTY LTD is consignee of "METAL HEIGHT ADJUSTABLE DESK FRAME" from Ningbo Aoke Office Equipment (2026-06-12) — [ImportGenius Aoke](https://www.importgenius.com/suppliers/ningbo-aoke-office-equipment-co-lt)
+  - ATDEC DISTRIBUTION USA PTY LTD receives TV brackets from Lumi Legend Corporation (2026-09-30) — [ImportGenius Lumi Legend Corp](https://www.importgenius.com/suppliers/lumi-legend-corporation)
+  - Jiecang's 2018 prospectus lists "Haworth Australia Pty Ltd." within its Haworth customer group — [Jiecang prospectus](https://pdf.dfcfw.com/pdf/H2_AN201808191180596187_1.pdf)
 
 ### Inferences
 - **Of the candidates, only Jiecang's kits are likely to come with Australian (SAA) certification paperwork.** A buyer still needs the specific certificate number and model match.
