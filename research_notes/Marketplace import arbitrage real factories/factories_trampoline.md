@@ -18,12 +18,15 @@ A company is called a **factory** only with two independent A/B items. ImportGen
 ## Q1. Where are the real 12–14 ft trampoline factories, and which companies own production?
 
 ### Takeaway
-**Where the verified factories are.** The trampoline makers that verifiably ship to Western brands sit mainly in **Qingdao (Shandong)** and **Hangzhou-Xiaoshan (Zhejiang)**, plus **Taishan (Guangdong)**:
+**Where the verified factories are.** The trampoline makers that verifiably ship to Western brands sit mainly in **Qingdao (Shandong)** and **Hangzhou-Xiaoshan (Zhejiang)**, plus **Dongguan and Taishan (Guangdong)**:
 - **Sportsoul / 青岛三柏硕健康科技股份有限公司** (SZSE 001300, Chengyang District, Qingdao). Its customers are Decathlon, Walmart, Amazon, ICON/iFIT, Plum Products, Dutch Toys Group, Avero, Sportspower and Escalade, plus its own Skywalker brand.
-- **Qingdao Jinhuaxing Sports Products** (Huangdao). It ships to Propel, Vuly's US entity and Rural King.
+- **Qingdao Jinhuaxing Sports Products** (Huangdao) and the similarly named **Qingdao Jinhuaxing Metal** (Jiaonan). Between them they ship to Propel, Vuly (including the Australian company itself), US Kmart, Spin Master and Rural King.
 - **Hangzhou Transasia Sporting Goods Manufactory** (Suoqian Town, Xiaoshan). It ships to Acon, JumpSport, Super Jumper and BERG.
 - **Hangzhou Entire Sporting Goods / Hangzhou Hengjian Technology** (Xiaoshan EDZ). It ships to JumpSport.
 - **Kogee Outdoor Group** (Taishan). It ships to BERG and North Trampoline.
+- **Dongguan Sheng Hui Fitness Equipment** (Qingxi Town, Dongguan). It ships to Springfree and Costco Wholesale Canada.
+
+**Intermediaries.** Brand intermediaries sit between factories and retailers. For example, **Sportspower Ltd** ships from an office in Causeway Bay, Hong Kong to US Kmart, Big 5 and Walmart-fulfilment sellers, and it was itself a Sportsoul ODM/OEM customer.
 
 **Where Lingsha fits.** The earlier round's "Lishui/Yongkang/Jinhua" picture holds only for **second-tier** makers. Lingsha (Jinyun County, Lishui) is a genuine factory that ships full containers to US Amazon sellers. The Yongkang/Jinhua names found are mostly small mini-trampoline workshops.
 
@@ -131,6 +134,61 @@ Source for this block: [Sportsoul IPO prospectus 招股意向书, SZSE, 2022-09-
 - Also outdoor furniture.
 - Source: [ImportGenius Kogee](https://www.importgenius.com/suppliers/kogee-outdoor-group). Berg USA's partners include BERG TOYS BV (via Rotterdam), Ningbo Polaris Enterprises, Kogee and Wuxi Xintie Mechanical. — [ImportGenius Berg USA](https://www.importgenius.com/importers/berg-usa-llc)
 
+**5a. Dongguan Sheng Hui Fitness Equipment (202 Tiesong Rd, Qingxi Town, Dongguan, Guangdong).**
+- 1,231 shipments to 2026-10-05. Consignees:
+  - **SPRINGFREE TRAMPOLINE INC.**: 670 containers, 11.0 million kg
+  - "N/A": 1,146 containers, 19.0 million kg
+  - THE NET RETURN LLC (golf nets): 68 containers
+  - **COSTCO WHOLESALE CANADA LTD.**: 27 containers, 416,985 kg, last 2026-05-16
+  - SPRINGFREE ISSAQUAH
+- Example B/L EXDO61N0963199: "TRAMPOLINES WITH COMPLETE SET HTS: 950691", 2026-10-05, 56,088 kg, 1,375 CTN.
+- Source: [ImportGenius Sheng Hui](https://www.importgenius.com/suppliers/dongguan-sheng-hui-fitness-equipmen)
+- **Springfree's own import page** (Springfree Trampoline Inc., 151 Whitehall Drive, Markham, Ontario) shows 640 shipments, and Dongguan Sheng Hui is its main supplier.
+  - Example B/Ls: EXDO61N0953732, "TRAMPOLINE WITH COMPLETE SET HTS: 950691", 2026-08-29, 18,335 kg, 832 CTN; EXDO61N0935482, "TRAMPOLINE SPARES & GOLF GOAL SET SPARES", 2026-03-11.
+  - Other suppliers: XIAMEN WORLD GEAR SPORTS GOODS CO (61 containers, last 2008-11-29), DONGGUAN SHENG HUI FITNESS CO LTD (19, last 2022), and YOMEE TOYS (SHUYANG) ("JAZZMINTON SPORT NET SET").
+  - Top ports: Yantian, Hong Kong, Shekou.
+  - Source: [ImportGenius Springfree](https://www.importgenius.com/importers/springfree-trampoline-inc)
+- Xiamen World Gear (Jimei District, Xiamen) now ships mainly medical care beds to Invacare and Hill-Rom. It is no longer evidence of a trampoline plant. — [ImportGenius](https://www.importgenius.com/suppliers/xiamen-world-gear-sports-goods-co)
+
+**5b. Qingdao Jinhuaxing Metal Co., Ltd ("No. 558, Haibin Liu Lu, Jiaonan, Qingdao").**
+- 593 shipments to 2020. Consignees:
+  - **PROPEL TRAMPOLINES INC.**: 1,016 containers, 19.4 million kg, last 2016-12-19
+  - **KMART CORPORATION** (3333 Beverly Rd, i.e. US Kmart): 141 containers, 2.75 million kg, last 2015-01-16
+  - **VULY TRAMPOLINES PTY LTD**: 29 containers, 533,064 kg, last 2015-08-10
+  - **SPIN MASTER**: 30 containers, last 2016-07-26
+  - Tohama Group
+  - Theisen Supply Inc.: "TRAMPOLINE WITH ENCLOSURE", 2018–2019 (e.g. B/L CHSL299772336TAO, 18,744 kg)
+- Source: [ImportGenius Jinhuaxing Metal](https://www.importgenius.com/suppliers/qingdao-jinhuaxing-metal-co-ltd)
+- **Propel Trampolines Inc.** (Logan, UT) has 1,085 shipments. Its suppliers are QINGDAO JINHUAXING SPORTS PRODUCTS, QINGDAO JINHUAXING METAL CO LTD, XHL COMPANY LIMITED and XHL HUIZHOU CORP; ports include Qingdao, Pusan, Yantian, Shanghai and Hai Phong. — [ImportGenius Propel](https://www.importgenius.com/importers/propel-trampolines-inc)
+
+**5c. Sportspower Ltd (Level 20, Parkview Centre, 7 Lau Li Street, Causeway Bay, Hong Kong): a brand/OEM intermediary.**
+- 5,279 shipments to 2026-10-05. Consignees:
+  - NATUS SPORTS AND RECREATION INC.: 937 containers
+  - AVA L.L.C.: 626
+  - **KMART CORPORATION** (US): 670 containers, last 2016-05-24
+  - EVERLAST SPORTS MANUFACTURING: 445
+  - also Big 5 LLC, Uptempo Sales c/o WFS (Walmart Fulfillment Services), and Stron USA
+- Products: swing sets, airbeds, heavy-bag stands and trampolines, with origins in China and Vietnam.
+- Source: [ImportGenius Sportspower](https://www.importgenius.com/suppliers/sportspower-ltd)
+- **Stron USA Inc.** (Las Vegas) buys from Sportspower. Example B/Ls:
+  - LUDONGB26070508, "14FT MULTIPLAY TRAMPOLINE … ITEM # TR-0347-168", 2026-09-12, 17,437 kg, 265 CTN
+  - LUDONGB26070794, "TRAMPOLINE LADDER … TRUJUMP PRO 14' TRAMPOLINE WITH LADDER", 2026-08-17
+
+  Its other suppliers include Qooco Industries, Tai Zhou Jiu Jiu Fitness Equipment, Trifecta Company and Xiamen Bincheng Wood. — [ImportGenius Stron](https://www.importgenius.com/importers/stron-usa-inc)
+- **Sportspower as a Sportsoul customer.** Sportsoul's prospectus lists Sportspower as an ODM/OEM customer: 10,097.20万元 (RMB 101.0m, 17.6% of revenue) in 2019 and 6,493.70万元 (RMB 64.9m) in 2020, buying "拳击架、蹦床等". — [Prospectus](https://disc.static.szse.cn/disc/disk03/finalpage/2022-09-23/af15bcac-c370-4195-8868-dc6032ae30a8.PDF)
+
+**5d. More Sportsoul-group shipper names.**
+- **Trampoline Pro** (Irvine) is supplied by QINGDAO OCEAN MASTER STEEL AND PLAS[TIC], QINGDAO OCEAN MASTER FITNESS CO LTD and **QINGDAO DEGAO STEEL PLASTIC CO** (得高钢塑 is a Sportsoul subsidiary). — [ImportGenius Trampoline Pro](https://www.importgenius.com/importers/trampoline-pro)
+- **Outdoor Product Technologies** (North Salt Lake) has 358 shipments. Its suppliers are QINGDAO MEIDI MACHINERY TECHNOLOGY, QINGDAO OCEAN MASTER FITNESS and SPORTSOUL CO LTD. — [ImportGenius OPT](https://www.importgenius.com/importers/outdoor-product-technologies-inc). The prospectus defines 青岛美邸机械科技有限公司 as "系发行人实际控制人控制的公司".
+
+**5e. Brand and retailer lookups that did not resolve.**
+- **Zupapa.** No ImportGenius importer page exists at zupapa, zupapa-inc or zupapa-llc.
+  - A Ubuy listing (per a search summary) names "Shenzhen Jinrui Import And Export Co., Ltd." as Zupapa's manufacturer — [Ubuy](https://www.ubuy.com.eg/en/product/PTSRF0M20-zupapa-kids-trampoline).
+  - On ImportGenius, that company sits at "Rm B901, Lenovo Building East, No.016 Gaoxin South 1st Rd, Yuehai Street, Nanshan District, Shenzhen". Its 3 US shipments are "STORAGE SHEDS/PARTY TENT/CARPORT" and "METAL BED FRAME…". — [ImportGenius Jinrui](https://www.importgenius.com/suppliers/shenzhen-jinrui-import-and-export-c)
+- **Jumpking.** No page exists at jumpking, jumpking-inc, jumpking-llc, jumpking-incorporated or jumpking-trampolines.
+- **Costco.** Costco Wholesale Canada (Langley BC; 129,437 shipments) lists only general-merchandise top partners on its own page. Its trampoline link shows up on the supplier side, from Dongguan Sheng Hui (5a). — [ImportGenius Costco Canada](https://www.importgenius.com/importers/costco-wholesale-canada-ltd)
+- **Walmart.** Its importer pages list only top partners among thousands, so I did not use them. Walmart's links here come from the supplier side: Sportsoul sells to Walmart via Skywalker (prospectus), and Sportspower ships to "Uptempo Sales c/o WFS".
+
 **6. Zhejiang Lingsha Technology / 浙江凌鲨科技有限公司 (Jinyun County, Lishui).** Details are in Q2.
 - Its US-customs address is "Zhejiang Lijin Hardware Technology Industrial Park, Jinyun County, Lishui City". It has 15 shipments, including full containers of "SPORTS TRAMPOLINE". — [ImportGenius](https://www.importgenius.com/suppliers/zhejiang-lingsha-technology-co-ltd)
 
@@ -150,6 +208,9 @@ Source for this block: [Sportsoul IPO prospectus 招股意向书, SZSE, 2022-09-
 | Hangzhou Transasia Sporting Goods Manufactory (CN name not confirmed) | Suoqian Town industrial park, Xiaoshan | Customs direct shipper (A); trademark "TRAN ASIA" via Justia search snippet (C) | Not found | Acon, JumpSport, Super Jumper, Berg USA | Not found | Not found | **Probable factory** |
 | Hangzhou Entire Sporting Goods / Hengjian Technology | Xiaoshan Econ. & Tech. Dev. Zone, 295 Hongda Rd | Customs direct shipper (A) | Not checked | JumpSport | Not found | Not found | **Probable factory** |
 | Kogee Outdoor Group | Sanhe Town, Taishan, Guangdong | Customs direct shipper, BERG-branded line items (A) | Not checked | Berg, North Trampoline, Global Quality Brands | Not found | Not found | **Probable factory** |
+| Dongguan Sheng Hui Fitness Equipment (CN name not confirmed) | 202 Tiesong Rd, Qingxi Town, Dongguan | Customs direct shipper of "TRAMPOLINE WITH COMPLETE SET" (A) | Not checked | Springfree (670 containers), Costco Wholesale Canada (27), The Net Return | Not found | Not found | **Probable factory** |
+| Qingdao Jinhuaxing Metal Co., Ltd (CN name not confirmed) | No. 558 Haibin Liu Lu, Jiaonan, Qingdao | Customs direct shipper (A) | Not checked | Propel (1,016 containers), US Kmart (141), Vuly Trampolines Pty Ltd (29), Spin Master (30), Theisen | Not found | Not found | **Probable factory** (likely Jinhuaxing sister entity) |
+| Sportspower Ltd | Office: Parkview Centre, Causeway Bay, Hong Kong | Customs shipper (A), but from an HK office address; named in Sportsoul's prospectus as an ODM/OEM *customer* (A) | Not checked | Natus, AVA, US Kmart, Everlast, Big 5, Stron USA, Walmart-fulfilment sellers | Not found | Not found | **Brand/OEM intermediary**, not a verified plant |
 | 浙江凌鲨科技有限公司 / Zhejiang Lingsha Technology (Funjump) | Lijin Hardware Tech. Industrial Park, Jinyun | Customs exporter of record (A); 2023 utility patents on tube processing (A); TÜV-verified MIC capacity fields (B) | MIC Diamond (direct) | US e-commerce importers (Alliance Route, Pharo Deals, Fina Crooning, ETS Media c/o FBA) | **100 pcs (50/size)**; 20–45 working days | US$96/93/89 | **Factory (second tier)** |
 | Yongkang Nanjian Leisure Products | Huachuan Industry Zone, Jinhua | Small customs shipper (A, mostly mini/pilates); TÜV ASV (B) | MIC Gold (direct) | Individuals/small firms | MOQ 1 pc | US$79–129 | **Small maker; 14 ft unproven** |
 | Beijing Set Sail Sports | Office: Jinpeng Mansion, Dingzhou, Hebei | Self-description only (C) | MIC (direct) | None found | 300 pcs; ≤15 workdays | US$119 | **Trader** |
@@ -168,7 +229,8 @@ Source for this block: [Sportsoul IPO prospectus 招股意向书, SZSE, 2022-09-
 
 ### Gaps
 - **Chinese registries not reached.** gsxt.gov.cn, qcc and tianyancha were not reached; they sit behind CAPTCHA/login walls and were not attempted. So registered production scope, registered address and insured headcount (参保人数) are missing for every company except Sportsoul (prospectus).
-- **Chinese names missing.** Not confirmed for Jinhuaxing, Transasia, Entire/Hengjian or Kogee.
+- **Chinese names missing.** Not confirmed for Jinhuaxing (Sports Products / Metal), Transasia, Entire/Hengjian, Kogee or Dongguan Sheng Hui.
+- **Zupapa and Jumpking not traced.** No ImportGenius page was found for either under guessed name slugs. I did not use ImportGenius's internal search API, which sits behind the JavaScript UI. Sportspower's own factories, if any, are not identified, because its customs address is a Hong Kong office.
 - **Trade-show lists not checked.** No China Sport Show, Canton Fair or Spielwarenmesse exhibitor lists were checked; the search quota was exhausted.
 - **1688 storefronts not found.** None were found for any 12–14 ft maker, and there is no 1688 domestic price for 14 ft sets.
 - **Customs coverage is US only.** The data covers US imports only, and the "supplier" on a B/L can be a trading company. Australian import B/Ls are not public.
@@ -370,6 +432,7 @@ The caveats:
 - **Lingsha's terms.** US$96/93/89 tiers; MOQ 100 (FAQ: 50 per size, 3–4 sizes per 20GP); 30% deposit / 70% against B/L copy or LC at sight; 20–45 working days; sample US$200. Its profile shows a one-month lead time, 100% visual inspection and 6 QC staff. — [MIC Lingsha 14FT](https://lsfunjump.en.made-in-china.com/product/uphRrGWYIgci/China-Funjump-14FT-Outdoor-Indoor-Fitness-Kid-Child-Mini-Bungee-Jumping-Trampoline-with-Safety-Enclosure.html); [MIC Lingsha company](https://lsfunjump.en.made-in-china.com/company-Zhejiang-Lingsha-Technology-Co-Ltd.html)
 - **Lingsha's real order sizes.** US customs shows it exporting trampoline lots of 355 CTN / 17.4 t (about one 40HQ) to US e-commerce importers. — [ImportGenius Lingsha](https://www.importgenius.com/suppliers/zhejiang-lingsha-technology-co-ltd)
 - **Trader comparison.** Set Sail lists 14FT at US$119, MOQ 300, ≤15 workdays. Nanjian lists US$79–129, MOQ 100 (MOQ 1 pc on its profile). — [MIC Set Sail 14FT](https://setsailsports.en.made-in-china.com/product/vOtTxfGMgZYq/China-Outdoor-14FT-Trampoline-with-Safety-Enclosure-Net.html); [MIC Nanjian company](https://yknanjian.en.made-in-china.com/company-Yongkang-Nanjian-Leisure-Products-Co-Ltd-.html)
+- **The brand-intermediary layer.** Sportspower Ltd (HK office) ships 14 ft trampolines ("14FT MULTIPLAY TRAMPOLINE", "TRUJUMP PRO 14' TRAMPOLINE WITH LADDER") in 265-carton / 17.4 t lots to Stron USA — [ImportGenius Stron](https://www.importgenius.com/importers/stron-usa-inc). Sportsoul's prospectus lists Sportspower as an ODM/OEM customer (RMB 101.0m in 2019) and says it cut Sportspower's volumes from 2021 when its own capacity was saturated — [Prospectus](https://disc.static.szse.cn/disc/disk03/finalpage/2022-09-23/af15bcac-c370-4195-8868-dc6032ae30a8.PDF)
 - **Brand OEM order scale.** Jinhuaxing shipped 1,041 containers to Propel. Sportsoul's Skywalker B/Ls run 564–3,066 CTN per entry. — [ImportGenius Jinhuaxing](https://www.importgenius.com/suppliers/qingdao-jinhuaxing-sports-products); [ImportGenius Sporsoul](https://www.importgenius.com/suppliers/sporsoul-co-ltd)
 
 ### Inferences
@@ -390,7 +453,9 @@ The caveats:
 ## Q5. Which factory is behind an Australian-sold trampoline (Everfit, Kahuna, Lifespan Kids, Anko, others)?
 
 ### Takeaway
-**Vuly is the only Australian-sold brand linked by customs evidence.** **Qingdao Jinhuaxing Sports Products** shipped trampolines, shade covers and spare parts to "American Play Stock, LLC dba Vuly P[lay]" (US) in Sept–Oct 2026. Vuly is described (AFR 2014, via Wikipedia) as manufacturing in "its factory in China".
+**Two Australian-sold brands are linked by customs evidence:**
+- **Vuly.** The Brisbane company itself (Vuly Trampolines Pty Ltd, 95 Ingleston Road, Wakerley QLD) imported "14FT VULY2 TRAMPOLINE BUNDLE" and "THUNDER XL TRAMPOLINE BUNDLE" from **Qingdao Jinhuaxing Metal Co., Ltd**, its only listed supplier (29 containers, 2015). Vuly's US entity still receives trampolines from **Qingdao Jinhuaxing Sports Products** (Sept–Oct 2026). Vuly says (AFR 2014, via Wikipedia) that it manufactures in "its factory in China".
+- **Springfree.** It sells in Australia, and its North American importer buys "TRAMPOLINE WITH COMPLETE SET" from **Dongguan Sheng Hui Fitness Equipment** (Qingxi Town, Dongguan): 670 containers, latest 2026-08-29. The same supplier ships to Costco Wholesale Canada.
 
 **Brands linked as Sportsoul customers.** Two brands sold in Australia are named Sportsoul customers in its prospectus: **Plum Products** and Decathlon (the latter's Australian presence was not verified here).
 
@@ -401,6 +466,15 @@ The caveats:
 - Australian import manifests are not public.
 
 ### Cited Findings
+- **Vuly Trampolines Pty Ltd** (95 Ingleston Road, Wakerley QLD 4154, AU) importer page: 23 shipments, with sole supplier QINGDAO JINHUAXING METAL CO LTD (29 containers, 533,064 kg, last 2015-08-10). Example B/Ls:
+  - CROIQDLGB1947812, "14FT VULY2 TRAMPOLINE BUNDLE", 2015-07-07, 19,400 kg, 700 CTN
+  - MFGTQDCHI1967516, "THUNDER XL TRAMPOLINE BUNDLE", 2015-07-26, 19,870 kg, 710 CTN
+  - CROIQDCHI1959890, "XL SUMMER TRAMPOLINE"
+  - CROIQDLGB1941822, "TRAMPOLINE BASKETBALL SET"
+
+  The page also lists related consignees VULY USA OPERATIONS CORP. and VULY TRAMPOLINES (Los Angeles). — [ImportGenius Vuly Pty Ltd](https://www.importgenius.com/importers/vuly-trampolines-pty-ltd)
+- **Springfree.** Its AU site is titled "Trampolines Australia Loves | Springfree® Trampoline AU" and has an Australian store finder — [Springfree AU](https://www.springfreetrampoline.com.au/). Its North American imports come from Dongguan Sheng Hui Fitness Equipment: B/L EXDO61N0953732, "TRAMPOLINE WITH COMPLETE SET HTS: 950691", 2026-08-29, 18,335 kg, 832 CTN — [ImportGenius Springfree](https://www.importgenius.com/importers/springfree-trampoline-inc); [ImportGenius Sheng Hui](https://www.importgenius.com/suppliers/dongguan-sheng-hui-fitness-equipmen)
+- **Trujump.** An OzBargain post dated 14/10/2025 reads "[VIC] 14ft Trampoline and Classic Enclosure Combo Set $150 (Was $484)… @ Trujump" and links trujump.com.au, labelled "Liquidation Sale" — [OzBargain](https://www.ozbargain.com.au/node/928521). trujump.com.au now returns a Cloudflare "DNS points to prohibited IP" error. Separately, Sportspower ships "TRUJUMP PRO 14' TRAMPOLINE WITH LADDER" to Stron USA (2026) — [ImportGenius Stron](https://www.importgenius.com/importers/stron-usa-inc)
 - **Jinhuaxing → Vuly (US entity).** B/L MFGTDAL000078221: "TRAMPOLINE ---95069190 TRAMPOLINE SHADE COVER --6306199000 TRAMPOLINE SPARE PARTS", 2026-10-08, 19,864 kg, 1,415 CTN. B/L MFGTQDIND5470765: trampoline, basketball adaptor and anchor kit, 2026-09-11, 19,800 kg, 1,413 CTN. — [ImportGenius Jinhuaxing](https://www.importgenius.com/suppliers/qingdao-jinhuaxing-sports-products)
 - **Vuly background.** Vuly Play was "founded by Joe Andon in 2007, as Trampolines Australia", is headquartered in Brisbane, and "designed its first trampoline in 2008, and it has since manufactured them in its factory in China". The source cited there is AFR, 15 Sep 2014, "$100,000 for an 'ABN': Vuly Trampolines shares what it takes to make Chinese manufacturing work". — [Wikipedia Vuly Play](https://en.wikipedia.org/wiki/Vuly_Play)
 - **Vuly sells in Australia** (e.g. AU Black Friday 2025 promotion "from $399"). — [Vuly AU](https://www.vulyplay.com/en-AU/black-friday-sales-trampoline) (from the earlier round's notes)
@@ -412,7 +486,9 @@ The caveats:
 - **US CPSC recalls** (search results only) cover trampolines "made in China" from Aviva Sports (2009) and Sportspower (Sports Authority-exclusive 14 ft). The search snippets name no Chinese factory. — [CPSC Aviva](https://www.cpsc.gov/Recalls/2009/aviva-sports-recalls-trampolines-due-to-fall-hazard); [Sportspower recall](https://www.enewspf.com/recalls/trampolines-recalled-by-sportspower-due-to-injury-hazard-sold-exclusively-at-sports-authority/)
 
 ### Inferences
-- **Vuly's Australian stock.** It is probably made by the same Qingdao Jinhuaxing plant that ships to Vuly's US entity. Vuly's "own factory in China" may be Jinhuaxing under contract or partial ownership. Not verified; no AU manifests exist publicly.
+- **Vuly's Australian stock.** It is very likely made by the Qingdao Jinhuaxing group (Metal Co. in 2015, Sports Products in 2026). In 2015 the Australian company itself was the consignee of 14 ft Vuly2 bundles from Jinhuaxing Metal. Vuly's "own factory in China" may be Jinhuaxing under contract or partial ownership. Ownership is not verified, and no AU manifests are public.
+- **Springfree's Australian stock** is probably made by Dongguan Sheng Hui, its dominant North American supplier for over a decade. Not verified for AU shipments.
+- **The Trujump name.** It appears both on a defunct AU retailer/brand (liquidation, Oct 2025) and in Sportspower 14 ft item descriptions. The two may be linked, but this is unverified.
 - **Plum and Decathlon trampolines in Australia** may be Sportsoul-made, since both are Sportsoul customers. Not verified per SKU; both brands may use several OEMs.
 - **Everfit, Kahuna and other wholesaler house brands.** These ship at heavier specs (Everfit 74.3 kg) and are most likely sourced from second-tier factories like Lingsha, or via traders. This is not evidenced: no customs, manual or recall link was found.
 
