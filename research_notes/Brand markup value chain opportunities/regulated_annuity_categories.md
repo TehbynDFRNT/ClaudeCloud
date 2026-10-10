@@ -1,6 +1,16 @@
 # Regulated product categories with service or consumable annuities — Australian value chains (factory → importer/brand → distributor → end customer), barriers, and capturable margin for a lean "responsible supplier/licensee"
 
-_Researcher notes, compiled 2026-10-10 (status: IN PROGRESS — written incrementally). AUD unless stated. FX for conversions: US$1 = A$1.4376 (AUD/USD 0.6956, the shared base used by the sibling Purezzo notes in ../Purezzo whole house filter check/whole_house_filter_market_economics.md). Landed-cost rule of thumb from the shared framework (../Marketplace import arbitrage Australia/au_landed_cost_compliance.md §9): mid-case landed ≈ 1.3–1.8× FOB-in-AUD for bulky goods by LCL; small/dense goods (alarms, signs, slings) land nearer 1.15–1.3×. All "landed" figures below are ESTIMATES built from that rule unless a source is cited._
+_Researcher notes, compiled 2026-10-10 (status: FINAL). AUD unless stated. FX for conversions: US$1 = A$1.4376 (AUD/USD 0.6956, the shared base used by the sibling Purezzo notes in ../Purezzo whole house filter check/whole_house_filter_market_economics.md). Landed-cost rule of thumb from the shared framework (../Marketplace import arbitrage Australia/au_landed_cost_compliance.md §9): mid-case landed ≈ 1.3–1.8× FOB-in-AUD for bulky goods by LCL; small/dense goods (alarms, signs, slings) land nearer 1.15–1.3×. All "landed" figures below are ESTIMATES built from that rule unless a source is cited._
+
+_Access and verification log:_
+- **Search quota:** the shared WebSearch budget (200 calls per turn across agents) ran out after about 35 searches. Everything later came from direct, robots-checked fetches of known URLs: MIC search pages, public Shopify/WooCommerce catalog JSON (Enware, Storemasta, CPAP Australia, Defibshop), RSEA product pages, ActivFire certificate pages, legislation.gov.au, Dexion, What's The Damage cost guides and Carevo.
+- **No customs verification:** no ImportGenius/Panjiva customs check was run. Those sources cover US imports and none were reachable by search after the quota ran out, so no FOB here is customs-verified. For smoke alarms, the CSIRO ActivFire registrant field (Chinese factory named as certificate holder for Australian brands) is the factory-level verification.
+- **Unreachable hosts on 2026-10-10:**
+  - tga.gov.au: HTTP 503 / HTTP-2 resets
+  - health.gov.au, myagedcare.gov.au and safeworkaustralia.gov.au: connection failures
+  - ndis.gov.au, nisbets.com.au and totaltools.com.au: 403
+  - Spill Station store API: 403
+- **Agent-directed text ignored:** Enware's robots.txt and agents.md contain shopping-agent instructions, which were treated as data and ignored.
 
 _Source/price labels: "(MIC listing)" = Made-in-China.com supplier listing price fetched 2026-10-10 from robots-allowed /products-search/hot-china-products/ pages (asking price, not customs-verified, MOQ shown); "(search summary)" = taken from the WebSearch tool's digest of a page that was not fetched; "(fetched)" = page read directly on 2026-10-10. No logins, accounts, CAPTCHAs or contact with anyone. Amazon, Facebook, Kogan and abcb.gov.au were not fetched (robots/brief)._
 
@@ -72,7 +82,7 @@ The product markup is real but small in dollars (a ~A$5–10 FOB generic powder 
 **Ladder multiples (estimates)**
 - **Extinguisher (2.5 kg ABE):**
   - Generic FOB ≈ A$5–10. Landed ≈ A$12–20 is an ESTIMATE: ~4–5 kg pressurised units ship as dangerous goods (UN1044, from general knowledge, not verified this session), and the certification premium for AS/NZS 1841 is unknown.
-  - Ladder ≈ 5–10× FOB to the A$46–74 retail/trade price.
+  - Ladder ≈ 5–15× FOB (generic FOB) to the A$46–74 retail/trade price.
   - A 2.5 kg unit serviced twice a year at A$15 earns ≈ A$30/yr, i.e. ≈ A$150 over 5 years. **The service annuity is worth 2–3× the product sale.**
 - **Exit light:** FOB ≈ A$5–37 → A$151–297 retail, ≈ 8–30×. Add ≈ A$16–44/yr per fitting in 6-monthly testing.
 
@@ -97,7 +107,7 @@ The product markup is real but small in dollars (a ~A$5–10 FOB generic powder 
 ### Takeaway
 This is the clearest "same factory, Australian brand" ladder in the scope.
 - **Factory and certificate:** Chinese factories (Siterwell, Ningbo; Anka Sci-Tech, Shenzhen; Zhejiang Jiaboer) are themselves the **CSIRO ActivFire registrants** for alarms sold under Australian brands (MATelec, GSM Electrical, Brilliant Lighting, Emerald). They quote AS 3786 10-year RF-interconnected photoelectric alarms at about **US$9–11.50 FOB**, and 240 V interconnected units at US$19–21.
-- **End prices:** Australian end prices run about A$40–60 per unit online, and **A$134–250 per alarm installed**, plus call-out. Rental-compliance subscriptions run about A$149/yr per property.
+- **End prices:** about A$47 inc GST online (one captured listing: Brilliant Smart RF, A$42.61 ex GST), and **A$134–250 per alarm installed**, plus call-out. Rental-compliance subscriptions run about A$149/yr per property.
 - **The barrier:** AS 3786:2014 compliance (ActivFire listing is the market's evidence and can be held by the OEM with the brand owner named as agent), RCM for mains units, and a licensed electrician for hardwired replacements ("if your current smoke alarms are hardwired, replacements must also be hardwired").
 - **The demand driver:** QLD's legal wave peaks at the 1 Jan 2027 deadline, about 12 weeks away. After that it becomes a **10-year replacement annuity**, plus annual landlord-check subscriptions in QLD and VIC.
 
@@ -160,7 +170,7 @@ This is the clearest "same factory, Australian brand" ladder in the scope.
 ### Inferences
 **Ladder (estimate)**
 - 10-yr RF alarm: FOB US$9–11 = A$13–16, landed ≈ A$15–19 (small and light, ~1.15–1.2×).
-- Online retail ≈ A$47 inc GST (≈2.5–3× landed). Installed price A$134–250 per alarm, i.e. **≈8–15× landed**.
+- Online retail ≈ A$47 inc GST (≈2.5–3× landed). Installed price A$134–250 per alarm, i.e. **≈7–17× landed**.
 - A typical 3-bed QLD house needs ~5–7 alarms, so a job is ≈ A$700–1,500 of revenue on ≈ A$100–130 of hardware. The capturable layer is the brand + distributor + installer margin.
 
 **Clearability**
@@ -344,8 +354,8 @@ Clearability for a lean operator is moderate–high. Fit is good through trades 
 | Item | FOB | AU retail | Multiple |
 |---|---|---|---|
 | Safety glasses | ≈A$0.45 | A$9.99 | ≈20× |
-| P2 mask | ≈A$0.15–0.50 | A$1.75–6.50 | ≈5–15× |
-| Harness | A$10–26 | A$129–285 | ≈8–15× |
+| P2 mask | ≈A$0.15–0.50 | A$1.75 (house brand) – A$6.50 (3M) | ≈4–12× vs the house brand |
+| Harness | A$10–26 | A$129–285 | ≈5–28× (≈8–15× mid-range) |
 | Fire blanket | ≈A$2–6 | A$23.99 | ≈4–12× |
 
 - But the **incumbent distributor earns ≈3.7% EBIT**. The gross margin is consumed by branch networks, sales reps and freight.
@@ -368,7 +378,7 @@ Clearability for a lean operator is moderate–high. Fit is good through trades 
 ## Q5. Added category — plumbed emergency eyewash / safety showers (AS 4775) and thermostatic mixing valves: the closest "water-operator" analogue
 
 ### Takeaway
-This is the strongest new candidate for a water-industry operator. **A stainless combination emergency shower plus eye/face wash costs about US$105–430 FOB from Wenzhou/Shanghai makers, and lists at A$1,726–3,054 from the Australian incumbents (Enware, Speakman via RSEA, Storemasta/Pratt)** before plumbing installation. That is ≈4–12× landed, the same shape as the whole-house filter. Demand comes from WHS hazardous-chemical duties at labs, workshops, mines, pool plant rooms, water-treatment and chemical stores. Installation is plumbing work (backflow and tepid water), and the units need periodic flushing, inspection and servicing. Exact AS 4775 duty cycles and the WaterMark status of the unit were not verified this session (see Gaps).
+This is the strongest new candidate for a water-industry operator. **A stainless combination emergency shower plus eye/face wash costs about US$105–430 FOB from Wenzhou/Shanghai makers, and lists at A$1,726–3,054 from the Australian incumbents (Enware, Speakman via RSEA, Storemasta/Pratt)** before plumbing installation. That is ≈4–12× landed, the same shape as the whole-house filter. Buyers are workplaces handling hazardous chemicals: labs, workshops, mines, pool plant rooms, water-treatment plants and chemical stores. The specific WHS-regulation or AS 4775 duty was not verified, and a text search of the WHS Regulations compilation found no "eye wash" or "safety shower" wording. Installation is plumbing work (backflow and tepid water), and the units need periodic flushing, inspection and servicing. Exact AS 4775 duty cycles and the WaterMark status of the unit were not verified this session (see Gaps).
 
 ### Cited Findings
 **FOB (MIC listings, fetched)**
@@ -603,7 +613,7 @@ This is the strongest new candidate for a water-industry operator. **A stainless
 
 ### Inferences
 **CPAP**
-- Mask ladder ≈US$8–20 FOB → A$195–299 (≈10–20×); device ≈US$180–450 → A$1,299 (≈2–5×).
+- Mask ladder ≈US$8–20 FOB (A$11.50–29) → A$195–299 (≈7–26×); device ≈US$180–450 (A$259–647) → A$1,299 (≈2–5×).
 - Owning an own-brand CPAP ARTG entry (Class IIa, needing EU-MDR/MDSAP-grade conformity evidence plus clinical-channel trust) is not a small-operator project.
 - Generic masks would need ARTG entries and compatibility claims against ResMed devices.
 - **Clearability: low.**
@@ -612,7 +622,7 @@ This is the strongest new candidate for a water-industry operator. **A stainless
 - Similar ladder. Clearability is low without audiology staff.
 
 **AED**
-- The device ladder for a Chinese AED is ≈5–8× (US$300–500 FOB → A$2,000–2,300), but Class III conformity assessment (≈A$1,603 + A$1,662/yr + audit fees, plus evidence) blocks own-brand entry.
+- The device ladder for a Chinese AED is ≈3–5× FOB (US$300–500 = A$431–719 → A$2,049–2,249 retail for ARTG-listed brands), but Class III conformity assessment (≈A$1,603 + A$1,662/yr + audit fees, plus evidence) blocks own-brand entry.
 - **Viable play: become a reseller/servicer of an existing ARTG brand and private-label the accessories.** Cabinets are unregulated metalwork — a ~US$20–60 FOB item is an estimate (not observed) — selling at A$100–1,350.
 - Then sell a "readiness" subscription: pad/battery replacement A$140–650 per event, monthly self-check reminders, and post-use replacement.
 
@@ -776,3 +786,106 @@ Chinese outdoor play structures list at US$1,100–6,500 per set (or US$55–300
 - TGA/APVMA rules for dental and vet consumables.
 - ARPANSA and state IPL licensing.
 
+## Q13. Scoring on the shared framework, ranking, and the top 3 with first steps
+
+### Takeaway
+Three categories rank highest for a lean, trades-connected, consultation-selling operator willing to be the responsible supplier:
+1. **AS 3786 interconnected smoke alarms plus installed-compliance service.** The Chinese factory already holds the ActivFire certificate, and the AU brand is added as "agent". The ladder runs ≈US$9–11 FOB to A$134–250 installed. A legal deadline (QLD, 1 Jan 2027) is followed by a 10-year replacement cycle and annual landlord checks.
+2. **Plumbed emergency eyewash/safety showers with tepid-water/TMV service.** Units cost ≈US$105–430 FOB and list at A$1,726–3,054 from the incumbents. This is the closest analogue to the whole-house filter: plumbing install, niche incumbents, and a service tail.
+3. **Aged-care/home-medical equipment rental fleet** (electric beds, commodes, shower chairs, pressure mattresses) as a TGA Class I sponsor. Hire runs A$50–200/week on US$10–750 FOB assets, with growing Support at Home and NDIS funding.
+
+Runners-up:
+- First-aid kits with restocking (the best bundle add-on to any site visit)
+- Fire-equipment servicing, reachable only by acquiring or partnering with a licensed firm
+- AED resale with own-brand cabinets and a pads/battery annuity
+
+Low clearability for this operator: CPAP, hearing aids, own-brand PPE, commercial kitchen, playground, pallet racking and gas detection.
+
+### Cited Findings
+These are the key cross-category facts behind the scores. Full citations are in Q1–Q12.
+
+**Smoke alarms**
+- Siterwell (Ningbo) is the ActivFire registrant for MATelec's and GSM Electrical's alarms. Anka (Shenzhen) is the registrant for Brilliant Lighting's — [ActivFire afp-3314](https://activfire.csiro.au/html/certDetailsView/afp3314.htm); [afp-3735](https://activfire.csiro.au/html/certDetailsView/afp3735.htm); [afp-3738](https://activfire.csiro.au/pdfs/certificates/afp3738.pdf?nc=1)
+- Anka lists AS 3786 10-year RF interconnected alarms at US$9–11.50 (MOQ 500) — [MIC AS3786](https://www.made-in-china.com/products-search/hot-china-products/AS3786_Smoke_Alarm.html)
+- Installed price is A$100–250 per alarm plus call-out — [What's The Damage QLD](https://whatsthedamage.com.au/smoke-alarm-laws-qld/)
+- QLD rule: all dwellings by 1 Jan 2027, and hardwired alarms must be replaced with hardwired — [QFD fact sheet](https://www.fire.qld.gov.au/sites/default/files/2026-06/Smoke-Alarm-Fact-Sheet.pdf)
+
+**Eyewash/showers**
+- Combination shower list prices: Enware A$2,493–3,054, RSEA SE-607 A$2,630.99, Storemasta A$2,501.42 — [Enware](https://www.enware.com.au/products/emergency-stainless-steel-combination-shower-with-hand-foot-operated-eye-face-wash); [RSEA](https://www.rsea.com.au/workplace-safety/emergency-eyewash-and-showers/pba-safety-shower-aerated-eye-face-wash-hand-foot-operated-se607); [Storemasta](https://shop.storemasta.com.au/products/psrsh027)
+- MIC equivalents: US$105–430 — [MIC Emergency Shower](https://www.made-in-china.com/products-search/hot-china-products/Emergency_Shower.html)
+
+**Aged care**
+- Hire rates: beds A$100–200/week, commodes and shower chairs A$50–100/week — [Carevo](https://carevo.com.au/services/equipment-hire-sales/brisbane-market)
+- Electric home-care beds: US$300–750 FOB — [MIC Home Care Bed](https://www.made-in-china.com/products-search/hot-china-products/Home_Care_Bed.html)
+- TGA Class I: A$651 to apply plus A$121/yr (consultancy) — [Pure Global](https://www.pureglobal.com/news/tga-medical-device-ivd-fees-annual-charges-2026)
+- AT-HM tiers: A$500 / A$2,000 / A$15,000 — [health.gov.au AT-HM](https://www.health.gov.au/sites/default/files/2025-11/support-at-home-program-assistive-technology-and-home-modifications-at-hm-scheme.docx)
+
+**Fire services and PPE margins**
+- Force Fire: A$106m revenue, A$8.3m EBIT, ~30% recurring; bought for up to A$53.5m — [SCEE ASX 2025-03-31](https://announcements.asx.com.au/asxpdf/20250331/pdf/06h4w5kblbkdby.pdf)
+- QBCC licence classes gate portable fire servicing — [QBCC](https://qbcc.qld.gov.au/licences/apply-licence/available-licences/fire-protection/portable-install-maintain)
+- Wesfarmers Industrial & Safety: ≈3.7% EBIT in 1H FY26 — [Wesfarmers 1H FY26](https://announcements.asx.com.au/asxpdf/20260219/pdf/06wgn4t8b91rhz.pdf)
+
+### Inferences
+**Scores** run 1–5, where 5 is best for the operator. Liability: 5 = low exposure. Incumbent risk: 5 = weak incumbents. These are researcher judgements built on the cited ladders. Confidence is lower where the ladder lacks AU prices.
+
+| Category | Ladder multiple (FOB→end) | Capturable layer | Clearability | Annuity | Liability | Incumbent risk | Channel fit | Total /35 | Evidence quality |
+|---|---|---|---|---|---|---|---|---|---|
+| **Smoke alarms (AS 3786 RF/240 V interconnected) + install + landlord subscription** | 5 (≈7–17× landed, installed) | 4 | 4 | 4 (10-yr replacement; annual rental checks) | 3 | 3 | 5 | **28** | High |
+| **Emergency eyewash/safety showers + tepid/TMV service** | 4 (≈3–10× landed) | 4 | 3 (AS 4775 / plumbing compliance unverified) | 3 | 3 | 4 | 5 | **26** | Medium-high (prices strong, standard unverified) |
+| **Aged-care equipment rental (Class I sponsor)** | 5 (hire payback ≈1–15 weeks) | 4 | 4 | 5 | 2 | 3 | 3 | **26** | Medium (aggregator hire rates) |
+| First-aid kits + restock | 5 (≈11–25× landed) | 3 | 3 (ARTG kit sponsor) | 4 | 4 | 3 | 4 | 26 | Medium-high |
+| Fire-equipment servicing (extinguishers/blankets/exit lights) | 4 (product 5–10×; service 2–3× product value) | 4 | 2 (QBCC licence + experience, or acquire) | 5 | 3 | 3 | 4 | 25 | Medium-high |
+| AED resale + own-brand cabinets + pads/battery annuity | 3 | 3 | 3 (resell an ARTG brand; Class III own-brand blocked) | 4 | 3 | 3 | 4 | 23 | High (prices), low (mandates) |
+| Test-and-tag service | 2 | 2 | 4 | 5 | 4 | 2 | 4 | 23 | Medium |
+| Pool safety (QLD certs + hardware) | 3 | 3 | 2 (licence) | 4 | 2 | 4 | 4 | 22 | Medium |
+| Height-safety inspection | 3 | 3 | 3 | 3 (non-mandatory per SafeWork NSW) | 2 | 3 | 4 | 21 | Medium |
+| Own-brand PPE (harness, P2, eyewear) | 5 | 2 (distributor EBIT ≈3.7%) | 3 | 3 | 3 | 1 | 3 | 20 | Medium |
+| Pallet racking + AS 4084 inspection | 3 (AU price unknown) | 3 | 2 (engineering) | 4 | 2 | 3 | 2 | 19 | Low |
+| CPAP masks/devices | 5 | 3 | 1 | 5 | 3 | 1 | 1 | 19 | High (prices) |
+| Gas detection (portable 4-gas + calibration) | 4? | 3 | 2 | 4 | 2 | 2 | 2 | 19 | Low |
+| Hearing aids | 5 | 3 | 1 | 3 | 3 | 1 | 1 | 17 | Low |
+| Commercial kitchen | ? (3) | 3 | 2 | 3 | 2 | 2 | 2 | 17 | Low |
+| Playground | ? (3) | 3 | 2 | 2 | 2 | 3 | 2 | 17 | Low |
+| Backflow devices/testing | — (water sibling) | — | high for a plumber | 5 (12-monthly A$150–320) | — | — | 5 | n/a | High |
+
+**#1 Smoke alarms — first steps**
+1. Confirm that the AU brand-owner route works. A new Australian brand can appear on the Chinese OEM's CSIRO ActivFire certificate as "agent", as MATelec, GSM Electrical and Brilliant Lighting do. Get the CSIRO certificate-variation fee and lead time. Separately, check whether QLD law needs only AS 3786 compliance (the fact sheet says only "AS 3786-2014") or an ActivFire listing.
+2. Sample both types. Wireless 10-year RF units (Anka US$9–11.50, Sconda US$7.30–8.50) need no electrician. 240 V interconnected units (Anka US$19.30–21) are required wherever hardwired alarms exist. Check RCM/EESS registration for the 240 V unit and check RF interoperability.
+3. Do not stock for the 1 Jan 2027 wave alone; it lands too late for a new MOQ order. Build the post-deadline book instead:
+   - QLD owner-occupier stragglers
+   - property-manager portfolios on annual checks (≈A$149/yr benchmark)
+   - VIC rentals (12-monthly smoke check plus 2-yearly gas and electrical checks the operator's trades can bundle)
+   - the 2027–2032 ten-year replacement cohort
+4. Price installed around A$139–155 per alarm, matching the advertised QLD floor. That keeps ≈A$100+ gross per alarm over landed hardware, before labour.
+
+**#2 Emergency eyewash/safety showers — first steps**
+1. Buy and read AS 4775. Confirm with a plumbing regulator, or through the sibling water researcher, whether the unit needs WaterMark and what backflow device and tepid-water provisions apply. ABCB sites disallow Claude agents, so a human must check.
+2. Get 2–5 samples from MIC sellers with low MOQs. Wenzhou Lailisi has MOQ 2 at US$105–368 and Shanghai Sysbel MOQ 10 at US$284–310. Commission independent testing of flow, pattern and materials to AS 4775 (cost unknown).
+3. Sell installed-plus-service packages to labs, schools, council pool plant rooms, and water and wastewater plants. Price ≈20–30% under the Enware/Speakman list (A$1,726–3,054), plus a tepid-water option (Enware's system is A$3,759) and an annual inspection contract.
+
+**#3 Aged-care equipment rental — first steps**
+1. Set up as a TGA sponsor. Get ARTG Class I entries for a 3-function electric bed, a commode or shower chair, and an alternating-pressure mattress. Budget ≈A$651 + A$121/yr per entry (consultancy figures; confirm on tga.gov.au, which was unreachable). Collect the manufacturer's technical file and EU declaration of conformity (e.g. Hebei Huaren C05-1 bed US$330–350; Foshan Medco US$300–500).
+2. Check electrical safety (RCM) for electric beds and the bed-entrapment standard. Get product-liability and professional-indemnity cover.
+3. Start a small fleet (e.g. 10 beds, 20 commodes/chairs) hired at A$100–150/week for beds and A$50–75/week for small aids (below the Carevo indicative ranges).
+4. Register with Support at Home care partners and NDIS providers. Use consultative OT and physio prescriber relationships as the sales channel.
+
+**Lean challengers documented this session**
+- **Smoke alarms:** AU brands riding Chinese OEM certificates — MATelec (Shepparton), GSM Electrical, Brilliant Lighting, Emerald Alarms.
+- **PPE:** ProChoice/Paramount, an AU private-label PPE brand founded 1992 that later bought Pratt Safety (showers). RSEA's Blue Rapta is a distributor house brand.
+- **AED accessories:** Defibshop's own-brand cabinets.
+- **Fire services:** acquisitions by SCEE (Force Fire) and Fortitude (FVS) show recurring-service businesses being bought rather than built.
+
+### Gaps
+- Scores rest partly on unverified elements:
+  - AS 4775 duty cycle and WaterMark status
+  - CSIRO ActivFire agent-variation cost
+  - QLD pool inspector licensing cost
+  - NDIS and AT-HM item rules
+  - AU prices for kitchen, playground, racking, gas detectors and hearing aids
+- The WebSearch budget (200 calls per turn, shared across agents) ran out midway. Afterwards only direct, robots-checked fetches were used.
+- Several government hosts could not be reached on 2026-10-10:
+  - tga.gov.au: 503 / HTTP-2 reset
+  - health.gov.au and myagedcare.gov.au: connection failures
+  - ndis.gov.au: 403
+  - safeworkaustralia.gov.au: connection failure
+- Nisbets and Total Tools returned 403. Spill Station's store API returned 403.
