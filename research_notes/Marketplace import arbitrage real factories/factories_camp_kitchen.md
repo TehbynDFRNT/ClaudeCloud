@@ -5,11 +5,23 @@
 ## Q1. Where is production really located, and which companies own extrusion/stamping/finishing/assembly lines?
 
 ### Takeaway
-The windscreen-and-fabric-cupboard aluminium camp kitchen is a low-capital assembly product (bought-in aluminium tube → cutting/bending/punching/riveting → anodising or powder/spray coating → sewn fabric cupboards → slatted top/windscreen). On 1688 its domestic sellers sit in **Ningbo, Yongkang/Jinhua and Yiwu**, while aluminium folding/egg-roll tables cluster heavily in **Yongkang**, and cheap carbon-steel egg-roll tables in **Hebei (Bazhou/Gu'an/Gaobeidian/Langfang)**. No company was proven (two A/B items) to be the maker of the cupboard kitchen itself. The best-evidenced real camp-table manufacturer found is **永康市乐享户外用品有限公司 (Yongkang Lexiang Outdoor Products)** — patent holder (A) plus an SGS-verified 1688 factory profile (C+) — but it makes IGT/unit tables and folding tables/chairs, not cupboard kitchens. Customs data identify **Zhejiang Zhengte (Linhai)** as a genuine direct shipper (A), but of pergolas/patio furniture.
+The windscreen-and-fabric-cupboard aluminium camp kitchen is a low-capital assembly product. Bought-in aluminium tube is cut, bent, punched and riveted, then anodised or powder/spray coated, and fitted with sewn fabric cupboards and a slatted top/windscreen.
+
+**US customs data (ImportGenius) show who really makes the folding camp-furniture family for Western brands.** The makers are industrial-zone exporters concentrated in **Jinhua prefecture, Zhejiang**, with others in **Changzhou (Jiangsu)** and inland **Pingyu County (Henan)**:
+- **Goleader Industries (Zhejiang)**, Jinpan New Development Zone, Jinhua. Ships to GCI Outdoor (1,308 containers), Dick's, Tractor Supply and Camping World ("ONE PIECE CAMP TABLE", rocker chairs).
+- **Dongyang Sopop**, Nanma Town Machinery Industry Zone. Ships to Coleman/Newell (1,379+ containers: chair-deck-with-table, cots, chairs).
+- **Lanxi Trueyach**, Shuiting Industry Zone. Ships to Dick's, GCI and Bass Pro.
+- **Changzhou Qiaoyu Tourist Products**. Ships to Kamp-Rite, Costco and Tractor Supply.
+- **Henan Hengfeng Top Leisure**, Pingyu. Ships to Costco Canada, Walmart Canada, Dick's, Aldi Inc, Uline and Camp Chef — including Camp Chef's "48 IN. DELUXE ALUMINUM CAMP TABLE".
+
+Each has one A item (customs direct shipper to Western brands) and an industrial-zone address taken from the same record. They are therefore *probable* factories, but none was shown to make the cupboard kitchen itself.
+
+On 1688 the cupboard kitchen's domestic sellers sit in Ningbo, Yongkang/Jinhua and Yiwu. Aluminium folding/egg-roll tables cluster in Yongkang, and carbon-steel egg-roll tables in Hebei. The best-documented small factory is **永康市乐享户外用品 (Yongkang Lexiang)**, a patent holder (A) with an SGS-verified 1688 profile (C+). It makes IGT/unit tables and folding tables/chairs.
 
 ### Cited Findings
 **Method and access notes (2026-10-10)**
 - ImportYeti returned HTTP 403 to every page type tried (company/coleman, company/aosom, supplier/welfull-group) by both WebFetch and curl; robots.txt allows these paths, so this is a bot wall, not a policy block; not bypassed. — [ImportYeti robots.txt](https://www.importyeti.com/robots.txt)
+- ImportGenius public supplier/importer pages (robots.txt "User-agent: * Allow: /") were readable and server-rendered: totals, top-5 partners with container counts, and the latest 5 B/Ls with product text. Slugs were tried directly; non-existent slugs return a ~455 KB generic page. /search was not used. — [ImportGenius robots.txt](https://www.importgenius.com/robots.txt)
 - Panjiva public company pages were readable (shipment counts, top HS codes, one sample B/L, partly redacted). — e.g. [Panjiva Welfull](https://cn.panjiva.com/Welfull-Group-Co-Ltd/4255217)
 - Google Patents robots.txt is `Disallow: /*` with `Allow: /patent/`, so only individual patent pages can be fetched; patent numbers must come from elsewhere (here: 1688 factory profiles). — [patents.google.com/robots.txt](https://patents.google.com/robots.txt)
 - 1688: keyword "market" pages (www.1688.com/market/-<GBK-hex>.html) and factory profile pages (www.1688.com/factory/b2b-<id>.html) returned full HTML with no anti-bot page; shop pages (shopXXXX.1688.com, …/page/creditdetail.htm) returned the anti-bot "punish" page and were left alone. 1688 robots.txt disallows only query-string URLs and some /chanpin/ patterns. — [1688 robots.txt](https://www.1688.com/robots.txt)
@@ -29,7 +41,7 @@ The windscreen-and-fabric-cupboard aluminium camp kitchen is a low-capital assem
   - 广州塔非户外用品有限公司: "…铝合金多功能折叠移动厨房带收纳柜小桌子" ¥164.59; 义乌市爱然户外用品有限公司: "户外便携橱柜…铝合金密度板野炊柜" ¥105 and "新款铝合金户外移动厨房…" ¥266. — [1688 露营橱柜](https://www.1688.com/market/-C2B6D3AAB3F7B9F1.html); [1688 户外厨房桌](https://www.1688.com/market/-BBA7CDE2B3F8B7BFD7C0.html)
 - The many listings sharing the IGT-style "CLS户外铝板桌…IGT移动厨房桌" title come from Yiwu sellers (义乌承野户外用品 14 yrs; 义乌圣悦户外用品 "clscamping"; 花航贸易（义乌）) at ¥145–359 — a brand (CLS) distributed through several Yiwu storefronts. — [1688 户外厨房桌](https://www.1688.com/market/-BBA7CDE2B3F8B7BFD7C0.html)
 
-**A verified Yongkang camp-table factory (worked example of A/B evidence)**
+**The best-documented small Yongkang camp-table maker (worked example of the grading; one A item + platform-audited profile = "probable factory")**
 - 1688 factory profile of **永康市乐享户外用品有限公司 (Yongkang Lexiang Outdoor Products Co., Ltd.)**: address 浙江省金华市永康市**芝英镇南市街112号**; founded 2014-06-16; "工厂面积 6800m²", "员工总数 26人", "生产人数 16人", "月产值 500万以上"; equipment listed as 鸿昌 HJ-13SL riveting machines; badges "已通过SGS机构认证 … 深度认证报告", "工贸一体", "A级纳税人"; ISO 9001:2015; 30 patents incl. 一种折叠桌 CN219047694U, 一种折叠机构和折叠桌 CN218737734U, 折叠机构 CN307868778S; supply customer "皓风"; brands 熊熊家, 随心; **"定制起订量 300件 / 贴牌起订量 50件 / 接外贸订单 不支持"**; main line "野营折叠桌椅 … 户外折叠床"; sells IGT unit camp tables ("升降模块单元IGT露营桌…移动厨房烧烤桌") at ¥238–340. — [1688 factory profile b2b-1726331428](https://www.1688.com/factory/b2b-1726331428.html)
 - Google Patents: CN219047694U "一种折叠桌", utility model, assignee **Yongkang Lexiang Outdoor Products Co., Ltd.**, inventor 胡柳惜, filed 2022-12-16, published 2023-05-23, status active. — [Google Patents CN219047694U](https://patents.google.com/patent/CN219047694U/zh)
 
@@ -41,9 +53,60 @@ The windscreen-and-fabric-cupboard aluminium camp kitchen is a low-capital assem
 - Wuyi County (武义, Jinhua): "2025年，武义县家具及旅游休闲产品累计出口额达37.55亿元" (RMB 3.755 bn); the article's example firm 浙江鹿枫户外用品有限公司 makes stoves (not furniture), 2025 output ~RMB 165 m, self-operated exports > RMB 69 m. — [潮新闻, 2026-03-06](https://tidenews.com.cn/news.html?id=3387494)
 - A 2023 Qianzhan report summary: ~2,700 folding table-and-chair companies nationally as of Nov 2022; Zhejiang Yongqiang's (Yotrio) outdoor leisure furniture output ~23.65 m pieces in 2021 (via search summary). — [前瞻 analyst article](https://www.qianzhan.com/analyst/detail/220/230117-3ecd7e56.html)
 - CIFF Click2Connect describes Ningbo and Taizhou (Linhai, Yuyao, Ningbo) as the hub for aluminium outdoor furniture (via search summary). — [CIFF Click2Connect](https://click2connect.ciff-gz.com/blogs/69eb1d48a1e2d46b1a11fb03)
-- Zhejiang Zhengte Co. (Linhai) ships "METAL CHAIR METAL TABLE" to Sorara Outdoor Living USA per ImportGenius (via search summary; camp kitchens not shown). — [ImportGenius Zhejiang Zhengte](https://www.importgenius.com/suppliers/zhejiang-zhengte-co-ltd)
-- Aosom (Outsunny) US imports are shipped by its own entity: Panjiva's sample B/L (2025-10-01) shows shipper "Aosom International Development Co." (Hong Kong) → Aosom LLC, place of receipt Fuzhou; 43 suppliers, 8,534 US shipments; a search summary also notes "Ningbo Aosom Internet Technology Co." as a shipper. US customs data therefore hide Outsunny's factories. — [Panjiva Aosom LLC](https://panjiva.com/Aosom-Llc/27919603)
+- Aosom (Outsunny) US imports are shipped by its own entity: Panjiva's sample B/L (2025-10-01) shows shipper "Aosom International Development Co." (Hong Kong) → Aosom LLC, place of receipt Fuzhou; 43 suppliers, 8,534 US shipments; "Ningbo Aosom Internet Technology Co." is also a shipper (confirmed on ImportGenius, below). US customs data therefore hide Outsunny's factories. — [Panjiva Aosom LLC](https://panjiva.com/Aosom-Llc/27919603)
 - Decathlon USA LLC's Panjiva page names only Desipro Pte (Singapore) and Ofma Camp; top products pillows, sleeping bags, inflatable mattresses (no camp-kitchen supplier visible). Decathlon says it works with 300+ Chinese suppliers and owns four plants in China (2026 coverage). — [Panjiva Decathlon USA](https://cn.panjiva.com/Decathlon-USA-Llc/41494637); [investinchina, 2026-06-29](https://investinchina.chinaservicesinfo.com/s/202606/29/WS6a41c7ca498e23165e070519/decathlon-deepens-ties-with-china-suppliers-through-2030.html)
+
+**Customs-verified camp-furniture exporters (ImportGenius public supplier pages, fetched 2026-10-10; each page shows totals, top 5 importers with container counts, and the 5 latest B/Ls)**
+
+- **GOLEADER INDUSTRIES (ZHEJIANG) CO.**
+  - Address: "No.1288, Huatai Road, **Jinpan New Development Zone**, Jinhua, Zhejiang 321024".
+  - 1,942 shipments (range to 2026-09-23).
+  - Importers: GCI OUTDOOR INC. (**1,308 containers**, last 2026-09-15); DICK'S MERCHANDISING AND SUPPLY CHAIN (878; also 400 under a second name); TRACTOR SUPPLY OF TEXAS (180); CAMPING WORLD INC. (71).
+  - Latest B/Ls: "ONE PIECE CAMP TABLE" to Dick's (982 CTN, 21,812 kg; and 976 CTN); "MESH FREESTYLE ROCKER CHAIR" (1,449 CTN); "ONE PIECE CAMP TABLE 20-BLACK / SUNSHADE ROCKER CHAIR"; a Koozie Group shipment.
+  - GCI's own page lists "GOLEADER VIETNAM RECREATION LIMIT" (685 containers) as its second supplier.
+  - — [ImportGenius Goleader Zhejiang](https://www.importgenius.com/suppliers/goleader-zhejiang-industries-co); [ImportGenius GCI Outdoor](https://www.importgenius.com/importers/gci-outdoor-inc)
+- **DONGYANG SOPOP FITNESS EQUIPMENT CO.**
+  - Address: "Machinery Industry Zone Of Nanma Town" (Dongyang, Jinhua).
+  - 712 shipments (to 2026-10-04).
+  - Importers: THE COLEMAN COMPANY INC (**1,379 containers**, last 2022-07-19); NEWELL BRANDS DISTRIBUTION LLC (150, last 2026-10-04); NEWELL DISTRIBUTION CENTER FTZ (120); COLEMAN COMPANY INCORPORATED (130); SUNBEAM CANADA (51).
+  - Latest B/Ls: "CHAIR DECK W/TABLE", "TRAILHEAD II CAMPING COT", "CHAIR STEEL DECK", "RIDGELINE COT W BOX", "CHAIR RAMBLER II" (275–3,808 CTN per B/L).
+  - — [ImportGenius Dongyang Sopop](https://www.importgenius.com/suppliers/dongyang-sopop-fitness-equipment-co)
+- **LANXI TRUEYACH INDUSTRY CO., LTD.**
+  - Address: "**Shuiting Industry Zone**, Shuiting Town, Lanxi City, Zhejiang".
+  - 429 shipments (to 2026-09-01).
+  - Importers: DICK'S (152 containers); CASCADE MOUNTAIN TECHNOLOGIES (75); GCI OUTDOOR (72); CHABY INTERNATIONAL (42); BASS PRO, LLC O B TRUE TIMBER (39); plus Albertsons.
+  - Goods: adult camp chairs, tripod hunting stools, garden wagons, "LEGZ UP LOUNGER" (601–1,800 CTN per B/L).
+  - — [ImportGenius Lanxi Trueyach](https://www.importgenius.com/suppliers/lanxi-trueyach-industry-co-ltd)
+- **CHANGZHOU QIAOYU TOURIST PRODUCTS**
+  - Address: "Yincun Zouqu Town … Zhonglou District, Changzhou City, Jiangsu".
+  - 761 shipments.
+  - Importers: KAMP-RITE TENT COT INC. (209 containers; plus 241 under a variant name on Kamp-Rite's page); THE INFINITY SPORTS GROUP (151); KEYSTONE AUTOMOTIVE (69); COSTCO WHOLESALE (50); JOHNSON OUTDOORS GEAR (36).
+  - Goods: "CAMPING FURNITURE" (Kamp-Rite, AAA Innovations), swing chairs (Tractor Supply), reclining hammock chairs (Costco) (327–3,380 CTN per B/L).
+  - — [ImportGenius Changzhou Qiaoyu](https://www.importgenius.com/suppliers/changzhou-qiaoyu-tourist-products); [ImportGenius Kamp-Rite](https://www.importgenius.com/importers/kamp-rite-tent-cot-inc)
+- **HENAN HENGFENG TOP LEISURE CO., LTD.**
+  - Address: "No. 819 Wenhua Road, Qinghe Subdist, **Pingyu County, Zhumadian**, Henan".
+  - 904 shipments (to 2026-10-07).
+  - Importers: COSTCO WHOLESALE CANADA (382 containers); WAL-MART CANADA (377); DICK'S (315); ULINE (114); ALDI, INC (65).
+  - Latest goods: folding chairs to Westfield Outdoor (529–2,827 PKG), director's chairs and zero-gravity loungers to Costco Canada.
+  - On Camp Chef's page it is the shipper of "**48 IN. DELUXE ALUMINUM CAMP TABLE**" (2025-02-15, 1,789 CTN, 16,164 kg).
+  - — [ImportGenius Henan Hengfeng](https://www.importgenius.com/suppliers/henan-hengfeng-top-leisure-company); [ImportGenius Camp Chef](https://www.importgenius.com/importers/camp-chef)
+- **KUNSHAN TRUSTEEL INDUSTRY CO., LTD.**
+  - Address: "No.333 Jindong Road, Jinxi Town, Kunshan, Jiangsu".
+  - Main importer: LOGAN OUTDOOR PRODUCTS, LLC DBA Camp Chef (426 + 319 containers); also Cabela's.
+  - Goods: griddle parts and WiFi controllers (cooking appliances, not camp kitchens).
+  - — [ImportGenius Kunshan Trusteel](https://www.importgenius.com/suppliers/kunshan-trusteel-industry-co-ltd)
+- **WILD LAND OUTDOOR GEAR LTD.**
+  - Address: "No.9, Dongfu West 2nd Road, Haicang, Xiamen".
+  - Only 6 US shipments (2021): tents, lights and beach shelters to Cascadia Vehicle Tents, Overland Vehicle Systems, LSO LP (FBA) and Mutual Sales.
+  - — [ImportGenius Wild Land](https://www.importgenius.com/suppliers/wild-land-outdoor-gear-ltd)
+
+**What brand importer pages show (ImportGenius)**
+- **Aosom LLC (Outsunny)**: every top supplier is an Aosom entity — AOSOM E COMMERCE INC (4,171 containers), an unnamed Singapore shipper (3,401), AOSOM INTERNATIONAL DEVELOPMENT CO (2,771) and NINGBO AOSOM INTERNET TECHNOLOGY CO (1,920). Its B/Ls list mixed furniture SKUs on one invoice. — [ImportGenius Aosom LLC](https://www.importgenius.com/importers/aosom-llc)
+- **The Coleman Company**: top "suppliers" are logistics consolidators — DHL ISC HONGKONG LIMITED (6,957 containers), DHL ISC HONG KONG O B (2,231), DHL GLOBAL FORWARDING CHINA (1,202) — then DONGYANG SOPOP (1,379) and ZHONGSHAN VANWARD ELECTRIC (520). Data shown to 2023-03. — [ImportGenius Coleman](https://www.importgenius.com/importers/the-coleman-company-inc)
+- **GCI Outdoor**: Goleader Zhejiang (1,308), Goleader Vietnam (685), Pinghu Huayang Outdoor Goods (82) and Lanxi Trueyach (72). Its 5 latest B/Ls are rocker and stadium chairs (HTS 9401790015). — [ImportGenius GCI Outdoor](https://www.importgenius.com/importers/gci-outdoor-inc)
+- **Camp Chef**: Chinabest Home Appliance (183, to 2015), Kunshan Trusteel (48 on this page), Henan Hengfeng (aluminium camp table) and Hi-Line Xuyang (Qingdao) ("DELUXE TWO BURNER COOKING SYSTEM"). — [ImportGenius Camp Chef](https://www.importgenius.com/importers/camp-chef)
+- **REI**: DHL ISC Hong Kong (1,941), WESTFIELD OUTDOORS INC (China, 901) and Zhejiang Natural Outdoor Goods (self-inflating mats). — [ImportGenius REI](https://www.importgenius.com/importers/recreational-equipment-inc)
+- No ImportGenius page resolved for Costway, VEVOR, vidaXL, Decathlon USA, Academy or Lifetime under the slugs tried (a generic fallback page was returned).
 
 **Candidate manufacturers — additional MIC profile evidence (fetched 2026-10-10)**
 - **Zhejiang Onetime Leisure Products Co., Ltd.** — "No.128 Yinta St, Jinxi Economic Zone, Jinhua"; profile sections "General Information | Trade Capacity | **Production Capacity** | R&D Capacity", "Production Capacity — All information verified by **TÜV Rheinland**"; "Production Lines: 4"; "Production Machines: Pipe cutting machine, Pipe bending machine, Punching machine, Welding robot, Spraying line, Cloth cutting machine, Sewing machine, Assembly line, Tensile testing machine, Salt spray tester, Impact resistance tester, Bursting strength tester, Riveting machine"; "Number of Foreign Trading Staff: 5"; "Supply Chain Partners: 13"; ISO 9001:2015 / ISO 14001; "Export Year: 13 Years"; Ningbo port; Diamond Member since 2020; products deck loungers, folding beds, camping cots, folding/director chairs, camping tables. MIC index JSON shows 96 employees. — [Onetime MIC profile](https://onetimecn.en.made-in-china.com/company-Zhejiang-Onetime-Leisure-Products-Co-Ltd-.html); [MIC factory index](https://www.made-in-china.com/factory/camping-kitchen-table.html)
@@ -65,6 +128,11 @@ The windscreen-and-fabric-cupboard aluminium camp kitchen is a low-capital assem
 
 | Company (as found) | Location | Evidence found | Grade(s) | Verdict |
 |---|---|---|---|---|
+| Goleader Industries (Zhejiang) Co. | Jinpan New Development Zone, Jinhua | ImportGenius: direct shipper to GCI Outdoor (1,308 containers), Dick's, Tractor Supply, Camping World; camp tables and rocker chairs | A | **Probable factory** (one A item; a second independent source was not found) — strongest camp-furniture candidate |
+| Dongyang Sopop Fitness Equipment Co. | Nanma Town Machinery Industry Zone, Dongyang | ImportGenius: direct shipper to Coleman/Newell (1,379+ containers): chair decks with table, cots, chairs | A | **Probable factory** (Coleman camp-furniture OEM) |
+| Henan Hengfeng Top Leisure Co. | Pingyu County, Zhumadian, Henan | ImportGenius: Costco Canada, Walmart Canada, Dick's, Uline, Aldi, Camp Chef (48-in aluminium camp table) | A | **Probable factory**; the only customs-confirmed aluminium camp-table shipper found |
+| Lanxi Trueyach Industry Co. | Shuiting Industry Zone, Lanxi | ImportGenius: Dick's, GCI, Cascade Mountain Tech, Bass Pro, Albertsons | A | Probable factory (chairs, stools, wagons) |
+| Changzhou Qiaoyu Tourist Products | Zouqu Town, Changzhou, Jiangsu | ImportGenius: Kamp-Rite, Costco, Tractor Supply, Infinity Sports | A | Probable factory (camping furniture, swing chairs) |
 | 永康市乐享户外用品有限公司 Yongkang Lexiang Outdoor Products | 永康市芝英镇南市街112号 | Patent holder CN219047694U (Google Patents); 1688 SGS 深度认证 profile: 6,800 m², 26 staff/16 production, riveting machines, ISO 9001 | A + C+ | **Probable factory** (only one A/B item); IGT/unit tables, folding tables/chairs — not cupboard kitchens |
 | Zhejiang Onetime Leisure Products | Jinxi Economic Zone, Jinhua | MIC TÜV-verified Production Capacity, 4 lines, machine list, ISO 9001/14001, 96 staff | C+ | Plausible manufacturer of aluminium folding chairs/beds/tables; unproven |
 | Zhejiang Zhengte Co. | No. 811 Oriental Ave, Linhai | ImportGenius direct shipper (Ningbo) to US outdoor-living importers | A | Real manufacturer/exporter, but of pergolas/patio furniture; no camp-kitchen evidence |
@@ -78,9 +146,12 @@ The windscreen-and-fabric-cupboard aluminium camp kitchen is a low-capital assem
 | Wild Land Outdoor Gear (Fujian) | Fujian | MIC: 37,884 m², 317 staff, ISO 45001/14001/50001 | C+ | Premium kitchen boxes, different product |
 
 ### Inferences
+- Customs data place the big-box camp-furniture factories in **Jinhua prefecture's industrial zones**: Jinhua Jinpan (Goleader), Dongyang Nanma (Sopop), Lanxi Shuiting (Trueyach), plus Yongkang and Wuyi on 1688. Others are in Jiangsu (Changzhou Qiaoyu; Danyang) and in an inland Henan county (Pingyu: Henan Hengfeng). A buyer looking for the real source of aluminium folding camp tables/kitchens should start in Jinhua prefecture, not in Ningbo or Hangzhou office towers.
+- These exporters ship **container loads to US big-box chains and brands** (Dick's, Costco, Walmart Canada, Tractor Supply, Coleman/Newell, GCI). That is the profile of the Western-brand OEM layer the user asked about. Whether any of them makes the windscreen/cupboard kitchen is unproven: only five B/Ls per page are visible, and none names a camp kitchen.
+- Big brands often hide their factories in customs data. Coleman's top shippers are DHL ISC consolidators and Aosom ships via its own entities. The absence of a camp-kitchen B/L does not mean these factories don't make one.
 - The cupboard kitchen requires no extrusion or casting: none of the assemblers examined lists extrusion presses (Onetime lists tube cutting/bending, punching, welding robot, spraying line, sewing; Lexiang lists riveting machines; Dashing's 175 cm listing says "Foot Surface Treatment: Oxidation"). Tubes and slats are therefore very likely bought from aluminium extruders, and "owning extrusion" is not a useful test for this product — sewing + tube-forming + riveting + a coating/oxidation line is.
 - On 1688 evidence, Yongkang (Jinhua) is the centre of gravity for aluminium folding camp tables; the cupboard-kitchen sellers are spread across Ningbo, Yongkang/Jinhua and Yiwu, with Yiwu sellers most likely traders. Hebei sellers dominate the cheaper carbon-steel egg-roll tables (a different material/price tier).
-- Hangzhou/Lin'an, Shanghai, Changzhou and Foshan did not surface any folding camp-kitchen assembler in the sources reachable this round (Hangzhou names found — Welfull, Hangzhou Cheers Technology — are traders; the Changzhou name is an aluminium-coil supplier; Foshan names sell stainless/"electric" outdoor-kitchen islands).
+- Changzhou surfaced one customs-verified camping-furniture exporter (Changzhou Qiaoyu). The Changzhou name on MIC's kitchen index is an aluminium-coil supplier. Hangzhou/Lin'an, Shanghai and Foshan surfaced no folding camp-kitchen assembler in the sources reachable this round. The Hangzhou names found — Welfull and Hangzhou Cheers Technology — are traders; the Foshan names sell stainless or "electric" outdoor-kitchen islands.
 - Large outdoor-furniture makers (Zhengte; Yotrio per the Qianzhan summary) are real factories but nothing found links them to small folding camp kitchens; they are unlikely to take 300–500 units from a new buyer.
 
 ### Gaps
@@ -89,19 +160,21 @@ The windscreen-and-fabric-cupboard aluminium camp kitchen is a low-capital assem
 - No CN design/utility patent for a folding camp kitchen was located: Google Patents search pages are disallowed by robots.txt, CN307868778S returned 404 on Google Patents, and CNIPA search requires login/captcha.
 - Trade-show exhibitor lists (Canton Fair Phase 2, ISPO, Asia Outdoor Nanjing, spoga+gafa), association/专精特新 lists and company ICP sites were not checked — the search quota ended before these could be located.
 - Unverified lead (WebSearch summary only; the underlying 1688 page could not be identified and the term does not appear on the fetched 铝合金折叠桌 page): 永康市益善工贸有限公司 at "永康市清溪二利小微园", aluminium folding tables/egg-roll tables, ~4,080 m², 29 staff.
-- ImportYeti (403) and paid customs tools were unavailable, so no brand→factory link was found for Coleman, GCI, VEVOR, Costway, Sportneer, Oztrail, Companion or Dune.
+- ImportYeti returned 403. ImportGenius public pages show only the latest 5 B/Ls and the top 5 partners per company, so camp-kitchen-specific shipments (e.g., GCI cook stations, Coleman Pack-Away kitchens, Outsunny/VEVOR/Costway kitchens) could not be traced. Costway/VEVOR/vidaXL/Decathlon/Academy importer slugs did not resolve. Australian imports (Wanderer, Kings, Oztrail, Companion, Dune) are not in US data at all.
+- No second independent A/B item (registry, own ICP site, trade-show booth, patent) was found for Goleader, Sopop, Trueyach, Qiaoyu or Hengfeng. goleader.com resolves to an unrelated New Jersey newspaper.
 
 ## Q2. Classification of Welfull Group, Ningbo General Union and Ningbo Eto (and other earlier-named suppliers)
 
 ### Takeaway
-All three are **traders**, and so are the other earlier-named "suppliers" checked. **Welfull Group** is a diversified Hangzhou export trading house. US customs records show apparel, Christmas knitwear, printed wall art, wine racks, hangers and pet/plastic goods shipped from Shanghai and Yantian to 526 customers. Its BV audit covers "Trade Capacity" and "**Partner** Production Capacity", which is MIC's trading-company format, and it claims 2,000 supply-chain partners. Nothing shows it owns a camp-furniture plant. **Ningbo General Union** declares itself a Trading Company (Market Union Group subsidiary, 3,000 partner factories). **Ningbo Eto** is an office-suite trader with "over 60 suppliers". Yongkang **Dashing** "Factory" and Jinjiang **Baojia** also present as traders.
+All three are **traders**, and so are the other earlier-named "suppliers" checked. **Welfull Group** is a diversified Hangzhou export trading house. US customs records show apparel, Christmas knitwear, printed wall art, wine racks, hangers and pet/plastic goods shipped from Shanghai and Yantian to 526 customers. Its BV audit covers "Trade Capacity" and "**Partner** Production Capacity", which is MIC's trading-company format, and it claims 2,000 supply-chain partners. Nothing shows it owns a camp-furniture plant. **Ningbo General Union** declares itself a Trading Company (Market Union Group subsidiary, 3,000 partner factories). Its US shipments are gift bundles, toys, greeting cards and books. **Ningbo Eto** is an office-suite trader with "over 60 suppliers" and a single US shipment ever (2018, lanterns). Yongkang **Dashing** "Factory" and Jinjiang **Baojia** also present as traders.
 
 ### Cited Findings
 **Welfull Group Co., Ltd. (Hangzhou) — evidence collected 2026-10-10**
 - MIC profile (fetched 2026-10-10): address "1701 Room, No. 1 Yuanjian Buliding, Gongshu District, Hangzhou" (an office building in the city centre, not an industrial park); "Founded in 1993"; describes itself as an "industry and commerce group" where "the modern commerce and manufacture is the core of the group"; no Business Type field shown; "Number of Foreign Trading Staff: 100", "QA/QC Inspectors: 30", "R&D Engineers: 30", **"Supply Chain Partners: 2000"**; MOQ 500; "Our factories have BSCI an SMETA"; claims business with "Walmart/Lidl/Norma/Argos/Vango/MWF/Bunnings/Sodimac"; "BV Audit Report No.: MIC-ASI2331871". — [Welfull MIC company profile](https://welfull-outdoors.en.made-in-china.com/company-Welfull-Group-Co-Ltd-.html)
 - The same profile's section headings are "General Information | Trade Capacity | **Partner Production Capacity** | R&D Capacity" (no "Production Capacity" section). — raw HTML of [Welfull MIC company profile](https://welfull-outdoors.en.made-in-china.com/company-Welfull-Group-Co-Ltd-.html)
 - Panjiva public page: Welfull Group Co., Ltd., "11th Foor, Jinjiang Mansion, No. 111, Hushu South Road, Hangzhou" (another office address), service@welfull.com / www.welfull.com; **4,094 US shipments "updated weekly since 2007"**, 372 South American shipments, **526 customers**; top products listed as "ladies woven, chair, dish rack, printed, luggage set"; top HS chapters 61 (knitted apparel), 94 (furniture), 85 (electrical), 62 (woven apparel), 29 (organic chemicals). Sample B/L 2025-10-07: shipper Welfull Group → Creative Pet Group LLC (New York), 8,088 cartons, HTS 3924.90 (plastic household articles), loaded at **Yantian (Shenzhen)**. — [Panjiva Welfull Group](https://cn.panjiva.com/Welfull-Group-Co-Ltd/4255217)
-- Search summary of other Panjiva/ImportGenius records: further Welfull addresses at "D Tower, Ocean International Center, No.333, Yuanjian Road, Hangzhou" and Hong Kong (Wan Chai / Kwun Tong) entities; ImportGenius lists ~4,083 shipments; an unrelated Welfull Group Co. Inc. exists in Rialto, CA. — [ImportGenius Welfull](https://www.importgenius.com/suppliers/welfull-group-co-ltd); [Panjiva Welfull (alt record)](https://cn.panjiva.com/Welfull-Group-Co-Ltd/62278751) (via search summary; not opened)
+- Search summary of other Panjiva records: Hong Kong Welfull entities (Wan Chai / Kwun Tong) and an unrelated Welfull Group Co. Inc. in Rialto, CA. — [Panjiva Welfull (alt record)](https://cn.panjiva.com/Welfull-Group-Co-Ltd/62278751) (via search summary; not opened)
+- Caution: the ImportGenius Welfull page mixes in an *importer-side* list ('Total Suppliers 9': HUEI TYNG ENTERPRISE (Taiwan), XINFENG HOUSEWARE PRODUCT, ZHEJIANG HENGLIN CHAIR INDUSTRY, last 2017–2020). This probably belongs to the same-name US importer and was not used as evidence about the Hangzhou company. — [ImportGenius Welfull Group](https://www.importgenius.com/suppliers/welfull-group-co-ltd)
 - welfull.com returned a Chinese bot "security check" page ("正在安全检测中… 正在检测上网环境") on 2026-10-10; not bypassed. — [welfull.com](http://www.welfull.com/)
 
 **Ningbo General Union Co., Ltd.**
@@ -114,6 +187,28 @@ All three are **traders**, and so are the other earlier-named "suppliers" checke
 **Additional customs evidence on Welfull (fetched 2026-10-10)**
 - ImportGenius: **4,328 shipments** (chart range 2006-11 to 2026-10-07). Top partners: DIGITAL ELECTRONIC SUPPLY (New York), ADVANCE APPAREL INC (Los Angeles), EMPIRE ART DIRECT LLC, TIME TEX INTERNATIONAL INC, WAVENET INC. Recent consignees include OPPO MERCHANDISE GROUP USA/B.V., OLD TIME POTTERY, THE HILLMAN GROUP / THE BEACHCOMBERS INTERNATIONAL, PACIFIC COAST HOME FURNISHINGS, CREATIVE PET GROUP and METZ US CORP. Goods: "CHRISTMAS SWEATER HS CODE: 611020 PO NO.:PO 260116-WELFULL CHRISTMAS 2026", "BAMBOO WINE RACK", "PRINTED WALL ART HSCODE:491191", "VELVET HANGER SET", "FABRIC TRIM CORD" and base-metal furniture fittings. Sample port of loading: Shanghai. **No camping table, camp kitchen, chair or aluminium furniture description appears.** — [ImportGenius Welfull Group](https://www.importgenius.com/suppliers/welfull-group-co-ltd)
 - The Welfull CT016 listing gives "Origin: Zhejiang, China", "Trademark: Welfull", "Production Capacity: 30000 Piece/Pieces Per Month", "Terms of Payment: LC, T/T, D/P, PayPal, Western Union, Small-amount payment", "Frame: Aluminum Tube", "Size 146X46X80cm", "Load Capaciy 30kgs", "MOQ 500", Port Ningbo. — [Welfull CT016 listing](https://welfull-outdoors.en.made-in-china.com/product/kfFpBKvoLRhH/China-Camping-Kitchen-Table-Aluminum-Portable-Outdoor-Cooking-Table-with-Windscreen-and-3-Storage-Cupboards-for-Outdoor-Activities.html)
+
+**Customs evidence on the Ningbo suppliers (ImportGenius, fetched 2026-10-10)**
+- **Ningbo General Union Co., Ltd.**
+  - Address "16f, Building 10, No.2560, Yongjiang Avenue (East Area), Ningbo".
+  - **2,804 shipments**. Top importers: LIFESTYLE PRODUCTS LLC (315 containers), ENCHANTE ACCESSORIES INC (179), CONQUEST SPORT GROUP LLC (148), IN MOTION DESIGN INC. (135), JEANNE SIMMONS ACCESSORIES INC (85).
+  - Latest B/Ls: "APRON / HAT / GLOVES / BRACELET / HEADBAND / SWITCH GIFTING BUNDLE", "DART TOYS", "GREETING CARDS" (Indigo Books & Music), novelty bottle openers and sound machines, and a "CHILDREN'S BOOK" (Sourcebooks).
+  - — [ImportGenius Ningbo General Union](https://www.importgenius.com/suppliers/ningbo-general-union-co-ltd)
+- **Market Union Co., Ltd.** (General Union's parent group)
+  - Address as printed: "7f,No.1 Building, Hi-tech Science And Technology Square, No.1498,Jian Ningbo Cn" (truncated in the source).
+  - **6,776 shipments**. Top importers: WINSTON PRODUCTS LLC (898 containers), HALO BRANDED SOLUTIONS (370), PACIFICTECH MOLDED PRODUCTS (266), ANYTHING POSSIBLE BRANDS (238), MAIGE INC (148).
+  - Latest B/Ls: squishy toys, Christmas bow decorations, toy cars, PU balls.
+  - — [ImportGenius Market Union](https://www.importgenius.com/suppliers/market-union-co-ltd)
+- **Ningbo Eto Outdoor Supplies Co., Ltd.**
+  - Address "No.16 169 Nong, Lianfeng Road, Haishu District, Ningbo".
+  - **1 US shipment in total**: 2018-09-18, "CAMPING LANTERN WITH FAN, CAMPING LANTERN", 63 cartons, to INLAND PRODUCTS INC.
+  - Its MIC "50,000 pcs/month" claim has no visible US export footprint behind it.
+  - — [ImportGenius Ningbo Eto](https://www.importgenius.com/suppliers/ningbo-eto-outdoor-supplies-co-ltd)
+- **GOOD SELLER CO., LTD**
+  - Address "No.399, Shangbo Road, Yiwu" — Yiwu, not Ningbo.
+  - 217 shipments. Latest goods: electric fans, trash cans, plastic toys, artificial grass, warehouse shelves, luggage sets, kitchenware, cutting boards and suspended cradles, to Quality Home Center (Mobile, AL), Bull Imports and Mussa Global Importaciones.
+  - — [ImportGenius GOOD SELLER](https://www.importgenius.com/suppliers/good-seller-co-ltd)
+- **Welfull's ImportGenius page also gives importer container counts**: DIGITAL ELECTRONIC SUPPLY 439 containers (last 2015), ADVANCE APPAREL INC 378 (last 2026-09-24), EMPIRE ART DIRECT 288, TIME TEX INTERNATIONAL 191, WAVENET 176. Its address appears as "D Tower, Ocean International Center, Yuanjian Road, Gongshu District, Hangzhou". — [ImportGenius Welfull Group](https://www.importgenius.com/suppliers/welfull-group-co-ltd)
 
 **Bureau Veritas / SGS audit verification attempts**
 - Welfull shows "BV Audit Report No.: MIC-ASI2331871". The report number is not in the static HTML (it loads by script), and the page offers no report link. MIC's buyer page says reports are "available online for free" but describes no lookup. BV's certificate-check host (certificatecheck.bureauveritas.com) returned a proxy 502 (unreachable). **The BV audit could not be verified on BV's site.** The only scope statement is MIC's: General Information, Trade Capacity, Partner Production Capacity and R&D Capacity "verified by BV". — [Welfull MIC profile](https://welfull-outdoors.en.made-in-china.com/company-Welfull-Group-Co-Ltd-.html); [MIC Audited Suppliers for buyers](https://www.made-in-china.com/audited-suppliers/for-buyers/)
@@ -134,8 +229,8 @@ All three are **traders**, and so are the other earlier-named "suppliers" checke
 | Supplier | Classification | Key evidence (grade) |
 |---|---|---|
 | Welfull Group Co., Ltd. (Hangzhou) | **Trader** (diversified export trading house). Own plant not shown; may have affiliated partner factories. | Customs: 4,094–4,328 US shipments across apparel, art, homewares and pet goods to 526 customers, loaded at Shanghai and Yantian (A, as a direct shipper but of non-camping goods). BV-verified "Partner Production Capacity", 2,000 partners, 100 trade staff, office-tower addresses (C+). |
-| Ningbo General Union Co., Ltd. | **Trader** (subsidiary of Market Union Group; the group's "Market Union Co." listing is the same house) | Self-declared "Trading Company", 152 trade staff, "3000 partner factories", multi-category, office tower (C) |
-| Ningbo Eto Outdoor Supplies Co., Ltd. | **Trader** | Office suite "Room 2001-19"; "over 60 suppliers"; only lantern-line footage; price ranges US$5–15 / US$12–30 (C) |
+| Ningbo General Union Co., Ltd. | **Trader** (subsidiary of Market Union Group; the group's "Market Union Co." listing is the same house) | Customs: 2,804 US shipments of gift bundles, toys, greeting cards and books; the parent ships 6,776 (toys, Christmas décor) (A as shipper, non-camping goods). Self-declared "Trading Company", 152 trade staff, "3000 partner factories", office tower (C) |
+| Ningbo Eto Outdoor Supplies Co., Ltd. | **Trader** (small) | Customs: a single US shipment ever (2018, camping lanterns). Office suite "Room 2001-19"; "over 60 suppliers"; only lantern-line footage; price ranges US$5–15 / US$12–30 (C) |
 | Yongkang Dashing Leisure Products "Factory" | **Trader in practice** (the name says factory) | Partner Production Capacity format, 36 partners, 5 employees, 4th-floor room (C) |
 | Jinjiang Baojia Supply Chain Mgmt | **Trader** | Trading Company, 90 m², promo-gift range (C) |
 
@@ -170,6 +265,7 @@ All three are **traders**, and so are the other earlier-named "suppliers" checke
   - The camping-table category URL now returns only a JavaScript shell titled "Home Page - Adventure Kings", with no product data.
   - In the earlier round the same category listed only "Kings Portable Alloy Camping Table $99; Large Aluminium Roll-Up Table $149. No storage/windscreen camp kitchen was found."
   - — [4WD Supacentre camping tables](https://www.4wdsupacentre.com.au/camping/camping-accessories/camping-table.html); earlier round: vertical_camping_4wd.md
+- Even where customs data exist, brand camp goods are often hidden. Coleman's top US "suppliers" are DHL ISC Hong Kong consolidators (6,957 + 2,231 containers) and DHL Global Forwarding China (1,202). Aosom's are its own export entities (Aosom E-Commerce, Aosom International Development, Ningbo Aosom Internet Technology). — [ImportGenius Coleman](https://www.importgenius.com/importers/the-coleman-company-inc); [ImportGenius Aosom LLC](https://www.importgenius.com/importers/aosom-llc)
 - Australian imports are not in US bill-of-lading data. ImportYeti covers the US only, per the earlier round, and returned 403 this round. — [Capterra ImportYeti (earlier round)](https://www.capterra.co.uk/software/1044829/importyeti)
 
 ### Inferences
@@ -209,14 +305,15 @@ The evidence points to **listing and design cloning on top of a few source range
 
 ### Takeaway
 **Yes on quantity, with conditions.**
-- The one verified domestic camp-table factory states **custom MOQ 300 and OEM/private-label MOQ 50**. It also states **"接外贸订单 不支持"**: it does not take foreign-trade orders.
+- The best-documented domestic camp-table maker (Yongkang Lexiang; probable factory) states **custom MOQ 300 and OEM/private-label MOQ 50**. It also states **"接外贸订单 不支持"**: it does not take foreign-trade orders.
 - So a 300–500-unit first order is realistic, but usually only through an export-capable intermediary: a trading company, a sourcing agent, or a buyer-appointed export agent/forwarder handling customs.
-- Container-only minimums are not the barrier; export handling is.
+- Container-only minimums are not the barrier for small Yongkang-type factories; export handling is. The customs-verified OEM tier (Goleader, Sopop, Hengfeng, Trueyach, Qiaoyu) ships 170–5,000-carton B/Ls to big-box brands, with relationships of dozens to hundreds of containers. A 300–500-unit first order from a new buyer would sit at the very bottom of their range — plausible only for an existing catalogue item, and not evidenced either way.
 
 **Price signals are inconsistent and need samples and quotes.**
 - 1688 domestic listing prices for the cupboard-type aluminium kitchen are **¥250–358 per unit (≈US$37–54)** at small quantity.
 - That is *above* the trader FOB offers on Alibaba/MIC: Welfull US$25–29.50 at MOQ 500; General Union US$41 at 100–1,999.
 - So the "cheap" export prices likely reflect a lighter spec or teaser ranges, not a factory-direct discount.
+- A realistic planning band for a full-spec 146 cm, 3-cupboard unit is **~US$30–45 FOB at 300–500 units** (inference). Using the earlier round's cost stack, GP at A$99 is 31.5% at US$29.50 but **22.4% at US$35, 14.2% at US$40 and 6.0% at US$45**.
 
 ### Cited Findings
 **MOQ and export capability**
@@ -261,6 +358,19 @@ The evidence points to **listing and design cloning on top of a few source range
   - Jinjiang Baojia (trader): US$44.45–46.00 (MOQ 100).
   - — [General Union listing](https://mugeneralunion.en.made-in-china.com/product/qmoretMWaSRn/China-Outdoor-Portable-Aluminum-Kitchen-Station-Folding-Camping-Table-with-Cupboard-Cabinet.html); [MIC factory index](https://www.made-in-china.com/factory/camping-kitchen-table.html)
 
+**How big are real OEM factories' shipments? (ImportGenius, latest B/Ls)**
+- Typical single B/Ls from the customs-verified camp-furniture exporters:
+  - Goleader → Dick's "ONE PIECE CAMP TABLE": 976–982 CTN (≈21 t).
+  - Goleader → GCI stadium/rocker chairs: 730–5,129 CTN.
+  - Dongyang Sopop → Newell: 275–3,808 CTN.
+  - Henan Hengfeng → Camp Chef aluminium camp table: 1,789 CTN.
+  - Henan Hengfeng → Costco Canada: 170–201 CTN.
+  - Henan Hengfeng → Westfield Outdoor: 529–530 PKG.
+  - Lanxi Trueyach → Chaby International: 601 CTN.
+  - Changzhou Qiaoyu → AAA Innovations: 1,560 CTN; → Costco: 382 CTN.
+  - — [Goleader](https://www.importgenius.com/suppliers/goleader-zhejiang-industries-co); [GCI Outdoor](https://www.importgenius.com/importers/gci-outdoor-inc); [Dongyang Sopop](https://www.importgenius.com/suppliers/dongyang-sopop-fitness-equipment-co); [Henan Hengfeng](https://www.importgenius.com/suppliers/henan-hengfeng-top-leisure-company); [Camp Chef](https://www.importgenius.com/importers/camp-chef); [Lanxi Trueyach](https://www.importgenius.com/suppliers/lanxi-trueyach-industry-co-ltd); [Changzhou Qiaoyu](https://www.importgenius.com/suppliers/changzhou-qiaoyu-tourist-products)
+- Their main relationships run to dozens or hundreds of containers: GCI–Goleader 1,308; Coleman–Sopop 1,379; Costco Canada–Hengfeng 382. Smaller importers do appear, e.g. CHABY INTERNATIONAL with 42 containers in total from Trueyach. — same pages
+
 **Payment, QC and lead-time terms seen**
 - Payment terms listed:
   - Welfull: "LC, T/T, D/P, PayPal, Western Union, Small-amount payment".
@@ -276,6 +386,11 @@ The evidence points to **listing and design cloning on top of a few source range
 - Container fill: Dashing's 175 cm table states "20GP:470pcs; 40GP:1120pcs; 40HQ:1320pcs". So 300–500 units is LCL to one 20GP for this carton (80×57×12 cm ≈ 0.055 m³). — [Dashing 175 cm](https://dashingleisure.en.made-in-china.com/product/DriYToZJYaks/China-Outdoor-Aluminum-Lightweight-Collapsible-Portable-Kitchen-Table-for-Camping-Picnic.html)
 
 ### Inferences
+- Two tiers exist.
+  - **OEM exporters** (Goleader, Sopop, Hengfeng, Trueyach, Qiaoyu) work for Western big-box brands. They are geared to repeat container programmes and will likely ask a new 300–500-unit buyer for the factory's standard item, full prepayment or a high deposit, and possibly a higher unit price. This is inference; their terms were not observed.
+  - **Small Yongkang/Jinhua workshops** (Lexiang-type) accept 50–300 units, but often not export paperwork.
+  - For a first order, the second tier plus an export agent, or a trader with a disclosed factory, is the realistic path. Approaching a customs-verified OEM such as Henan Hengfeng (aluminium camp tables) or Goleader is worth a quote request as a benchmark.
+
 **Who can supply a 300–500-unit first order**
 - Small Yongkang/Jinhua factories like Lexiang already work at MOQ 50–300 for domestic custom and private-label orders. Order size is therefore not the obstacle. The obstacles are export paperwork (customs declaration, VAT-rebate invoicing, foreign-currency receipt) and English-language service, which is why so many sell through Ningbo, Yiwu or Hangzhou traders.
 - A new buyer can buy domestically from such a factory (RMB, ex-works, with a 13% VAT invoice if needed) through:
@@ -287,8 +402,23 @@ The evidence points to **listing and design cloning on top of a few source range
 **Price**
 - On the evidence above, the domestic 1688 price for the most comparable cupboard kitchen (¥255–320 ≈ US$38–48 at small quantity) does not support Welfull's US$25–29.50 as a like-for-like factory price for the same spec.
 - Either the export listings use a lighter spec (19 mm tube at 0.8 mm wall, thin fabric, MDF or thin slats), or the 1688 prices include domestic shipping and small-order margins that fall at 300–500 units.
-- Plan with a range: about US$25–35 FOB for a 146 cm, 3-cupboard aluminium kitchen at 300–500 units from a trader. The factory-direct price could be lower by the trader's margin, which could not be quantified here.
-- The 100-unit trader price of US$41 (General Union) is the realistic ceiling.
+- **Planning band (inference).**
+  - The trader tiers that look like real prices — General Union US$41 at 100–1,999 / US$36 at 2,000+; Dashing US$34.71–45.56; Jinjiang Baojia US$44.45–46; Danyang Hongyu US$25–35 at MOQ 200 — overlap the 1688 small-lot range of ≈US$37–54.
+  - A full-spec 146 cm, 3-cupboard aluminium kitchen is therefore more likely **~US$30–45 FOB at 300–500 units**.
+  - Welfull's US$25–29.50 is the low outlier, a best case to validate against a sample. Eto's US$12–30 should be ignored until quoted.
+- **GP sensitivity at A$99 (500 units, one 20GP).**
+  - This applies the earlier round's cost stack unchanged: FOB converted at its A$42.41-per-US$29.50 rate (1.4376); + A$11.82 freight + A$0.80 inspection; ×1.03; + A$5; net of GST A$90.00. — earlier round: verify_camping_appliance.md, Q4 worked example
+  - Computed here:
+
+| FOB US$/unit | FOB A$ | Landed + selling cost A$ | GP at A$99 (A$) | GP % of A$90 net |
+|---|---|---|---|---|
+| 25 | 35.94 | 55.02 | 34.98 | 38.9% |
+| 29.5 | 42.41 | 61.68 | 28.32 | 31.5% |
+| 35 | 50.32 | 69.82 | 20.18 | 22.4% |
+| 40 | 57.50 | 77.23 | 12.77 | 14.2% |
+| 45 | 64.69 | 84.63 | 5.37 | 6.0% |
+
+  - At US$35–40, a factory-direct or Lexiang-type buy is needed to keep GP near 15–22%. The earlier round's 31.5% assumed Welfull's US$29.50.
 - **Treat every figure as a hypothesis until there are samples and written quotes.**
 
 **What to require**

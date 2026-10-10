@@ -11,6 +11,7 @@
 
 **How the data was collected, and what was blocked**
 - **Worked:**
+  - **ImportGenius public importer/supplier pages** (robots.txt "Allow: /"; no login). They show US bill-of-lading samples, top trading partners and container counts. Fetched 10 Oct 2026; pages "Updated: 2026-10-08". This was added at the coordinator's suggestion after ImportYeti returned Cloudflare 403.
   - Listed-company filings, downloaded as PDFs from the eastmoney mirror (pdf.dfcfw.com) and found via its public announcement-list API.
   - Google Patents, through its xhr JSON endpoint, fetched with WebFetch.
   - Company websites (curl).
@@ -47,6 +48,15 @@ Customs records and IPO prospectuses link specific Western brands to specific ma
 - Autonomous uses Aoke frames with TiMOTION electronics.
 
 Prorials and Lumi are metal-fabrication and assembly factories, not column/motor makers. Desktops are a separate board-maker supply chain, mainly in Shandong and Jiangsu, with bamboo in Zhejiang and Fujian; Loctek is the exception, with in-house board processing.
+
+**ImportGenius bills of lading (fetched 10 Oct 2026) confirm the brand-to-maker links directly:**
+- UPLIFT's "adjustable table parts" come from **Jiecang's Malaysian plant**, JSTAR MOTION SDN BHD (616 containers to "The Human Solution - Uplift Desk", last 2025-01-12).
+- FlexiSpot US imports from **Loctek's Vietnam, Ningbo and Guangxi entities only**.
+- Teknion receives "STEEL FRAME / CONTROL BOX / HANDSET" from **Kaidi** (last 2026-09-28).
+- VIVO's largest supplier group is **LUMI** (Lumi Legend Corporation / HK / Group; more than 2,700 containers in total).
+- Autonomous's frames came from **Ningbo Aoke Office Equipment**; recent frame lots came through a Ningbo trading office and an Anji chair maker.
+- Vari's frames and legs come from **Taiwanese makers**.
+- Jiecang's export arm ships kits to J-Star Motion (its own US subsidiary), HAT/Human Active Technology, AMQ, Fully (to 2018), Bush, Secretlab and 247 Workspace.
 
 ### Cited Findings
 **Tier 1 – actuator / lifting-column / control-box makers (motor-and-column production evidenced)**
@@ -109,6 +119,78 @@ Prorials and Lumi are metal-fabrication and assembly factories, not column/motor
   - "The Jarvis Desk is currently manufactured by JieCang Linear Technology".
 - **UPLIFT label evidence:** a used "Uplift Desk JCB35N2-110" control box is on sale — [eBay](https://www.ebay.de/itm/405964185266). JCB35 is Jiecang's controller family — [DirectIndustry JCB35M11C](https://www.directindustry.com/prod/jiecang-linear-motion/product-233233-2744784.html)
 - **Not found:** no supplier mapping for Fezibo, Autonomous (customs), Desky, Advwin, Omnidesk, Zen Space Desks or Artiss. Search-result summaries of ImportYeti returned no pages for Fezibo, UPLIFT or Autonomous.
+
+**ImportGenius US bill-of-lading pages (direct fetch, 10 Oct 2026; "No. of Containers" = ImportGenius's count)**
+- **FlexiSpot Inc (Irvine CA)**
+  - 1,181 shipments. Top suppliers: LOCTEK ERGONOMICS VIETNAM CO LTD (911 containers, last 2026-10-08), LOCTEK ERGONOMICS VIETNAM COMPANY L (710), LOCTEK NINGBO INTERNATIONAL (117), LOCTEK NINGBO INTERNATIONAL TRADI (78), LOCTEK GUANGXI SMART HOME (48).
+  - Cargo descriptions include "LIFTING TABLE (FRAME+TOPBOARD)" and "DESK (FRAME+ BAMBOO TOPBOARD)".
+  - Source: [ImportGenius FlexiSpot](https://www.importgenius.com/importers/flexispot-inc)
+- **Loctek Ergonomics Vietnam (Long Jiang Industrial Park, Tien Giang)**
+  - Customers: Loctek Inc (1,800), FlexiSpot (911), Monoprice (44), "CKNAPP SALES, INC. DBA VIVO" (39, last 2021-11-16), Vovomart (HK) (42); also Amazon Logistics consignments of "LIFTING TABLE (FRAME+TOPBOARD)" — [ImportGenius Loctek Vietnam](https://www.importgenius.com/suppliers/loctek-ergonomics-vietnam-co-ltd)
+- **Loctek Ergonomic Technology Corp (No.588 Qihang South Road, Binhai, Yinzhou)**
+  - 3,253 shipments. One sample bill is an IKEA consignment, "BOLLSIDAN LAPTOP STND… IKEA SUPPLY AG C/O IKEA DISTRIBUTIO".
+  - Top US consignees are import agents (HPWI International Trade 428, Artistic Conception 286, Sunflower USA 254).
+  - Source: [ImportGenius Loctek](https://www.importgenius.com/suppliers/loctek-ergonomic-technology-corp)
+- **Jiecang's Malaysian plant: JSTAR MOTION SDN BHD (No. 90 & 91 Jalan I-Park 1/10, Kulai, Johor)**
+  - 2,147 shipments. Customers: J-STAR MOTION CORPORATION (909), HUMAN ACTIVE TECHNOLOGY LLC (456), **THE HUMAN SOLUTION - UPLIFT DESK (616, last 2025-01-12)**, ELEMENT ERGO (76), BESTQI INNOVATION (HK) (46).
+  - Cargo: "ADJUSTABLE TABLE PARTS (DIGITALLY-CONTROLLED INTELLIGENT & ERGONOMIC WORKSTATION WITH IOT)".
+  - Sources: [ImportGenius Jstar Motion](https://www.importgenius.com/suppliers/jstar-motion-sdn-bhd), [ImportGenius UPLIFT](https://www.importgenius.com/importers/the-human-solution-uplift-desk)
+- **Xinchang Jiecang Import And Export (No.19-1 Xintao Road, Qixing Street, Xinchang)**
+  - 4,596 shipments. Customers: J-STAR MOTION CORPORATION (4,101, last 2026-10-08), HAT CONTRACT (413, last 2019-07-06), AMQ SOLUTIONS LLC (454, last 2019-07-12), FULLY ENTERPRISE CORP (80, last 2018-01-28), BUSH INDUSTRIES (88, last 2024-01-25).
+  - Recent bills: "ADJUSTABLE TABLE PARTS(LIFTING DEVICE), HANDSET" to J-Star; "TABLETOP TABLE LEGS AND PAD FOR DESK" to SECRETLAB SG PTE LTD; "ADJUSTABLE TABLE PARTS" to 247 WORKSPACE and Human Active Technology; tubular blind motors to Levolor.
+  - Source: [ImportGenius Xinchang Jiecang I&E](https://www.importgenius.com/suppliers/xinchang-jiecang-import-and-export)
+- **Zhejiang Jiecang Linear Motion (High-tech Park, Xinchang)**
+  - Customers: THE HUMAN SOLUTION (61, last 2015-11-16), J-STAR MOTION (46, 2026), HAT CONTRACT (38, last 2016-06-17).
+  - Cargo: "ADJUSTABLE TABLE PARTS/CONTROL BOX", "HANDSPIKE MOTOR".
+  - Source: [ImportGenius Zhejiang Jiecang](https://www.importgenius.com/suppliers/zhejiang-jiecang-linear-motion)
+- **Changzhou Kaidi Electrical Inc (No 4 Jiangcun East Road, Henglin)**
+  - 1,954 shipments. Customers: KAIDI LLC (588; Kaidi's US arm), ESI ERGONOMIC SOLUTIONS (328, last 2020-11-22), SOUTHERN MOTION (175), TEKNION LIMITED (ALNESS SHIPMENTS) (133, last 2026-09-28), KAIDI ELECTRICAL (140).
+  - Teknion bills: "STEEL FRAME / CONTROL BOX / HANDSET".
+  - Source: [ImportGenius Kaidi](https://www.importgenius.com/suppliers/changzhou-kaidi-electrical-inc)
+- **TiMOTION Technology (10F, No. 100 Minquan Rd, Xindian, New Taipei)**
+  - 2,676 shipments. Customers include TiMOTION USA, La-Z-Boy (actuators shipped from Malaysia) and JWF Technologies.
+  - "DESK LIFT FRAMES… 710 CARTONS" to ERGO INDUSTRIAL SEATING SYSTEM INC (2026-10-03).
+  - "COLUMN / CONTROL BOX / HANDSET / CABLES" to John Deere.
+  - Source: [ImportGenius TiMOTION](https://www.importgenius.com/suppliers/timotion-technology-co-ltd)
+- **Varidesk LLC**
+  - Suppliers: INVENTION GLOBAL LIMITED (5,944, last 2022-02-15; Shenzhen address, Taiwan-based), DER YIH ENTERPRISE (Taichung; 1,948, last 2026-10-02; "ELECTRIC STANDING DESK LEGS HTS: 940391"), Invention Global HK, Chen Source, Goang Hann.
+  - Recent "HEIGHT-ADJUSTABLE COMPUTER DESK" lots come from TAN PHONG AN INDUSTRIAL (Vietnam).
+  - Sources: [ImportGenius Varidesk](https://www.importgenius.com/importers/varidesk-llc), [ImportGenius Der Yih](https://www.importgenius.com/suppliers/der-yih-enterprise-co-ltd)
+- **Autonomous Inc (Redlands CA)**
+  - Suppliers: VINA G 7 JSC (Vietnam, 192), NINGBO AOKE OFFICE EQUIPMENT (117 + 63, last 2022-10-18), Merryfair.
+  - 2024–25 "METAL HEIGHT ADJUSTABLE DESK FRAME" lots came from NINGBO YUNQI INNOVATION INTELLIGENT and from ZHEJIANG YUEQIANG FURNITURE (Anji chair maker).
+  - Source: [ImportGenius Autonomous](https://www.importgenius.com/importers/autonomous-inc)
+- **Ningbo Aoke Office Equipment (Science & Technology Park, Jiangshan Town, Yinzhou)**
+  - Customers: Autonomous (117), Meubles Burotic, Bestar, Bush, and **SCHIAVELLO GWS PTY LTD** ("METAL HEIGHT ADJUSTABLE DESK FRAME", 2026-06-12).
+  - Also "METAL HEIGHT ADJUSTABLE DESK FRAME HAND CONTROL CONTROL BOX TABLE ADAPTER" to Meyrin Development.
+  - Source: [ImportGenius Aoke](https://www.importgenius.com/suppliers/ningbo-aoke-office-equipment-co-lt)
+- **Ningbo Yunqi Innovation Intelligent** — address "Room 1204-1, Haoru International No.468 Taikang Middle Road" (an office suite). It ships "LIFTING COLUMN HAND CONTROLLER DESK TOP" and desk frames to Uncaged Ergonomics, Autonomous and others — [ImportGenius Yunqi](https://www.importgenius.com/suppliers/ningbo-yunqi-innovation-intelligent)
+- **VIVO (C Knapp Sales, Goodfield IL)** — [ImportGenius VIVO](https://www.importgenius.com/importers/c-knapp-sales-inc-dba-vivo), [ImportGenius VIVO (2)](https://www.importgenius.com/importers/cknapp-sales-inc-dba-vivo):
+  - Suppliers: LUMI LEGEND CORPORATION (725), LUMI LEGEND HK LIMITED (769), LUMI LEGEND GROUP LIMITED (994 on one page, 286 on another), GIBBON ERGONOMICS (M) SDN BHD (813), Vision Ergonomics (M) Sdn Bhd (Klang, Malaysia), Qidong Vision Mounts, Display Mount Pro.
+  - Lumi Group bills to VIVO include "WORKSTATION TABLE TOP", "BAMBOO TABLE TOP" and "CONTROL BOX".
+  - Malaysian bills: "COMPUTER DESK HEIGHT ADJUSTABLE DESK ACCESSORIES HS CODE 9403.10".
+- **UPLIFT (The Human Solution)** — [ImportGenius UPLIFT Desk](https://www.importgenius.com/importers/uplift-desk), [ImportGenius The Human Solution](https://www.importgenius.com/importers/the-human-solution):
+  - Desktops: JONAVOS EKSPORTAS UAB (Lithuania; 195 + 141 containers; "MELAMINE FACED CHIPBOARD FURNITURE AND FURNITURE PARTS") and HANGZHOU ECOMAX BAMBOO (162).
+  - Fittings: FETON LTD; storage: CHYN FUH (Taiwan); a smaller Lumi Legend lot (27).
+- **Fully** ("Fully Enterprise Corp"; the page mixes in an unrelated apparel importer) — [ImportGenius Fully Enterprise](https://www.importgenius.com/importers/fully-enterprise-corp):
+  - Suppliers: HANGZHOU ECOMAX BAMBOO (109), XINCHANG JIECANG IMPORT AND EXPORT (80, last 2018-01-28), NINGBO ERGOVIDA HEALTH TECHNOLOGY (52; LUMI group member, monitor brackets and "WORKSTATION"), JSTAR MOTION SDN BHD (50, last 2022-02-13).
+- **HAT Contract / Human Active Technology LLC (San Jose)** — [ImportGenius HAT Contract](https://www.importgenius.com/importers/hat-contract), [ImportGenius Human Active Technology](https://www.importgenius.com/importers/human-active-technology-llc):
+  - Suppliers: XINCHANG JIECANG I&E (413), JSTAR MOTION SDN BHD (456), Lumi Legend HK (151) and Group (142), Zhejiang Steelrix.
+- **ESI Ergonomic Solutions** — [ImportGenius ESI](https://www.importgenius.com/importers/esi-ergonomic-solutions-llc):
+  - Top supplier CHANGZHOU KAIDI ELECTRICAL INC (328).
+  - Also "MONITOR BRACKET / PRIVACY PANEL BRACKET" from LUMI LEGEND CORPORATION (2020-12-07).
+- **Element Ergo:** JSTAR MOTION SDN BHD (76) — [ImportGenius Element Ergo](https://www.importgenius.com/importers/element-ergo). **Desktronic US:** UAB Desktronic (Lithuania), Zhejiang Yueqiang, Lumi Legend Corporation — [ImportGenius Desktronic](https://www.importgenius.com/importers/desktronic-us-inc).
+- **Lumi Legend Corporation (supplier page; address "24/f., Building 1, Lisi Plaza, Huifeng East Road, Ningbo", an office tower)**
+  - 5,682 shipments; customers VIVO (725), Transform Partners (515), Stand Steady (154), Inland Products (100).
+  - Recent bills: monitor brackets to Workrite Ergonomics, ACCO Brands and Safco; TV brackets to **ATDEC DISTRIBUTION USA PTY LTD** (Atdec is an Australian mounting brand); a mixed desk-accessory lot to DESKTRONIC US.
+  - Source: [ImportGenius Lumi Legend Corp](https://www.importgenius.com/suppliers/lumi-legend-corporation)
+- **Lumi Legend HK** (Kwun Tong, HK; customers VIVO 769, StarTech, Monoprice, Human Active Technology) and **Lumi Legend Group** (Wan Chai, HK; customers VIVO, Human Active Technology) — [ImportGenius Lumi HK](https://www.importgenius.com/suppliers/lumi-legend-hk-limited), [ImportGenius Lumi Group](https://www.importgenius.com/suppliers/lumi-legend-group-limited)
+- **Zhejiang Weise Technology** ("Building 1 No 11 Meigui Road Qixing Street Xinchang"): exactly **1** US shipment ever, "ELECTRIC STANDING DESK, MONITOR ARM" to Micronetbd Inc, 2023-06-23 — [ImportGenius Weise](https://www.importgenius.com/suppliers/zhejiang-weise-technology-co-ltd)
+- **Prorials:** no ImportGenius supplier page exists under four slug variants of "Zhejiang Prorials Advanced Materials". They redirect to /tradebase.
+- **Data caveats:**
+  - Some pages mix different entities with the same name (e.g. "Fully Enterprise Corp").
+  - The "Country of Origin" field on Malaysian lots sometimes reads "South Korea" or "China Taiwan", apparently the transhipment port.
+  - Full shipment lists are paywalled; only 10 sample bills and the top 5 partners are public.
 
 **Tier 2 – frame fabricators / assemblers (no motor or controller production evidenced)**
 - **Prorials 浙江普锐新材料有限公司 (Cixi)** — [Prorials company profile](https://www.prorials.com/company-profile.html):
