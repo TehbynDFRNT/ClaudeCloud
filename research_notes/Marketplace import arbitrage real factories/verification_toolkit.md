@@ -93,7 +93,7 @@ Everything in the "did not work" list is still usable manually in a browser, and
 | [CNCA/CQC search cx.cnca.cn](https://cx.cnca.cn/) | robots.txt HTTP 521 (862 B), then TLS resets | — |
 | [IAF CertSearch](https://www.iafcertsearch.org/) | Homepage 200 (15,033 B, with captcha markers) | [robots.txt](https://www.iafcertsearch.org/robots.txt): `*` and ClaudeSearchBot disallow /certified-entity/ and /certification/ (the detail pages), so lookups are manual-only |
 | FSC [search.fsc.org](https://search.fsc.org/en/) | 307 → 308 → 200 (303,886 B app shell) | [robots.txt](https://search.fsc.org/robots.txt): Disallow /api (the data calls). The old [info.fsc.org](https://info.fsc.org/robots.txt) has "Disallow: /" |
-| amfori (BSCI) | robots.txt 404 | Allowed; audit results sit on the members-only amfori platform (not tested) |
+| amfori (BSCI) | robots.txt 404 | Allowed, but no BSCI lookup was tested. That BSCI audit results are visible only to amfori members is background knowledge, not verified here |
 | Australia EESS ([eess.gov.au](https://www.eess.gov.au/)) | Homepage 200 (74,942 B). The [registration-database page](https://www.eess.gov.au/registration/eess-registration-database/) says: "The Registration database will no longer be available from 18:00 (AEDST) Friday, 11 October. It will be replaced by the EESS Platform from 8:00 (AEDST) Monday, 14 October 2024". The old host equipment.erac.gov.au gave proxy CONNECT 502 and, via WebFetch, "getaddrinfo ENOTFOUND". The new [public link](https://eessplatform.eess.gov.au/prweb/PRAuth/Public) goes 307 → 303 → 303 → 200 to a Pega "Login Page" (21,415 B: user name, password, Register) | [robots.txt](https://www.eess.gov.au/robots.txt): Disallow /*? (all query URLs), Crawl-delay 3; the platform host has no robots file (404) |
 
 The [EESS platform page](https://www.eess.gov.au/about/about-the-new-eess-platform/) lists the platform's functions, all framed as managing one's own compliance: "make applications for certificates… search and view the Responsible Suppliers equipment registrations… search and view certifications issued to the Certificate Applicant or Responsible Supplier".
@@ -123,6 +123,7 @@ The [EESS platform page](https://www.eess.gov.au/about/about-the-new-eess-platfo
 - I found no public, anonymous EESS search on the new platform. The about-page wording suggests search is limited to an account's own registrations, so whether EESS shows the overseas manufacturer behind a Responsible Supplier remains unconfirmed.
 - Trade-show directories (ISPO Shanghai, CIFF, China Toy Expo, FIBO, spoga+gafa), industry associations (宁津/永康/安吉/平乡) and 专精特新 or high-tech lists could not be tested: Chinese government hosts were unreachable, and the WebSearch quota ran out before exhibitor URLs could be found.
 - Panjiva's and ImportGenius's coverage beyond US imports (Colombia only appeared on Panjiva) was not explored. Nothing covers Australian imports.
+- CE / EN 71 / EN 15194 certificates have no central public database to test. Verification runs through the issuing lab's or notified body's own report-check (and the EU NANDO list for notified bodies), none of which was tested here.
 
 ## Q2. Worked examples on the test companies: what each working source showed
 
@@ -449,6 +450,10 @@ Ask for the licence scan early (Step 5) to get the Chinese name and USCC.
   - The seller name and tax ID must match the licence.
   - Context, not verified here: production enterprises claim export VAT refunds under the 免抵退 method and trading companies under 免退. Asking which method the supplier uses is a cheap tell.
 - **Certificate and test-report numbers.** Verify ISO on IAF CertSearch, FSC CoC on search.fsc.org, BSCI via the full audit report (the amfori platform is members-only), and lab reports on the lab's portal. Check the "manufacturer/factory address" field.
+
+**Step 5b — Export-licence wording and social accounts (10 min, $0; manual; background knowledge, not verified in this session).**
+- "Export licence" (进出口权) in supplier claims usually now means the customs registration. My understanding is that the separate 对外贸易经营者备案登记 filing was dropped when the Foreign Trade Law was amended in Dec 2022, so ask for the 海关备案 receipt rather than an "export licence".
+- For WeChat 公众号 and Douyin enterprise accounts, check that the displayed verified subject (认证主体/企业认证) is the same legal name as the licence. A personal or differently named subject is a trader signal.
 
 **Step 6 — Live video walk (45–60 min, $0).** Ask for:
 - the factory gate and signboard, with GPS or map pin shared

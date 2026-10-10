@@ -118,7 +118,7 @@ Prorials and Lumi are metal-fabrication and assembly factories, not column/motor
   - "Autonomous has switched to Aoke Furniture to produce their frames… using TiMotion for all of their electronic components".
   - "The Jarvis Desk is currently manufactured by JieCang Linear Technology".
 - **UPLIFT label evidence:** a used "Uplift Desk JCB35N2-110" control box is on sale — [eBay](https://www.ebay.de/itm/405964185266). JCB35 is Jiecang's controller family — [DirectIndustry JCB35M11C](https://www.directindustry.com/prod/jiecang-linear-motion/product-233233-2744784.html)
-- **Not found:** no supplier mapping for Fezibo, Autonomous (customs), Desky, Advwin, Omnidesk, Zen Space Desks or Artiss. Search-result summaries of ImportYeti returned no pages for Fezibo, UPLIFT or Autonomous.
+- **Not found:** no supplier mapping for Fezibo, Desky, Advwin, Omnidesk, Zen Space Desks or Artiss. ImportGenius had no importer page under the slugs tried: fezibo, fezibo-inc, fezibo-llc. (UPLIFT, Autonomous, FlexiSpot, Vari and VIVO are now mapped from ImportGenius, above.)
 
 **ImportGenius US bill-of-lading pages (direct fetch, 10 Oct 2026; "No. of Containers" = ImportGenius's count)**
 - **FlexiSpot Inc (Irvine CA)**
@@ -225,15 +225,23 @@ Prorials and Lumi are metal-fabrication and assembly factories, not column/motor
   1. Column/controller makers (Jiecang, Kaidi, Loctek, TiMOTION, LINAK, DewertOkin, Xinyi).
   2. Frame fabricators/assemblers that make steel feet, crossbars and outer tubes, then fit bought-in drive kits (Prorials, Lumi, Weise, 东莞创健达, the Changzhou 1688 sellers).
   3. Board makers for tops.
-- Western brands (UPLIFT, Fully, HAT, Fellowes/ESI, Teknion) buy layer 1 directly. Small storefronts are usually layer 2, or traders on top of layer 2.
+- Western brands buy layer 1 directly. Small storefronts are usually layer 2, or traders on top of layer 2.
+- The 2024–26 bills show the pattern still holds:
+  - UPLIFT, HAT/Human Active Technology, Element Ergo and Secretlab buy Jiecang kits.
+  - Teknion buys Kaidi frame + control box + handset sets.
+  - FlexiSpot is fully captive to Loctek.
+  - VIVO buys from the LUMI group plus Malaysian assemblers.
+  - Autonomous buys from Ningbo assemblers and a trading office.
+- Jiecang's US-bound kits moved to its Malaysian plant (JSTAR MOTION SDN BHD) after 2019. Direct China-origin Jiecang shipments to HAT and AMQ end in July 2019, and UPLIFT's Malaysian lots run to 2025-01. My inference is that this is US-tariff routing; the timing fits but no filing states the reason.
 - "Owns motor/column production": Jiecang, Kaidi, Loctek (all A), and TiMOTION, LINAK and DewertOkin (B, from regulated-filing mentions).
 - "Assembles bought-in columns": 东莞创健达, 乐联 and 再兴 (A, from Kaidi's customer table). Prorials and Lumi are probable, but this is inferred from the absence of any motor/PCB capability; it is not proven.
 - Ningbo (Loctek, Lumi, Prorials in Cixi), Xinchang/Shangyu (Jiecang, Weise, Xinyi) and Changzhou (Kaidi plus 1688 assemblers) are the clusters with evidence. No Zhongshan column maker was found.
 
 ### Gaps
 - **Hengsheng and OMT:** no actuator maker could be identified under either name (both searches empty). No Zhongshan maker was identified.
-- **Brands with unknown OEMs:** Fezibo, Autonomous (customs side), Desky, Advwin, Omnidesk, Zen Space Desks and Artiss. ImportYeti is Cloudflare-blocked, and AU import data is not public.
-- **IKEA:** only Loctek's statement that IKEA is an ODM customer was found. Which IKEA desks it makes is unknown.
+- **Brands with unknown OEMs:** Fezibo, Desky, Advwin, Omnidesk, Zen Space Desks and Artiss. ImportGenius covers US imports only, and AU import data is not public.
+- **UPLIFT after Jan 2025:** its latest JSTAR lot is 2025-01-12. Where UPLIFT has sourced since was not visible; it may be buying through J-Star Motion Corp (Jiecang's US subsidiary) domestically. That is inference.
+- **IKEA:** Loctek's report names IKEA as an ODM customer, and ImportGenius shows a Loctek → "IKEA SUPPLY AG" bill for the BOLLSIDAN laptop stand. Which IKEA sit/stand desks (if any) Loctek makes is unknown.
 - **Particleboard tops:** no 140×70 particleboard top quote was found from a desk-top specialist. The Wanhua listing (US$12–28) does not state a size.
 
 ---
@@ -243,9 +251,15 @@ Prorials and Lumi are metal-fabrication and assembly factories, not column/motor
 ### Takeaway
 Six companies clear the "two independent A/B items" bar as manufacturers: Jiecang, Kaidi, Loctek, TiMOTION, Prorials and Lumi. Only the first four make motor/column/control-box drive systems; Prorials and Lumi are frame/desk fabricators and assemblers.
 
-Two more are probable but under-evidenced:
-- Xinyi (one regulated-filing mention plus platform claims).
-- Weise (platform-only, upper-floor unit).
+Customs pages add more:
+- **Lumi:** a direct shipper to VIVO, Workrite, ACCO and Atdec.
+- **TiMOTION:** a direct shipper of "DESK LIFT FRAMES" to a North American seating maker.
+- **Ningbo Aoke:** a frame assembler that supplied Autonomous, Bush, Bestar and Schiavello. It qualifies as a manufacturer (customs plus a BTOD description), though it uses TiMOTION electronics.
+
+Under-evidenced:
+- **Xinyi:** one regulated-filing mention plus platform claims.
+- **Weise:** platform-only; just one US shipment ever.
+- **Ningbo Yunqi Innovation:** shown by customs to be an office-suite trading company.
 
 ### Cited Findings
 - **1. Zhejiang Jiecang Linear Motion Technology 浙江捷昌线性驱动科技股份有限公司 — Xinchang, Shaoxing (registered at 新昌县省级高新技术产业园区).**
@@ -270,6 +284,7 @@ Two more are probable but under-evidenced:
   - Sources: [Loctek 2026 H1](https://pdf.dfcfw.com/pdf/H2_AN202608280006758408_1.pdf), [Loctek prospectus](https://pdf.dfcfw.com/pdf/H2_AN201711201053206901_1.pdf), [LoctekMotion](https://www.loctekmotion.com/)
 - **4. TiMOTION 第一傳動 (Taiwan HQ; Dongguan factory 东莞堤摩讯传动科技有限公司; Kunshan branch).**
   - Evidence B: named as a producer in both the Jiecang and Kaidi prospectuses; own site (more than 2,000 staff, 7 facilities).
+  - Evidence A: customs as direct shipper of "DESK LIFT FRAMES" (710 cartons, 2026-10-03, to Ergo Industrial Seating System) and actuators to La-Z-Boy — [ImportGenius TiMOTION](https://www.importgenius.com/suppliers/timotion-technology-co-ltd)
   - Customer: Autonomous electronics (BTOD).
   - MOQ and price were not found.
   - Sources: [Kaidi prospectus](https://pdf.dfcfw.com/pdf/H2_AN202005171379856182_1.pdf), [BTOD](https://www.btod.com/blog/autonomous-pro-vs-jarvis-desk)
@@ -284,13 +299,25 @@ Two more are probable but under-evidenced:
   - VIVO link: CA3028426C is assigned to Lumi Legend HK, while the same-priority US20220192364A1 is assigned to "Cknapp Sales, Inc. D/B/A Vivo".
   - Evidence B: own site with factory tour ("Standing Desks Manufacturing Center"); ICP备17059849号-1; LUMI-branded desks sold by NZ retailers (search summary).
   - Terms: M08-23DE complete dual desk at US$99–129, MOQ 100, about 45 days after payment.
+  - **Evidence A (customs):** Lumi Legend Corp / HK / Group are direct shippers to VIVO (725 + 769 + 994 containers), Human Active Technology, Monoprice, StarTech, Workrite, ACCO, Desktronic and ATDEC (Australian mounts brand).
+    - VIVO bills include "WORKSTATION TABLE TOP", "BAMBOO TABLE TOP" and "CONTROL BOX".
+    - Group member Ningbo Ergovida shipped to Fully.
+    - Sources: [ImportGenius Lumi Legend Corp](https://www.importgenius.com/suppliers/lumi-legend-corporation), [ImportGenius Lumi Group](https://www.importgenius.com/suppliers/lumi-legend-group-limited)
   - Sources: [Google Patents Lumi](https://patents.google.com/xhr/query?url=assignee%3DLumi%2BLegend%26num%3D50&exp=), [Lumi factory tour](https://www.lumi.cn/en/factorytour), [MIC Lumi desk](https://lumi2007.en.made-in-china.com/product/MolxpvyJXUDj/China-Modern-Home-Office-Furniture-Wholesale-3-Stage-Dual-Motors-Electric-Standing-Table-Gaming-Desk.html), [PB Tech LUMI](https://www.pbtech.com/product/MOABRA1156/product/MOABRA1156/LUMI-Lumi-STB-072-Deluxe-Desktop-MonitorLaptop-Adj)
 - **7. Zhejiang Xinyi Intelligent Drive / Xinyi Control System 浙江新益控制系统 — Shangyu EDZ.**
   - Evidence B: named by Jiecang's prospectus as a linear-actuator producer. Evidence C: MIC profile.
   - Earlier round: 3-stage dual frame at US$110–159, MOQ 20 sets — [MIC Xinyi](https://xinyiintelligent.en.made-in-china.com/)
-- **8. Zhejiang Weise Technology — Xinchang (upper-floor unit).**
-  - Evidence C only (MIC).
+- **8. Zhejiang Weise Technology — Xinchang (MIC lists an upper-floor unit; customs lists "Building 1 No 11 Meigui Road Qixing Street").**
+  - Evidence C (MIC). Customs: a single US shipment, "ELECTRIC STANDING DESK, MONITOR ARM" to Micronetbd Inc, 2023-06-23 — [ImportGenius Weise](https://www.importgenius.com/suppliers/zhejiang-weise-technology-co-ltd)
   - Earlier round: Ws-Sg2bj-01 dual-motor at US$87.40 (30–299) / 84.10 / 82.60 — [MIC Weisetech](https://weisetech.en.made-in-china.com/product/AdXaNiyhClGE/China-Ws-Sg2bj-01-Dual-Motor-Electric-Ergonomic-Height-Adjustable-Standing-Desk.html)
+
+- **9. Ningbo Aoke Office Equipment Co., Ltd (Chinese name not found) — Science & Technology Park, Jiangshan Town, Yinzhou, Ningbo.**
+  - Evidence A: customs as direct shipper of "METAL HEIGHT ADJUSTABLE DESK FRAME… HAND CONTROL CONTROL BOX" to Autonomous (180 containers to 2022), Meubles Burotic, Bestar, Bush and SCHIAVELLO GWS PTY LTD (Australian office-furniture group) — [ImportGenius Aoke](https://www.importgenius.com/suppliers/ningbo-aoke-office-equipment-co-lt)
+  - Evidence B/C: BTOD says "Aoke currently manufacturers their frame components while using TiMotion for all of their electronic components" — [BTOD](https://www.btod.com/blog/autonomous-pro-vs-jarvis-desk)
+  - Classification: frame assembler fitting TiMOTION drive electronics. MOQ and price not found.
+- **10. Ningbo Yunqi Innovation Intelligent — "Room 1204-1, Haoru International No.468 Taikang Middle Road" (office suite).**
+  - Customs: ships "LIFTING COLUMN HAND CONTROLLER DESK TOP" and desk frames to Uncaged Ergonomics, Autonomous and Clouds Grande — [ImportGenius Yunqi](https://www.importgenius.com/suppliers/ningbo-yunqi-innovation-intelligent)
+  - Classification: trading company (office address). This is an example of the reseller layer the user is worried about.
 
 ### Inferences
 - For a small Australian buyer, the realistic "real factory" options are:
